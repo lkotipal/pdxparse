@@ -97,6 +97,7 @@ data ScriptMessage
     | MsgStrengthenStatists {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgStrengthenOrangists {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainRepTrad {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainRevolutionaryZeal {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainInflation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainLocalAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgReformDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1154,6 +1155,15 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True _amt)
                 , " republican tradition"
+                ]
+        MsgGainRevolutionaryZeal {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " revolutionary zeal"
                 ]
         MsgGainStability {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

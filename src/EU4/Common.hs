@@ -259,6 +259,7 @@ handlersNumericIcons = Tr.fromList
         ,("add_prosperity"           , numericIcon "prosperity" MsgGainProsperity)
         ,("add_reform_desire"        , numericIcon "reform desire" MsgGainReformDesire)
         ,("add_republican_tradition" , numericIcon "republican tradition" MsgGainRepTrad)
+        ,("add_revolutionary_zeal"   , numericIcon "revolutionary zeal" MsgGainRevolutionaryZeal)
         ,("add_stability"            , numericIcon "stability" MsgGainStability)
         ,("add_splendor"             , numericIcon "splendor" MsgGainSplendor)
         ,("add_tariff_value"         , numericIcon "gloabl tariffs" MsgAddTariffValue)
