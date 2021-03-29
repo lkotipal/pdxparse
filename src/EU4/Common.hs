@@ -708,8 +708,8 @@ handlersTypewriter = Tr.fromList
 -- | Handlers for simple statements with icon
 handlersSimpleIcon :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSimpleIcon = Tr.fromList
-        [("accepted_culture"        , withLocAtomAndIcon "max accepted cultures" MsgAcceptedCulture)
-        ,("add_accepted_culture"    , withLocAtomAndIcon "max accepted cultures" MsgAddAcceptedCulture)
+        [("accepted_culture"        , withLocAtomAndIcon "max promoted cultures" MsgAcceptedCulture)
+        ,("add_accepted_culture"    , withLocAtomAndIcon "max promoted cultures" MsgAddAcceptedCulture)
         ,("add_building"            , withLocAtomIcon MsgAddBuilding)
         ,("add_harmonized_religion" , withLocAtomIcon MsgAddHarmonizedReligion)
         ,("add_heir_personality"    , withLocAtomIcon MsgAddHeirPersonality)
