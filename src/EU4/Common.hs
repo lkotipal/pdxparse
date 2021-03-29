@@ -270,7 +270,7 @@ handlersNumericIcons = Tr.fromList
         ,("add_yearly_sailors"       , numericIcon "sailors" MsgGainYearlySailors)
         ,("add_years_of_income"      , numericIcon "ducats" MsgAddYearsOfIncome)
         ,("adm"                      , numericIcon "adm" MsgRulerADM)
-        ,("administrative_efficiency", numericIconBonus "administrative efficiency" MsgAdminEfficiencyBonus MsgAdminEfficiency)
+        ,("administrative_efficiency", numericIconBonus "administrative efficiency" MsgAdminEfficiency MsgAdminEfficiencyBonus)
         ,("adm_power"                , numericIcon "adm" MsgHasADM)
         ,("army_organiser"           , numericIconLoc "army organizer" "army_organiser" MsgHasAdvisorLevel)
         ,("army_reformer"            , numericIconLoc "army reformer" "army_reformer" MsgHasAdvisorLevel)
