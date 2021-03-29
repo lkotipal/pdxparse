@@ -909,6 +909,7 @@ data ScriptMessage
     | MsgProvTradePowerMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRazingPowerGain {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRecoverNavyMoraleSpeed {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgShockDamage {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgStateMaintMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSubjectLibertyDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTaxIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -6224,6 +6225,13 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Recover navy morale speed"
+                ]
+        MsgShockDamage {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " Shock damage"
                 ]
         MsgStateMaintMod {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

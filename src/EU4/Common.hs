@@ -381,6 +381,7 @@ handlersNumericIcons = Tr.fromList
         ,("republican_tradition"     , numericIconBonus "republican tradition" MsgRepTrad MsgYearlyRepTrad)
         ,("sailors_percentage"       , numericIcon "sailors" MsgSailorsPercentage)
         ,("ship_recruit_speed"       , numericIcon "shipbuilding time" MsgShipbuildingTime)
+        ,("shock_damage"             , numericIcon "shock damage" MsgShockDamage)
         ,("stability"                , numericIcon "stability" MsgStability)
         ,("statesman"                , numericIconLoc "statesman" "statesman" MsgHasAdvisorLevel)
         ,("state_maintenance_modifier", numericIcon "state maintenance" MsgStateMaintMod)
