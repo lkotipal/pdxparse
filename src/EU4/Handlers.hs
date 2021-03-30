@@ -607,6 +607,7 @@ scriptIconTable = HM.fromList
     ,("estate_church", "clergy")
     ,("estate_cossacks", "cossacks")
     ,("estate_dhimmi", "dhimmi")
+    ,("estate_jains", "jains")
     ,("estate_maratha", "marathas")
     ,("estate_nobles", "nobles")
     ,("estate_nomadic_tribes", "tribes")
