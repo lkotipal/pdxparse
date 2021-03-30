@@ -906,6 +906,7 @@ data ScriptMessage
     | MsgMaxPromotedCultures {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMercenaryDiscipline {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMeritocracy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgMovementSpeed {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProvTradePowerMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRazingPowerGain {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRecoverNavyMoraleSpeed {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -6204,6 +6205,13 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Meritocracy is at least "
                 , toMessage (roundNum _amt)
+                ]
+        MsgMovementSpeed {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " Movement speed"
                 ]
         MsgProvTradePowerMod {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
