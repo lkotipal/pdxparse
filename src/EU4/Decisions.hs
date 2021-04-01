@@ -115,7 +115,7 @@ decisionAddSection dec [pdx| major            = %_   |] = return dec -- currentl
 decisionAddSection dec [pdx| provinces_to_highlight = %_   |] = return dec -- not interesting
 decisionAddSection dec [pdx| ai_importance    = %_   |]
             -- TODO: use logging instead of trace
-        = trace "notice: ai_importance not yet implemented" $
+        = -- trace "notice: ai_importance not yet implemented" $ -- TODO: Ignored for now
           return dec
 decisionAddSection dec stmt = withCurrentFile $ \file -> do
     -- TODO: use logging instead of trace

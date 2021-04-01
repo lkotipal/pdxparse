@@ -26,6 +26,8 @@ module MessageTools (
     -- | These functions hardcode their message fragments. They will have to
     -- be duplicated for languages other than English.
     ,   gainOrLose, gainsOrLoses
+    -- * Advisor text helpers
+    ,   advisorDiscountText
     -- * Wiki markup
     ,   template, templateDoc
     -- * If-then-else
@@ -217,6 +219,11 @@ gainOrLose n | n < 0     = "Lose"
 gainsOrLoses :: (Ord n, Num n) => n -> Text
 gainsOrLoses n | n < 0     = "loses"
                | otherwise = "gains"
+
+-- | Format advisor discount text (or empty if none)
+advisorDiscountText :: Double -> Doc
+advisorDiscountText 0 = ""
+advisorDiscountText discount = " (" <> (plainPc (100*(1-discount))) <> " cheaper to employ)"
 
 -----------------
 ---- Wiki text --

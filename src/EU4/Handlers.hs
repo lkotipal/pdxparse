@@ -1564,7 +1564,7 @@ data DefineAdvisor = DefineAdvisor
     {   da_type :: Maybe Text
     ,   da_type_loc :: Maybe Text
     ,   da_name :: Maybe Text
-    ,   da_discount :: Maybe Bool
+    ,   da_discount :: Maybe Double
     ,   da_location :: Maybe Int
     ,   da_location_loc :: Maybe Text
     ,   da_skill :: Maybe Double
@@ -1600,9 +1600,10 @@ defineAdvisor stmt@[pdx| %_ = @scr |]
                         GenericRhs yn' [] -> Just yn'
                         StringRhs yn' -> Just yn'
                         _ -> Nothing
-                in if yn == Just "yes" then da { da_discount = Just True }
-                   else if yn == Just "no" then da { da_discount = Just False }
+                in if yn == Just "yes" then da { da_discount = Just 0.5 }
+                   else if yn == Just "no" then da { da_discount = Just 0.0 }
                    else da
+            "cost_multiplier" -> return $ da { da_discount = floatRhs rhs }
             "location" -> do
                 let location_code = floatRhs rhs
                 location_loc <- sequence (getProvLoc <$> location_code)
@@ -1617,6 +1618,8 @@ defineAdvisor stmt@[pdx| %_ = @scr |]
                 in if yn == Just "yes" then da { da_female = Just True }
                    else if yn == Just "no" then da { da_female = Just False }
                    else da
+            "culture" -> return da -- TODO: Ignored for now
+            "religion" -> return da -- TODO: Ignored for now
             param -> trace ("warning: unknown define_advisor parameter: " ++ show param) $ return da
         addLine da _ = return da
         pp_define_advisor :: DefineAdvisor -> ScriptMessage
@@ -1624,7 +1627,7 @@ defineAdvisor stmt@[pdx| %_ = @scr |]
             case da_skill da of
                 Just skill ->
                     let mdiscount = da_discount da
-                        discount = fromMaybe False mdiscount
+                        discount = fromMaybe 0.0 mdiscount
                         mlocation_loc = da_location_loc da
                         mlocation = mlocation_loc `mplus` (T.pack . show <$> da_location da)
                     in case (da_female da,
@@ -1632,52 +1635,37 @@ defineAdvisor stmt@[pdx| %_ = @scr |]
                                da_name da,
                                mlocation) of
                         (Nothing, Nothing, Nothing, Nothing)
-                            -> (if discount then MsgGainAdvisorDiscount else MsgGainAdvisor) skill
+                            -> MsgGainAdvisor skill discount
                         (Nothing, Nothing, Nothing, Just location)
-                            -> (if discount then MsgGainAdvisorLocDiscount else MsgGainAdvisorLoc)
-                                location skill
+                            ->MsgGainAdvisorLoc location skill discount
                         (Nothing, Nothing, Just name, Nothing)
-                            -> (if discount then MsgGainAdvisorNameDiscount else MsgGainAdvisorName)
-                                name skill
+                            -> MsgGainAdvisorName name skill discount
                         (Nothing, Nothing, Just name, Just location)
-                            -> (if discount then MsgGainAdvisorNameLocDiscount else MsgGainAdvisorNameLoc)
-                                name location skill
+                            -> MsgGainAdvisorNameLoc name location skill discount
                         (Nothing, Just advtype, Nothing, Nothing)
-                            -> (if discount then MsgGainAdvisorTypeDiscount else MsgGainAdvisorType)
-                                advtype skill
+                            -> MsgGainAdvisorType advtype skill discount
                         (Nothing, Just advtype, Nothing, Just location)
-                            -> (if discount then MsgGainAdvisorTypeLocDiscount else MsgGainAdvisorTypeLoc)
-                                advtype location skill
+                            -> MsgGainAdvisorTypeLoc advtype location skill discount
                         (Nothing, Just advtype, Just name, Nothing)
-                            -> (if discount then MsgGainAdvisorTypeNameDiscount else MsgGainAdvisorTypeName)
-                                advtype name skill
+                            -> MsgGainAdvisorTypeName advtype name skill discount
                         (Nothing, Just advtype, Just name, Just location)
-                            -> (if discount then MsgGainAdvisorTypeNameLocDiscount else MsgGainAdvisorTypeNameLoc)
-                                advtype name location skill
+                            -> MsgGainAdvisorTypeNameLoc advtype name location skill discount
                         (Just female, Nothing, Nothing, Nothing)
-                            -> (if discount then MsgGainFemaleAdvisorDiscount else MsgGainFemaleAdvisor)
-                                female skill
+                            -> MsgGainFemaleAdvisor female skill discount
                         (Just female, Nothing, Nothing, Just location)
-                            -> (if discount then MsgGainFemaleAdvisorLocDiscount else MsgGainFemaleAdvisorLoc)
-                                female location skill
+                            -> MsgGainFemaleAdvisorLoc female location skill discount
                         (Just female, Nothing, Just name, Nothing)
-                            -> (if discount then MsgGainFemaleAdvisorNameDiscount else MsgGainFemaleAdvisorName)
-                                female name skill
+                            -> MsgGainFemaleAdvisorName female name skill discount
                         (Just female, Nothing, Just name, Just location)
-                            -> (if discount then MsgGainFemaleAdvisorNameLocDiscount else MsgGainFemaleAdvisorNameLoc)
-                                female name location skill
+                            -> MsgGainFemaleAdvisorNameLoc female name location skill discount
                         (Just female, Just advtype, Nothing, Nothing)
-                            -> (if discount then MsgGainFemaleAdvisorTypeDiscount else MsgGainFemaleAdvisorType)
-                                female advtype skill
+                            -> MsgGainFemaleAdvisorType female advtype skill discount
                         (Just female, Just advtype, Nothing, Just location)
-                            -> (if discount then MsgGainFemaleAdvisorTypeLocDiscount else MsgGainFemaleAdvisorTypeLoc)
-                                female advtype location skill
+                            -> MsgGainFemaleAdvisorTypeLoc female advtype location skill discount
                         (Just female, Just advtype, Just name, Nothing)
-                            -> (if discount then MsgGainFemaleAdvisorTypeNameDiscount else MsgGainFemaleAdvisorTypeName)
-                                female advtype name skill
+                            -> MsgGainFemaleAdvisorTypeName female advtype name skill discount
                         (Just female, Just advtype, Just name, Just location)
-                            -> (if discount then MsgGainFemaleAdvisorTypeNameLocDiscount else MsgGainFemaleAdvisorTypeNameLoc)
-                                female advtype name location skill
+                            -> MsgGainFemaleAdvisorTypeNameLoc female advtype name location skill discount
                 _ -> preMessage stmt
 defineAdvisor stmt = preStatement stmt
 
