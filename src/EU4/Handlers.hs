@@ -1537,6 +1537,10 @@ random stmt@[pdx| %_ = @scr |]
     | otherwise = compoundMessage MsgRandom stmt
 random stmt = preStatement stmt
 
+
+toPct :: Double -> Double
+toPct num = (fromIntegral $ round (num * 1000)) / 10 -- round to one digit after the point
+
 randomList :: (EU4Info g, Monad m) => StatementHandler g m
 randomList stmt@[pdx| %_ = @scr |] = fmtRandomList $ map entry scr
     where
@@ -1547,7 +1551,7 @@ randomList stmt@[pdx| %_ = @scr |] = fmtRandomList $ map entry scr
             in (:) <$> pure (i, MsgRandom)
                    <*> (concat <$> indentUp (mapM (fmtRandomList' total) entries))
         fmtRandomList' total (wt, what) = withCurrentIndent $ \i ->
-            (:) <$> pure (i, MsgRandomChance ((wt / total) * 100))
+            (:) <$> pure (i, MsgRandomChance $ toPct (wt / total))
                 <*> ppMany what -- has integral indentUp
 randomList _ = withCurrentFile $ \file ->
     error ("randomList sent strange statement in " ++ file)
