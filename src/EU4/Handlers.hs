@@ -808,7 +808,7 @@ numericOrTagIcon :: (EU4Info g, Monad m) =>
         -> StatementHandler g m
 numericOrTagIcon icon numMsg tagMsg stmt@[pdx| %_ = %rhs |] = msgToPP =<<
     case floatRhs rhs of
-        Just n -> return $ numMsg icon n
+        Just n -> return $ numMsg (iconText icon) n
         Nothing -> case textRhs rhs of
             Just t -> do -- assume it's a country
                 tflag <- flag (Just EU4Country) t
