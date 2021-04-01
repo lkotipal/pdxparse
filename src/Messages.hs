@@ -5745,7 +5745,7 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _icon
                 , " "
-                , toMessage (reducedNum (colourNum True) _amt)
+                , toMessage (reducedNum (colourPc True) _amt)
                 , " army professionalism"
                 ]
         MsgSailorsPercentage {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
