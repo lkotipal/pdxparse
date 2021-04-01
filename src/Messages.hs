@@ -2764,7 +2764,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
-                , " in the [[Capital area]] of its owner"
+                , " connected to the capital of its owner"
                 ]
         MsgIsLesserInUnion {scriptMessageYn = _yn}
             -> mconcat
