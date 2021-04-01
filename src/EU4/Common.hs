@@ -713,7 +713,7 @@ handlersSimpleIcon :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSimpleIcon = Tr.fromList
         [("accepted_culture"        , withLocAtomAndIcon "max promoted cultures" MsgAcceptedCulture)
         ,("add_accepted_culture"    , withLocAtomAndIcon "max promoted cultures" MsgAddAcceptedCulture)
-        ,("add_building"            , withLocAtomIcon MsgAddBuilding)
+        ,("add_building"            , withLocAtomIconBuilding MsgAddBuilding)
         ,("add_harmonized_religion" , withLocAtomIcon MsgAddHarmonizedReligion)
         ,("add_heir_personality"    , withLocAtomIcon MsgAddHeirPersonality)
         ,("add_queen_personality"   , withLocAtomIcon MsgAddConsortPersonality)
@@ -727,7 +727,7 @@ handlersSimpleIcon = Tr.fromList
         ,("current_age"             , withLocAtomIcon MsgCurrentAge)
         ,("enable_religion"         , withLocAtomIcon MsgEnableReligion)
         ,("has_adopted_cult"        , withLocAtomIcon MsgHasAdoptedCult)
-        ,("has_building"            , withLocAtomIcon MsgHasBuilding)
+        ,("has_building"            , withLocAtomIconBuilding MsgHasBuilding)
         ,("has_idea_group"          , withLocAtomIcon MsgHasIdeaGroup) -- FIXME: icon fails
         ,("has_unlocked_cult"       , withLocAtomIcon MsgHasUnlockedCult)
         ,("full_idea_group"         , withLocAtomIcon MsgFullIdeaGroup)

@@ -15,6 +15,7 @@ module EU4.Handlers (
     ,   withLocAtomAndIcon
     ,   withLocAtomIcon
     ,   withLocAtomIconEU4Scope
+    ,   withLocAtomIconBuilding
     ,   locAtomTagOrProvince
     ,   withProvince
     ,   withNonlocAtom
@@ -539,6 +540,15 @@ withLocAtomIconEU4Scope countrymsg provincemsg stmt = do
         Just EU4Country -> withLocAtomIcon countrymsg stmt
         Just EU4Province -> withLocAtomIcon provincemsg stmt
         _ -> preStatement stmt -- others don't make sense
+
+-- | Handler for buildings. Localization needs "building_" prepended. Hack..
+withLocAtomIconBuilding :: (EU4Info g, Monad m) =>
+    (Text -> Text -> ScriptMessage)
+        -> StatementHandler g m
+withLocAtomIconBuilding msg stmt@[pdx| %_ = $key |]
+    = do what <- Doc.doc2text <$> allowPronoun Nothing (fmap Doc.strictText . getGameL10n) ("building_" <> key)
+         msgToPP $ msg (iconText key) what
+withLocAtomIconBuilding _ stmt = preStatement stmt
 
 -- | Generic handler for a statement where the RHS is a localizable atom, but
 -- may be replaced with a tag or province to refer synecdochally to the
