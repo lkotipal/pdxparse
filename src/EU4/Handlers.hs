@@ -671,6 +671,8 @@ scriptIconTable = HM.fromList
     ,("ismaili_school", "ismaili")
     ,("jafari_school", "jafari")
     ,("zaidi_school", "zaidi")
+    -- buildings
+    ,("cathedral", "western_cathedral")
     ]
 
 -- Given a script atom, return the corresponding icon key, if any.
