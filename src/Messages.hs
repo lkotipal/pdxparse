@@ -5767,7 +5767,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " Corruption is at least "
-                , toMessage (reducedNum plainNum _amt)
+                , toMessage (plainNum _amt)
                 ]
         MsgAddIncidentVariableValue {scriptMessageAmt = _amt}
             -> mconcat
