@@ -1940,6 +1940,7 @@ hasDlc [pdx| %_ = ?dlc |]
             ,("Cradle of Civilization", "coc")
             ,("Rule Britannia", "rb")
             ,("Dharma", "dhr")
+            ,("Emperor", "emp")
             ]
         dlc_icon = maybe "" iconText mdlc_key
 hasDlc stmt = preStatement stmt
