@@ -1690,17 +1690,25 @@ data DefineRuler = DefineRuler
     ,   dr_dip :: Maybe Int
     ,   dr_mil :: Maybe Int
     ,   dr_fixed :: Bool
+    ,   dr_max_adm :: Maybe Int
+    ,   dr_max_dip :: Maybe Int
+    ,   dr_max_mil :: Maybe Int
     ,   dr_culture :: Maybe (Either Text Text)
     ,   dr_religion :: Maybe (Either Text Text)
     ,   dr_attach_leader :: Maybe Text
+    ,   dr_hidden_skills :: Bool
+    ,   dr_min_age :: Maybe Int
+    ,   dr_max_age :: Maybe Int
+    ,   dr_random_gender :: Maybe Bool
     }
 newDefineRuler :: DefineRuler
-newDefineRuler = DefineRuler False Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing Nothing Nothing
+newDefineRuler = DefineRuler False Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing
 
 defineRuler :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
 defineRuler [pdx| %_ = @scr |] = do
     -- Since addLine is pure, we have to prepare these in advance in case we
     -- need them.
+    currentFile <- withCurrentFile $ \f -> return f
     prevPronoun <- Doc.doc2text <$> pronoun Nothing "PREV"
     rootPronoun <- Doc.doc2text <$> pronoun Nothing "ROOT"
     thisPronoun <- Doc.doc2text <$> pronoun Nothing "THIS"
@@ -1726,6 +1734,10 @@ defineRuler [pdx| %_ = @scr |] = do
                 Just (Left other) -> Just (DynText other)
                 _ -> Nothing }
             "age" -> dr { dr_age = floatRhs rhs }
+            "male" -> case textRhs rhs of
+                Just "yes" -> dr { dr_female = Just False }
+                Just "no"  -> dr { dr_female = Just True }
+                _ -> dr
             "female" -> case textRhs rhs of
                 Just "yes" -> dr { dr_female = Just True }
                 Just "no"  -> dr { dr_female = Just False }
@@ -1737,13 +1749,24 @@ defineRuler [pdx| %_ = @scr |] = do
             "adm" -> dr { dr_adm = floatRhs rhs }
             "dip" -> dr { dr_dip = floatRhs rhs }
             "mil" -> dr { dr_mil = floatRhs rhs }
+            "max_random_adm" -> dr { dr_max_adm = floatRhs rhs }
+            "max_random_dip" -> dr { dr_max_dip = floatRhs rhs }
+            "max_random_mil" -> dr { dr_max_mil = floatRhs rhs }
             "fixed" -> case textRhs rhs of
                 Just "yes" -> dr { dr_fixed = True }
                 _ -> dr
             "culture" -> dr { dr_culture = testPronoun $ textRhs rhs }
             "religion" -> dr { dr_religion = testPronoun $ textRhs rhs }
             "attach_leader" -> dr { dr_attach_leader = textRhs rhs }
-            param -> trace ("warning: unknown define_ruler parameter: " ++ show param) $ dr
+            "hide_skills" -> case textRhs rhs of
+                Just "yes" -> dr { dr_hidden_skills = True }
+                _ -> dr
+            "min_age" -> dr { dr_min_age = floatRhs rhs }
+            "max_age" -> dr { dr_max_age = floatRhs rhs }
+            "random_gender" -> case textRhs rhs of
+                Just "yes" -> dr { dr_random_gender = Just True }
+                _ -> dr
+            param -> trace ("warning: unknown define_ruler parameter in " ++ currentFile ++ ": " ++ show param) $ dr
         addLine dr _ = dr
 
         pp_define_ruler :: DefineRuler -> PPT g m IndentedMessages
@@ -1792,6 +1815,16 @@ defineRuler [pdx| %_ = @scr |] = do
         pp_define_ruler_attrib dr@DefineRuler { dr_mil = Just mil, dr_fixed = fixed } = do
             [msg] <- msgToPP (MsgNewRulerMil fixed (fromIntegral mil))
             return (Just (msg, dr { dr_mil = Nothing }))
+        -- "At most <foo> skill"
+        pp_define_ruler_attrib dr@DefineRuler { dr_max_adm = Just adm } = do
+            [msg] <- msgToPP (MsgNewRulerMaxAdm (fromIntegral adm))
+            return (Just (msg, dr { dr_max_adm = Nothing }))
+        pp_define_ruler_attrib dr@DefineRuler { dr_max_dip = Just dip } = do
+            [msg] <- msgToPP (MsgNewRulerMaxDip (fromIntegral dip))
+            return (Just (msg, dr { dr_max_dip = Nothing }))
+        pp_define_ruler_attrib dr@DefineRuler { dr_max_mil = Just mil } = do
+            [msg] <- msgToPP (MsgNewRulerMaxMil (fromIntegral mil))
+            return (Just (msg, dr { dr_max_mil = Nothing }))
         -- "Claim strength <foo>"
         pp_define_ruler_attrib dr@DefineRuler { dr_claim = Just claim } = do
             [msg] <- msgToPP $ MsgNewRulerClaim claim
@@ -1814,6 +1847,22 @@ defineRuler [pdx| %_ = @scr |] = do
             Right religionText -> do
               [msg] <- msgToPP $ MsgNewRulerReligionAs religionText
               return (Just (msg, dr { dr_religion = Nothing }))
+        -- "With skills hidden"
+        pp_define_ruler_attrib dr@DefineRuler { dr_hidden_skills = True } = do
+            [msg] <- msgToPP $ MsgNewRulerHiddenSkills
+            return (Just (msg, dr { dr_hidden_skills = False }))
+        -- Random gender
+        pp_define_ruler_attrib dr@DefineRuler { dr_random_gender = Just True } = do
+            [msg] <- msgToPP $ MsgNewRulerRandomGender
+            return (Just (msg, dr { dr_random_gender = Nothing }))
+        -- Min age
+        pp_define_ruler_attrib dr@DefineRuler { dr_min_age = Just age } = do
+            [msg] <- msgToPP (MsgNewRulerMinAge (fromIntegral age))
+            return (Just (msg, dr { dr_min_age = Nothing }))
+        -- Max age
+        pp_define_ruler_attrib dr@DefineRuler { dr_max_age = Just age } = do
+            [msg] <- msgToPP (MsgNewRulerMaxAge (fromIntegral age))
+            return (Just (msg, dr { dr_max_age = Nothing }))
         -- Nothing left
         pp_define_ruler_attrib _ = return Nothing
     pp_define_ruler $ foldl' addLine newDefineRuler scr

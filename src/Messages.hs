@@ -483,11 +483,18 @@ data ScriptMessage
     | MsgNewRulerAdm {scriptMessageFixed :: Bool, scriptMessageAmt :: Double}
     | MsgNewRulerDip {scriptMessageFixed :: Bool, scriptMessageAmt :: Double}
     | MsgNewRulerMil {scriptMessageFixed :: Bool, scriptMessageAmt :: Double}
+    | MsgNewRulerMaxAdm {scriptMessageAmt :: Double}
+    | MsgNewRulerMaxDip {scriptMessageAmt :: Double}
+    | MsgNewRulerMaxMil {scriptMessageAmt :: Double}
     | MsgNewRulerClaim {scriptMessageAmt :: Double}
     | MsgNewRulerCulture {scriptMessageText :: Text}
     | MsgNewRulerCultureAs {scriptMessageText :: Text}
     | MsgNewRulerReligion {scriptMessageIcon :: Text, scriptMessageText :: Text}
     | MsgNewRulerReligionAs {scriptMessageText :: Text}
+    | MsgNewRulerHiddenSkills
+    | MsgNewRulerRandomGender
+    | MsgNewRulerMinAge {scriptMessageAge :: Double}
+    | MsgNewRulerMaxAge {scriptMessageAge :: Double}
     | MsgEstateHasInfluenceModifier {scriptMessageIcon :: Text, scriptMessageEstate :: Text, scriptMessageModifier :: Text}
     | MsgTriggerSwitch
     | MsgTriggerSwitchClause {scriptMessageCond :: Text}
@@ -3416,6 +3423,24 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (roundNum _amt)
                 , " military skill"
                 ]
+        MsgNewRulerMaxAdm {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "At most {{icon|adm}} "
+                , toMessage (roundNum _amt)
+                , " administrative skill"
+                ]
+        MsgNewRulerMaxDip {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "At most {{icon|dip}} "
+                , toMessage (roundNum _amt)
+                , " diplomatic skill"
+                ]
+        MsgNewRulerMaxMil {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "At most {{icon|mil}} "
+                , toMessage (roundNum _amt)
+                , " military skill"
+                ]
         MsgNewRulerClaim {scriptMessageAmt = _amt}
             -> mconcat
                 [ "{{icon|small legitimacy|28px}} Claim strength "
@@ -3444,6 +3469,22 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Following the same religion as "
                 , toMessage _text
+                ]
+        MsgNewRulerHiddenSkills
+            -> "With skills hidden"
+        MsgNewRulerRandomGender
+            -> "With random gender"
+        MsgNewRulerMinAge {scriptMessageAge = _age}
+            -> mconcat
+                [ "At least "
+                , toMessage (roundNum _age)
+                , " years old"
+                ]
+        MsgNewRulerMaxAge {scriptMessageAge = _age}
+            -> mconcat
+                [ "At most "
+                , toMessage (roundNum _age)
+                , " years old"
                 ]
         MsgEstateHasInfluenceModifier {scriptMessageIcon = _icon, scriptMessageEstate = _estate, scriptMessageModifier = _modifier}
             -> mconcat
