@@ -847,8 +847,7 @@ data ScriptMessage
     | MsgOprichninaProgress {scriptMessageAmt :: Double}
     | MsgStreltsyProgress {scriptMessageAmt :: Double}
     | MsgAddLootFromProvinceEffect
-    | MsgAddEstateLoyaltyEffect {scriptMessageWhom :: Text}
-    | MsgReduceEstateLoyaltyEffect {scriptMessageWhom :: Text}
+    | MsgGenericTemplate {scriptMessageTemplate :: Text}
     | MsgAddStabilityOrAdm
     | MsgAddTrust {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAddTrustMutual {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
@@ -5736,18 +5735,8 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddLootFromProvinceEffect
             -> "Gain {{icon|ducats}} ducats and {{icon|mil}} military power scaling with province development"
-        MsgAddEstateLoyaltyEffect {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "{{add estate loyalty effect|"
-                , _whom
-                , "}}"
-                ]
-        MsgReduceEstateLoyaltyEffect {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "{{add estate loyalty effect|"
-                , _whom
-                , "|reduce}}"
-                ]
+        MsgGenericTemplate {scriptMessageTemplate = _template}
+            -> "{{" <> _template <> "}}"
         MsgAddStabilityOrAdm
             -> "{{add stability or adm power}}"
         MsgAddTrust {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
