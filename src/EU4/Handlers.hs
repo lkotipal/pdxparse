@@ -275,7 +275,7 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
     "original_dynasty" -> message MsgOriginalDynasty
     "historic_dynasty" -> message MsgHistoricDynasty
     "capital" -> message MsgCapital
-    -- Suggestions of a description for FROM are welcome.
+    "from" -> return "[From]" -- TODO: Handle this properly (if possible)
     _ -> return $ Doc.strictText name -- something else; regurgitate untouched
     where
         Nothing `matchScope` _ = True
@@ -298,6 +298,7 @@ isPronoun s = T.map toLower s `S.member` pronouns where
         ["root"
         ,"prev"
         ,"this"
+        ,"from"
         ,"owner"
         ,"controller"
         ,"emperor"
