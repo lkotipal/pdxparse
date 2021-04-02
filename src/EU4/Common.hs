@@ -319,7 +319,7 @@ handlersNumericIcons = Tr.fromList
         ,("karma"                    , numericIcon "high karma" MsgKarma)
         ,("legitimacy"               , numericIconBonus "legitimacy" MsgLegitimacy MsgYearlyLegitimacy)
         ,("liberty_desire"           , numericIcon "liberty desire" MsgLibertyDesire)
-        ,("local_autonomy"           , numericIcon "local autonomy" MsgLocalAutonomy)
+        ,("local_autonomy"           , numericIconBonus "local autonomy" MsgLocalAutonomy MsgMonthlylAutonomyChange)
         ,("local_build_cost"         , numericIcon "local construction cost" MsgLocalConstructionCost)
         ,("local_colonial_growth"    , numericIcon "local settler increase" MsgLocalSettlerIncrease)
         ,("local_culture_conversion_cost", numericIcon "local culture conversion cost" MsgLocalCultureConversionCost)

@@ -326,6 +326,7 @@ data ScriptMessage
     | MsgYearlyRepTrad {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgInflation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLocalAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgMonthlylAutonomyChange {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgManpower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgManpowerPercentage {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMercantilism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -2366,6 +2367,12 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Local autonomy is at least "
                 , toMessage (colourPc False _amt)
+                ]
+        MsgMonthlylAutonomyChange {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Monthly autonomy change "
+                , toMessage (colourNumSign False _amt)
                 ]
         MsgManpower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
