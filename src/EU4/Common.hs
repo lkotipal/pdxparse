@@ -993,7 +993,7 @@ handlersSpecialComplex = Tr.fromList
         ,("reverse_add_opinion"          , opinion MsgReverseAddOpinion MsgReverseAddOpinionDur)
         ,("area"                         , area)
         ,("custom_trigger_tooltip"       , customTriggerTooltip)
---      ,("define_heir"                  , defineHeir) -- needs redoing
+        ,("define_heir"                  , defineHeir)
         ,("build_to_forcelimit"          , buildToForcelimit)
         ,("country_event"                , scope EU4Country . triggerEvent MsgCountryEvent)
         ,("declare_war_with_cb"          , declareWarWithCB)

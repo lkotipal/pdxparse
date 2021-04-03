@@ -2161,6 +2161,7 @@ numOwnedProvincesWith stmt = preStatement stmt
 
 -- Heirs
 
+-- TODO: Rework to handle more cases (like defineRuler)
 data Heir = Heir
         {   heir_dynasty :: Maybe Text
         ,   heir_claim :: Maybe Double
