@@ -959,6 +959,7 @@ data ScriptMessage
     | MsgIsColonialNationOf { scriptMessageWho :: Text }
     | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
+    | MsgHasCompletedAllReforms { scriptMessageYn :: Bool }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6336,6 +6337,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "The country "
                 , toMessage (ifThenElseT _yn "was never" "is")
                 , " an [[end-game tag]]"
+                ]
+        MsgHasCompletedAllReforms { scriptMessageYn = _yn }
+            -> mconcat
+                [ "The country has"
+                , toMessage (ifThenElseT _yn "" " not")
+                , " enacted one of the highest tier [[government reform]]s"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

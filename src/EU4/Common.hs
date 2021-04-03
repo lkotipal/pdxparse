@@ -833,6 +833,7 @@ handlersYesNo = Tr.fromList
         ,("always"                      , withBool MsgAlways)
         ,("has_any_disaster"            , withBool MsgHasAnyDisaster)
         ,("has_cardinal"                , withBool MsgHasCardinal)
+        ,("has_completed_all_reforms_trigger" , withBool MsgHasCompletedAllReforms)
         ,("has_consort"                 , withBool MsgHasConsort)
         ,("has_factions"                , withBool MsgHasFactions)
         ,("has_female_heir"             , withBool MsgHasFemaleHeir)
