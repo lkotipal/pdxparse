@@ -964,6 +964,8 @@ data ScriptMessage
     | MsgIsBackingCurrentIssue { scriptMessageYn :: Bool }
     | MsgHasActiveDebate { scriptMessageYn :: Bool }
     | MsgCurrentDebate { scriptMessageWhat :: Text }
+    | MsgBackCurrentIssue { scriptMessageYn :: Bool }
+    | MsgSetSeatInParliament { scriptMessageYn :: Bool }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6369,6 +6371,19 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Current debate in [[parliament]] is "
                 , _what
+                ]
+        MsgBackCurrentIssue { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Will"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " back the current issue in [[parliament]]"
+                ]
+        MsgSetSeatInParliament { scriptMessageYn = _yn }
+            -> mconcat
+                [ toMessage (ifThenElseT _yn "Add" "Remove")
+                , " seat "
+                , toMessage (ifThenElseT _yn "to" "from")
+                , " [[parliament]]"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

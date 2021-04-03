@@ -833,6 +833,7 @@ handlersYesNo = Tr.fromList
         [("ai"                          , withBool MsgIsAIControlled)
         ,("allows_female_emperor"       , withBool MsgFemaleEmperorAllowed)
         ,("always"                      , withBool MsgAlways)
+        ,("back_current_issue"          , withBool MsgBackCurrentIssue)
         ,("has_active_debate"           , withBool MsgHasActiveDebate)
         ,("has_any_disaster"            , withBool MsgHasAnyDisaster)
         ,("has_cardinal"                , withBool MsgHasCardinal)
@@ -896,6 +897,7 @@ handlersYesNo = Tr.fromList
         ,("ruler_is_foreigner"          , withBool MsgRulerIsForeigner)
         ,("set_hre_religion_locked"     , withBool MsgSetHREReligionLocked)
         ,("set_in_empire"               , withBool MsgSetInEmpire)
+        ,("set_seat_in_parliament"      , withBool MsgSetSeatInParliament)
         ,("unit_in_siege"               , withBool MsgUnderSiege) -- duplicate?
         ,("was_player"                  , withBool MsgHasBeenPlayer)
         ,("was_never_end_game_tag_trigger" , withBool MsgWasNeverEndGameTag)
