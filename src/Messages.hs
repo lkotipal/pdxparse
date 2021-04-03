@@ -960,6 +960,10 @@ data ScriptMessage
     | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
     | MsgHasCompletedAllReforms { scriptMessageYn :: Bool }
+    | MsgPctBackingParliamentIssue { scriptMessageAmt :: Double }
+    | MsgIsBackingCurrentIssue { scriptMessageYn :: Bool }
+    | MsgHasActiveDebate { scriptMessageYn :: Bool }
+    | MsgCurrentDebate { scriptMessageWhat :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6343,6 +6347,28 @@ instance RenderMessage Script ScriptMessage where
                 [ "The country has"
                 , toMessage (ifThenElseT _yn "" " not")
                 , " enacted one of the highest tier [[government reform]]s"
+                ]
+        MsgPctBackingParliamentIssue { scriptMessageAmt = _amt }
+            -> mconcat
+                [ "At least "
+                , toMessage (reducedNum plainPc _amt)
+                , " of the seats in [[parliament]] are backing the current issue"
+                ]
+        MsgIsBackingCurrentIssue { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " backing the current issue in [[parliament]]"
+                ]
+        MsgHasActiveDebate { scriptMessageYn = _yn }
+            -> mconcat
+                [ toMessage (ifThenElseT _yn "Has" "Doesn't have")
+                , " an ongoing [[debate]] in [[parliament]]"
+                ]
+        MsgCurrentDebate { scriptMessageWhat = _what }
+            -> mconcat
+                [ "Current debate in [[parliament]] is "
+                , _what
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

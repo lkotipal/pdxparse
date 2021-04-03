@@ -213,6 +213,7 @@ handlersNumeric = Tr.fromList
         ,("num_of_rebel_controlled_provinces", numeric MsgNumRebelControlledProvinces)
         ,("num_of_total_ports"               , numeric MsgNumPorts) -- same as num_of_ports?
         ,("num_of_trade_embargos"            , numeric MsgNumEmbargoes)
+        ,("percentage_backing_issue"         , numeric MsgPctBackingParliamentIssue)
         ,("revolt_percentage"                , numeric MsgRevoltPercentage)
         ,("ruler_age"                        , numeric MsgRulerAge)
         ,("trade_income_percentage"          , numeric MsgTradeIncomePercentage)
@@ -633,6 +634,7 @@ handlersLocRhs = Tr.fromList
         ,("change_government"     , withLocAtom MsgChangeGovernment)
         ,("change_province_name"  , withLocAtom MsgChangeProvinceName) -- will usually fail localization
         ,("colonial_region"       , withLocAtom MsgColonialRegion)
+        ,("current_debate"        , withLocAtom MsgCurrentDebate)
         ,("end_disaster"          , withLocAtom MsgDisasterEnds)
         ,("government"            , withLocAtom MsgGovernmentIs)
         ,("has_advisor"           , withLocAtom MsgHasAdvisor)
@@ -831,6 +833,7 @@ handlersYesNo = Tr.fromList
         [("ai"                          , withBool MsgIsAIControlled)
         ,("allows_female_emperor"       , withBool MsgFemaleEmperorAllowed)
         ,("always"                      , withBool MsgAlways)
+        ,("has_active_debate"           , withBool MsgHasActiveDebate)
         ,("has_any_disaster"            , withBool MsgHasAnyDisaster)
         ,("has_cardinal"                , withBool MsgHasCardinal)
         ,("has_completed_all_reforms_trigger" , withBool MsgHasCompletedAllReforms)
@@ -856,6 +859,7 @@ handlersYesNo = Tr.fromList
         ,("hre_religion_treaty"         , withBool MsgHREWestphalia)
         ,("is_at_war"                   , withBool MsgAtWar)
         ,("is_bankrupt"                 , withBool MsgIsBankrupt)
+        ,("is_backing_current_issue"    , withBool MsgIsBackingCurrentIssue)
         ,("is_capital"                  , withBool MsgIsCapital)
         ,("is_city"                     , withBool MsgIsCity)
         ,("is_colony"                   , withBool MsgIsColony)
