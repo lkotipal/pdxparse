@@ -84,6 +84,7 @@ module EU4.Handlers (
     ,   hasIdea
     ,   trust
     ,   governmentPower
+    ,   employedAdvisor
     -- testing
     ,   isPronoun
     ,   flag
@@ -2418,3 +2419,102 @@ governmentPower stmt@[pdx| %_ = @scr |]
               = return (powmsg amt)
             | otherwise = return (preMessage stmt)
 governmentPower stmt = preStatement stmt
+
+----------------------
+-- Employed advisor --
+----------------------
+
+data EmployedAdvisor = EmployedAdvisor
+        {   ea_category :: Maybe MonarchPower
+        ,   ea_type :: Maybe Text
+        ,   ea_male :: Maybe Bool
+        ,   ea_culture :: Maybe Text
+        ,   ea_religion :: Maybe Text
+        }
+        deriving Show
+newEA :: EmployedAdvisor
+newEA = EmployedAdvisor Nothing Nothing Nothing Nothing Nothing
+
+employedAdvisor :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+employedAdvisor stmt@[pdx| %_ = @scr |] = do
+    currentFile <- withCurrentFile $ \f -> return f
+    let addLine :: EmployedAdvisor -> GenericStatement -> EmployedAdvisor
+        addLine ea [pdx| category = $cat |]
+            = case cat of
+                "ADM" -> ea { ea_category = Just Administrative }
+                "DIP" -> ea { ea_category = Just Diplomatic }
+                "MIL" -> ea { ea_category = Just Military }
+                _ -> ea
+        addLine ea [pdx| type = $typ |]
+            = ea { ea_type = Just typ }
+        addLine ea [pdx| is_male = $is_male |]
+            = case T.toLower is_male of
+                "yes" -> ea { ea_male = Just True }
+                "no" -> ea { ea_male = Just False }
+                _ -> ea
+        addLine ea [pdx| is_female = $is_female |]
+            = case T.toLower is_female of
+                "yes" -> ea { ea_male = Just False }
+                "no" -> ea { ea_male = Just True }
+                _ -> ea
+        addLine ea [pdx| culture = %cul |]
+            = ea { ea_culture = textRhs cul }
+        addLine ea [pdx| religion = %rel |]
+            = ea { ea_religion = textRhs rel }
+        addLine ea line = (trace $ ("Unhandled employed_advisor condition in " ++ currentFile ++ ": " ++ show line)) $ ea
+
+
+        pp_employed_advisor :: EmployedAdvisor -> PPT g m IndentedMessages
+        pp_employed_advisor ea = do
+            body <- indentUp (unfoldM pp_employed_advisor_attrib ea)
+            if null body then
+                msgToPP MsgEmployedAdvisor
+            else
+                liftA2 (++)
+                    (msgToPP MsgEmployedAdvisorWhere)
+                    (pure body)
+
+        pp_employed_advisor_attrib :: EmployedAdvisor -> PPT g m (Maybe (IndentedMessage, EmployedAdvisor))
+        pp_employed_advisor_attrib ea@EmployedAdvisor { ea_category = Just cat } = do
+            let mt = case cat of
+                    Administrative -> MsgEmployedAdvisorAdmin
+                    Diplomatic -> MsgEmployedAdvisorDiplo
+                    Military -> MsgEmployedAdvisorMiltary
+            [msg] <- msgToPP mt
+            return (Just (msg, ea { ea_category = Nothing }))
+        pp_employed_advisor_attrib ea@EmployedAdvisor { ea_type = Just typ } = do
+            (t, i) <- tryLocAndIcon typ
+            [msg] <- msgToPP $ MsgEmployedAdvisorType t i
+            return (Just (msg, ea { ea_type = Nothing }))
+        pp_employed_advisor_attrib ea@EmployedAdvisor { ea_male = Just male } = do
+            [msg] <- msgToPP $ MsgEmployedAdvisorMale male
+            return (Just (msg, ea { ea_male = Nothing }))
+        pp_employed_advisor_attrib ea@EmployedAdvisor { ea_culture = Just culture } =
+            if isPronoun culture then do
+                text <- Doc.doc2text <$> pronoun Nothing culture
+                [msg] <- msgToPP $ MsgCultureIsAs text
+                return (Just (msg, ea { ea_culture = Nothing }))
+            else do
+                text <- getGameL10n culture
+                [msg] <- msgToPP $ MsgCultureIs text
+                return (Just (msg, ea { ea_culture = Nothing }))
+        -- TODO: Better localization (neither heretic nor heathen seem to be in the localization files)
+        pp_employed_advisor_attrib ea@EmployedAdvisor { ea_religion = Just "heretic" } = do
+            [msg] <- msgToPP $ MsgReligion (iconText "tolerance heretic") "hertical"
+            return (Just (msg, ea { ea_religion = Nothing }))
+        pp_employed_advisor_attrib ea@EmployedAdvisor { ea_religion = Just "heathen" } = do
+            [msg] <- msgToPP $ MsgReligion (iconText "tolerance heathen") "heathen"
+            return (Just (msg, ea { ea_religion = Nothing }))
+        pp_employed_advisor_attrib ea@EmployedAdvisor { ea_religion = Just religion } =
+            if isPronoun religion then do
+                text <- Doc.doc2text <$> pronoun Nothing religion
+                [msg] <- msgToPP $ MsgSameReligion text
+                return (Just (msg, ea { ea_religion = Nothing }))
+            else do
+                (t, i) <- tryLocAndIcon religion
+                [msg] <- msgToPP $ MsgReligion i t
+                return (Just (msg, ea { ea_religion = Nothing }))
+        pp_employed_advisor_attrib _ = return Nothing
+
+    pp_employed_advisor $ foldl' addLine newEA scr
+employedAdvisor stmt = preStatement stmt

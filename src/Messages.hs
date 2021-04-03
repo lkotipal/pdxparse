@@ -945,6 +945,13 @@ data ScriptMessage
     | MsgAddGovernmentReform {scriptMessageWhat :: Text}
     | MsgAddCOTLevel {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRulerAge {scriptMessageAmt :: Double}
+    | MsgEmployedAdvisor
+    | MsgEmployedAdvisorWhere
+    | MsgEmployedAdvisorAdmin
+    | MsgEmployedAdvisorDiplo
+    | MsgEmployedAdvisorMiltary
+    | MsgEmployedAdvisorType {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgEmployedAdvisorMale {scriptMessageMale :: Bool}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6254,6 +6261,28 @@ instance RenderMessage Script ScriptMessage where
                 [ "Ruler is at least "
                 , toMessage (plainNum _amt)
                 , " years old"
+                ]
+        MsgEmployedAdvisor
+            -> "Employed advisor"
+        MsgEmployedAdvisorWhere
+            -> "Employed advisor where:"
+        MsgEmployedAdvisorAdmin
+            -> "Is administrative"
+        MsgEmployedAdvisorDiplo
+            -> "Is diplomatic"
+        MsgEmployedAdvisorMiltary
+            -> "Is military"
+        MsgEmployedAdvisorType {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Is "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgEmployedAdvisorMale {scriptMessageMale = _yn}
+            -> mconcat
+                [ "Is "
+                , toMessage (ifThenElseT _yn "male" "female")
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

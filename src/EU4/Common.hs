@@ -999,6 +999,7 @@ handlersSpecialComplex = Tr.fromList
         ,("declare_war_with_cb"          , declareWarWithCB)
         ,("define_advisor"               , defineAdvisor)
         ,("define_ruler"                 , defineRuler)
+        ,("employed_advisor"             , employedAdvisor)
         ,("has_estate_influence_modifier", hasEstateInfluenceModifier)
         ,("has_opinion"                  , hasOpinion)
         ,("has_opinion_modifier"         , opinion MsgHasOpinionMod (\modid what who _years -> MsgHasOpinionMod modid what who))
