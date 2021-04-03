@@ -953,6 +953,8 @@ data ScriptMessage
     | MsgEmployedAdvisorType {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEmployedAdvisorMale {scriptMessageMale :: Bool}
     | MsgNumOwnedProvincesWith {scriptMessageAmt :: Double}
+    | MsgSetVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgSetVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6290,6 +6292,20 @@ instance RenderMessage Script ScriptMessage where
                 [ "At least "
                 , toMessage (plainNum _amt)
                 , " provinces with:"
+                ]
+        MsgSetVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Set variable "
+                , _var1
+                , " to the value of "
+                , _var2
+                ]
+        MsgSetVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Set variable "
+                , _var
+                , " to "
+                , toMessage (Doc.pp_float _amt)
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

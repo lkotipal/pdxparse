@@ -1007,6 +1007,7 @@ handlersSpecialComplex = Tr.fromList
         ,("remove_opinion"               , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
         ,("religion_years"               , religionYears)
         ,("reverse_add_casus_belli"      , addCB False)
+        ,("set_variable"                 , setVariable)
         ,("trigger_switch"               , triggerSwitch)
         ]
 

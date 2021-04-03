@@ -86,6 +86,7 @@ module EU4.Handlers (
     ,   trust
     ,   governmentPower
     ,   employedAdvisor
+    ,   setVariable
     -- testing
     ,   isPronoun
     ,   flag
@@ -109,7 +110,7 @@ import qualified Data.Trie as Tr
 import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import Data.List (foldl', intersperse)
-import Data.Maybe (isJust, fromMaybe)
+import Data.Maybe (isJust, isNothing, fromMaybe)
 
 import Control.Applicative (liftA2)
 import Control.Arrow (first)
@@ -2541,3 +2542,38 @@ employedAdvisor stmt@[pdx| %_ = @scr |] = do
 
     pp_employed_advisor $ foldl' addLine newEA scr
 employedAdvisor stmt = preStatement stmt
+
+------------------------------
+-- Handler for set_variable --
+------------------------------
+
+data SetVariable = SetVariable
+        { sv_which  :: Maybe Text
+        , sv_which2 :: Maybe Text
+        , sv_value  :: Maybe Double
+        }
+
+newSV :: SetVariable
+newSV = SetVariable Nothing Nothing Nothing
+
+setVariable :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+setVariable stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_sv (foldl' addLine newSV scr)
+    where
+        addLine :: SetVariable -> GenericStatement -> SetVariable
+        addLine sv [pdx| which = ?val |]
+            = if isNothing (sv_which sv) then
+                sv { sv_which = Just val }
+              else
+                sv { sv_which2 = Just val }
+        addLine sv [pdx| value = !val |]
+            = sv { sv_value = Just val }
+        addLine sv _ = sv
+        toTT :: Text -> Text
+        toTT t = "<tt>" <> t <> "</tt>"
+        pp_sv :: SetVariable -> PPT g m ScriptMessage
+        pp_sv sv = case (sv_which sv, sv_which2 sv, sv_value sv) of
+            (Just v1, Just v2, Nothing) -> do return $ MsgSetVariable (toTT v1) (toTT v2)
+            (Just v,  Nothing, Just val) -> do return $ MsgSetVariableVal (toTT v) val
+            _ ->  do return $ preMessage stmt
+setVariable stmt = preStatement stmt
