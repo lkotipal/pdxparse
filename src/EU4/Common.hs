@@ -893,6 +893,7 @@ handlersYesNo = Tr.fromList
         ,("set_in_empire"               , withBool MsgSetInEmpire)
         ,("unit_in_siege"               , withBool MsgUnderSiege) -- duplicate?
         ,("was_player"                  , withBool MsgHasBeenPlayer)
+        ,("was_never_end_game_tag_trigger" , withBool MsgWasNeverEndGameTag)
         ]
 
 -- | Handlers for statements that may be numeric or a tag

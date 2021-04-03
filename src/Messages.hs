@@ -958,6 +958,7 @@ data ScriptMessage
     | MsgSetVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgIsColonialNationOf { scriptMessageWho :: Text }
     | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
+    | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6329,6 +6330,12 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " institution"
+                ]
+        MsgWasNeverEndGameTag { scriptMessageYn = _yn }
+            -> mconcat
+                [ "The country "
+                , toMessage (ifThenElseT _yn "was never" "is")
+                , " an [[end-game tag]]"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
