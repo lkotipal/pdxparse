@@ -874,7 +874,7 @@ withTagOrNumber :: (EU4Info g, Monad m) =>
         -> (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
 withTagOrNumber iconkey numMsg _ scr@[pdx| %_ = %num |]
-    | FloatRhs _ <- num = numericIcon iconkey numMsg scr
+    | IntRhs _ <- num = numericIcon iconkey numMsg scr
 withTagOrNumber iconkey _ tagMsg scr@[pdx| %_ = $_ |]
     = withFlagAndIcon iconkey tagMsg (Just EU4Country) scr
 withTagOrNumber  _ _ _ stmt = plainMsg $ pre_statement' stmt
