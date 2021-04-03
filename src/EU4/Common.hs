@@ -664,6 +664,7 @@ handlersProvince = Tr.fromList
         ]
 
 -- | Handlers for statements whose RHS is a flag OR a province ID
+-- Also abusable for tag,scope purposes
 handlersFlagOrProvince :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersFlagOrProvince = Tr.fromList
         [("add_claim"          , withFlagOrProvince MsgAddClaimFor MsgAddClaimOn)
@@ -671,6 +672,7 @@ handlersFlagOrProvince = Tr.fromList
         ,("cavalry"            , withFlagOrProvince MsgCavalrySpawnsCountry MsgCavalrySpawnsProvince)
         ,("infantry"           , withFlagOrProvince MsgInfantrySpawnsCountry MsgInfantrySpawnsProvince)
         ,("remove_core"        , withFlagOrProvince MsgLoseCoreCountry MsgLoseCoreProvince)
+        ,("is_colonial_nation_of" , withFlagOrProvince MsgIsColonialNationOf MsgIsColonialNationOf)
         -- RHS is a flag or province id, but the statement's meaning depends on the scope
         ,("has_discovered"     , withFlagOrProvinceEU4Scope MsgHasDiscovered MsgHasDiscovered MsgDiscoveredBy MsgDiscoveredBy) -- scope sensitive
         ,("same_continent"     , withFlagOrProvinceEU4Scope (MsgSameContinent True True) (MsgSameContinent True False) (MsgSameContinent False True) (MsgSameContinent False False)) -- scope sensitive

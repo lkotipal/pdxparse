@@ -956,6 +956,7 @@ data ScriptMessage
     | MsgNumOwnedProvincesWith {scriptMessageAmt :: Double}
     | MsgSetVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgSetVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgIsColonialNationOf { scriptMessageWho :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6314,6 +6315,11 @@ instance RenderMessage Script ScriptMessage where
                 , _var
                 , " to "
                 , toMessage (Doc.pp_float _amt)
+                ]
+        MsgIsColonialNationOf { scriptMessageWho = _who }
+            -> mconcat
+                [ "Is colonial nation of "
+                , _who
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
