@@ -421,6 +421,7 @@ data ScriptMessage
     | MsgIndefinitely
     | MsgForDays {scriptMessageDays :: Double}
     | MsgEstateLoyalty {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
+    | MsgEstateTerritory {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgEstateInfluence {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgAddEstateLoyalty {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgAddEstateInfluence {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
@@ -2953,6 +2954,15 @@ instance RenderMessage Script ScriptMessage where
                 , " has at least "
                 , toMessage (plainNum _amt)
                 , " loyalty"
+                ]
+        MsgEstateTerritory {scriptMessageIcon = _icon, scriptMessageWho = _who, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , _who
+                , " control at least "
+                , toMessage (plainPc _amt)
+                , " of total development"
                 ]
         MsgEstateInfluence {scriptMessageIcon = _icon, scriptMessageWho = _who, scriptMessageAmt = _amt}
             -> mconcat
