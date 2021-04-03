@@ -1066,6 +1066,7 @@ handlersIgnored = Tr.fromList
         [("custom_tooltip", return $ return [])
         ,("goto"          , return $ return [])
         ,("tooltip"       , return $ return [])
+        ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ]
 
 -- | Extract the appropriate message(s) from a single statement. Note that this
