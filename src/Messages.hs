@@ -384,6 +384,7 @@ data ScriptMessage
     | MsgHasConsort {scriptMessageYn :: Bool}
     | MsgHasHeir {scriptMessageYn :: Bool}
     | MsgHasOwnerCulture {scriptMessageYn :: Bool}
+    | MsgHasOwnerAcceptedCulture {scriptMessageYn :: Bool}
     | MsgHasOwnerReligion {scriptMessageYn :: Bool}
     | MsgHasPort {scriptMessageYn :: Bool}
     | MsgHasSeatInParliament {scriptMessageYn :: Bool}
@@ -2714,6 +2715,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has "
                 , toMessage (ifThenElseT _yn "the same culture as" "a different culture from")
                 , " its owner"
+                ]
+        MsgHasOwnerAcceptedCulture {scriptMessageYn = _yn}
+            -> mconcat
+                [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
+                , " an accepted culture of its owner"
                 ]
         MsgHasOwnerReligion {scriptMessageYn = _yn}
             -> mconcat

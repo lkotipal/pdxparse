@@ -844,6 +844,7 @@ handlersYesNo = Tr.fromList
         ,("has_foreign_heir"            , withBool MsgHasForeignHeir)
         ,("has_heir"                    , withBool MsgHasHeir)
         ,("has_missionary"              , withBool MsgHasMissionary)
+        ,("has_owner_accepted_culture"  , withBool MsgHasOwnerAcceptedCulture)
         ,("has_owner_culture"           , withBool MsgHasOwnerCulture)
         ,("has_owner_religion"          , withBool MsgHasOwnerReligion)
         ,("has_parliament"              , withBool MsgHasParliament)
