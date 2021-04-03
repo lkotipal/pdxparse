@@ -66,6 +66,7 @@ module EU4.Handlers (
     ,   estateInfluenceModifier
     ,   triggerSwitch
     ,   calcTrueIf
+    ,   numOwnedProvincesWith
     ,   defineHeir
     ,   hreReformLevel
     ,   religionYears
@@ -2136,6 +2137,27 @@ calcTrueIf stmt@[pdx| %_ = @stmts |]
         withCurrentIndent $ \i ->
             return $ (i, MsgCalcTrueIf count) : stmtMessages
 calcTrueIf stmt = preStatement stmt
+
+
+---------------------------------------------
+-- Handler for num_of_owned_provinces_with --
+---------------------------------------------
+
+-- Expect "value" to come first or last
+numOwnedProvincesWith :: (EU4Info g, Monad m) => StatementHandler g m
+numOwnedProvincesWith stmt@[pdx| %_ = @stmts |]
+    | [pdx| value = !count |] : conds <- stmts
+    = do
+        stmtMessages <- ppMany conds
+        withCurrentIndent $ \i ->
+            return $ (i, MsgNumOwnedProvincesWith count) : stmtMessages
+numOwnedProvincesWith stmt@[pdx| %_ = @stmts |]
+    | Just (conds, [pdx| value = !count |]) <- unsnoc stmts
+    = do
+        stmtMessages <- ppMany conds
+        withCurrentIndent $ \i ->
+            return $ (i, MsgNumOwnedProvincesWith count) : stmtMessages
+numOwnedProvincesWith stmt = preStatement stmt
 
 -- Heirs
 

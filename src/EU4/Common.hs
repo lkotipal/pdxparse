@@ -1052,6 +1052,7 @@ handlersMisc = Tr.fromList
         ,("has_dlc"             , hasDlc)
         ,("hre_reform_level"    , hreReformLevel)
         ,("is_month"            , isMonth)
+        ,("num_of_owned_provinces_with" , numOwnedProvincesWith)
         ,("piety"               , piety)
         ,("range"               , range)
         ,("set_government_rank" , setGovtRank)

@@ -952,6 +952,7 @@ data ScriptMessage
     | MsgEmployedAdvisorMiltary
     | MsgEmployedAdvisorType {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEmployedAdvisorMale {scriptMessageMale :: Bool}
+    | MsgNumOwnedProvincesWith {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6284,6 +6285,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is "
                 , toMessage (ifThenElseT _yn "male" "female")
                 ]
+        MsgNumOwnedProvincesWith {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "At least "
+                , toMessage (plainNum _amt)
+                , " provinces with:"
+                ]
+
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
 -- | Message paired with an indentation level.
