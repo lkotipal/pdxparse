@@ -868,6 +868,7 @@ handlersYesNo = Tr.fromList
         ,("is_colony"                   , withBool MsgIsColony)
         ,("is_colonial_nation"          , withBool MsgIsColonialNation)
         ,("is_defender_of_faith"        , withBool MsgIsDefenderOfFaith)
+        ,("is_emperor_of_china"         , withBool MsgIsEmperorOfChina)
         ,("is_empty"                    , withBool MsgIsProvinceEmpty)
         ,("is_force_converted"          , withBool MsgWasForceConverted)
         ,("is_former_colonial_nation"   , withBool MsgIsFormerColonialNation)
