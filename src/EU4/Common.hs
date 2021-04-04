@@ -852,6 +852,7 @@ handlersYesNo = Tr.fromList
         ,("has_parliament"              , withBool MsgHasParliament)
         ,("has_port"                    , withBool MsgHasPort)
         ,("has_seat_in_parliament"      , withBool MsgHasSeatInParliament)
+        ,("has_states_general_mechanic" , withBool MsgHasStatesGeneralMechanic)
         ,("has_regency"                 , withBool MsgIsInRegency)
         ,("has_religious_school"        , withBool MsgHasReligiousSchool)
         ,("has_siege"                   , withBool MsgUnderSiege)

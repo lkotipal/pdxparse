@@ -972,6 +972,7 @@ data ScriptMessage
     | MsgHasCustomIdeas { scriptMessageYn :: Bool }
     | MsgIsProvinceEmpty { scriptMessageYn :: Bool }
     | MsgIsEmperorOfChina { scriptMessageYn :: Bool }
+    | MsgHasStatesGeneralMechanic { scriptMessageYn :: Bool }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6424,6 +6425,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " the [[Emperor of China]]"
+                ]
+        MsgHasStatesGeneralMechanic { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Government "
+                , toMessage (ifThenElseT _yn "uses" "does ''not'' use")
+                , " Estates General mechanic"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
