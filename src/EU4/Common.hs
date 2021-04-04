@@ -579,6 +579,7 @@ handlersCompound = Tr.fromList
         ,("any_rival_country"       , scope EU4Country   . compoundMessage MsgAnyRival)
         ,("any_subject_country"     , scope EU4Country   . compoundMessage MsgAnySubject)
         ,("any_trade_node"          , scope EU4TradeNode . compoundMessage MsgAnyTradeNode)
+        ,("any_trade_node_member_province" , scope EU4Province . compoundMessage MsgAnyTradeNodeProvince)
         ,("capital_scope"           , scope EU4Province  . compoundMessage MsgCapital)
         ,("colonial_parent"         , scope EU4Country   . compoundMessage MsgColonialParent)
         ,("controller"              , scope EU4Country   . compoundMessage MsgController)

@@ -169,6 +169,7 @@ data ScriptMessage
     | MsgAnyNeighborProvince
     | MsgAnyOwnedProvince
     | MsgAnyPrivateeringCountry
+    | MsgAnyTradeNodeProvince
     | MsgAnyProvince
     | MsgAnyRival
     | MsgAnySubject
@@ -1610,6 +1611,8 @@ instance RenderMessage Script ScriptMessage where
             -> "Any owned province:"
         MsgAnyPrivateeringCountry
             -> "Any country privateering in this node:"
+        MsgAnyTradeNodeProvince
+            -> "Any province in this trade node:"
         MsgAnyProvince
             -> "Any province:"
         MsgAnyRival
