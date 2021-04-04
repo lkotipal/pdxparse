@@ -973,6 +973,7 @@ data ScriptMessage
     | MsgIsProvinceEmpty { scriptMessageYn :: Bool }
     | MsgIsEmperorOfChina { scriptMessageYn :: Bool }
     | MsgHasStatesGeneralMechanic { scriptMessageYn :: Bool }
+    | MsgConsortHasPersonality { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6431,6 +6432,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "Government "
                 , toMessage (ifThenElseT _yn "uses" "does ''not'' use")
                 , " Estates General mechanic"
+                ]
+        MsgConsortHasPersonality { scriptMessageIcon = _icon, scriptMessageWhat = _what }
+            -> mconcat
+                [ "Consort has the personality trait "
+                , _icon
+                , " "
+                , _what
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

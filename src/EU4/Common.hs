@@ -728,6 +728,7 @@ handlersSimpleIcon = Tr.fromList
         ,("change_technology_group" , withLocAtomIcon MsgChangeTechGroup)
         ,("change_trade_goods"      , withLocAtomIcon MsgChangeGoods)
         ,("change_unit_type"        , withLocAtomIcon MsgChangeUnitType)
+        ,("consort_has_personality" , withLocAtomIcon MsgConsortHasPersonality)
         ,("create_advisor"          , withLocAtomIcon MsgCreateAdvisor)
         ,("current_age"             , withLocAtomIcon MsgCurrentAge)
         ,("enable_religion"         , withLocAtomIcon MsgEnableReligion)
