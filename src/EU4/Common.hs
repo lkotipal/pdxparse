@@ -1086,6 +1086,7 @@ handlersIgnored = Tr.fromList
         ,("tooltip"       , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
+        ,("swap_non_generic_missions" , return $ return []) -- Reloads mission tree, doesn't seem useful for the wiki (?)
         ]
 
 -- | Extract the appropriate message(s) from a single statement. Note that this
