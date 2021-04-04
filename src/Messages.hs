@@ -969,6 +969,7 @@ data ScriptMessage
     | MsgBackCurrentIssue { scriptMessageYn :: Bool }
     | MsgSetSeatInParliament { scriptMessageYn :: Bool }
     | MsgHasCustomIdeas { scriptMessageYn :: Bool }
+    | MsgIsProvinceEmpty { scriptMessageYn :: Bool }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6407,6 +6408,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "The country "
                 , toMessage (ifThenElseT _yn "has" "does ''not'' have")
                 , " [[custom ideas]]"
+                ]
+        MsgIsProvinceEmpty { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " open for colonization"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
