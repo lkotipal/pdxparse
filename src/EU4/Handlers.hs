@@ -87,6 +87,7 @@ module EU4.Handlers (
     ,   governmentPower
     ,   employedAdvisor
     ,   setVariable
+    ,   isInWar
     -- testing
     ,   isPronoun
     ,   flag
@@ -2577,3 +2578,29 @@ setVariable stmt@[pdx| %_ = @scr |]
             (Just v,  Nothing, Just val) -> do return $ MsgSetVariableVal (toTT v) val
             _ ->  do return $ preMessage stmt
 setVariable stmt = preStatement stmt
+
+---------------------------
+-- Handler for is_in_war --
+---------------------------
+
+isInWar :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+isInWar stmt@[pdx| %_ = @scr |]
+    = withCurrentIndent $ \i -> do
+        script_pp'd <- indentUp (concat <$> mapM handleLine scr)
+        return ((i, MsgIsInWar) : script_pp'd)
+    where
+        handleLine :: (EU4Info g, Monad m) => StatementHandler g m
+        handleLine [pdx| duration = !dur |] = msgToPP $ MsgDurationAtLeast dur
+        handleLine [pdx| casus_belli = $cb |] = msgToPP =<< do
+            cbText <- getGameL10n cb
+            return $ MsgCasusBelliIs cbText
+        handleLine stmt@[pdx| $what = $who |] = msgToPP =<< do
+            whoText <- flagText (Just EU4Country) who
+            return $ case T.toLower what of
+                        "attacker_leader" -> MsgIsAttackerWarLeader whoText
+                        "defender_leader" -> MsgIsDefenderWarLeader whoText
+                        "attackers" -> MsgIsAttacker whoText
+                        "defenders" -> MsgIsDefender whoText
+                        _ -> (trace $ "is_in_war: Unhandled Statement " ++ (show stmt)) $ preMessage stmt
+        handleLine stmt = (trace $ "is_in_war: Unhandled statement " ++ (show stmt)) $ preStatement stmt
+isInWar stmt = preStatement stmt

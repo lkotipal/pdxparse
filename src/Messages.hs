@@ -206,6 +206,7 @@ data ScriptMessage
     | MsgRandomCoreProvince
     | MsgRandomCountry
     | MsgRandomElector
+    | MsgRandomEnemyCountry
     | MsgRandomEmptyNeighborProvince
     | MsgRandomHereticProvince
     | MsgRandomKnownCountry
@@ -974,6 +975,13 @@ data ScriptMessage
     | MsgIsEmperorOfChina { scriptMessageYn :: Bool }
     | MsgHasStatesGeneralMechanic { scriptMessageYn :: Bool }
     | MsgConsortHasPersonality { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
+    | MsgIsInWar
+    | MsgDurationAtLeast { scriptMessageDays :: Double }
+    | MsgIsAttackerWarLeader { scriptMessageWho :: Text }
+    | MsgIsDefenderWarLeader { scriptMessageWho :: Text }
+    | MsgIsAttacker { scriptMessageWho :: Text }
+    | MsgIsDefender { scriptMessageWho :: Text }
+    | MsgCasusBelliIs { scriptMessageCb :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -1687,6 +1695,8 @@ instance RenderMessage Script ScriptMessage where
             -> "One random country:"
         MsgRandomElector
             -> "One random elector:"
+        MsgRandomEnemyCountry
+            -> "One random enemy country:"
         MsgRandomEmptyNeighborProvince
             -> "One random neighbouring uncolonized province:"
         MsgRandomHereticProvince
@@ -6439,6 +6449,39 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , _what
+                ]
+        MsgIsInWar
+            -> "Is in a war where:"
+        MsgDurationAtLeast { scriptMessageDays = _days }
+            -> mconcat
+                [ "Duration is at least "
+                , toMessage (roundNumNoSpace _days)
+                , " days"
+                ]
+        MsgIsAttackerWarLeader { scriptMessageWho = _who }
+            -> mconcat
+                [ _who
+                , " is the war leader on the attacking side"
+                ]
+        MsgIsDefenderWarLeader { scriptMessageWho = _who }
+            -> mconcat
+                [ _who
+                , " is the war leader on the defending side"
+                ]
+        MsgIsAttacker { scriptMessageWho = _who }
+            -> mconcat
+                [ _who
+                , " is on the attacking side"
+                ]
+        MsgIsDefender { scriptMessageWho = _who }
+            -> mconcat
+                [ _who
+                , " is on the defending side"
+                ]
+        MsgCasusBelliIs { scriptMessageCb = _cb }
+            -> mconcat
+                [ "The [[Casus Belli]] is "
+                , _cb
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
