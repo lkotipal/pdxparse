@@ -991,6 +991,7 @@ data ScriptMessage
     | MsgIsCenterOfRevolution { scriptMessageYn :: Bool }
     | MsgRegionProvinceScope
     | MsgSetRevolutionProvince { scriptMessageYn :: Bool }
+    | MsgGovernmentHasAttribute { scriptMessageWhat :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6514,7 +6515,11 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (ifThenElseT _yn "to" "from")
                 , " province"
                 ]
-
+        MsgGovernmentHasAttribute { scriptMessageWhat = _what }
+            -> mconcat
+                [ "Has government type where: "
+                , _what
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

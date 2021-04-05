@@ -1083,6 +1083,7 @@ handlersMisc = Tr.fromList
         ,("faction_in_power"    , factionInPower)
         ,("government_rank"     , govtRank)
         ,("has_dlc"             , hasDlc)
+        ,("has_government_attribute" , hasGovermentAttribute)
         ,("hre_reform_level"    , hreReformLevel)
         ,("is_month"            , isMonth)
         ,("num_of_owned_provinces_with" , numOwnedProvincesWith)

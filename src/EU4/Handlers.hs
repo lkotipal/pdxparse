@@ -89,6 +89,7 @@ module EU4.Handlers (
     ,   employedAdvisor
     ,   setVariable
     ,   isInWar
+    ,   hasGovermentAttribute
     -- testing
     ,   isPronoun
     ,   flag
@@ -2627,3 +2628,11 @@ isInWar stmt@[pdx| %_ = @scr |]
                         _ -> (trace $ "is_in_war: Unhandled Statement " ++ (show stmt)) $ preMessage stmt
         handleLine stmt = (trace $ "is_in_war: Unhandled statement " ++ (show stmt)) $ preStatement stmt
 isInWar stmt = preStatement stmt
+
+------------------------------------------
+-- Handler for has_government_attribute --
+------------------------------------------
+hasGovermentAttribute :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasGovermentAttribute stmt@[pdx| %_ = $mech |]
+    = msgToPP =<< MsgGovernmentHasAttribute <$> getGameL10n ("mechanic_" <> mech <> "_yes")
+hasGovermentAttribute stmt = trace ("warning: not handled for has_government_attribute: " ++ (show stmt)) $ preStatement stmt
