@@ -356,6 +356,7 @@ rhs customLhs customRhs
         <|> FloatRhs    <$> floatLit
         <|> GenericRhs  <$> ident <*> Ap.many' (":" *> ident)
         <|> CompoundRhs <$> compoundRhs customLhs customRhs)
+        <|> StringRhs   <$> "---" -- FIXME: Hack to work around weird "set_revolution_target = ---" line in the center_of_revolution.1500 event
     <?> "statement RHS"
 
 -- | A RHS that consists of multiple statements grouped by braces. Frequently
