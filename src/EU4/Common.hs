@@ -181,6 +181,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_cardinal"        , const (msgToPP MsgLoseCardinal))
         ,("remove_non_electors_emperors_from_empire_effect", const (msgToPP MsgLeaveHRE))
         ,("sea_repair"             , const (msgToPP MsgGainSeaRepair)) -- Full Maritime
+        ,("swap_non_generic_missions" , const (msgToPP MsgGainNewMissions))
         ]
 
 -- | Handlers for numeric statements
@@ -1089,7 +1090,6 @@ handlersIgnored = Tr.fromList
         ,("tooltip"       , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
-        ,("swap_non_generic_missions" , return $ return []) -- Reloads mission tree, doesn't seem useful for the wiki (?)
         ]
 
 -- | Extract the appropriate message(s) from a single statement. Note that this

@@ -982,6 +982,7 @@ data ScriptMessage
     | MsgIsAttacker { scriptMessageWho :: Text }
     | MsgIsDefender { scriptMessageWho :: Text }
     | MsgCasusBelliIs { scriptMessageCb :: Text }
+    | MsgGainNewMissions
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6483,6 +6484,8 @@ instance RenderMessage Script ScriptMessage where
                 [ "The [[Casus Belli]] is "
                 , _cb
                 ]
+        MsgGainNewMissions
+            -> "Gets new {{icon|mission|21px}} missions"
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
