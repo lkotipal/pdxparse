@@ -59,6 +59,8 @@ module EU4.Handlers (
     ,   randomList
     ,   defineAdvisor
     ,   defineRuler
+    ,   defineHeir
+    ,   defineConsort
     ,   buildToForcelimit
     ,   declareWarWithCB
     ,   hasDlc
@@ -67,7 +69,6 @@ module EU4.Handlers (
     ,   triggerSwitch
     ,   calcTrueIf
     ,   numOwnedProvincesWith
-    ,   defineHeir
     ,   hreReformLevel
     ,   religionYears
     ,   govtRank
@@ -1674,7 +1675,9 @@ defineAdvisor stmt@[pdx| %_ = @scr |]
                 _ -> preMessage stmt
 defineAdvisor stmt = preStatement stmt
 
--- Rulers
+-------------
+-- Dynasty --
+-------------
 
 data Dynasty
     = DynText Text
@@ -1682,197 +1685,250 @@ data Dynasty
     | DynOriginal
     | DynHistoric
 
-data DefineRuler = DefineRuler
-    {   dr_rebel :: Bool
-    ,   dr_name :: Maybe Text
-    ,   dr_dynasty :: Maybe Dynasty
-    ,   dr_age :: Maybe Double
-    ,   dr_female :: Maybe Bool
-    ,   dr_claim :: Maybe Double
-    ,   dr_regency :: Bool
-    ,   dr_adm :: Maybe Int
-    ,   dr_dip :: Maybe Int
-    ,   dr_mil :: Maybe Int
-    ,   dr_fixed :: Bool
-    ,   dr_max_adm :: Maybe Int
-    ,   dr_max_dip :: Maybe Int
-    ,   dr_max_mil :: Maybe Int
-    ,   dr_culture :: Maybe (Either Text Text)
-    ,   dr_religion :: Maybe (Either Text Text)
-    ,   dr_attach_leader :: Maybe Text
-    ,   dr_hidden_skills :: Bool
-    ,   dr_min_age :: Maybe Int
-    ,   dr_max_age :: Maybe Int
-    ,   dr_random_gender :: Maybe Bool
+data DefineDynMember = DefineDynMember
+    {   ddm_rebel :: Bool
+    ,   ddm_name :: Maybe Text
+    ,   ddm_dynasty :: Maybe Dynasty
+    ,   ddm_age :: Maybe Double
+    ,   ddm_female :: Maybe Bool
+    ,   ddm_claim :: Maybe Double
+    ,   ddm_regency :: Bool
+    ,   ddm_adm :: Maybe Int
+    ,   ddm_dip :: Maybe Int
+    ,   ddm_mil :: Maybe Int
+    ,   ddm_fixed :: Bool
+    ,   ddm_max_adm :: Maybe Int
+    ,   ddm_max_dip :: Maybe Int
+    ,   ddm_max_mil :: Maybe Int
+    ,   ddm_culture :: Maybe (Either Text Text)
+    ,   ddm_religion :: Maybe (Either Text Text)
+    ,   ddm_attach_leader :: Maybe Text
+    ,   ddm_hidden_skills :: Bool
+    ,   ddm_min_age :: Maybe Int
+    ,   ddm_max_age :: Maybe Int
+    ,   ddm_random_gender :: Maybe Bool
+    ,   ddm_block_disinherit :: Bool
+    ,   ddm_birth_date :: Maybe Text
+    ,   ddm_bastard :: Bool
+    ,   ddm_country :: Maybe Text
     }
-newDefineRuler :: DefineRuler
-newDefineRuler = DefineRuler False Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing
+newDefineDynMember :: DefineDynMember
+newDefineDynMember = DefineDynMember False Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing False Nothing
 
-defineRuler :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
-defineRuler [pdx| %_ = @scr |] = do
+defineDynMember :: forall g m. (EU4Info g, Monad m) =>
+    (Bool -> ScriptMessage) ->
+    (Bool -> Text -> ScriptMessage) ->
+    (Bool -> ScriptMessage) ->
+    (Bool -> Text -> ScriptMessage) ->
+    StatementHandler g m
+defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ = @scr |] = do
     -- Since addLine is pure, we have to prepare these in advance in case we
     -- need them.
     currentFile <- withCurrentFile $ \f -> return f
     prevPronoun <- Doc.doc2text <$> pronoun Nothing "PREV"
     rootPronoun <- Doc.doc2text <$> pronoun Nothing "ROOT"
     thisPronoun <- Doc.doc2text <$> pronoun Nothing "THIS"
+    fromPronoun <- Doc.doc2text <$> pronoun Nothing "FROM"
     hrePronoun  <- Doc.doc2text <$> pronoun Nothing "emperor" -- needs l10n
     let testPronoun :: Maybe Text -> Maybe (Either Text Text)
         testPronoun (Just "PREV") = Just (Right prevPronoun)
         testPronoun (Just "ROOT") = Just (Right rootPronoun)
         testPronoun (Just "THIS") = Just (Right thisPronoun)
+        testPronoun (Just "FROM") = Just (Right fromPronoun)
         testPronoun (Just "emperor") = Just (Right hrePronoun)
         testPronoun (Just other) = Just (Left other)
         testPronoun _ = Nothing
 
-        addLine :: DefineRuler -> GenericStatement -> DefineRuler
-        addLine dr [pdx| $lhs = %rhs |] = case T.map toLower lhs of
+        addLine :: DefineDynMember -> GenericStatement -> DefineDynMember
+        addLine ddm [pdx| $lhs = %rhs |] = case T.map toLower lhs of
             "rebel" -> case textRhs rhs of
-                Just "yes" -> dr { dr_rebel = True }
-                _ -> dr
-            "name" -> dr { dr_name = textRhs rhs }
-            "dynasty" -> dr { dr_dynasty = case testPronoun $ textRhs rhs of
+                Just "yes" -> ddm { ddm_rebel = True }
+                _ -> ddm
+            "name" -> ddm { ddm_name = textRhs rhs }
+            "dynasty" -> ddm { ddm_dynasty = case testPronoun $ textRhs rhs of
                 Just (Right pronoun) -> Just (DynPron pronoun)
                 Just (Left "original_dynasty") -> Just DynOriginal
                 Just (Left "historic_dynasty") -> Just DynHistoric
                 Just (Left other) -> Just (DynText other)
                 _ -> Nothing }
-            "age" -> dr { dr_age = floatRhs rhs }
+            "age" -> ddm { ddm_age = floatRhs rhs }
             "male" -> case textRhs rhs of
-                Just "yes" -> dr { dr_female = Just False }
-                Just "no"  -> dr { dr_female = Just True }
-                _ -> dr
+                Just "yes" -> ddm { ddm_female = Just False }
+                Just "no"  -> ddm { ddm_female = Just True }
+                _ -> ddm
             "female" -> case textRhs rhs of
-                Just "yes" -> dr { dr_female = Just True }
-                Just "no"  -> dr { dr_female = Just False }
-                _ -> dr
-            "claim" -> dr { dr_claim = floatRhs rhs }
+                Just "yes" -> ddm { ddm_female = Just True }
+                Just "no"  -> ddm { ddm_female = Just False }
+                _ -> ddm
+            "claim" -> ddm { ddm_claim = floatRhs rhs }
             "regency" -> case textRhs rhs of
-                Just "yes" -> dr { dr_regency = True }
-                _ -> dr
-            "adm" -> dr { dr_adm = floatRhs rhs }
-            "dip" -> dr { dr_dip = floatRhs rhs }
-            "mil" -> dr { dr_mil = floatRhs rhs }
-            "max_random_adm" -> dr { dr_max_adm = floatRhs rhs }
-            "max_random_dip" -> dr { dr_max_dip = floatRhs rhs }
-            "max_random_mil" -> dr { dr_max_mil = floatRhs rhs }
+                Just "yes" -> ddm { ddm_regency = True }
+                _ -> ddm
+            "adm" -> ddm { ddm_adm = floatRhs rhs }
+            "dip" -> ddm { ddm_dip = floatRhs rhs }
+            "mil" -> ddm { ddm_mil = floatRhs rhs }
+            "max_random_adm" -> ddm { ddm_max_adm = floatRhs rhs }
+            "max_random_dip" -> ddm { ddm_max_dip = floatRhs rhs }
+            "max_random_mil" -> ddm { ddm_max_mil = floatRhs rhs }
             "fixed" -> case textRhs rhs of
-                Just "yes" -> dr { dr_fixed = True }
-                _ -> dr
-            "culture" -> dr { dr_culture = testPronoun $ textRhs rhs }
-            "religion" -> dr { dr_religion = testPronoun $ textRhs rhs }
-            "attach_leader" -> dr { dr_attach_leader = textRhs rhs }
-            "hide_skills" -> case textRhs rhs of
-                Just "yes" -> dr { dr_hidden_skills = True }
-                _ -> dr
-            "min_age" -> dr { dr_min_age = floatRhs rhs }
-            "max_age" -> dr { dr_max_age = floatRhs rhs }
+                Just "yes" -> ddm { ddm_fixed = True }
+                _ -> ddm
+            "culture" -> ddm { ddm_culture = testPronoun $ textRhs rhs }
+            "religion" -> ddm { ddm_religion = testPronoun $ textRhs rhs }
+            "attach_leader" -> ddm { ddm_attach_leader = textRhs rhs }
+            x | x `elem` ["hide_skills", "hidden"] -> case textRhs rhs of
+                Just "yes" -> ddm { ddm_hidden_skills = True }
+                _ -> ddm
+            "min_age" -> ddm { ddm_min_age = floatRhs rhs }
+            "max_age" -> ddm { ddm_max_age = floatRhs rhs }
             "random_gender" -> case textRhs rhs of
-                Just "yes" -> dr { dr_random_gender = Just True }
-                _ -> dr
-            param -> trace ("warning: unknown define_ruler parameter in " ++ currentFile ++ ": " ++ show param) $ dr
-        addLine dr _ = dr
+                Just "yes" -> ddm { ddm_random_gender = Just True }
+                _ -> ddm
+            "block_disinherit" -> case textRhs rhs of
+                Just "yes" -> ddm { ddm_block_disinherit = True }
+                _ -> ddm
+            "birth_date" -> ddm { ddm_birth_date = textRhs rhs }
+            "no_consort_with_heir" -> case textRhs rhs of
+                Just "yes" -> ddm { ddm_bastard = True }
+                _ -> ddm
+            "country_of_origin" -> ddm { ddm_country = textRhs rhs }
+            param -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show param) $ ddm
+        addLine ddm _ = ddm
 
-        pp_define_ruler :: DefineRuler -> PPT g m IndentedMessages
-        pp_define_ruler    DefineRuler { dr_rebel = True } = msgToPP MsgRebelLeaderRuler
-        pp_define_ruler dr@DefineRuler { dr_regency = regency, dr_attach_leader = mleader } = do
-            body <- indentUp (unfoldM pp_define_ruler_attrib dr)
+        pp_define_dyn_member :: DefineDynMember -> PPT g m IndentedMessages
+        pp_define_dyn_member    DefineDynMember { ddm_rebel = True } = msgToPP MsgRebelLeaderRuler
+        pp_define_dyn_member ddm@DefineDynMember { ddm_regency = regency, ddm_attach_leader = mleader } = do
+            body <- indentUp (unfoldM pp_define_dyn_member_attrib ddm)
             if null body then
-                msgToPP (maybe (MsgNewRuler regency) (MsgNewRulerLeader regency) mleader)
+                msgToPP (maybe (msgNew regency) (msgNewLeader regency) mleader)
             else
                 liftA2 (++)
-                    (msgToPP (maybe (MsgNewRulerAttribs regency) (MsgNewRulerLeaderAttribs regency) mleader))
+                    (msgToPP (maybe (msgNewAttribs regency) (msgNewLeaderAttribs regency) mleader))
                     (pure body)
-        pp_define_ruler_attrib :: DefineRuler -> PPT g m (Maybe (IndentedMessage, DefineRuler))
+        pp_define_dyn_member_attrib :: DefineDynMember -> PPT g m (Maybe (IndentedMessage, DefineDynMember))
         -- "Named <foo>"
-        pp_define_ruler_attrib dr@DefineRuler { dr_name = Just name } = do
-            [msg] <- msgToPP (MsgNewRulerName name)
-            return (Just (msg, dr { dr_name = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_name = Just name } = do
+            [msg] <- msgToPP (MsgNewDynMemberName name)
+            return (Just (msg, ddm { ddm_name = Nothing }))
         -- "Of the <foo> dynasty"
-        pp_define_ruler_attrib dr@DefineRuler { dr_dynasty = Just dynasty } =
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_dynasty = Just dynasty } =
             case dynasty of
                 DynText dyntext -> do
-                    [msg] <- msgToPP (MsgNewRulerDynasty dyntext)
-                    return (Just (msg, dr { dr_dynasty = Nothing }))
+                    [msg] <- msgToPP (MsgNewDynMemberDynasty dyntext)
+                    return (Just (msg, ddm { ddm_dynasty = Nothing }))
                 DynPron dyntext -> do
-                    [msg] <- msgToPP (MsgNewRulerDynastyAs dyntext)
-                    return (Just (msg, dr { dr_dynasty = Nothing }))
+                    [msg] <- msgToPP (MsgNewDynMemberDynastyAs dyntext)
+                    return (Just (msg, ddm { ddm_dynasty = Nothing }))
                 DynOriginal -> do
-                    [msg] <- msgToPP MsgNewRulerOriginalDynasty
-                    return (Just (msg, dr { dr_dynasty = Nothing }))
+                    [msg] <- msgToPP MsgNewDynMemberOriginalDynasty
+                    return (Just (msg, ddm { ddm_dynasty = Nothing }))
                 DynHistoric -> do
-                    [msg] <- msgToPP MsgNewRulerHistoricDynasty
-                    return (Just (msg, dr { dr_dynasty = Nothing }))
+                    [msg] <- msgToPP MsgNewDynMemberHistoricDynasty
+                    return (Just (msg, ddm { ddm_dynasty = Nothing }))
         -- "Aged <foo> years"
-        pp_define_ruler_attrib dr@DefineRuler { dr_age = Just age } = do
-            [msg] <- msgToPP (MsgNewRulerAge age)
-            return (Just (msg, dr { dr_age = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_age = Just age } = do
+            [msg] <- msgToPP (MsgNewDynMemberAge age)
+            return (Just (msg, ddm { ddm_age = Nothing }))
         -- "With {{icon|adm}} <foo> administrative skill"
-        pp_define_ruler_attrib dr@DefineRuler { dr_adm = Just adm, dr_fixed = fixed } = do
-            [msg] <- msgToPP (MsgNewRulerAdm fixed (fromIntegral adm))
-            return (Just (msg, dr { dr_adm = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_adm = Just adm, ddm_fixed = fixed } = do
+            [msg] <- msgToPP (MsgNewDynMemberAdm fixed (fromIntegral adm))
+            return (Just (msg, ddm { ddm_adm = Nothing }))
         -- "With {{icon|adm}} <foo> diplomatic skill"
-        pp_define_ruler_attrib dr@DefineRuler { dr_dip = Just dip, dr_fixed = fixed } = do
-            [msg] <- msgToPP (MsgNewRulerDip fixed (fromIntegral dip))
-            return (Just (msg, dr { dr_dip = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_dip = Just dip, ddm_fixed = fixed } = do
+            [msg] <- msgToPP (MsgNewDynMemberDip fixed (fromIntegral dip))
+            return (Just (msg, ddm { ddm_dip = Nothing }))
         -- "With {{icon|adm}} <foo> military skill"
-        pp_define_ruler_attrib dr@DefineRuler { dr_mil = Just mil, dr_fixed = fixed } = do
-            [msg] <- msgToPP (MsgNewRulerMil fixed (fromIntegral mil))
-            return (Just (msg, dr { dr_mil = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_mil = Just mil, ddm_fixed = fixed } = do
+            [msg] <- msgToPP (MsgNewDynMemberMil fixed (fromIntegral mil))
+            return (Just (msg, ddm { ddm_mil = Nothing }))
         -- "At most <foo> skill"
-        pp_define_ruler_attrib dr@DefineRuler { dr_max_adm = Just adm } = do
-            [msg] <- msgToPP (MsgNewRulerMaxAdm (fromIntegral adm))
-            return (Just (msg, dr { dr_max_adm = Nothing }))
-        pp_define_ruler_attrib dr@DefineRuler { dr_max_dip = Just dip } = do
-            [msg] <- msgToPP (MsgNewRulerMaxDip (fromIntegral dip))
-            return (Just (msg, dr { dr_max_dip = Nothing }))
-        pp_define_ruler_attrib dr@DefineRuler { dr_max_mil = Just mil } = do
-            [msg] <- msgToPP (MsgNewRulerMaxMil (fromIntegral mil))
-            return (Just (msg, dr { dr_max_mil = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_max_adm = Just adm } = do
+            [msg] <- msgToPP (MsgNewDynMemberMaxAdm (fromIntegral adm))
+            return (Just (msg, ddm { ddm_max_adm = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_max_dip = Just dip } = do
+            [msg] <- msgToPP (MsgNewDynMemberMaxDip (fromIntegral dip))
+            return (Just (msg, ddm { ddm_max_dip = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_max_mil = Just mil } = do
+            [msg] <- msgToPP (MsgNewDynMemberMaxMil (fromIntegral mil))
+            return (Just (msg, ddm { ddm_max_mil = Nothing }))
         -- "Claim strength <foo>"
-        pp_define_ruler_attrib dr@DefineRuler { dr_claim = Just claim } = do
-            [msg] <- msgToPP $ MsgNewRulerClaim claim
-            return (Just (msg, dr { dr_claim = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_claim = Just claim } = do
+            [msg] <- msgToPP $ MsgNewDynMemberClaim claim
+            return (Just (msg, ddm { ddm_claim = Nothing }))
         -- "Of the <foo> culture"
-        pp_define_ruler_attrib dr@DefineRuler { dr_culture = Just culture } = case culture of
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_culture = Just culture } = case culture of
             Left cultureText -> do
               locCulture <- getGameL10n cultureText
-              [msg] <- msgToPP $ MsgNewRulerCulture locCulture
-              return (Just (msg, dr { dr_culture = Nothing }))
+              [msg] <- msgToPP $ MsgNewDynMemberCulture locCulture
+              return (Just (msg, ddm { ddm_culture = Nothing }))
             Right cultureText -> do
-              [msg] <- msgToPP $ MsgNewRulerCultureAs cultureText
-              return (Just (msg, dr { dr_culture = Nothing }))
+              [msg] <- msgToPP $ MsgNewDynMemberCultureAs cultureText
+              return (Just (msg, ddm { ddm_culture = Nothing }))
         -- "Following the <foo> religion"
-        pp_define_ruler_attrib dr@DefineRuler { dr_religion = Just religion } = case religion of
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_religion = Just religion } = case religion of
             Left religionText -> do
               locReligion <- getGameL10n religionText
-              [msg] <- msgToPP $ MsgNewRulerReligion (iconText religionText) locReligion
-              return (Just (msg, dr { dr_religion = Nothing }))
+              [msg] <- msgToPP $ MsgNewDynMemberReligion (iconText religionText) locReligion
+              return (Just (msg, ddm { ddm_religion = Nothing }))
             Right religionText -> do
-              [msg] <- msgToPP $ MsgNewRulerReligionAs religionText
-              return (Just (msg, dr { dr_religion = Nothing }))
+              [msg] <- msgToPP $ MsgNewDynMemberReligionAs religionText
+              return (Just (msg, ddm { ddm_religion = Nothing }))
         -- "With skills hidden"
-        pp_define_ruler_attrib dr@DefineRuler { dr_hidden_skills = True } = do
-            [msg] <- msgToPP $ MsgNewRulerHiddenSkills
-            return (Just (msg, dr { dr_hidden_skills = False }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_hidden_skills = True } = do
+            [msg] <- msgToPP $ MsgNewDynMemberHiddenSkills
+            return (Just (msg, ddm { ddm_hidden_skills = False }))
         -- Random gender
-        pp_define_ruler_attrib dr@DefineRuler { dr_random_gender = Just True } = do
-            [msg] <- msgToPP $ MsgNewRulerRandomGender
-            return (Just (msg, dr { dr_random_gender = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_random_gender = Just True } = do
+            [msg] <- msgToPP $ MsgNewDynMemberRandomGender
+            return (Just (msg, ddm { ddm_random_gender = Nothing }))
         -- Min age
-        pp_define_ruler_attrib dr@DefineRuler { dr_min_age = Just age } = do
-            [msg] <- msgToPP (MsgNewRulerMinAge (fromIntegral age))
-            return (Just (msg, dr { dr_min_age = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_min_age = Just age } = do
+            [msg] <- msgToPP (MsgNewDynMemberMinAge (fromIntegral age))
+            return (Just (msg, ddm { ddm_min_age = Nothing }))
         -- Max age
-        pp_define_ruler_attrib dr@DefineRuler { dr_max_age = Just age } = do
-            [msg] <- msgToPP (MsgNewRulerMaxAge (fromIntegral age))
-            return (Just (msg, dr { dr_max_age = Nothing }))
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_max_age = Just age } = do
+            [msg] <- msgToPP (MsgNewDynMemberMaxAge (fromIntegral age))
+            return (Just (msg, ddm { ddm_max_age = Nothing }))
+        -- Disinherit blockde
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_block_disinherit = True } = do
+            [msg] <- msgToPP $ MsgNewDynMemberBlockDisinherit
+            return (Just (msg, ddm { ddm_block_disinherit = False }))
+        -- Birth date
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_birth_date = Just date } = do
+            [msg] <- msgToPP $ MsgNewDynMemberBirthdate date
+            return (Just (msg, ddm { ddm_birth_date = Nothing }))
+        -- Bastard
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_bastard = True } = do
+            [msg] <- msgToPP $ MsgNewDynMemberBastard
+            return (Just (msg, ddm { ddm_bastard = False }))
+        -- Country of origin
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_country = Just country } = do
+            countryText <- flagText (Just EU4Country) country
+            [msg] <- msgToPP $ MsgNewDynMemberCountry countryText
+            return (Just (msg, ddm { ddm_country = Nothing }))
         -- Nothing left
-        pp_define_ruler_attrib _ = return Nothing
-    pp_define_ruler $ foldl' addLine newDefineRuler scr
-defineRuler stmt = preStatement stmt
+        pp_define_dyn_member_attrib _ = return Nothing
+    pp_define_dyn_member $ foldl' addLine newDefineDynMember scr
+defineDynMember _ _ _ _ stmt = preStatement stmt
 
--- Building units
+-- Rulers
+
+defineRuler :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+defineRuler = defineDynMember MsgNewRuler MsgNewRulerLeader MsgNewRulerAttribs MsgNewRulerLeaderAttribs
+
+-- Heirs
+
+defineHeir :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+defineHeir = defineDynMember (\_ -> MsgNewHeir) (\_ -> \_ -> MsgNewHeir) (\_ -> MsgNewHeirAttribs) (\_ -> \_ -> MsgNewHeirAttribs)
+
+-- Consorts
+
+defineConsort :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+defineConsort = defineDynMember (\_ -> MsgNewConsort) (\_ -> \_ -> MsgNewConsort) (\_ -> MsgNewConsortAttribs) (\_ -> \_ -> MsgNewConsortAttribs)
+
+--------------------
+-- Building units --
+--------------------
 
 data UnitType
     = UnitInfantry
@@ -2160,39 +2216,6 @@ numOwnedProvincesWith stmt@[pdx| %_ = @stmts |]
         withCurrentIndent $ \i ->
             return $ (i, MsgNumOwnedProvincesWith count) : stmtMessages
 numOwnedProvincesWith stmt = preStatement stmt
-
--- Heirs
-
--- TODO: Rework to handle more cases (like defineRuler)
-data Heir = Heir
-        {   heir_dynasty :: Maybe Text
-        ,   heir_claim :: Maybe Double
-        ,   heir_age :: Maybe Double
-        }
-newHeir :: Heir
-newHeir = Heir Nothing Nothing Nothing
-defineHeir :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
-defineHeir [pdx| %_ = @scr |]
-    = msgToPP =<< pp_heir (foldl' addLine newHeir scr)
-    where
-        addLine :: Heir -> GenericStatement -> Heir
-        addLine heir [pdx| dynasty = $dynasty |] = heir { heir_dynasty = Just dynasty }
-        addLine heir [pdx| claim   = !claim   |] = heir { heir_claim = Just claim }
-        addLine heir [pdx| age     = !age     |] = heir { heir_age = Just age }
-        addLine heir _ = heir
-        pp_heir :: IsGameData (GameData g) => Heir -> PPT g m ScriptMessage
-        pp_heir heir = do
-            dynasty_flag <- fmap Doc.doc2text <$> maybeM (flag (Just EU4Country)) (heir_dynasty heir)
-            case (heir_age heir, dynasty_flag, heir_claim heir) of
-                (Nothing,  Nothing,   Nothing)     -> return $ MsgNewHeir
-                (Nothing,  Nothing,   Just claim)  -> return $ MsgNewHeirClaim claim
-                (Nothing,  Just cflag, Nothing)     -> return $ MsgNewHeirDynasty cflag
-                (Nothing,  Just cflag, Just claim)  -> return $ MsgNewHeirDynastyClaim cflag claim
-                (Just age, Nothing,   Nothing)     -> return $ MsgNewHeirAge age
-                (Just age, Nothing,   Just claim)  -> return $ MsgNewHeirAgeClaim age claim
-                (Just age, Just cflag, Nothing)    -> return $ MsgNewHeirAgeFlag age cflag
-                (Just age, Just cflag, Just claim) -> return $ MsgNewHeirAgeFlagClaim age cflag claim
-defineHeir stmt = preStatement stmt
 
 -- Holy Roman Empire
 

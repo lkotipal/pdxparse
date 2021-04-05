@@ -442,13 +442,9 @@ data ScriptMessage
     | MsgDevelCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLocalDevelopmentCost {scriptMessageYn :: Bool, scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNewHeir
-    | MsgNewHeirClaim {scriptMessageClaim :: Double}
-    | MsgNewHeirDynasty {scriptMessageFlag :: Text}
-    | MsgNewHeirDynastyClaim {scriptMessageFlag :: Text, scriptMessageClaim :: Double}
-    | MsgNewHeirAge {scriptMessageAge :: Double}
-    | MsgNewHeirAgeClaim {scriptMessageAge :: Double, scriptMessageClaim :: Double}
-    | MsgNewHeirAgeFlag {scriptMessageAge :: Double, scriptMessageFlag :: Text}
-    | MsgNewHeirAgeFlagClaim {scriptMessageAge :: Double, scriptMessageFlag :: Text, scriptMessageClaim :: Double}
+    | MsgNewHeirAttribs
+    | MsgNewConsort
+    | MsgNewConsortAttribs
     | MsgBuildToForcelimitLand {scriptMessageInficon :: Text, scriptMessageInfantry :: Double, scriptMessageCavicon :: Text, scriptMessageCavalry :: Double, scriptMessageArticon :: Text, scriptMessageArtillery :: Double}
     | MsgBuildToForcelimitNavy {scriptMessageHeavyicon :: Text, scriptMessageHeavy :: Double, scriptMessageLighticon :: Text, scriptMessageLight :: Double, scriptMessageGallicon :: Text, scriptMessageGalley :: Double, scriptMessageTranspicon :: Text, scriptMessageTransport :: Double}
     | MsgProvinceEvent
@@ -478,27 +474,31 @@ data ScriptMessage
     | MsgNewRulerAttribs {scriptMessageRegent :: Bool}
     | MsgNewRulerLeaderAttribs {scriptMessageRegent :: Bool, scriptMessageName :: Text}
     | MsgLeaderRuler {scriptMessageRegent :: Bool, scriptMessageName :: Text}
-    | MsgNewRulerName {scriptMessageName :: Text}
-    | MsgNewRulerDynasty {scriptMessageName :: Text}
-    | MsgNewRulerDynastyAs {scriptMessageName :: Text}
-    | MsgNewRulerOriginalDynasty
-    | MsgNewRulerHistoricDynasty
-    | MsgNewRulerAge {scriptMessageAmt :: Double}
-    | MsgNewRulerAdm {scriptMessageFixed :: Bool, scriptMessageAmt :: Double}
-    | MsgNewRulerDip {scriptMessageFixed :: Bool, scriptMessageAmt :: Double}
-    | MsgNewRulerMil {scriptMessageFixed :: Bool, scriptMessageAmt :: Double}
-    | MsgNewRulerMaxAdm {scriptMessageAmt :: Double}
-    | MsgNewRulerMaxDip {scriptMessageAmt :: Double}
-    | MsgNewRulerMaxMil {scriptMessageAmt :: Double}
-    | MsgNewRulerClaim {scriptMessageAmt :: Double}
-    | MsgNewRulerCulture {scriptMessageText :: Text}
-    | MsgNewRulerCultureAs {scriptMessageText :: Text}
-    | MsgNewRulerReligion {scriptMessageIcon :: Text, scriptMessageText :: Text}
-    | MsgNewRulerReligionAs {scriptMessageText :: Text}
-    | MsgNewRulerHiddenSkills
-    | MsgNewRulerRandomGender
-    | MsgNewRulerMinAge {scriptMessageAge :: Double}
-    | MsgNewRulerMaxAge {scriptMessageAge :: Double}
+    | MsgNewDynMemberName {scriptMessageName :: Text}
+    | MsgNewDynMemberDynasty {scriptMessageName :: Text}
+    | MsgNewDynMemberDynastyAs {scriptMessageName :: Text}
+    | MsgNewDynMemberOriginalDynasty
+    | MsgNewDynMemberHistoricDynasty
+    | MsgNewDynMemberAge {scriptMessageAmt :: Double}
+    | MsgNewDynMemberAdm {scriptMessageFixed :: Bool, scriptMessageAmt :: Double}
+    | MsgNewDynMemberDip {scriptMessageFixed :: Bool, scriptMessageAmt :: Double}
+    | MsgNewDynMemberMil {scriptMessageFixed :: Bool, scriptMessageAmt :: Double}
+    | MsgNewDynMemberMaxAdm {scriptMessageAmt :: Double}
+    | MsgNewDynMemberMaxDip {scriptMessageAmt :: Double}
+    | MsgNewDynMemberMaxMil {scriptMessageAmt :: Double}
+    | MsgNewDynMemberClaim {scriptMessageAmt :: Double}
+    | MsgNewDynMemberCulture {scriptMessageText :: Text}
+    | MsgNewDynMemberCultureAs {scriptMessageText :: Text}
+    | MsgNewDynMemberReligion {scriptMessageIcon :: Text, scriptMessageText :: Text}
+    | MsgNewDynMemberReligionAs {scriptMessageText :: Text}
+    | MsgNewDynMemberHiddenSkills
+    | MsgNewDynMemberRandomGender
+    | MsgNewDynMemberMinAge {scriptMessageAge :: Double}
+    | MsgNewDynMemberMaxAge {scriptMessageAge :: Double}
+    | MsgNewDynMemberBirthdate {scriptMessageDate :: Text}
+    | MsgNewDynMemberBlockDisinherit
+    | MsgNewDynMemberBastard
+    | MsgNewDynMemberCountry {scriptMessageWhere :: Text}
     | MsgEstateHasInfluenceModifier {scriptMessageIcon :: Text, scriptMessageEstate :: Text, scriptMessageModifier :: Text}
     | MsgTriggerSwitch
     | MsgTriggerSwitchClause {scriptMessageCond :: Text}
@@ -3118,50 +3118,12 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgNewHeir
             -> "Gain a new heir"
-        MsgNewHeirClaim {scriptMessageClaim = _claim}
-            -> mconcat
-                [ "Gain a new heir with claim strength "
-                , toMessage (plainNum _claim)
-                ]
-        MsgNewHeirDynasty {scriptMessageFlag = _flag}
-            -> mconcat
-                [ "Gain a new heir of the same dynasty as "
-                , _flag
-                ]
-        MsgNewHeirDynastyClaim {scriptMessageFlag = _flag, scriptMessageClaim = _claim}
-            -> mconcat
-                [ "Gain a new heir with claim strength "
-                , toMessage (roundNum _claim)
-                ]
-        MsgNewHeirAge {scriptMessageAge = _age}
-            -> mconcat
-                [ "Gain a new "
-                , toMessage (roundNum _age)
-                , " year old heir"
-                ]
-        MsgNewHeirAgeClaim {scriptMessageAge = _age, scriptMessageClaim = _claim}
-            -> mconcat
-                [ "Gain a new "
-                , toMessage (roundNum _age)
-                , " year old heir with claim strength "
-                , toMessage (roundNum _claim)
-                ]
-        MsgNewHeirAgeFlag {scriptMessageAge = _age, scriptMessageFlag = _flag}
-            -> mconcat
-                [ "Gain a new "
-                , toMessage (roundNum _age)
-                , " year old heir of the same dynasty as "
-                , _flag
-                ]
-        MsgNewHeirAgeFlagClaim {scriptMessageAge = _age, scriptMessageFlag = _flag, scriptMessageClaim = _claim}
-            -> mconcat
-                [ "Gain a new "
-                , toMessage (roundNum _age)
-                , " year old heir of the same dynasty as "
-                , _flag
-                , " with claim strength "
-                , toMessage (roundNum _claim)
-                ]
+        MsgNewHeirAttribs
+            -> "Gain a new heir with the following attributes:"
+        MsgNewConsort
+            -> "Gain a new consort"
+        MsgNewConsortAttribs
+            -> "Gain a new consort with the following attributes:"
         MsgBuildToForcelimitLand {scriptMessageInficon = _inficon, scriptMessageInfantry = _infantry, scriptMessageCavicon = _cavicon, scriptMessageCavalry = _cavalry, scriptMessageArticon = _articon, scriptMessageArtillery = _artillery}
             -> mconcat
                 [ "Build land units to forcelimit: "
@@ -3432,88 +3394,88 @@ instance RenderMessage Script ScriptMessage where
                 , " comes to power as "
                 , toMessage (ifThenElseT _regent "regent" "ruler")
                 ]
-        MsgNewRulerName {scriptMessageName = _name}
+        MsgNewDynMemberName {scriptMessageName = _name}
             -> mconcat
                 [ "Named "
                 , _name
                 ]
-        MsgNewRulerDynasty {scriptMessageName = _name}
+        MsgNewDynMemberDynasty {scriptMessageName = _name}
             -> mconcat
                 [ "Of the "
                 , _name
                 , " dynasty"
                 ]
-        MsgNewRulerDynastyAs {scriptMessageName = _name}
+        MsgNewDynMemberDynastyAs {scriptMessageName = _name}
             -> mconcat
                 [ "Of the same dynasty as "
                 , _name
                 ]
-        MsgNewRulerOriginalDynasty
+        MsgNewDynMemberOriginalDynasty
             -> "Of the country's original dynasty"
-        MsgNewRulerHistoricDynasty
+        MsgNewDynMemberHistoricDynasty
             -> "Of one of the country's historic dynasties"
-        MsgNewRulerAge {scriptMessageAmt = _amt}
+        MsgNewDynMemberAge {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Aged "
                 , toMessage (roundNum _amt)
                 , " years"
                 ]
-        MsgNewRulerAdm {scriptMessageFixed = _fixed, scriptMessageAmt = _amt}
+        MsgNewDynMemberAdm {scriptMessageFixed = _fixed, scriptMessageAmt = _amt}
             -> mconcat
                 [ toMessage (ifThenElseT _fixed "Fixed " "")
                 , "{{icon|adm}} "
                 , toMessage (roundNum _amt)
                 , " administrative skill"
                 ]
-        MsgNewRulerDip {scriptMessageFixed = _fixed, scriptMessageAmt = _amt}
+        MsgNewDynMemberDip {scriptMessageFixed = _fixed, scriptMessageAmt = _amt}
             -> mconcat
                 [ toMessage (ifThenElseT _fixed "Fixed " "")
                 , "{{icon|dip}} "
                 , toMessage (roundNum _amt)
                 , " diplomatic skill"
                 ]
-        MsgNewRulerMil {scriptMessageFixed = _fixed, scriptMessageAmt = _amt}
+        MsgNewDynMemberMil {scriptMessageFixed = _fixed, scriptMessageAmt = _amt}
             -> mconcat
                 [ toMessage (ifThenElseT _fixed "Fixed " "")
                 , "{{icon|mil}} "
                 , toMessage (roundNum _amt)
                 , " military skill"
                 ]
-        MsgNewRulerMaxAdm {scriptMessageAmt = _amt}
+        MsgNewDynMemberMaxAdm {scriptMessageAmt = _amt}
             -> mconcat
                 [ "At most {{icon|adm}} "
                 , toMessage (roundNum _amt)
                 , " administrative skill"
                 ]
-        MsgNewRulerMaxDip {scriptMessageAmt = _amt}
+        MsgNewDynMemberMaxDip {scriptMessageAmt = _amt}
             -> mconcat
                 [ "At most {{icon|dip}} "
                 , toMessage (roundNum _amt)
                 , " diplomatic skill"
                 ]
-        MsgNewRulerMaxMil {scriptMessageAmt = _amt}
+        MsgNewDynMemberMaxMil {scriptMessageAmt = _amt}
             -> mconcat
                 [ "At most {{icon|mil}} "
                 , toMessage (roundNum _amt)
                 , " military skill"
                 ]
-        MsgNewRulerClaim {scriptMessageAmt = _amt}
+        MsgNewDynMemberClaim {scriptMessageAmt = _amt}
             -> mconcat
                 [ "{{icon|small legitimacy|28px}} Claim strength "
                 , toMessage (roundNum _amt)
                 ]
-        MsgNewRulerCulture {scriptMessageText = _text}
+        MsgNewDynMemberCulture {scriptMessageText = _text}
             -> mconcat
                 [ "Of {{icon|culture|28px}} "
                 , toMessage _text
                 , " culture"
                 ]
-        MsgNewRulerCultureAs {scriptMessageText = _text}
+        MsgNewDynMemberCultureAs {scriptMessageText = _text}
             -> mconcat
                 [ "Of the same {{icon|culture|28px}} culture as "
                 , toMessage _text
                 ]
-        MsgNewRulerReligion {scriptMessageIcon = _icon, scriptMessageText = _text}
+        MsgNewDynMemberReligion {scriptMessageIcon = _icon, scriptMessageText = _text}
             -> mconcat
                 [ "Following the "
                 , toMessage _icon
@@ -3521,26 +3483,40 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage _text
                 , " religion"
                 ]
-        MsgNewRulerReligionAs {scriptMessageText = _text}
+        MsgNewDynMemberReligionAs {scriptMessageText = _text}
             -> mconcat
                 [ "Following the same religion as "
                 , toMessage _text
                 ]
-        MsgNewRulerHiddenSkills
+        MsgNewDynMemberHiddenSkills
             -> "With skills hidden"
-        MsgNewRulerRandomGender
+        MsgNewDynMemberRandomGender
             -> "With random gender"
-        MsgNewRulerMinAge {scriptMessageAge = _age}
+        MsgNewDynMemberMinAge {scriptMessageAge = _age}
             -> mconcat
                 [ "At least "
                 , toMessage (roundNum _age)
                 , " years old"
                 ]
-        MsgNewRulerMaxAge {scriptMessageAge = _age}
+        MsgNewDynMemberMaxAge {scriptMessageAge = _age}
             -> mconcat
                 [ "At most "
                 , toMessage (roundNum _age)
                 , " years old"
+                ]
+        MsgNewDynMemberBirthdate {scriptMessageDate = _date}
+            -> mconcat
+                [ "With birth date "
+                , _date
+                ]
+        MsgNewDynMemberBlockDisinherit
+            -> "Can ''not'' be disinherited"
+        MsgNewDynMemberBastard
+            -> "Not a child of the consort"
+        MsgNewDynMemberCountry {scriptMessageWhere = _where}
+            -> mconcat
+                [ "From "
+                , _where
                 ]
         MsgEstateHasInfluenceModifier {scriptMessageIcon = _icon, scriptMessageEstate = _estate, scriptMessageModifier = _modifier}
             -> mconcat
