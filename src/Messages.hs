@@ -2978,9 +2978,9 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , _who
-                , " control at least "
+                , " control at least '''"
                 , toMessage (plainPc _amt)
-                , " of total development"
+                , "''' of the land"
                 ]
         MsgEstateInfluence {scriptMessageIcon = _icon, scriptMessageWho = _who, scriptMessageAmt = _amt}
             -> mconcat
