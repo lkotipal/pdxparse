@@ -307,6 +307,7 @@ data ScriptMessage
     | MsgYearlyHordeUnity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgKarma {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLegitimacy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLegitimacyEquivalent {scriptMessageAmt :: Double}
     | MsgYearlyLegitimacy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRulerMIL {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMILTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -2265,6 +2266,11 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " Legitimacy is at least "
+                , toMessage (roundNum _amt)
+                ]
+        MsgLegitimacyEquivalent {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "{{icon|legitimacy}} Legitimacy (or equivalent) is at least "
                 , toMessage (roundNum _amt)
                 ]
         MsgYearlyLegitimacy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}

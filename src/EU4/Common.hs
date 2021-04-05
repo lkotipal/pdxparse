@@ -205,6 +205,7 @@ handlersNumeric = Tr.fromList
         ,("had_recent_war"                   , numeric MsgWasAtWar)
         ,("heir_age"                         , numeric MsgHeirAge)
         ,("is_year"                          , numeric MsgYearIs)
+        ,("legitimacy_equivalent"            , numeric MsgLegitimacyEquivalent)
         ,("num_of_colonial_subjects"         , numeric MsgNumColonialSubjects)
         ,("num_of_colonies"                  , numeric MsgNumColonies)
         ,("num_of_loans"                     , numeric MsgNumLoans)
