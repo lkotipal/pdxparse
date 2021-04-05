@@ -625,6 +625,7 @@ handlersCompound = Tr.fromList
         ,("random_rival_country"    , scope EU4Country   . compoundMessage MsgRandomRival)
         ,("random_subject_country"  , scope EU4Country   . compoundMessage MsgRandomSubjectCountry)
         ,("random_trade_node"       , scope EU4TradeNode . compoundMessage MsgRandomTradeNode)
+        ,("region_for_scope_province" , scope EU4Province . compoundMessage MsgRegionProvinceScope)
         ,("strongest_trade_power"   , scope EU4Country   . compoundMessage MsgStrongestTradePower) -- always needs editing
         ,("while"                   , scope EU4Country   . compoundMessage MsgWhile) -- always needs editing
         ]
@@ -854,6 +855,7 @@ handlersYesNo = Tr.fromList
         ,("has_owner_religion"          , withBool MsgHasOwnerReligion)
         ,("has_parliament"              , withBool MsgHasParliament)
         ,("has_port"                    , withBool MsgHasPort)
+        ,("has_revolution_in_province"  , withBool MsgHasRevolutionInProvince)
         ,("has_seat_in_parliament"      , withBool MsgHasSeatInParliament)
         ,("has_states_general_mechanic" , withBool MsgHasStatesGeneralMechanic)
         ,("has_regency"                 , withBool MsgIsInRegency)
@@ -869,6 +871,7 @@ handlersYesNo = Tr.fromList
         ,("is_bankrupt"                 , withBool MsgIsBankrupt)
         ,("is_backing_current_issue"    , withBool MsgIsBackingCurrentIssue)
         ,("is_capital"                  , withBool MsgIsCapital)
+        ,("is_center_of_revolution"     , withBool MsgIsCenterOfRevolution)
         ,("is_city"                     , withBool MsgIsCity)
         ,("is_colony"                   , withBool MsgIsColony)
         ,("is_colonial_nation"          , withBool MsgIsColonialNation)
@@ -893,6 +896,8 @@ handlersYesNo = Tr.fromList
         ,("is_random_new_world"         , withBool MsgRandomNewWorld)
         ,("is_reformation_center"       , withBool MsgIsCenterOfReformation)
         ,("is_religion_reformed"        , withBool MsgReligionReformed)
+        ,("is_revolutionary"            , withBool MsgIsRevolutionary)
+        ,("is_revolutionary_republic_trigger" , withBool MsgIsRevolutionaryRepublic)
         ,("is_sea"                      , withBool MsgIsSea) -- province or trade node
         ,("is_state"                    , withBool MsgIsState)
         ,("is_statists_in_power"        , withBool MsgIsStatistsInPower)
@@ -903,10 +908,12 @@ handlersYesNo = Tr.fromList
         ,("normal_or_historical_nations", withBool MsgNormalOrHistoricalNations)
         ,("papacy_active"               , withBool MsgPapacyIsActive)
         ,("primitives"                  , withBool MsgPrimitives)
+        ,("revolution_target_exists"    , withBool MsgRevolutionTargetExists)
         ,("ruler_is_foreigner"          , withBool MsgRulerIsForeigner)
         ,("set_hre_religion_locked"     , withBool MsgSetHREReligionLocked)
         ,("set_in_empire"               , withBool MsgSetInEmpire)
         ,("set_seat_in_parliament"      , withBool MsgSetSeatInParliament)
+        ,("set_revolution_in_province"  , withBool MsgSetRevolutionProvince)
         ,("unit_in_siege"               , withBool MsgUnderSiege) -- duplicate?
         ,("was_player"                  , withBool MsgHasBeenPlayer)
         ,("was_never_end_game_tag_trigger" , withBool MsgWasNeverEndGameTag)

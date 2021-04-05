@@ -983,6 +983,13 @@ data ScriptMessage
     | MsgIsDefender { scriptMessageWho :: Text }
     | MsgCasusBelliIs { scriptMessageCb :: Text }
     | MsgGainNewMissions
+    | MsgIsRevolutionary { scriptMessageYn :: Bool }
+    | MsgIsRevolutionaryRepublic { scriptMessageYn :: Bool }
+    | MsgHasRevolutionInProvince { scriptMessageYn :: Bool }
+    | MsgRevolutionTargetExists { scriptMessageYn :: Bool }
+    | MsgIsCenterOfRevolution { scriptMessageYn :: Bool }
+    | MsgRegionProvinceScope
+    | MsgSetRevolutionProvince { scriptMessageYn :: Bool }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6462,6 +6469,46 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgGainNewMissions
             -> "Gets new {{icon|mission|21px}} missions"
+        MsgIsRevolutionary { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " revolutionary"
+                ]
+        MsgIsRevolutionaryRepublic { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " a revolutionary republic"
+                ]
+        MsgHasRevolutionInProvince { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Revolution is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " present"
+                ]
+        MsgRevolutionTargetExists { scriptMessageYn = _yn }
+            -> mconcat
+                [ "There is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " a {{icon|revolution target}} revolution target"
+                ]
+        MsgIsCenterOfRevolution { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " the center of revolution"
+                ]
+        MsgRegionProvinceScope
+            -> "At least one province in the region"
+        MsgSetRevolutionProvince { scriptMessageYn = _yn }
+            -> mconcat
+                [ toMessage (ifThenElseT _yn "Add" "Remove")
+                , " revolution "
+                , toMessage (ifThenElseT _yn "to" "from")
+                , " province"
+                ]
+
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
