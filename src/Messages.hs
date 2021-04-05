@@ -6442,7 +6442,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Government "
                 , toMessage (ifThenElseT _yn "uses" "does ''not'' use")
-                , " Estates General mechanic"
+                , " [[States General]] mechanic"
                 ]
         MsgConsortHasPersonality { scriptMessageIcon = _icon, scriptMessageWhat = _what }
             -> mconcat
