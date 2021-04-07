@@ -60,11 +60,19 @@ parseEU4Modifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadEr
 parseEU4Modifier [pdx| $modid = @effects |]
     = withCurrentFile $ \file -> do
         mlocid <- getGameL10nIfPresent modid
+
+        -- Handle religions modifiers
+        -- FIXME: This is a pretty terrible way of doing it...
+        let oldLength = length effects
+            rest = flip filter effects $ \stmt -> case stmt of
+                [pdx| religion = yes |] -> False
+                _ -> True
         return . Right . Just $ EU4Modifier {
                 modName = modid
             ,   modLocName = mlocid
             ,   modPath = file
-            ,   modEffects = effects
+            ,   modReligious = length rest /= oldLength
+            ,   modEffects = rest
             }
 parseEU4Modifier _ = withCurrentFile $ \file ->
     throwError ("unrecognised form for modifier in " <> T.pack file)

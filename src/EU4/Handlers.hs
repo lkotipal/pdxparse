@@ -1198,11 +1198,18 @@ addModifier kind stmt@(Statement _ OpEq (CompoundRhs scr)) =
             meffect = modEffects <$> mthemod
         mpp_meffect <- scope EU4Bonus $ maybeM ppMany meffect
 
+        -- Is this a religious modifer?
+        mpp_meffect' <- case (mpp_meffect, modReligious <$> mthemod) of
+            (Just pp_meffect, Just True) -> do
+                relMsg <- withCurrentIndent $ \i -> return (i + 1, MsgReligiousModifier)
+                return $ Just $ pp_meffect ++ [relMsg]
+            _ -> do return mpp_meffect
+
         case mname_or_key of
             Just modid ->
                 -- default presented name to mod id
                 let name_loc = fromMaybe modid mname_or_key_loc
-                in case (mwho, amod_power amod, mdur, mpp_meffect) of
+                in case (mwho, amod_power amod, mdur, mpp_meffect') of
                     -- Event modifiers - expect effects
                     (Nothing,  Nothing,  Nothing, Just pp_effect)  -> do
                         msghead <- alsoIndent' (MsgGainMod modid tkind name_loc)

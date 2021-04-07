@@ -992,6 +992,7 @@ data ScriptMessage
     | MsgRegionProvinceScope
     | MsgSetRevolutionProvince { scriptMessageYn :: Bool }
     | MsgGovernmentHasAttribute { scriptMessageWhat :: Text }
+    | MsgReligiousModifier
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6520,6 +6521,8 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has government type where: "
                 , _what
                 ]
+        MsgReligiousModifier
+            -> "These effects are lost if the state religion changes"
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

@@ -192,6 +192,7 @@ data EU4Modifier = EU4Modifier
     {   modName :: Text
     ,   modLocName :: Maybe Text
     ,   modPath :: FilePath
+    ,   modReligious :: Bool
     ,   modEffects :: GenericScript
     } deriving (Show)
 data EU4OpinionModifier = EU4OpinionModifier
