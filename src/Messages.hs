@@ -995,6 +995,8 @@ data ScriptMessage
     | MsgSetRevolutionProvince { scriptMessageYn :: Bool }
     | MsgGovernmentHasAttribute { scriptMessageWhat :: Text }
     | MsgReligiousModifier
+    | MsgIsEnemy { scriptMessageWho :: Text }
+    | MsgHasSpyNetworkFrom { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6539,6 +6541,20 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgReligiousModifier
             -> "These effects are lost if the state religion changes"
+        MsgIsEnemy { scriptMessageWho = _who }
+            -> mconcat
+                [ _who
+                , " is viewed as an enemy"
+                ]
+        MsgHasSpyNetworkFrom {scriptMessageIcon = _icon, scriptMessageWho = _who, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , _who
+                , " has at least "
+                , toMessage (plainNum _amt)
+                , " spy network"
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

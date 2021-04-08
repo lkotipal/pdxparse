@@ -776,6 +776,7 @@ handlersSimpleFlag = Tr.fromList
         ,("has_merchant"            , withFlag MsgHasMerchant)
         ,("heavy_ship"              , withFlag MsgHeavyShip)
         ,("inherit"                 , withFlag MsgInherit)
+        ,("is_enemy"                , scope EU4Country . withFlag MsgIsEnemy)
         ,("is_league_enemy"         , withFlag MsgIsLeagueEnemy)
         ,("is_neighbor_of"          , withFlag MsgNeighbors)
         ,("is_rival"                , withFlag MsgIsRival)
@@ -1002,6 +1003,7 @@ handlersTextValue = Tr.fromList
         ,("had_province_flag"           , textValue "flag" "days" MsgHadProvinceFlag MsgHadProvinceFlag tryLocAndIcon)
         ,("had_ruler_flag"              , textValue "flag" "days" MsgHadRulerFlag MsgHadRulerFlag tryLocAndIcon)
         ,("had_ruler_flag"              , textValue "flag" "days" MsgHadRulerFlag MsgHadRulerFlag tryLocAndIcon)
+        ,("has_spy_network_from"        , textValue "who" "value" MsgHasSpyNetworkFrom MsgHasSpyNetworkFrom flagTextMaybe)
         ,("num_of_religion"             , textValue "religion" "value" MsgNumOfReligion MsgNumOfReligion tryLocAndIcon)
         ]
 
