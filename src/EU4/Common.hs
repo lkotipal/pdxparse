@@ -728,6 +728,7 @@ handlersSimpleIcon = Tr.fromList
         ,("add_queen_personality"   , withLocAtomIcon MsgAddConsortPersonality)
         ,("add_reform_center"       , withLocAtomIcon MsgAddCenterOfReformation)
         ,("add_ruler_personality"   , withLocAtomIcon MsgAddRulerPersonality)
+        ,("remove_ruler_personality"  , withLocAtomIcon MsgRemoveRulerPersonality)
         ,("advisor"                 , withLocAtomIcon MsgHasAdvisorType)
         ,("change_technology_group" , withLocAtomIcon MsgChangeTechGroup)
         ,("change_trade_goods"      , withLocAtomIcon MsgChangeGoods)
@@ -740,6 +741,7 @@ handlersSimpleIcon = Tr.fromList
         ,("has_building"            , withLocAtomIconBuilding MsgHasBuilding)
         ,("has_idea_group"          , withLocAtomIcon MsgHasIdeaGroup) -- FIXME: icon fails
         ,("has_institution"         , withLocAtomIcon MsgHasInstitution)
+        ,("heir_has_personality"    , withLocAtomIcon MsgHeirHasPersonality)
         ,("ruler_has_personality"   , withLocAtomIcon MsgRulerHasPersonality)
         ,("has_unlocked_cult"       , withLocAtomIcon MsgHasUnlockedCult)
         ,("full_idea_group"         , withLocAtomIcon MsgFullIdeaGroup)

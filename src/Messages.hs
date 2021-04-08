@@ -831,7 +831,9 @@ data ScriptMessage
     | MsgAddHeirPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddConsortPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddRulerPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgRemoveRulerPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRulerHasPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHeirHasPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddCenterOfReformation {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddHistoricalRival {scriptMessageWho :: Text}
     | MsgAddTruceWith {scriptMessageWho :: Text}
@@ -5624,9 +5626,23 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
+        MsgRemoveRulerPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Ruler loses the personality trait "
+                , _icon
+                , " "
+                , _what
+                ]
         MsgRulerHasPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Ruler has the personality trait "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgHeirHasPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Heir has the personality trait "
                 , _icon
                 , " "
                 , _what
