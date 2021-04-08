@@ -1349,8 +1349,9 @@ data HasOpinion = HasOpinion
 newHasOpinion :: HasOpinion
 newHasOpinion = HasOpinion Nothing Nothing
 hasOpinion :: forall g m. (EU4Info g, Monad m) =>
+    (Double -> Text -> ScriptMessage) ->
     StatementHandler g m
-hasOpinion stmt@[pdx| %_ = @scr |]
+hasOpinion msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_hasOpinion (foldl' addLine newHasOpinion scr)
     where
         addLine :: HasOpinion -> GenericStatement -> HasOpinion
@@ -1361,9 +1362,9 @@ hasOpinion stmt@[pdx| %_ = @scr |]
         pp_hasOpinion hop = case (hop_who hop, hop_value hop) of
             (Just who, Just value) -> do
                 who_flag <- flag (Just EU4Country) who
-                return (MsgHasOpinion value (Doc.doc2text who_flag))
+                return (msg value (Doc.doc2text who_flag))
             _ -> return (preMessage stmt)
-hasOpinion stmt = preStatement stmt
+hasOpinion _ stmt = preStatement stmt
 
 -- Rebels
 

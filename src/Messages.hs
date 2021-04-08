@@ -598,6 +598,7 @@ data ScriptMessage
     | MsgMissionaryStrengthVsHeretics {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCultureConvCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
+    | MsgReverseHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
     | MsgNormalOrHistoricalNations {scriptMessageYn :: Bool}
     | MsgIsCustomNation {scriptMessageYn :: Bool}
     | MsgReligionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -4188,6 +4189,14 @@ instance RenderMessage Script ScriptMessage where
                 , _whom
                 , " is at least "
                 , toMessage (colourNumSign True _amt)
+                ]
+        MsgReverseHasOpinion {scriptMessageAmt = _amt, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Opinion of "
+                , _whom
+                , " is at least "
+                , toMessage (colourNumSign True _amt)
+                , " of target country"
                 ]
         MsgNormalOrHistoricalNations {scriptMessageYn = _yn}
             -> mconcat
