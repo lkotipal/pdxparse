@@ -162,7 +162,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("reduce_estate_burghers_loyalty_effect", const (msgToPP (MsgGenericTemplate "reduce_estate_burghers_loyalty_effect")))
         ,("reduce_estate_church_loyalty_effect", const (msgToPP (MsgGenericTemplate "reduce_estate_church_loyalty_effect")))
         ,("reduce_estate_cossacks_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_loyalty_effect|cossacks|lose")))
-        ,("reduce_estate_dhimmi_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_loyalty_effect|dhimmi|lose")))
+        ,("reduce_estate_dhimmi_loyalty_effect", const (msgToPP (MsgGenericTemplate "reduce_estate_dhimmi_loyalty_effect")))
         ,("reduce_estate_jains_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_loyalty_effect|jains|lose")))
         ,("reduce_estate_nobles_loyalty_effect", const (msgToPP (MsgGenericTemplate "reduce_estate_nobles_loyalty_effect")))
         ,("reduce_bureaucrats_effect", const (msgToPP MsgReduceBureaucratsEffect))
