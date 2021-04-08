@@ -3476,7 +3476,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgNewDynMemberClaim {scriptMessageAmt = _amt}
             -> mconcat
-                [ "{{icon|small legitimacy|28px}} Claim strength "
+                [ "{{icon|legitimacy}} [[heir claim|Claim strength]] "
                 , toMessage (roundNum _amt)
                 ]
         MsgNewDynMemberCulture {scriptMessageText = _text}
