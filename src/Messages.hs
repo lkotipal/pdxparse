@@ -475,7 +475,7 @@ data ScriptMessage
     | MsgNewRulerAttribs {scriptMessageRegent :: Bool}
     | MsgNewRulerLeaderAttribs {scriptMessageRegent :: Bool, scriptMessageName :: Text}
     | MsgLeaderRuler {scriptMessageRegent :: Bool, scriptMessageName :: Text}
-    | MsgNewDynMemberName {scriptMessageName :: Text}
+    | MsgNamed {scriptMessageName :: Text}
     | MsgNewDynMemberDynasty {scriptMessageName :: Text}
     | MsgNewDynMemberDynastyAs {scriptMessageName :: Text}
     | MsgNewDynMemberOriginalDynasty
@@ -494,6 +494,7 @@ data ScriptMessage
     | MsgNewDynMemberReligionAs {scriptMessageText :: Text}
     | MsgNewDynMemberHiddenSkills
     | MsgNewDynMemberRandomGender
+    | MsgWithGender {scriptMessageMale :: Bool}
     | MsgNewDynMemberMinAge {scriptMessageAge :: Double}
     | MsgNewDynMemberMaxAge {scriptMessageAge :: Double}
     | MsgNewDynMemberBirthdate {scriptMessageDate :: Text}
@@ -742,6 +743,7 @@ data ScriptMessage
     | MsgGoodsProducedMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavalLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavalLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestigeFromLand {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestigeFromNaval {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDiplomats {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -998,6 +1000,11 @@ data ScriptMessage
     | MsgReligiousModifier
     | MsgIsEnemy { scriptMessageWho :: Text }
     | MsgHasSpyNetworkFrom { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
+    | MsgDefineGeneral
+    | MsgDefineConquistador
+    | MsgDefineAdmiral
+    | MsgDefineExplorer
+    | MsgMilitaryLeaderTrait { scriptMessageWhat :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -3414,10 +3421,10 @@ instance RenderMessage Script ScriptMessage where
                 , " comes to power as "
                 , toMessage (ifThenElseT _regent "regent" "ruler")
                 ]
-        MsgNewDynMemberName {scriptMessageName = _name}
+        MsgNamed {scriptMessageName = _name}
             -> mconcat
                 [ "Named "
-                , _name
+                , toMessage $ quotes _name
                 ]
         MsgNewDynMemberDynasty {scriptMessageName = _name}
             -> mconcat
@@ -3512,6 +3519,11 @@ instance RenderMessage Script ScriptMessage where
             -> "With skills hidden"
         MsgNewDynMemberRandomGender
             -> "With random gender"
+        MsgWithGender {scriptMessageMale = _male}
+            -> mconcat
+               [ "Is "
+               , toMessage $ ifThenElseT _male "male" "female"
+               ]
         MsgNewDynMemberMinAge {scriptMessageAge = _age}
             -> mconcat
                 [ "At least "
@@ -5065,15 +5077,22 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (reducedNum (colourNumSign True) _amt)
+                , toMessage (colourNumSign True _amt)
                 , " Naval leader fire"
                 ]
         MsgNavalLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (reducedNum (colourNumSign True) _amt)
+                , toMessage (colourNumSign True _amt)
                 , " Naval leader shock"
+                ]
+        MsgNavalLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Naval leader siege"
                 ]
         MsgPrestigeFromLand {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -6562,6 +6581,19 @@ instance RenderMessage Script ScriptMessage where
                 , " has at least "
                 , toMessage (plainNum _amt)
                 , " spy network"
+                ]
+        MsgDefineGeneral
+            -> "Gain a new general with:"
+        MsgDefineConquistador
+            -> "Gain a new conquistador with:"
+        MsgDefineAdmiral
+            -> "Gain a new admiral with:"
+        MsgDefineExplorer
+            -> "Gain a new explorer with:"
+        MsgMilitaryLeaderTrait { scriptMessageWhat = _what }
+            -> mconcat
+                [ "With the [[Leader trait|trait]] "
+                , toMessage $ quotes _what
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

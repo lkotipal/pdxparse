@@ -90,6 +90,7 @@ module EU4.Handlers (
     ,   setVariable
     ,   isInWar
     ,   hasGovermentAttribute
+    ,   defineMilitaryLeader
     -- testing
     ,   isPronoun
     ,   flag
@@ -1866,7 +1867,7 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
         pp_define_dyn_member_attrib :: DefineDynMember -> PPT g m (Maybe (IndentedMessage, DefineDynMember))
         -- "Named <foo>"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_name = Just name } = do
-            [msg] <- msgToPP (MsgNewDynMemberName name)
+            [msg] <- msgToPP (MsgNamed name)
             return (Just (msg, ddm { ddm_name = Nothing }))
         -- "Of the <foo> dynasty"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_dynasty = Just dynasty } =
@@ -1939,6 +1940,10 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_random_gender = Just True } = do
             [msg] <- msgToPP $ MsgNewDynMemberRandomGender
             return (Just (msg, ddm { ddm_random_gender = Nothing }))
+        -- Assigned gender
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_female = Just female } = do
+            [msg] <- msgToPP $ MsgWithGender (not female)
+            return (Just (msg, ddm { ddm_female = Nothing }))
         -- Min age
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_min_age = Just age } = do
             [msg] <- msgToPP (MsgNewDynMemberMinAge (fromIntegral age))
@@ -2693,3 +2698,80 @@ hasGovermentAttribute :: forall g m. (EU4Info g, Monad m) => StatementHandler g 
 hasGovermentAttribute stmt@[pdx| %_ = $mech |]
     = msgToPP =<< MsgGovernmentHasAttribute <$> getGameL10n ("mechanic_" <> mech <> "_yes")
 hasGovermentAttribute stmt = trace ("warning: not handled for has_government_attribute: " ++ (show stmt)) $ preStatement stmt
+
+
+
+-------------------------------------
+-- Handler for define_general etc. --
+-------------------------------------
+data MilitaryLeader = MilitaryLeader
+        {   ml_shock :: Maybe Double
+        ,   ml_fire :: Maybe Double
+        ,   ml_manuever :: Maybe Double
+        ,   ml_siege :: Maybe Double
+        ,   ml_name :: Maybe Text
+        ,   ml_female :: Maybe Bool
+        ,   ml_trait :: Maybe Text
+        }
+        deriving Show
+newML :: MilitaryLeader
+newML = MilitaryLeader Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+defineMilitaryLeader :: forall g m. (EU4Info g, Monad m) => ScriptMessage -> Bool -> StatementHandler g m
+defineMilitaryLeader headline naval stmt@[pdx| %_ = @scr |] = do
+    currentFile <- withCurrentFile $ \f -> return f
+    let msgShock     = (if naval then MsgNavalLeaderShock (iconText "naval leader shock") else MsgLandLeaderShock (iconText "land leader shock"))
+        msgFire      = (if naval then MsgNavalLeaderFire (iconText "naval leader fire") else MsgLandLeaderFire (iconText "land leader fire"))
+        msgManuever  = (if naval then MsgNavalLeaderManeuver (iconText "naval leader maneuver") else MsgLandLeaderManeuver (iconText "land leader maneuver"))
+        msgSiege     = (if naval then MsgNavalLeaderSiege (iconText "blockade") else MsgLeaderSiege (iconText "land leader siege"))
+        addLine :: MilitaryLeader -> GenericStatement -> MilitaryLeader
+        addLine ml [pdx| shock = %rhs |]
+            = ml { ml_shock = floatRhs rhs }
+        addLine ml [pdx| fire = %rhs |]
+            = ml { ml_fire = floatRhs rhs }
+        addLine ml [pdx| manuever = %rhs |]
+            = ml { ml_manuever = floatRhs rhs }
+        addLine ml [pdx| siege = %rhs |]
+            = ml { ml_siege = floatRhs rhs }
+        addLine ml [pdx| name = %name |]
+            = ml { ml_name = textRhs name }
+        addLine ml [pdx| female = yes |]
+            = ml { ml_female = Just True }
+        addLine ml [pdx| trait = %trait |]
+            = ml { ml_trait = textRhs trait }
+        addLine ml line = (trace $ ("Unhandled military leader condition in " ++ currentFile ++ ": " ++ show line)) $ ml
+
+        pp_mil_leader :: MilitaryLeader -> PPT g m IndentedMessages
+        pp_mil_leader ea = do
+            body <- indentUp (unfoldM pp_mil_leader_attrib ea)
+            liftA2 (++)
+                (msgToPP headline)
+                (pure body)
+
+        pp_mil_leader_attrib :: MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
+        pp_mil_leader_attrib ml@MilitaryLeader { ml_shock = Just shock } = do
+            [msg] <- msgToPP $ msgShock shock
+            return (Just (msg, ml { ml_shock = Nothing }))
+        pp_mil_leader_attrib ml@MilitaryLeader { ml_fire = Just fire } = do
+            [msg] <- msgToPP $ msgFire fire
+            return (Just (msg, ml { ml_fire = Nothing }))
+        pp_mil_leader_attrib ml@MilitaryLeader { ml_manuever = Just manuever } = do
+            [msg] <- msgToPP $ msgManuever manuever
+            return (Just (msg, ml { ml_manuever = Nothing }))
+        pp_mil_leader_attrib ml@MilitaryLeader { ml_siege = Just siege } = do
+            [msg] <- msgToPP $ msgSiege siege
+            return (Just (msg, ml { ml_siege = Nothing }))
+        pp_mil_leader_attrib ml@MilitaryLeader { ml_name = Just name } = do
+            [msg] <- msgToPP $ MsgNamed name
+            return (Just (msg, ml { ml_name = Nothing }))
+        pp_mil_leader_attrib ml@MilitaryLeader { ml_female = Just True } = do
+            [msg] <- msgToPP $ MsgWithGender False
+            return (Just (msg, ml { ml_female = Nothing }))
+        pp_mil_leader_attrib ml@MilitaryLeader { ml_trait = Just trait } = do
+            text <- getGameL10n trait
+            [msg] <- msgToPP $ MsgMilitaryLeaderTrait text
+            return (Just (msg, ml { ml_trait = Nothing }))
+        pp_mil_leader_attrib _ = return Nothing
+
+    pp_mil_leader $ foldl' addLine newML scr
+defineMilitaryLeader _ _ stmt = preStatement stmt

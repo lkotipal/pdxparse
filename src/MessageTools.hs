@@ -33,7 +33,7 @@ module MessageTools (
     -- * If-then-else
     ,   ifThenElse, ifThenElseT
     -- * General text formatting
-    ,   iquotes, bold, boldText
+    ,   iquotes, quotes, bold, boldText
     -- * The 'ppNumSep' number formatting method
     ,   PPSep (..)
     ,   module Text.Shakespeare.I18N
@@ -245,6 +245,9 @@ templateDoc name args = PP.hcat $
 -- localized strings such as modifier and event names.
 iquotes :: Text -> Doc
 iquotes = PP.enclose "''“" "”''" . Doc.strictText
+
+quotes :: Text -> Doc
+quotes = PP.enclose "“" "”" . Doc.strictText
 
 ---- Set doc in italics.
 --italic :: Doc -> Doc
