@@ -4187,16 +4187,15 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Opinion of "
                 , _whom
-                , " is at least "
+                , " is at least {{icon|opinion}} "
                 , toMessage (colourNumSign True _amt)
                 ]
         MsgReverseHasOpinion {scriptMessageAmt = _amt, scriptMessageWhom = _whom}
             -> mconcat
-                [ "Opinion of "
-                , _whom
-                , " is at least "
+                [ _whom
+                , " has at least {{icon|opinion}} "
                 , toMessage (colourNumSign True _amt)
-                , " of target country"
+                , " opinion towards this country"
                 ]
         MsgNormalOrHistoricalNations {scriptMessageYn = _yn}
             -> mconcat
