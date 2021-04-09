@@ -28,6 +28,8 @@ module MessageTools (
     ,   gainOrLose, gainsOrLoses
     -- * Advisor text helpers
     ,   advisorDiscountText
+    -- * Day formatting
+    , formatDays
     -- * Wiki markup
     ,   template, templateDoc
     -- * If-then-else
@@ -224,6 +226,18 @@ gainsOrLoses n | n < 0     = "loses"
 advisorDiscountText :: Double -> Doc
 advisorDiscountText 0 = ""
 advisorDiscountText discount = " (" <> (plainPc (100*(1-discount))) <> " cheaper to employ)"
+
+
+-- | Format days
+formatDays :: Double -> Text
+formatDays days = formatDays' (round days :: Int)
+    where
+    formatDays' :: Int -> Text
+    formatDays' 1                          = "one day"
+    formatDays' days | days < 365          = T.pack $ show days <> " days"
+    formatDays' 365                        = "one year"
+    formatDays' days | days `mod` 365 == 0 = T.pack $ show (days `div` 365) <> " years"
+    formatDays' days                       = formatDays' (days `div` 365) <> " and " <> formatDays' (days `mod` 365)
 
 -----------------
 ---- Wiki text --

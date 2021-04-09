@@ -1415,8 +1415,7 @@ instance RenderMessage Script ScriptMessage where
                 , " <!-- "
                 , _modid
                 , " --> for "
-                , toMessage (roundNumNoSpace _days)
-                , " days"
+                , toMessage $ formatDays _days
                 ]
         MsgGainMod {scriptMessageModid = _modid, scriptMessageType = _type, scriptMessageName = _name}
             -> mconcat
@@ -1441,11 +1440,7 @@ instance RenderMessage Script ScriptMessage where
                     then if _type == "ruler"
                         then "the duration of the current ruler's reign"
                         else "the rest of the game"
-                    else mconcat
-                        [ toMessage (roundNumNoSpace _days)
-                        , " "
-                        , plural _days "day" "days"
-                        ]
+                    else toMessage $ formatDays _days
                 , ", giving the following effects:"
                 ]
         MsgGainModPow {scriptMessageModid = _modid, scriptMessageType = _type, scriptMessageName = _name, scriptMessagePow = _pow}
@@ -1471,9 +1466,7 @@ instance RenderMessage Script ScriptMessage where
                 , " --> ("
                 , toMessage (colourNumSign True _pow)
                 , " Power) for "
-                , toMessage (plainNum _days)
-                , " "
-                , plural _days "day" "days"
+                , toMessage (formatDays _days)
                 ]
         MsgActorGainsMod {scriptMessageModid = _modid, scriptMessageWho = _who, scriptMessageType = _type, scriptMessageName = _name}
             -> mconcat
@@ -1496,9 +1489,7 @@ instance RenderMessage Script ScriptMessage where
                 , " <!-- "
                 , _modid
                 , " --> for "
-                , toMessage (plainNum _days)
-                , " "
-                , plural _days "day" "days"
+                , toMessage $ formatDays _days
                 , ", giving the following effects:"
                 ]
         MsgActorGainsModPow {scriptMessageModid = _modid, scriptMessageWho = _who, scriptMessageType = _type, scriptMessageName = _name, scriptMessagePow = _pow}
@@ -1526,9 +1517,7 @@ instance RenderMessage Script ScriptMessage where
                 , " --> ("
                 , toMessage (colourNumSign True _pow)
                 , " Power) for "
-                , toMessage (plainNum _days)
-                , " "
-                , plural _days "day" "days"
+                , toMessage (formatDays _days)
                 ]
         MsgHasModifier {scriptMessageModid = _modid, scriptMessageKind = _kind, scriptMessageName = _name}
             -> mconcat
@@ -2005,8 +1994,7 @@ instance RenderMessage Script ScriptMessage where
                 , " flag "
                 , _name
                 , " for "
-                , toMessage (roundNum _days)
-                , " days"
+                , toMessage (formatDays _days)
                 ]
         MsgCountryFlag
             -> "country"
@@ -2021,36 +2009,28 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has had country flag <tt>"
                 , _name
                 , "</tt> for at least "
-                , toMessage (roundNum _days)
-                , " "
-                , plural _days "day" "days"
+                , toMessage (formatDays _days)
                 ]
         MsgHadProvinceFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
                 [ "Has had province flag <tt>"
                 , _name
                 , "</tt> for at least "
-                , toMessage (roundNum _days)
-                , " "
-                , plural _days "day" "days"
+                , toMessage (formatDays _days)
                 ]
         MsgHadRulerFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
                 [ "Has had ruler flag <tt>"
                 , _name
                 , "</tt> for at least "
-                , toMessage (roundNum _days)
-                , " "
-                , plural _days "day" "days"
+                , toMessage (formatDays _days)
                 ]
         MsgHadGlobalFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
                 [ "Global flag <tt>"
                 , _name
                 , "</tt> has been set for at least "
-                , toMessage (roundNum _days)
-                , " "
-                , plural _days "day" "days"
+                , toMessage (formatDays _days)
                 ]
         MsgColonySettlers {scriptMessageAmt = _amt}
             -> mconcat
@@ -2988,8 +2968,7 @@ instance RenderMessage Script ScriptMessage where
         MsgForDays {scriptMessageDays = _days}
             -> mconcat
                 [ "for "
-                , toMessage (roundNum _days)
-                , " days"
+                , toMessage (formatDays _days)
                 ]
         MsgEstateLoyalty {scriptMessageIcon = _icon, scriptMessageWho = _who, scriptMessageAmt = _amt}
             -> mconcat
@@ -3210,8 +3189,7 @@ instance RenderMessage Script ScriptMessage where
                 , " <!-- "
                 , _evtid
                 , " --> in "
-                , toMessage (roundNum _days)
-                , " days"
+                , toMessage (formatDays _days)
                 ]
         MsgDeclareWarWithCB {scriptMessageWhom = _whom, scriptMessageCb = _cbtype}
             -> mconcat
@@ -5813,8 +5791,7 @@ instance RenderMessage Script ScriptMessage where
                 , " gain opinion modifier "
                 , toMessage (iquotes _what)
                 , " towards each other for "
-                , toMessage (plainNum _days)
-                , plural _days " day" " days"
+                , toMessage (formatDays _days)
                 ]
         MsgAddNextInstitutionEmbracement {scriptMessageAmt = _amt}
             -> mconcat
@@ -6492,8 +6469,7 @@ instance RenderMessage Script ScriptMessage where
         MsgDurationAtLeast { scriptMessageDays = _days }
             -> mconcat
                 [ "Duration is at least "
-                , toMessage (roundNumNoSpace _days)
-                , " days"
+                , toMessage (formatDays _days)
                 ]
         MsgIsAttackerWarLeader { scriptMessageWho = _who }
             -> mconcat
