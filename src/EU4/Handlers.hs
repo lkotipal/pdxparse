@@ -11,6 +11,7 @@ module EU4.Handlers (
     ,   compoundMessageTagged
     ,   allowPronoun
     ,   withLocAtom
+    ,   withLocAtom'
     ,   withLocAtom2
     ,   withLocAtomAndIcon
     ,   withLocAtomIcon
@@ -497,13 +498,17 @@ compoundMessageTagged header mscope stmt@[pdx| $_:$tag = %_ |]
 compoundMessageTagged _ _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom.
-withLocAtom :: (IsGameData (GameData g),
+-- with the ability to transform the localization key
+withLocAtom' :: (IsGameData (GameData g),
                 IsGameState (GameState g),
                 Monad m) =>
-    (Text -> ScriptMessage) -> StatementHandler g m
-withLocAtom msg [pdx| %_ = ?key |]
-    = msgToPP =<< msg <$> getGameL10n key
-withLocAtom _ stmt = preStatement stmt
+    (Text -> ScriptMessage) -> (Text -> Text) -> StatementHandler g m
+withLocAtom' msg xform [pdx| %_ = ?key |]
+    = msgToPP =<< msg <$> getGameL10n (xform key)
+withLocAtom' _ _ stmt = preStatement stmt
+
+-- | Generic handler for a statement whose RHS is a localizable atom.
+withLocAtom msg stmt = withLocAtom' msg id stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom and we
 -- need a second one (passed to message as first arg).

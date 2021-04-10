@@ -652,6 +652,7 @@ handlersLocRhs = Tr.fromList
         ,("has_idea"              , withLocAtom MsgHasIdea)
         ,("has_reform"            , withLocAtom MsgHasReform)
         ,("has_terrain"           , withLocAtom MsgHasTerrain)
+        ,("is_subject_of_type"    , withLocAtom' MsgIsSubjectOfType (\t -> t <> "_title"))
         ,("kill_advisor"          , withLocAtom MsgAdvisorDies)
         ,("region"                , withLocAtom MsgRegionIs)
         ,("remove_advisor"        , withLocAtom MsgLoseAdvisor)
