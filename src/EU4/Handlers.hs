@@ -83,6 +83,7 @@ module EU4.Handlers (
     ,   dominantCulture
     ,   customTriggerTooltip
     ,   piety
+    ,   dynasty
     ,   hasIdea
     ,   trust
     ,   governmentPower
@@ -2435,6 +2436,15 @@ piety stmt@[pdx| %_ = !amt |]
         _  -> "being pious")
       MsgPiety stmt
 piety stmt = preStatement stmt
+
+dynasty :: (EU4Info g, Monad m) => StatementHandler g m
+dynasty stmt@[pdx| %_ = ?str |] = do
+    nflag <- flag (Just EU4Country) str
+    if isTag str || isTag str then
+        msgToPP $ MsgRulerIsSameDynasty (Doc.doc2text nflag)
+    else
+        msgToPP $ MsgRulerIsDynasty str
+dynasty stmt = (trace (show stmt)) $ preStatement stmt
 
 ----------------------
 -- Idea group ideas --

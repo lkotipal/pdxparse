@@ -1783,8 +1783,8 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgRulerIsDynasty {scriptMessageWhat = _what}
             -> mconcat
-                [ "Ruler is of "
-                , _what
+                [ "Ruler is of the "
+                , toMessage (quotes _what)
                 , " dynasty"
                 ]
         MsgRulerIsSameDynasty {scriptMessageWho = _who}
