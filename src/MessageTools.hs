@@ -232,12 +232,18 @@ advisorDiscountText discount = " (" <> (plainPc (100*(1-discount))) <> " cheaper
 formatDays :: Double -> Text
 formatDays days = formatDays' (round days :: Int)
     where
+    formatYears :: Int -> Text
+    formatYears 1 = "1 year"
+    formatYears ys = T.pack $ show ys <> " years"
     formatDays' :: Int -> Text
-    formatDays' 1                          = "one day"
-    formatDays' days | days < 365          = T.pack $ show days <> " days"
-    formatDays' 365                        = "one year"
-    formatDays' days | days `mod` 365 == 0 = T.pack $ show (days `div` 365) <> " years"
-    formatDays' days                       = formatDays' (days `div` 365) <> " and " <> formatDays' (days `mod` 365)
+    formatDays' days | days < 0   = "the rest of the game"
+    formatDays' 1                 = "1 day"
+    formatDays' days | days < 365 = T.pack $ show days <> " days"
+    formatDays' days              = formatYears (days `div` 365) <>
+                                        (if days `mod` 365 == 0 then
+                                            ""
+                                         else
+                                            " and " <> formatDays' (days `mod` 365))
 
 -----------------
 ---- Wiki text --
