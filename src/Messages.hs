@@ -1006,6 +1006,9 @@ data ScriptMessage
     | MsgDefineExplorer
     | MsgMilitaryLeaderTrait { scriptMessageWhat :: Text }
     | MsgTypeAll
+    | MsgSetSavedName { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageFemale :: Bool }
+    | MsgSetSavedNameScope { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageScope :: Text, scriptMessageFemale :: Bool }
+    | MsgClearSavedName { scriptMessageVar :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6574,6 +6577,32 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgTypeAll
             -> "Condition applies to all"
+        MsgSetSavedName { scriptMessageVar = _var, scriptMessageType = _type, scriptMessageFemale = _female }
+            -> mconcat
+                [ "Save name of "
+                , toMessage (ifThenElseT _female "female " "")
+                , _type
+                , " to <tt>"
+                , _var
+                , "</tt>"
+                ]
+        MsgSetSavedNameScope { scriptMessageVar = _var, scriptMessageType = _type, scriptMessageScope = _scope, scriptMessageFemale = _female }
+            -> mconcat
+                [ "Save name of "
+                , toMessage (ifThenElseT _female "female " "")
+                , _type
+                , " from "
+                , _scope
+                , " to <tt>"
+                , _var
+                , "</tt>"
+                ]
+        MsgClearSavedName { scriptMessageVar = _var }
+            -> mconcat
+                [ "Clear saved name <tt>"
+                , _var
+                , "</tt>"
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

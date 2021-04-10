@@ -706,6 +706,7 @@ handlersTypewriter = Tr.fromList
         [("clr_country_flag" , withNonlocAtom2 MsgCountryFlag MsgClearFlag)
         ,("clr_province_flag", withNonlocAtom2 MsgProvinceFlag MsgClearFlag)
         ,("clr_ruler_flag"   , withNonlocAtom2 MsgRulerFlag MsgClearFlag)
+        ,("clear_saved_name" , withNonlocAtom MsgClearSavedName)
         ,("has_country_flag" , withNonlocAtom2 MsgCountryFlag MsgHasFlag)
         ,("has_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgHasFlag)
         ,("has_province_flag", withNonlocAtom2 MsgProvinceFlag MsgHasFlag)
@@ -1100,6 +1101,7 @@ handlersMisc = Tr.fromList
         ,("piety"               , piety)
         ,("range"               , range)
         ,("set_government_rank" , setGovtRank)
+        ,("set_saved_name"      , setSavedName)
         ]
 
 -- | Handlers for ignored statements

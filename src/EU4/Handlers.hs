@@ -92,6 +92,7 @@ module EU4.Handlers (
     ,   isInWar
     ,   hasGovermentAttribute
     ,   defineMilitaryLeader
+    ,   setSavedName
     -- testing
     ,   isPronoun
     ,   flag
@@ -2785,3 +2786,44 @@ defineMilitaryLeader headline naval stmt@[pdx| %_ = @scr |] = do
 
     pp_mil_leader $ foldl' addLine newML scr
 defineMilitaryLeader _ _ stmt = preStatement stmt
+
+--------------------------------
+-- Handler for set_saved_name --
+--------------------------------
+
+data SetSavedName = SetSavedName
+        { ssn_key  :: Maybe Text
+        , ssn_type :: Maybe Text
+        , ssn_scope :: Maybe Text
+        , ssn_female :: Bool
+        }
+
+newSSN :: SetSavedName
+newSSN = SetSavedName Nothing Nothing Nothing False
+
+setSavedName :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+setSavedName stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_ssn (foldl' addLine newSSN scr)
+    where
+        addLine :: SetSavedName -> GenericStatement -> SetSavedName
+        addLine ssn [pdx| key = ?val |]
+            = ssn { ssn_key = Just val }
+        addLine ssn [pdx| type = ?typ |]
+            = ssn { ssn_type = Just (T.toUpper typ) }
+        addLine ssn [pdx| scope = ?scope |]
+            = ssn { ssn_scope = Just scope }
+        addLine ssn [pdx| female = ?val |]
+            = case T.toLower val of
+                "yes" -> ssn { ssn_female = True }
+                _ -> ssn
+        addLine ssn stmt = (trace $ "Unknown in set_saved_name" ++ show stmt) $ ssn
+        pp_ssn :: SetSavedName -> PPT g m ScriptMessage
+        pp_ssn ssn = do
+            typeText <- maybeM getGameL10n (ssn_type ssn)
+            scopeText <- maybeM (\n -> if isPronoun n then Doc.doc2text <$> pronoun Nothing n else return $ "<tt>" <> n <> "</tt>") (ssn_scope ssn)
+            case (ssn_key ssn, typeText, scopeText) of
+                (Just key, Just typ, Nothing) -> return $ MsgSetSavedName key typ (ssn_female ssn)
+                (Just key, Just typ, Just scope) -> return $ MsgSetSavedNameScope key typ scope (ssn_female ssn)
+                _ -> return $ preMessage stmt
+setSavedName stmt = (trace (show stmt)) $ preStatement stmt
+
