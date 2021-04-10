@@ -270,6 +270,7 @@ data ScriptMessage
     | MsgProvinceFlag
     | MsgRulerFlag
     | MsgGlobalFlag
+    | MsgConsortFlag
     | MsgHadCountryFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgHadProvinceFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgHadRulerFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
@@ -2008,6 +2009,8 @@ instance RenderMessage Script ScriptMessage where
             -> "ruler"
         MsgGlobalFlag
             -> "global"
+        MsgConsortFlag
+            -> "consort"
         MsgHadCountryFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
                 [ "Has had country flag <tt>"

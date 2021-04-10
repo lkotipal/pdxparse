@@ -703,10 +703,12 @@ handlersAdvisorId = Tr.fromList
 -- | Simple statements whose RHS should be presented as is, in typewriter face
 handlersTypewriter :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTypewriter = Tr.fromList
-        [("clr_country_flag" , withNonlocAtom2 MsgCountryFlag MsgClearFlag)
+        [("clr_consort_flag" , withNonlocAtom2 MsgConsortFlag MsgClearFlag)
+        ,("clr_country_flag" , withNonlocAtom2 MsgCountryFlag MsgClearFlag)
         ,("clr_province_flag", withNonlocAtom2 MsgProvinceFlag MsgClearFlag)
         ,("clr_ruler_flag"   , withNonlocAtom2 MsgRulerFlag MsgClearFlag)
         ,("clear_saved_name" , withNonlocAtom MsgClearSavedName)
+        ,("has_consort_flag" , withNonlocAtom2 MsgConsortFlag MsgHasFlag)
         ,("has_country_flag" , withNonlocAtom2 MsgCountryFlag MsgHasFlag)
         ,("has_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgHasFlag)
         ,("has_province_flag", withNonlocAtom2 MsgProvinceFlag MsgHasFlag)
