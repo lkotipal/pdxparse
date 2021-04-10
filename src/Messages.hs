@@ -3960,7 +3960,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (roundNum _amt)
                 , " Naval leader maneuver"
                 ]
         MsgBlockadeEfficiency {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -5055,21 +5055,21 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (roundNum _amt)
                 , " Naval leader fire"
                 ]
         MsgNavalLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (roundNum _amt)
                 , " Naval leader shock"
                 ]
         MsgNavalLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (roundNum _amt)
                 , " Naval leader siege"
                 ]
         MsgPrestigeFromLand {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -5291,28 +5291,28 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (roundNum _amt)
                 , " Land leader fire"
                 ]
         MsgLandLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (roundNum _amt)
                 , " Land leader shock"
                 ]
         MsgLandLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (roundNum _amt)
                 , " Land leader maneuver"
                 ]
         MsgLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (roundNum _amt)
                 , " Leader siege"
                 ]
         MsgFortDefense {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
