@@ -716,6 +716,7 @@ handlersTypewriter = Tr.fromList
         ,("has_ruler_flag"   , withNonlocAtom2 MsgRulerFlag MsgHasFlag)
         ,("has_saved_event_target", withNonlocAtom MsgHasSavedEventTarget)
         ,("save_event_target_as", withNonlocAtom MsgSaveEventTargetAs)
+        ,("set_consort_flag" , withNonlocAtom2 MsgConsortFlag MsgSetFlag)
         ,("set_country_flag" , withNonlocAtom2 MsgCountryFlag MsgSetFlag)
         ,("set_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgSetFlag)
         ,("set_province_flag", withNonlocAtom2 MsgProvinceFlag MsgSetFlag)
