@@ -784,6 +784,7 @@ handlersSimpleFlag = Tr.fromList
         ,("is_enemy"                , scope EU4Country . withFlag MsgIsEnemy)
         ,("is_league_enemy"         , withFlag MsgIsLeagueEnemy)
         ,("is_neighbor_of"          , withFlag MsgNeighbors)
+        ,("is_permanent_claim"      , withFlag MsgIsPermanentClaim)
         ,("is_rival"                , withFlag MsgIsRival)
         ,("is_strongest_trade_power", withFlag MsgIsStrongestTradePower)
         ,("is_subject_of"           , withFlag MsgIsSubjectOf)

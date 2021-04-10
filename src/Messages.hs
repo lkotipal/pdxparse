@@ -1011,6 +1011,7 @@ data ScriptMessage
     | MsgSetSavedNameScope { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageScope :: Text, scriptMessageFemale :: Bool }
     | MsgClearSavedName { scriptMessageVar :: Text }
     | MsgProvinceTradePower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgIsPermanentClaim { scriptMessageWhom :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6614,6 +6615,11 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _icon
                 , " province trade power"
+                ]
+        MsgIsPermanentClaim { scriptMessageWhom = _whom }
+            -> mconcat
+                [ "Is a [[permanent claim]] of "
+                , _whom
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
