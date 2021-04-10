@@ -377,6 +377,7 @@ handlersNumericIcons = Tr.fromList
         ,("raze_power_gain"          , numericIcon "razing power gain" MsgRazingPowerGain)
         ,("recover_navy_morale_speed", numericIcon "recover navy morale speed" MsgRecoverNavyMoraleSpeed)
         ,("recruitmaster"            , numericIconLoc "recruitmaster" "recruitmaster" MsgHasAdvisorLevel)
+        ,("province_trade_power"     , numericIcon "trade power" MsgProvinceTradePower)
         -- the number for the following is negated compared to the displayed figure
         ,("reduced_liberty_desire"   , numericIcon "liberty desire in subjects" MsgSubjectLibertyDesire)
         ,("reform_desire"            , numericIcon "reform desire" MsgReformDesire)

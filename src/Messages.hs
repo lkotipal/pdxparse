@@ -1010,6 +1010,7 @@ data ScriptMessage
     | MsgSetSavedName { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageFemale :: Bool }
     | MsgSetSavedNameScope { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageScope :: Text, scriptMessageFemale :: Bool }
     | MsgClearSavedName { scriptMessageVar :: Text }
+    | MsgProvinceTradePower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6605,6 +6606,14 @@ instance RenderMessage Script ScriptMessage where
                 [ "Clear saved name <tt>"
                 , _var
                 , "</tt>"
+                ]
+        MsgProvinceTradePower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (roundNum _amt)
+                , " "
+                , _icon
+                , " province trade power"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
