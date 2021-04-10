@@ -182,6 +182,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_non_electors_emperors_from_empire_effect", const (msgToPP MsgLeaveHRE))
         ,("sea_repair"             , const (msgToPP MsgGainSeaRepair)) -- Full Maritime
         ,("swap_non_generic_missions" , const (msgToPP MsgGainNewMissions))
+        ,("type" , const (msgToPP MsgTypeAll)) -- FIXME: This is a hack to handle xxxx_area = { type = all }
         ]
 
 -- | Handlers for numeric statements

@@ -1005,6 +1005,7 @@ data ScriptMessage
     | MsgDefineAdmiral
     | MsgDefineExplorer
     | MsgMilitaryLeaderTrait { scriptMessageWhat :: Text }
+    | MsgTypeAll
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6571,6 +6572,8 @@ instance RenderMessage Script ScriptMessage where
                 [ "With the [[Leader trait|trait]] "
                 , toMessage $ quotes _what
                 ]
+        MsgTypeAll
+            -> "Condition applies to all"
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
