@@ -1014,6 +1014,7 @@ data ScriptMessage
     | MsgIsPermanentClaim { scriptMessageWhom :: Text }
     | MsgIsSubjectOfType { scriptMessageType :: Text }
     | MsgHasRuler { scriptMessageWho :: Text }
+    | MsgHasCasusBelli { scriptMessageWho :: Text, scriptMessageCb :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6633,6 +6634,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has "
                 , toMessage (quotes _who)
                 ," as ruler"
+                ]
+        MsgHasCasusBelli { scriptMessageWho = _who, scriptMessageCb = _cb }
+            -> mconcat
+                [ "The country has the "
+                , _cb
+                , " [[casus belli]] against "
+                , _who
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

@@ -1047,6 +1047,7 @@ handlersSpecialComplex = Tr.fromList
         ,("define_explorer"              , defineMilitaryLeader MsgDefineExplorer True)
         ,("define_general"               , defineMilitaryLeader MsgDefineGeneral False)
         ,("employed_advisor"             , employedAdvisor)
+        ,("has_casus_belli"              , hasCasusBelli)
         ,("has_estate_influence_modifier", hasEstateInfluenceModifier)
         ,("has_opinion"                  , hasOpinion MsgHasOpinion)
         ,("has_opinion_modifier"         , opinion MsgHasOpinionMod (\modid what who _years -> MsgHasOpinionMod modid what who))

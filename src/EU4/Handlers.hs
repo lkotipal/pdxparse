@@ -94,6 +94,7 @@ module EU4.Handlers (
     ,   hasGovermentAttribute
     ,   defineMilitaryLeader
     ,   setSavedName
+    ,   hasCasusBelli
     -- testing
     ,   isPronoun
     ,   flag
@@ -1075,6 +1076,19 @@ data TextAtom = TextAtom
         }
 newTA :: TextAtom
 newTA = TextAtom Nothing Nothing
+
+parseTA whatlabel atomlabel scr = (foldl' addLine newTA scr)
+    where
+        addLine :: TextAtom -> GenericStatement -> TextAtom
+        addLine ta [pdx| $label = ?what |]
+            | label == whatlabel
+            = ta { ta_what = Just what }
+        addLine ta [pdx| $label = ?at |]
+            | label == atomlabel
+            = ta { ta_atom = Just at }
+        addLine ta scr = (trace ("parseTA: Ignoring " ++ show scr)) $ ta
+
+
 textAtom :: forall g m. (IsGameData (GameData g),
                          IsGameState (GameState g),
                          Monad m) =>
@@ -1084,16 +1098,8 @@ textAtom :: forall g m. (IsGameData (GameData g),
         -> (Text -> PPT g m (Maybe Text)) -- ^ Action to localize, get icon, etc. (applied to RHS of "what")
         -> StatementHandler g m
 textAtom whatlabel atomlabel msg loc stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_ta (foldl' addLine newTA scr)
+    = msgToPP =<< pp_ta (parseTA whatlabel atomlabel scr)
     where
-        addLine :: TextAtom -> GenericStatement -> TextAtom
-        addLine ta [pdx| $label = ?what |]
-            | label == whatlabel
-            = ta { ta_what = Just what }
-        addLine ta [pdx| $label = ?at |]
-            | label == atomlabel
-            = ta { ta_atom = Just at }
-        addLine nor _ = nor
         pp_ta :: TextAtom -> PPT g m ScriptMessage
         pp_ta ta = case (ta_what ta, ta_atom ta) of
             (Just what, Just atom) -> do
@@ -2832,3 +2838,19 @@ setSavedName stmt@[pdx| %_ = @scr |]
                 _ -> return $ preMessage stmt
 setSavedName stmt = (trace (show stmt)) $ preStatement stmt
 
+---------------------------------
+-- Handler for has_casus_belli --
+---------------------------------
+
+hasCasusBelli :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasCasusBelli stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_hcb (parseTA "target" "type" scr)
+    where
+        pp_hcb :: TextAtom -> PPT g m ScriptMessage
+        pp_hcb ta = case (ta_what ta, ta_atom ta) of
+            (Just what, Just atom) -> do
+                what_loc <- flag (Just EU4Country) what
+                atom_loc <- getGameL10n atom
+                return $ MsgHasCasusBelli (Doc.doc2text what_loc) atom_loc
+            _ -> return $ preMessage stmt
+hasCasusBelli stmt = preStatement stmt
