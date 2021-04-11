@@ -1013,6 +1013,7 @@ data ScriptMessage
     | MsgProvinceTradePower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgIsPermanentClaim { scriptMessageWhom :: Text }
     | MsgIsSubjectOfType { scriptMessageType :: Text }
+    | MsgHasRuler { scriptMessageWho :: Text }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6626,6 +6627,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is Subject type "
                 , _type
+                ]
+        MsgHasRuler { scriptMessageWho = _who }
+            -> mconcat
+                [ "Has "
+                , toMessage (quotes _who)
+                ," as ruler"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
