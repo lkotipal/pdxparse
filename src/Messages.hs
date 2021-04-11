@@ -1015,6 +1015,12 @@ data ScriptMessage
     | MsgIsSubjectOfType { scriptMessageType :: Text }
     | MsgHasRuler { scriptMessageWho :: Text }
     | MsgHasCasusBelli { scriptMessageWho :: Text, scriptMessageCb :: Text }
+    | MsgHeirADM { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
+    | MsgHeirDIP { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
+    | MsgHeirMIL { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
+    | MsgConsortADM { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
+    | MsgConsortDIP { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
+    | MsgConsortMIL { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6641,6 +6647,48 @@ instance RenderMessage Script ScriptMessage where
                 , _cb
                 , " [[casus belli]] against "
                 , _who
+                ]
+        MsgHeirADM {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Heir's "
+                , _icon
+                , " administrative skill is at least "
+                , toMessage (roundNum _amt)
+                ]
+        MsgHeirDIP {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Heir's "
+                , _icon
+                , " diplomatic skill is at least "
+                , toMessage (roundNum _amt)
+                ]
+        MsgHeirMIL {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Heir's "
+                , _icon
+                , " military skill is at least "
+                , toMessage (roundNum _amt)
+                ]
+        MsgConsortADM {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Consort's "
+                , _icon
+                , " administrative skill is at least "
+                , toMessage (roundNum _amt)
+                ]
+        MsgConsortDIP {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Consort's "
+                , _icon
+                , " diplomatic skill is at least "
+                , toMessage (roundNum _amt)
+                ]
+        MsgConsortMIL {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Consort's "
+                , _icon
+                , " military skill is at least "
+                , toMessage (roundNum _amt)
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
