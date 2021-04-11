@@ -2745,7 +2745,7 @@ defineMilitaryLeader headline naval stmt@[pdx| %_ = @scr |] = do
     let msgShock     = (if naval then MsgNavalLeaderShock (iconText "naval leader shock") else MsgLandLeaderShock (iconText "land leader shock"))
         msgFire      = (if naval then MsgNavalLeaderFire (iconText "naval leader fire") else MsgLandLeaderFire (iconText "land leader fire"))
         msgManuever  = (if naval then MsgNavalLeaderManeuver (iconText "naval leader maneuver") else MsgLandLeaderManeuver (iconText "land leader maneuver"))
-        msgSiege     = (if naval then MsgNavalLeaderSiege (iconText "blockade") else MsgLeaderSiege (iconText "land leader siege"))
+        msgSiege     = (if naval then MsgNavalLeaderSiege (iconText "blockade") else MsgLandLeaderSiege (iconText "land leader siege"))
         addLine :: MilitaryLeader -> GenericStatement -> MilitaryLeader
         addLine ml [pdx| shock = %rhs |]
             = ml { ml_shock = floatRhs rhs }

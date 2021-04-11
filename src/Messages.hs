@@ -568,7 +568,6 @@ data ScriptMessage
     | MsgGlobalShipRepair {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGlobalShipCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRegimentCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavalLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgBlockadeEfficiency {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainSeaRepair
     | MsgPrimitives {scriptMessageYn :: Bool}
@@ -742,9 +741,10 @@ data ScriptMessage
     | MsgADMTechCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDIPTechCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGoodsProducedMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavalLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavalLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainNavalLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainNavalLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainNavalLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestigeFromLand {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestigeFromNaval {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDiplomats {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -780,10 +780,10 @@ data ScriptMessage
     | MsgMILTechCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHostileCoreCreation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCaravanPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgLandLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgLandLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgLandLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainLandLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainLandLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainLandLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainLandLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgFortDefense {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgFortMaintenance {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgReinforceSpeed {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1021,6 +1021,14 @@ data ScriptMessage
     | MsgConsortADM { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
     | MsgConsortDIP { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
     | MsgConsortMIL { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
+    | MsgLandLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLandLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLandLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLandLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNavalLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNavalLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNavalLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -3974,13 +3982,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Regiment cost"
                 ]
-        MsgNavalLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (roundNum _amt)
-                , " Naval leader maneuver"
-                ]
         MsgBlockadeEfficiency {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -5069,25 +5070,32 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Goods produced modifier"
                 ]
-        MsgNavalLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgGainNavalLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (roundNum _amt)
+                , toMessage (colourNumSign True _amt)
                 , " Naval leader fire"
                 ]
-        MsgNavalLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgGainNavalLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (roundNum _amt)
+                , toMessage (colourNumSign True _amt)
                 , " Naval leader shock"
                 ]
-        MsgNavalLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgGainNavalLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (roundNum _amt)
+                , toMessage (colourNumSign True _amt)
+                , " Naval leader maneuver"
+                ]
+        MsgGainNavalLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
                 , " Naval leader siege"
                 ]
         MsgPrestigeFromLand {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -5305,33 +5313,33 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Caravan power"
                 ]
-        MsgLandLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgGainLandLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (roundNum _amt)
+                , toMessage (colourNumSign True _amt)
                 , " Land leader fire"
                 ]
-        MsgLandLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgGainLandLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (roundNum _amt)
+                , toMessage (colourNumSign True _amt)
                 , " Land leader shock"
                 ]
-        MsgLandLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgGainLandLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (roundNum _amt)
+                , toMessage (colourNumSign True _amt)
                 , " Land leader maneuver"
                 ]
-        MsgLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgGainLandLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (roundNum _amt)
-                , " Leader siege"
+                , toMessage (colourNumSign True _amt)
+                , " Land leader siege"
                 ]
         MsgFortDefense {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -6689,6 +6697,62 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " military skill is at least "
                 , toMessage (roundNum _amt)
+                ]
+        MsgLandLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage $ bold (roundNum _amt)
+                , " fire"
+                ]
+        MsgLandLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage $ bold (roundNum _amt)
+                , " shock"
+                ]
+        MsgLandLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage $ bold (roundNum _amt)
+                , " maneuver"
+                ]
+        MsgLandLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage $ bold (roundNum _amt)
+                , " siege"
+                ]
+        MsgNavalLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage $ bold (roundNum _amt)
+                , " fire"
+                ]
+        MsgNavalLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage $ bold (roundNum _amt)
+                , " shock"
+                ]
+        MsgNavalLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage $ bold (roundNum _amt)
+                , " maneuver"
+                ]
+        MsgNavalLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage $ bold (roundNum _amt)
+                , " siege"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
