@@ -92,7 +92,8 @@ writeEU4Events = do
 -- those, and for any obvious errors, return Right Nothing.
 parseEU4Event :: (IsGameState (GameState g), MonadError Text m) =>
     GenericStatement -> PPT g m (Either Text (Maybe EU4Event))
-parseEU4Event (StatementBare _) = throwError "bare statement at top level"
+parseEU4Event (StatementBare lhs) = withCurrentFile $ \f ->
+        throwError $ T.pack (f ++ ": bare statement at top level: " ++ (show lhs))
 parseEU4Event stmt@[pdx| %left = %right |] = case right of
     CompoundRhs parts -> case left of
         CustomLhs _ -> throwError "internal error: custom lhs"

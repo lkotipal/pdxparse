@@ -215,11 +215,11 @@ restOfLine = (Ap.many1' Ap.endOfLine >> return "")
          <|> (T.cons <$> Ap.anyChar <*> restOfLine)
 
 -- | An identifier, or atom. An atom can start with a letter, an underscore or
--- a number and continue with letters, numbers, underscores, and full stops.
+-- a number and continue with letters, numbers, underscores, at-signs, dashes and full stops.
 ident :: Parser Text
 ident = do
         res <- (<>) <$> (T.singleton <$> (Ap.satisfy (\c -> c  == '_' || isAlphaNum c)))
-                    <*> Ap.takeWhile (\c -> c `elem` ['_','.'] || isAlphaNum c)
+                    <*> Ap.takeWhile (\c -> c `elem` ['_','.','@','-'] || isAlphaNum c)
         if T.all isDigit res
             then fail "ident: numeric identifier"
             else return res
@@ -290,20 +290,24 @@ escapedChar = ("0" *> return '\0')
           <|> ("\\" *> return '\\')
     <?> "character escape sequence"
 
+
 -- | An entire statement. This usually contains an operator, but some
 -- statements are lists of data items, e.g. strings or numbers.
---
--- Currently bare statements (those with no operator or RHS) are not supported.
 --
 -- @
 --  statement ::= ident | ident operator rhs
 -- @
 statement :: Parser lhs -> Parser rhs -> Parser (Statement lhs rhs)
 statement customLhs customRhs
-    = Statement <$> lhs customLhs
-                -- TODO: permit bare statements (no operator and RHS)
-                <*> (skipSpace *> operator <* skipSpace)
-                <*> rhs customLhs customRhs
+    -- TODO: Make this more "haskell-like"
+    = do
+        l <- lhs customLhs
+        skipSpace
+        mnext <- Ap.peekChar
+        if maybe False (\c -> c `elem` ['=', '<', '>']) mnext then
+            Statement l <$> operator <* skipSpace <*> rhs customLhs customRhs
+        else do
+            return $ StatementBare l
     <?> "statement"
 
 -- | A script (i.e. list of statements separated by whitespace), possibly with

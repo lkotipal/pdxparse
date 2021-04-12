@@ -11,6 +11,7 @@ module EU4.Types (
     ,   EU4Decision (..)
     ,   IdeaGroup (..), Idea (..), IdeaTable
     ,   EU4Modifier (..), EU4OpinionModifier (..)
+    ,   EU4MissionTreeBranch (..), EU4Mission (..)
         -- * Low level types
     ,   MonarchPower (..)
     ,   EU4Scope (..)
@@ -48,11 +49,13 @@ data EU4Data = EU4Data {
     ,   eu4ideaGroups :: IdeaTable
     ,   eu4modifiers :: HashMap Text EU4Modifier
     ,   eu4opmods :: HashMap Text EU4OpinionModifier
+    ,   eu4missions :: HashMap Text EU4MissionTreeBranch
     ,   eu4eventScripts :: HashMap FilePath GenericScript
     ,   eu4decisionScripts :: HashMap FilePath GenericScript
     ,   eu4ideaGroupScripts :: HashMap FilePath GenericScript
     ,   eu4modifierScripts :: HashMap FilePath GenericScript
     ,   eu4opmodScripts :: HashMap FilePath GenericScript
+    ,   eu4missionScripts :: HashMap FilePath GenericScript
     -- etc.
     }
 
@@ -96,6 +99,10 @@ class (IsGame g,
     getDecisionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed decisions table (keyed on decision ID).
     getDecisions :: Monad m => PPT g m (HashMap Text EU4Decision)
+    -- | Get the contents of all mission script files
+    getMissionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | get the parsed mission trees
+    getMissions :: Monad m => PPT g m (HashMap Text EU4MissionTreeBranch)
 
 -------------------
 -- Feature types --
@@ -207,6 +214,22 @@ data EU4OpinionModifier = EU4OpinionModifier
     ,   omodYears :: Maybe Double
     ,   omodMaxVassal :: Maybe Double
     ,   omodMaxInOtherDirection :: Maybe Double
+    } deriving (Show)
+
+data EU4Mission = EU4Mission
+    {   eu4m_id :: Text
+    ,   eu4m_icon :: Text
+    ,   eu4m_prerequisites :: [Text]
+    ,   eu4m_trigger :: GenericScript
+    ,   eu4m_effect :: GenericScript
+    } deriving (Show)
+
+data EU4MissionTreeBranch = EU4MissionTreeBranch
+    {   eu4mtb_path :: FilePath
+    ,   eu4mtb_id :: Text
+    ,   eu4mtb_slot :: Int -- Which column (1..5) does the mission tree branch appear in?
+    ,   eu4mtb_potential :: Maybe GenericScript
+    ,   eu4mtb_missions :: [EU4Mission]
     } deriving (Show)
 
 ------------------------------

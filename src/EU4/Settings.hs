@@ -38,7 +38,7 @@ import EU4.Decisions (parseEU4Decisions, writeEU4Decisions)
 import EU4.IdeaGroups (parseEU4IdeaGroups, writeEU4IdeaGroups)
 import EU4.Modifiers ( parseEU4Modifiers, writeEU4Modifiers
                      , parseEU4OpinionModifiers, writeEU4OpinionModifiers)
---import EU4.Missions (parseEU4Missions, writeEU4Missions)
+import EU4.Missions (parseEU4Missions , writeEU4Missions)
 import EU4.Events (parseEU4Events, writeEU4Events)
 --import EU4.Policies (parseEU4Policies, writeEU4Policies)
 
@@ -65,6 +65,8 @@ instance IsGame EU4 where
                 ,   eu4modifierScripts = HM.empty
                 ,   eu4opmods = HM.empty
                 ,   eu4opmodScripts = HM.empty
+                ,   eu4missionScripts = HM.empty
+                ,   eu4missions = HM.empty
                 }))
                 (EU4S $ EU4State {
                     eu4currentFile = Nothing
@@ -122,6 +124,12 @@ instance EU4Info EU4 where
     getOpinionModifiers = do
         EU4D ed <- get
         return (eu4opmods ed)
+    getMissionScripts = do
+        EU4D ed <- get
+        return (eu4missionScripts ed)
+    getMissions = do
+        EU4D ed <- get
+        return (eu4missions ed)
 
 instance IsGameData (GameData EU4) where
     getSettings (EU4D ed) = eu4settings ed
@@ -170,12 +178,14 @@ readEU4Scripts = do
     events <- readEU4Script "events"
     modifiers <- readEU4Script "modifiers"
     opinion_modifiers <- readEU4Script "opinion_modifiers"
+    missions <- readEU4Script "missions"
     modify $ \(EU4D s) -> EU4D $ s {
             eu4ideaGroupScripts = ideaGroups
         ,   eu4decisionScripts = decisions
         ,   eu4eventScripts = events
         ,   eu4modifierScripts = modifiers
         ,   eu4opmodScripts = opinion_modifiers
+        ,   eu4missionScripts = missions
         }
 
 -- | Interpret the script ASTs as usable data.
@@ -187,13 +197,15 @@ parseEU4Scripts = do
     opinionModifiers <- parseEU4OpinionModifiers =<< getOpinionModifierScripts
     decisions <- parseEU4Decisions =<< getDecisionScripts
     events <- parseEU4Events =<< getEventScripts
-    
+    missions <- parseEU4Missions =<< getMissionScripts
+
     modify $ \(EU4D s) -> EU4D $
             s { eu4events = events
             ,   eu4decisions = decisions
             ,   eu4ideaGroups = ideaGroups
             ,   eu4modifiers = modifiers
             ,   eu4opmods = opinionModifiers
+            ,   eu4missions = missions
             }
 
 -- | Output the game data as wiki text.
@@ -202,3 +214,4 @@ writeEU4Scripts = do
     writeEU4IdeaGroups
     writeEU4Events
     writeEU4Decisions
+    writeEU4Missions
