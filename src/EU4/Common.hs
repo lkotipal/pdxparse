@@ -324,6 +324,7 @@ handlersNumericIcons = Tr.fromList
         ,("heir_mil"                 , numericIcon "mil" MsgHeirMIL)
         ,("horde_unity"              , numericIconBonus "horde unity" MsgHordeUnity MsgYearlyHordeUnity)
         ,("imperial_influence"       , numericIcon "imperial authority" MsgImperialAuthority)
+        ,("imperial_mandate"         , numericIconBonus "mandate growth modifier" MsgImperialMandate MsgImperialMandateGrowth)
         ,("inflation"                , numericIcon "inflation" MsgInflation)
         ,("inquisitor"               , numericIconLoc "inquisitor" "inquisitor" MsgHasAdvisorLevel)
         ,("karma"                    , numericIcon "high karma" MsgKarma)

@@ -699,6 +699,8 @@ data ScriptMessage
     | MsgWasForceConverted {scriptMessageYn :: Bool}
     | MsgFemaleEmperorAllowed {scriptMessageYn :: Bool}
     | MsgImperialAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgImperialMandate {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgImperialMandateGrowth {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasFemaleHeir {scriptMessageYn :: Bool}
     | MsgHasForeignHeir {scriptMessageYn :: Bool}
     | MsgPiety {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -4777,6 +4779,21 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Imperial Authority is at least "
                 , toMessage (roundNum _amt)
+                ]
+        MsgImperialMandate {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ " Has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " mandate"
+                ]
+        MsgImperialMandateGrowth {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " {{DLC-only|Mandate growth modifier}}"
                 ]
         MsgHasFemaleHeir {scriptMessageYn = _yn}
             -> mconcat
