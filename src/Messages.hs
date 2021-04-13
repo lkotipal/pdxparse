@@ -4461,7 +4461,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (reducedNum (colourPc True) _amt)
+                , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Trade efficiency"
                 ]
         MsgHasWarTaxes {scriptMessageYn = _yn}
@@ -4937,14 +4937,14 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (reducedNum (colourNumSign True) _amt)
+                , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Morale of armies"
                 ]
         MsgMoraleOfNavies {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (reducedNum (colourNumSign True) _amt)
+                , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Morale of navies"
                 ]
         MsgNavalAttrition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -4965,7 +4965,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (reducedNum (colourNumSign True) _amt)
+                , toMessage (reducedNum (colourPcSign True) _amt)
                 , " National manpower modifier"
                 ]
         MsgManpowerRecoverySpeed {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
