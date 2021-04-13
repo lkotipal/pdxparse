@@ -1142,6 +1142,7 @@ data ScriptMessage
     | MsgYearlyHarmony {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyRevolutionaryZeal {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMapSetupRandom
+    | MsgValidForPU {scriptMessageYn :: Bool}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7604,6 +7605,12 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgMapSetupRandom
             -> "Using random map setup"
+        MsgValidForPU { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " an independent Christian monarchy"
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

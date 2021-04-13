@@ -1042,6 +1042,7 @@ handlersYesNo = Tr.fromList
         ,("set_seat_in_parliament"      , withBool MsgSetSeatInParliament)
         ,("set_revolution_in_province"  , withBool MsgSetRevolutionProvince)
         ,("unit_in_siege"               , withBool MsgUnderSiege) -- duplicate?
+        ,("valid_for_personal_unions_trigger" , withBool MsgValidForPU)
         ,("was_player"                  , withBool MsgHasBeenPlayer)
         ,("was_never_end_game_tag_trigger" , withBool MsgWasNeverEndGameTag)
         ]
