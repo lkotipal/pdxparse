@@ -2439,7 +2439,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNum True _amt)
+                , toMessage (colourNumSign True _amt)
                 , " Yearly republican tradition"
                 ]
         MsgInflation {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
