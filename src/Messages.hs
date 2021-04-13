@@ -1117,6 +1117,7 @@ data ScriptMessage
     | MsgNoblesLoyaltyModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgOwnCoastNavalCombatBonus {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPlacedMerchantPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgPossibleAdmPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPossibleDipPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPossibleMilPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPossiblePolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -7100,23 +7101,23 @@ instance RenderMessage Script ScriptMessage where
         MsgFreeAdmPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Administrative free policies"
+                , " {{DLC-only|Administrative free policies|"
+                , toMessage (plainNumSign _amt)
+                , "}}"
                 ]
         MsgFreeDipPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Diplomatic free policies"
+                , " {{DLC-only|Diplomatic free policies|"
+                , toMessage (plainNumSign _amt)
+                , "}}"
                 ]
         MsgFreeMilPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Military free policies"
+                , " {{DLC-only|Military free policies|"
+                , toMessage (plainNumSign _amt)
+                , "}}"
                 ]
         MsgGalleyCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7431,26 +7432,33 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNumSign True _amt)
                 , " Merchant trade power"
                 ]
+        MsgPossibleAdmPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " {{DLC-only|Administrative possible policies|"
+                , toMessage (plainNumSign _amt)
+                , "}}"
+                ]
         MsgPossibleDipPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Diplomatic possible policies"
+                , " {{DLC-only|Diplomatic possible policies|"
+                , toMessage (plainNumSign _amt)
+                , "}}"
                 ]
         MsgPossibleMilPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Military possible policies"
+                , " {{DLC-only|Military possible policies|"
+                , toMessage (plainNumSign _amt)
+                , "}}"
                 ]
         MsgPossiblePolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Possible policies"
+                , " {{DLC-only|Possible policies|"
+                , toMessage (plainNumSign _amt)
+                , "}}"
                 ]
         MsgPowerProjectionFromInsults {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

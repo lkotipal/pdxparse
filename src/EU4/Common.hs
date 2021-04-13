@@ -614,6 +614,7 @@ handlersNumericIcons = Tr.fromList
         ,("nobles_loyalty_modifier"           , numericIcon "nobility loyalty" MsgNoblesLoyaltyModifier)
         ,("own_coast_naval_combat_bonus"      , numericIcon "naval combat bonus off owned coast" MsgOwnCoastNavalCombatBonus)
         ,("placed_merchant_power"             , numericIcon "merchant trade power" MsgPlacedMerchantPower)
+        ,("possible_adm_policy"               , numericIcon "administrative possible policies" MsgPossibleAdmPolicy)
         ,("possible_dip_policy"               , numericIcon "diplomatic possible policies" MsgPossibleDipPolicy)
         ,("possible_mil_policy"               , numericIcon "military possible policies" MsgPossibleMilPolicy)
         ,("possible_policy"                   , numericIcon "possible policies" MsgPossiblePolicy)
