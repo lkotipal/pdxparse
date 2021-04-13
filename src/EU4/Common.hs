@@ -176,6 +176,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("reduce_meritocracy_effect", const (msgToPP MsgReduceMeritocracyEffect))
         ,("reduce_meritocracy_large_effect", const (msgToPP MsgReduceMeritocracyLargeEffect))
         ,("reduce_reform_progress_small_effect", const (msgToPP MsgReduceReformProgressSmallEffect))
+        ,("reduce_reform_progress_medium_effect", const (msgToPP MsgReduceReformProgressMediumEffect))
         ,("reduce_reform_progress_big_effect", const (msgToPP MsgReduceReformProgressBigEffect))
         ,("remove_advisor_adm_effect", const (msgToPP MsgRemoveAdvisorAdmEffect)) -- "The currently employed administrative advisor leaves the country's court."
         ,("remove_cardinal"        , const (msgToPP MsgLoseCardinal))

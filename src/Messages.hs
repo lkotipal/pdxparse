@@ -952,6 +952,7 @@ data ScriptMessage
     | MsgReduceMeritocracyEffect
     | MsgReduceMeritocracyLargeEffect
     | MsgReduceReformProgressSmallEffect
+    | MsgReduceReformProgressMediumEffect
     | MsgReduceReformProgressBigEffect
     | MsgRemoveAdvisorAdmEffect
     | MsgDivorceConsortEffect
@@ -6297,9 +6298,9 @@ instance RenderMessage Script ScriptMessage where
         MsgAddInnovativenessSmallEffect
             -> "If DLC {{icon|rb}} Rule Britannia is active, gain {{icon|innovativeness}} {{green|1}} innovativeness"
         MsgAddReformProgressMediumEffect
-            -> "If DLC {{icon|dhr}} Dharma is active, gain {{icon|reform progress}} {{green|25}} reform progress"
+            -> "Gain {{icon|reform progress}} {{green|25}} reform progress"
         MsgAddReformProgressSmallEffect
-            -> "If DLC {{icon|dhr}} Dharma is active, gain {{icon|reform progress}} {{green|15}} reform progress"
+            -> "Gain {{icon|reform progress}} {{green|15}} reform progress"
         MsgBoostBureaucratsEffect
             -> "If DLC {{icon|moh}} Mandate of Heaven is ''not'' active, the {{icon|bureaucrats}} Grand Secretariat faction gains '''10''' influence"
         MsgBoostBureaucratsLargeEffect
@@ -6347,9 +6348,11 @@ instance RenderMessage Script ScriptMessage where
         MsgReduceMeritocracyLargeEffect
             -> "If the country is the Emperor of China and DLC {{icon|moh}} Mandate of Heaven is active, lose {{icon|meritocracy}} {{red|10}} meritocracy"
         MsgReduceReformProgressSmallEffect
-            -> "If DLC {{icon|dhr}} Dharma is active, lose {{icon|reform progress}} {{red|25}} reform progress"
+            -> "Lose {{icon|reform progress}} {{red|25}} reform progress"
+        MsgReduceReformProgressMediumEffect
+            -> "Lose {{icon|reform progress}} {{red|50}} reform progress"
         MsgReduceReformProgressBigEffect
-            -> "If DLC {{icon|dhr}} Dharma is active, lose {{icon|reform progress}} {{red|75}} reform progress"
+            -> "Lose {{icon|reform progress}} {{red|75}} reform progress"
         MsgRemoveAdvisorAdmEffect
             -> "The currently employed administrative advisor leaves the country's court."
         MsgDivorceConsortEffect
