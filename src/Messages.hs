@@ -7609,7 +7609,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
-                , " an independent Christian monarchy"
+                , " an independent [[Christian]] [[monarchy]]"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
