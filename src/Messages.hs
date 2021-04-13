@@ -3895,7 +3895,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Colonial range"
                 ]
         MsgSettlerChance {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
