@@ -1352,7 +1352,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (colourNum True _amt)
-                , " revolutionary zeal"
+                , " {{DLC-only|revolutionary zeal}}"
                 ]
         MsgGainStability {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -2386,7 +2386,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Yearly horde unity"
+                , " {{DLC-only|Yearly horde unity}}"
                 ]
         MsgKarma {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5343,7 +5343,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Privateer efficiency"
+                , " {{DLC-only|Privateer efficiency}}"
                 ]
         MsgGlobalSpyDefence {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5437,7 +5437,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Caravan power"
+                , " {{DLC-only|Caravan power}}"
                 ]
         MsgGainLandLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5862,7 +5862,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (reducedNum (colourPc True) _amt)
-                , " army professionalism"
+                , " {{DLC-only|army professionalism}}"
                 ]
         MsgSailorsPercentage {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -6386,7 +6386,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Yearly army professionalism"
+                , " {{DLC-only|Yearly army professionalism}}"
                 ]
         MsgYearlyCorruption {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7097,7 +7097,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign False) _amt)
-                , " Flagship cost"
+                , " {{DLC-only|Flagship cost}}"
                 ]
         MsgFreeAdmPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7211,7 +7211,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Innovativeness gain"
+                , " {{DLC-only|Innovativeness gain}}"
                 ]
         MsgJustifyTradeConflictCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7309,14 +7309,14 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Maximum revolutionary zeal"
+                , " {{DLC-only|Maximum revolutionary zeal}}"
                 ]
         MsgMayEstablishFrontier
-            -> "May establish siberian frontiers"
+            -> "{{DLC-only|May establish siberian frontiers}}"
         MsgMayPerformSlaveRaid
-            -> "May raid coasts"
+            -> "{{DLC-only|May raid coasts}}"
         MsgMayPerformSlaveRaidOnSameReligion
-            -> "May raid coasts, including coasts of countries with same religion"
+            -> "{{DLC-only|May raid coasts}}, including coasts of countries with same religion"
         MsgMayRecruitFemaleGenerals
             -> "May recruit female generals"
         MsgMercenaryManpower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -7331,7 +7331,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign False) _amt)
-                , " Migration cooldown"
+                , " {{DLC-only|Migration cooldown}}"
                 ]
         MsgMinAutonomyInTerritories {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7599,7 +7599,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Yearly revolutionary zeal"
+                , " {{DLC-only|Yearly revolutionary zeal}}"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
