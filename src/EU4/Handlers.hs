@@ -2275,20 +2275,20 @@ calcTrueIf stmt@[pdx| %_ = @stmts |] = do
 calcTrueIf stmt = preStatement stmt
 
 
----------------------------------------------
--- Handler for num_of_owned_provinces_with --
----------------------------------------------
+------------------------------------------------
+-- Handler for num_of_owned_provinces_**_with --
+------------------------------------------------
 
-numOwnedProvincesWith :: (EU4Info g, Monad m) => StatementHandler g m
-numOwnedProvincesWith stmt@[pdx| %_ = @stmts |] = do
+numOwnedProvincesWith :: (EU4Info g, Monad m) => (Double -> ScriptMessage) -> StatementHandler g m
+numOwnedProvincesWith msg stmt@[pdx| %_ = @stmts |] = do
     let (mvalStmt, rest) = extractStmt (matchLhsText "value") stmts
     case mvalStmt of
         Just [pdx| %_ = !count |] -> do
             restMsgs <- ppMany rest
             withCurrentIndent $ \i ->
-                return $ (i, MsgNumOwnedProvincesWith count) : restMsgs
+                return $ (i, msg count) : restMsgs
         _ -> preStatement stmt
-numOwnedProvincesWith stmt = preStatement stmt
+numOwnedProvincesWith _ stmt = preStatement stmt
 
 -- Holy Roman Empire
 
