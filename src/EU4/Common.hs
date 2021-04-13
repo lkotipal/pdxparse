@@ -112,88 +112,88 @@ ppHandlers = foldl' Tr.unionL Tr.empty
 -- | Handlers for statements where RHS is irrelevant (usually "yes")
 handlersRhsIrrelevant :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersRhsIrrelevant = Tr.fromList
-        [("add_cardinal"           , const (msgToPP MsgAddCardinal))
-        ,("add_estate_burghers_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_burghers_loyalty_effect")))
-        ,("add_estate_church_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_church_loyalty_effect")))
-        ,("add_estate_cossacks_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_loyalty_effect|cossacks")))
-        ,("add_estate_dhimmi_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_dhimmi_loyalty_effect")))
-        ,("add_estate_jains_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_loyalty_effect|jains")))
-        ,("add_estate_nobles_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_nobles_loyalty_effect")))
-        ,("add_innovativeness_big_effect", const (msgToPP MsgAddInnovativenessBigEffect))
-        ,("add_innovativeness_small_effect", const (msgToPP MsgAddInnovativenessSmallEffect))
-        ,("add_loot_from_province_effect", const (msgToPP MsgAddLootFromProvinceEffect))
-        ,("add_mandate_effect"     , const (msgToPP MsgAddMandateEffect))
-        ,("add_mandate_large_effect", const (msgToPP MsgAddMandateLargeEffect))
-        ,("add_meritocracy_effect" , const (msgToPP MsgAddMeritocracyEffect))
-        ,("add_meritocracy_large_effect", const (msgToPP MsgAddMeritocracyLargeEffect))
-        ,("add_reform_progress_medium_effect", const (msgToPP MsgAddReformProgressMediumEffect))
-        ,("add_reform_progress_small_effect", const (msgToPP MsgAddReformProgressSmallEffect))
-        ,("add_stability_or_adm_power", const (msgToPP MsgAddStabilityOrAdm))
-        ,("boost_bureaucrats_effect", const (msgToPP MsgBoostBureaucratsEffect))
-        ,("boost_bureaucrats_large_effect", const (msgToPP MsgBoostBureaucratsLargeEffect))
-        ,("boost_eunuchs_effect", const (msgToPP MsgBoostEunuchsEffect))
-        ,("boost_eunuchs_large_effect", const (msgToPP MsgBoostEunuchsLargeEffect))
-        ,("boost_temples_effect", const (msgToPP MsgBoostTemplesEffect))
-        ,("boost_temples_large_effect", const (msgToPP MsgBoostTemplesLargeEffect))
-        ,("cancel_construction"    , const (msgToPP MsgCancelConstruction)) -- Canals
-        ,("cb_on_overseas"         , const (msgToPP MsgGainOverseasCB)) -- Full Expansion
-        ,("cb_on_primitives"       , const (msgToPP MsgGainPrimitivesCB)) -- Full Exploration
-        ,("cb_on_religious_enemies", const (msgToPP MsgGainReligiousCB)) -- Deus Vult
-        ,("check_if_non_state_advisor_effect", const (msgToPP MsgCheckIfNonStateAdvisorEffect))
-        ,("divorce_consort_effect", const (msgToPP MsgDivorceConsortEffect))
-        ,("enable_hre_leagues"     , const (msgToPP MsgEnableHRELeagues))
-        ,("erase_advisor_flags_effect", const (msgToPP MsgEnableHRELeagues))
-        ,("increase_heir_adm_effect", const (msgToPP MsgIncreaseHeirAdmEffect))
-        ,("increase_heir_dip_effect", const (msgToPP MsgIncreaseHeirDipEffect))
-        ,("increase_heir_mil_effect", const (msgToPP MsgIncreaseHeirMilEffect))
-        ,("increase_legitimacy_medium_effect", const (msgToPP MsgIncreaseLegitimacyMediumEffect))
-        ,("increase_legitimacy_small_effect", const (msgToPP MsgIncreaseLegitimacySmallEffect))
-        ,("is_janissary_modifier"  , const (msgToPP MsgIsJanissaryMod))
-        ,("kill_heir"              , const (msgToPP MsgHeirDies))
-        ,("kill_ruler"             , const (msgToPP MsgRulerDies))
-        ,("may_agitate_for_liberty", const (msgToPP MsgMayAgitateForLiberty)) -- Espionage: Destabilizing Efforts
-        ,("may_explore"            , const (msgToPP MsgMayExplore)) -- Exploration: Quest for the New World
-        ,("may_infiltrate_administration", const (msgToPP MsgMayInfiltrateAdministration)) -- Espionage: Espionage
-        ,("may_sabotage_reputation", const (msgToPP MsgMaySabotageReputation)) -- Espionage: Rumormongering
-        ,("may_sow_discontent"     , const (msgToPP MsgMaySowDiscontent)) -- Espionage: Destabilizing Efforts
-        ,("may_study_technology"   , const (msgToPP MsgMayStudyTech)) -- Espionage: Shady Recruitment
-        ,("move_capital_effect"    , const (msgToPP MsgMoveCapitalEffect))
-        ,("set_hre_religion_treaty", const (msgToPP MsgSignWestphalia))
-        ,("reduced_stab_impacts"   , const (msgToPP MsgReducedStabImpacts)) -- Full Diplomacy
-        ,("reduce_estate_burghers_loyalty_effect", const (msgToPP (MsgGenericTemplate "reduce_estate_burghers_loyalty_effect")))
-        ,("reduce_estate_church_loyalty_effect", const (msgToPP (MsgGenericTemplate "reduce_estate_church_loyalty_effect")))
-        ,("reduce_estate_cossacks_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_loyalty_effect|cossacks|lose")))
-        ,("reduce_estate_dhimmi_loyalty_effect", const (msgToPP (MsgGenericTemplate "reduce_estate_dhimmi_loyalty_effect")))
-        ,("reduce_estate_jains_loyalty_effect", const (msgToPP (MsgGenericTemplate "add_estate_loyalty_effect|jains|lose")))
-        ,("reduce_estate_nobles_loyalty_effect", const (msgToPP (MsgGenericTemplate "reduce_estate_nobles_loyalty_effect")))
-        ,("reduce_bureaucrats_effect", const (msgToPP MsgReduceBureaucratsEffect))
-        ,("reduce_eunuchs_effect"  , const (msgToPP MsgReduceEunuchsEffect))
-        ,("reduce_innovativeness_small_effect", const (msgToPP MsgAddInnovativenessSmallEffect))
-        ,("reduce_temples_effect"  , const (msgToPP MsgReduceTemplesEffect))
-        ,("reduce_legitimacy_medium_effect", const (msgToPP MsgReduceLegitimacyEffect))
-        ,("reduce_legitimacy_small_effect", const (msgToPP MsgReduceLegitimacySmallEffect))
-        ,("reduce_mandate_effect", const (msgToPP MsgReduceMandateEffect))
-        ,("reduce_mandate_large_effect", const (msgToPP MsgReduceMandateLargeEffect))
-        ,("reduce_meritocracy_effect", const (msgToPP MsgReduceMeritocracyEffect))
-        ,("reduce_meritocracy_large_effect", const (msgToPP MsgReduceMeritocracyLargeEffect))
-        ,("reduce_reform_progress_small_effect", const (msgToPP MsgReduceReformProgressSmallEffect))
-        ,("reduce_reform_progress_medium_effect", const (msgToPP MsgReduceReformProgressMediumEffect))
-        ,("reduce_reform_progress_big_effect", const (msgToPP MsgReduceReformProgressBigEffect))
-        ,("remove_advisor_adm_effect", const (msgToPP MsgRemoveAdvisorAdmEffect)) -- "The currently employed administrative advisor leaves the country's court."
-        ,("remove_cardinal"        , const (msgToPP MsgLoseCardinal))
-        ,("remove_non_electors_emperors_from_empire_effect", const (msgToPP MsgLeaveHRE))
-        ,("sea_repair"             , const (msgToPP MsgGainSeaRepair)) -- Full Maritime
-        ,("swap_non_generic_missions" , const (msgToPP MsgGainNewMissions))
-        ,("type" , const (msgToPP MsgTypeAll)) -- FIXME: This is a hack to handle xxxx_area = { type = all }
-        ,("auto_explore_adjacent_to_colony", const (msgToPP MsgAutoExploreAdjacentToColony))
-        ,("can_fabricate_for_vassals", const (msgToPP MsgCanFabricateForVassals))
-        ,("idea_claim_colonies"    , const (msgToPP MsgIdeaClaimColonies))
-        ,("may_establish_frontier" , const (msgToPP MsgMayEstablishFrontier))
-        ,("may_perform_slave_raid" , const (msgToPP MsgMayPerformSlaveRaid))
-        ,("may_perform_slave_raid_on_same_religion", const (msgToPP MsgMayPerformSlaveRaidOnSameReligion))
-        ,("may_recruit_female_generals", const (msgToPP MsgMayRecruitFemaleGenerals))
-        ,("no_religion_penalty"    , const (msgToPP MsgNoReligionPenalty))
-        ,("map_setup"              , const (msgToPP MsgMapSetupRandom)) -- In 1.30.6 all uses are "map_setup = map_setup_random"
+        [("add_cardinal"           , rhsAlwaysYes MsgAddCardinal)
+        ,("add_estate_burghers_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_burghers_loyalty_effect"))
+        ,("add_estate_church_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_church_loyalty_effect"))
+        ,("add_estate_cossacks_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|cossacks"))
+        ,("add_estate_dhimmi_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_dhimmi_loyalty_effect"))
+        ,("add_estate_jains_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|jains"))
+        ,("add_estate_nobles_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_nobles_loyalty_effect"))
+        ,("add_innovativeness_big_effect", rhsAlwaysYes MsgAddInnovativenessBigEffect)
+        ,("add_innovativeness_small_effect", rhsAlwaysYes MsgAddInnovativenessSmallEffect)
+        ,("add_loot_from_province_effect", rhsAlwaysYes MsgAddLootFromProvinceEffect)
+        ,("add_mandate_effect"     , rhsAlwaysYes MsgAddMandateEffect)
+        ,("add_mandate_large_effect", rhsAlwaysYes MsgAddMandateLargeEffect)
+        ,("add_meritocracy_effect" , rhsAlwaysYes MsgAddMeritocracyEffect)
+        ,("add_meritocracy_large_effect", rhsAlwaysYes MsgAddMeritocracyLargeEffect)
+        ,("add_reform_progress_medium_effect", rhsAlwaysYes MsgAddReformProgressMediumEffect)
+        ,("add_reform_progress_small_effect", rhsAlwaysYes MsgAddReformProgressSmallEffect)
+        ,("add_stability_or_adm_power", rhsAlwaysYes MsgAddStabilityOrAdm)
+        ,("boost_bureaucrats_effect", rhsAlwaysYes MsgBoostBureaucratsEffect)
+        ,("boost_bureaucrats_large_effect", rhsAlwaysYes MsgBoostBureaucratsLargeEffect)
+        ,("boost_eunuchs_effect", rhsAlwaysYes MsgBoostEunuchsEffect)
+        ,("boost_eunuchs_large_effect", rhsAlwaysYes MsgBoostEunuchsLargeEffect)
+        ,("boost_temples_effect", rhsAlwaysYes MsgBoostTemplesEffect)
+        ,("boost_temples_large_effect", rhsAlwaysYes MsgBoostTemplesLargeEffect)
+        ,("cancel_construction"    , rhsAlwaysYes MsgCancelConstruction) -- Canals
+        ,("cb_on_overseas"         , rhsAlwaysYes MsgGainOverseasCB) -- Full Expansion
+        ,("cb_on_primitives"       , rhsAlwaysYes MsgGainPrimitivesCB) -- Full Exploration
+        ,("cb_on_religious_enemies", rhsAlwaysYes MsgGainReligiousCB) -- Deus Vult
+        ,("check_if_non_state_advisor_effect", const $ msgToPP MsgCheckIfNonStateAdvisorEffect) -- Ignore actual percentages
+        ,("divorce_consort_effect", rhsAlwaysYes MsgDivorceConsortEffect)
+        ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)
+        ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
+        ,("increase_heir_adm_effect", rhsAlwaysYes MsgIncreaseHeirAdmEffect)
+        ,("increase_heir_dip_effect", rhsAlwaysYes MsgIncreaseHeirDipEffect)
+        ,("increase_heir_mil_effect", rhsAlwaysYes MsgIncreaseHeirMilEffect)
+        ,("increase_legitimacy_medium_effect", rhsAlwaysYes MsgIncreaseLegitimacyMediumEffect)
+        ,("increase_legitimacy_small_effect", rhsAlwaysYes MsgIncreaseLegitimacySmallEffect)
+        ,("is_janissary_modifier"  , rhsAlwaysYes MsgIsJanissaryMod)
+        ,("kill_heir"              , rhsAlwaysYes MsgHeirDies)
+        ,("kill_ruler"             , rhsAlwaysYes MsgRulerDies)
+        ,("may_agitate_for_liberty", rhsAlwaysYes MsgMayAgitateForLiberty) -- Espionage: Destabilizing Efforts
+        ,("may_explore"            , rhsAlwaysYes MsgMayExplore) -- Exploration: Quest for the New World
+        ,("may_infiltrate_administration", rhsAlwaysYes MsgMayInfiltrateAdministration) -- Espionage: Espionage
+        ,("may_sabotage_reputation", rhsAlwaysYes MsgMaySabotageReputation) -- Espionage: Rumormongering
+        ,("may_sow_discontent"     , rhsAlwaysYes MsgMaySowDiscontent) -- Espionage: Destabilizing Efforts
+        ,("may_study_technology"   , rhsAlwaysYes MsgMayStudyTech) -- Espionage: Shady Recruitment
+        ,("move_capital_effect"    , rhsAlwaysYes MsgMoveCapitalEffect)
+        ,("set_hre_religion_treaty", rhsAlwaysYes MsgSignWestphalia)
+        ,("reduced_stab_impacts"   , rhsAlwaysYes MsgReducedStabImpacts) -- Full Diplomacy
+        ,("reduce_estate_burghers_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_burghers_loyalty_effect"))
+        ,("reduce_estate_church_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_church_loyalty_effect"))
+        ,("reduce_estate_cossacks_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|cossacks|lose"))
+        ,("reduce_estate_dhimmi_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_dhimmi_loyalty_effect"))
+        ,("reduce_estate_jains_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|jains|lose"))
+        ,("reduce_estate_nobles_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_nobles_loyalty_effect"))
+        ,("reduce_bureaucrats_effect", rhsAlwaysYes MsgReduceBureaucratsEffect)
+        ,("reduce_eunuchs_effect"  , rhsAlwaysYes MsgReduceEunuchsEffect)
+        ,("reduce_innovativeness_small_effect", rhsAlwaysYes MsgAddInnovativenessSmallEffect)
+        ,("reduce_temples_effect"  , rhsAlwaysYes MsgReduceTemplesEffect)
+        ,("reduce_legitimacy_medium_effect", rhsAlwaysYes MsgReduceLegitimacyEffect)
+        ,("reduce_legitimacy_small_effect", rhsAlwaysYes MsgReduceLegitimacySmallEffect)
+        ,("reduce_mandate_effect", rhsAlwaysYes MsgReduceMandateEffect)
+        ,("reduce_mandate_large_effect", rhsAlwaysYes MsgReduceMandateLargeEffect)
+        ,("reduce_meritocracy_effect", rhsAlwaysYes MsgReduceMeritocracyEffect)
+        ,("reduce_meritocracy_large_effect", rhsAlwaysYes MsgReduceMeritocracyLargeEffect)
+        ,("reduce_reform_progress_small_effect", rhsAlwaysYes MsgReduceReformProgressSmallEffect)
+        ,("reduce_reform_progress_medium_effect", rhsAlwaysYes MsgReduceReformProgressMediumEffect)
+        ,("reduce_reform_progress_big_effect", rhsAlwaysYes MsgReduceReformProgressBigEffect)
+        ,("remove_advisor_adm_effect", rhsAlwaysYes MsgRemoveAdvisorAdmEffect) -- "The currently employed administrative advisor leaves the country's court."
+        ,("remove_cardinal"        , rhsAlwaysYes MsgLoseCardinal)
+        ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
+        ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
+        ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
+        ,("type" , rhsAlways "all" MsgTypeAll) -- FIXME: This is a hack to handle xxxx_area = { type = all }
+        ,("auto_explore_adjacent_to_colony", rhsAlwaysYes MsgAutoExploreAdjacentToColony)
+        ,("can_fabricate_for_vassals", rhsAlwaysYes MsgCanFabricateForVassals)
+        ,("idea_claim_colonies"    , rhsAlwaysYes MsgIdeaClaimColonies)
+        ,("may_establish_frontier" , rhsAlwaysYes MsgMayEstablishFrontier)
+        ,("may_perform_slave_raid" , rhsAlwaysYes MsgMayPerformSlaveRaid)
+        ,("may_perform_slave_raid_on_same_religion", rhsAlwaysYes MsgMayPerformSlaveRaidOnSameReligion)
+        ,("may_recruit_female_generals", rhsAlwaysYes MsgMayRecruitFemaleGenerals)
+        ,("no_religion_penalty"    , rhsAlwaysYes MsgNoReligionPenalty)
+        ,("map_setup"              , rhsAlways "map_setup_random" MsgMapSetupRandom) -- In 1.30.6 all uses are "map_setup = map_setup_random"
         ]
 
 -- | Handlers for numeric statements

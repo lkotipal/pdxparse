@@ -95,6 +95,8 @@ module EU4.Handlers (
     ,   defineMilitaryLeader
     ,   setSavedName
     ,   hasCasusBelli
+    ,   rhsAlways
+    ,   rhsAlwaysYes
     -- testing
     ,   isPronoun
     ,   flag
@@ -1137,6 +1139,14 @@ ppAiMod (AIModifier (Just multiplier) triggers) = do
             : map (first succ) triggers_pp'd -- indent up
 ppAiMod (AIModifier Nothing _) =
     plainMsg "(missing multiplier for this factor)"
+
+-- | Verify assumption about rhs
+rhsAlways :: (EU4Info g, Monad m) => Text -> ScriptMessage -> StatementHandler g m
+rhsAlways assumedRhs msg [pdx| %_ = ?rhs |] | T.toLower rhs == assumedRhs = msgToPP $ msg
+rhsAlways _ _ stmt = preStatement stmt
+
+rhsAlwaysYes :: (EU4Info g, Monad m) => ScriptMessage -> StatementHandler g m
+rhsAlwaysYes = rhsAlways "yes"
 
 ---------------------------------
 -- Specific statement handlers --
