@@ -137,7 +137,7 @@ import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), Ga
                      , getGameL10n, getGameL10nIfPresent, getGameL10nDefault, withCurrentFile
                      , unfoldM, unsnoc )
 import Templates
-import {-# SOURCE #-} EU4.Common (pp_script, ppMany, ppOne)
+import {-# SOURCE #-} EU4.Common (pp_script, ppMany, ppOne, extractStmt, matchLhsText)
 import EU4.Types -- everything
 
 import Debug.Trace
@@ -2262,14 +2262,16 @@ triggerSwitch stmt = preStatement stmt
 --  }
 -- @
 --
--- We expect the @amount@ clause to come last.
 calcTrueIf :: (EU4Info g, Monad m) => StatementHandler g m
-calcTrueIf stmt@[pdx| %_ = @stmts |]
-    | Just (conds, [pdx| amount = !count |]) <- unsnoc stmts
-    = do
-        stmtMessages <- ppMany conds
-        withCurrentIndent $ \i ->
-            return $ (i, MsgCalcTrueIf count) : stmtMessages
+calcTrueIf stmt@[pdx| %_ = @stmts |] = do
+    let (mvalStmt, rest) = extractStmt (matchLhsText "amount") stmts
+        (_, rest') = extractStmt (matchLhsText "desc") rest -- ignore desc for missions
+    case mvalStmt of
+        Just [pdx| %_ = !count |] -> do
+            restMsgs <- ppMany rest'
+            withCurrentIndent $ \i ->
+                return $ (i, MsgCalcTrueIf count) : restMsgs
+        _ -> preStatement stmt
 calcTrueIf stmt = preStatement stmt
 
 
@@ -2277,20 +2279,15 @@ calcTrueIf stmt = preStatement stmt
 -- Handler for num_of_owned_provinces_with --
 ---------------------------------------------
 
--- Expect "value" to come first or last
 numOwnedProvincesWith :: (EU4Info g, Monad m) => StatementHandler g m
-numOwnedProvincesWith stmt@[pdx| %_ = @stmts |]
-    | [pdx| value = !count |] : conds <- stmts
-    = do
-        stmtMessages <- ppMany conds
-        withCurrentIndent $ \i ->
-            return $ (i, MsgNumOwnedProvincesWith count) : stmtMessages
-numOwnedProvincesWith stmt@[pdx| %_ = @stmts |]
-    | Just (conds, [pdx| value = !count |]) <- unsnoc stmts
-    = do
-        stmtMessages <- ppMany conds
-        withCurrentIndent $ \i ->
-            return $ (i, MsgNumOwnedProvincesWith count) : stmtMessages
+numOwnedProvincesWith stmt@[pdx| %_ = @stmts |] = do
+    let (mvalStmt, rest) = extractStmt (matchLhsText "value") stmts
+    case mvalStmt of
+        Just [pdx| %_ = !count |] -> do
+            restMsgs <- ppMany rest
+            withCurrentIndent $ \i ->
+                return $ (i, MsgNumOwnedProvincesWith count) : restMsgs
+        _ -> preStatement stmt
 numOwnedProvincesWith stmt = preStatement stmt
 
 -- Holy Roman Empire

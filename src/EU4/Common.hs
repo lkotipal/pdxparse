@@ -10,6 +10,7 @@ module EU4.Common (
     ,   iconKey, iconFile, iconFileB
     ,   AIWillDo (..), AIModifier (..)
     ,   ppAiWillDo, ppAiMod
+    ,   extractStmt, matchLhsText
     ,   module EU4.Types
     ) where
 
@@ -1161,4 +1162,18 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
     CustomLhs _ -> preStatement stmt
 ppOne stmt = preStatement stmt
 
+-- | Try to extra one matching statement
+extractStmt :: (a -> Bool) -> [a] -> (Maybe a, [a])
+extractStmt p xs = extractStmt' p xs []
+    where
+        extractStmt' _ [] acc = (Nothing, acc)
+        extractStmt' p (x:xs) acc =
+            if p x then
+                (Just x, acc++xs)
+            else
+                extractStmt' p xs (acc++[x])
 
+-- | Predicate for matching text on the left hand side
+matchLhsText :: Text -> GenericStatement -> Bool
+matchLhsText t s@[pdx| $lhs = %_ |] | t == lhs = True
+matchLhsText _ _ = False
