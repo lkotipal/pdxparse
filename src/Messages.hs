@@ -4166,7 +4166,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (reducedNum (colourPcSign True) _amt)
                 , " {{DLC-only|Church power}}"
                 ]
         MsgPrestige {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
