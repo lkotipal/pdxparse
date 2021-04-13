@@ -3932,7 +3932,7 @@ instance RenderMessage Script ScriptMessage where
         MsgNavyTradition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " Naval tradition is at least "
+                , " Navy tradition is at least "
                 , toMessage (plainNum _amt)
                 ]
         MsgYearlyNavyTradition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -3940,7 +3940,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Yearly naval tradition"
+                , " Yearly navy tradition"
                 ]
         MsgHeavyShipCombatAbility {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
