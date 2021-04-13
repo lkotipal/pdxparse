@@ -944,7 +944,7 @@ handlersIconFlagOrPronoun = Tr.fromList
         ,("dominant_religion", locAtomTagOrProvince MsgDominantReligion MsgDominantReligionAs)
         ,("heir_nationality" , locAtomTagOrProvince (const MsgHeirNationality) MsgHeirNationalityAs)
         ,("heir_religion"    , locAtomTagOrProvince MsgHeirReligion MsgHeirReligionAs)
-        ,("is_core"          , tagOrProvince MsgIsCoreOf MsgHasCoreOn (Just EU4From))
+        ,("is_core"          , tagOrProvince MsgIsCoreOf MsgHasCoreOn (Just EU4Country))
         ,("is_claim"         , tagOrProvince MsgHasClaim MsgHasClaimOn (Just EU4Country))
         ,("primary_culture"  , locAtomTagOrProvince (const MsgPrimaryCultureIs) MsgPrimaryCultureIsAs)
         ,("religion"         , locAtomTagOrProvince MsgReligion MsgSameReligion)
