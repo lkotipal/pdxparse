@@ -5252,7 +5252,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Spy offense"
+                , " Spy network construction"
                 ]
         MsgCovertActionRelationImpact {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
