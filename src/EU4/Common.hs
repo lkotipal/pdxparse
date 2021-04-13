@@ -184,7 +184,6 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_non_electors_emperors_from_empire_effect", const (msgToPP MsgLeaveHRE))
         ,("sea_repair"             , const (msgToPP MsgGainSeaRepair)) -- Full Maritime
         ,("swap_non_generic_missions" , const (msgToPP MsgGainNewMissions))
-        ,("type" , const (msgToPP MsgTypeAll)) -- FIXME: This is a hack to handle xxxx_area = { type = all }
         ]
 
 -- | Handlers for numeric statements
@@ -1149,7 +1148,15 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
                 mloc <- getGameL10nIfPresent label
                 case mloc of
                     -- Check for localizable atoms, e.g. regions
-                    Just loc -> compound loc stmt
+                    Just loc -> case rhs of
+                        CompoundRhs scr -> do
+                            let (mtypeStmt, rest) = extractStmt (matchLhsText "type") scr
+                            [header] <- plainMsg $ (case mtypeStmt of
+                                Just [pdx| %_ = all |] -> "All provinces in "
+                                _ -> "") <> loc <> ":"
+                            scriptMsgs <- scope EU4Country $ ppMany rest
+                            return (header : scriptMsgs)
+                        _ -> compound loc stmt
                     Nothing -> preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
     IntLhs n -> do -- Treat as a province tag
