@@ -2417,7 +2417,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNum False _amt)
+                , toMessage (colourNumSign False _amt)
                 , " Monthly war exhaustion"
                 ]
         MsgWarScore {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
