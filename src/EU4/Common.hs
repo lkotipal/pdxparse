@@ -193,6 +193,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("may_perform_slave_raid_on_same_religion", const (msgToPP MsgMayPerformSlaveRaidOnSameReligion))
         ,("may_recruit_female_generals", const (msgToPP MsgMayRecruitFemaleGenerals))
         ,("no_religion_penalty"    , const (msgToPP MsgNoReligionPenalty))
+        ,("map_setup"              , const (msgToPP MsgMapSetupRandom)) -- In 1.30.6 all uses are "map_setup = map_setup_random"
         ]
 
 -- | Handlers for numeric statements

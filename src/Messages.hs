@@ -1141,6 +1141,7 @@ data ScriptMessage
     | MsgWarscoreCostVsOtherReligion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyHarmony {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyRevolutionaryZeal {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgMapSetupRandom
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7601,6 +7602,8 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNumSign True _amt)
                 , " {{DLC-only|Yearly revolutionary zeal}}"
                 ]
+        MsgMapSetupRandom
+            -> "Using random map setup"
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
