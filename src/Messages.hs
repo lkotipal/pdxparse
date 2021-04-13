@@ -5375,7 +5375,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourPcSign True _amt)
+                , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Reinforce speed"
                 ]
         MsgAttritionForEnemies {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
