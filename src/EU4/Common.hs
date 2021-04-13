@@ -1011,6 +1011,7 @@ handlersYesNo = Tr.fromList
         ,("is_elector"                  , withBool MsgIsElector)
         ,("is_emperor"                  , withBool MsgIsEmperor)
         ,("is_female"                   , withBool MsgIsFemale)
+        ,("is_great_power"              , withBool MsgIsGreatPower)
         ,("is_in_capital_area"          , withBool MsgIsInCapitalArea)
         ,("is_in_league_war"            , withBool MsgIsInLeagueWar)
         ,("is_lesser_in_union"          , withBool MsgIsLesserInUnion)

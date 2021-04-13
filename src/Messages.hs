@@ -1143,6 +1143,7 @@ data ScriptMessage
     | MsgYearlyRevolutionaryZeal {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMapSetupRandom
     | MsgValidForPU {scriptMessageYn :: Bool}
+    | MsgIsGreatPower {scriptMessageYn :: Bool}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7610,6 +7611,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " an independent [[Christian]] [[monarchy]]"
+                ]
+        MsgIsGreatPower { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " a [[great power]]"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
