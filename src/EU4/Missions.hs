@@ -164,7 +164,7 @@ writeEU4Missions = do
             return $ mconcat  $ [
                 "|-", PP.line,
                 "| {{iconbox|", Doc.strictText title, "|", Doc.strictText desc, "|image=", Doc.strictText (eu4m_icon m), ".png}}", PP.line,
-                "| ", trigger, PP.line,
-                "| ", effect, PP.line,
+                "|", PP.line, trigger, PP.line,
+                "|", PP.line, effect, PP.line,
                 "| "] ++ prereqs ++ [PP.line]
 
