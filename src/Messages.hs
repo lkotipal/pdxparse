@@ -4026,7 +4026,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign False (negate _amt))
+                , toMessage (colourNumSign True _amt)
                 , " Yearly inflation reduction"
                 ]
         MsgInterestPerAnnum {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
