@@ -2459,7 +2459,7 @@ piety stmt = preStatement stmt
 dynasty :: (EU4Info g, Monad m) => StatementHandler g m
 dynasty stmt@[pdx| %_ = ?str |] = do
     nflag <- flag (Just EU4Country) str
-    if isTag str || isTag str then
+    if isTag str || isPronoun str then
         msgToPP $ MsgRulerIsSameDynasty (Doc.doc2text nflag)
     else
         msgToPP $ MsgRulerIsDynasty str
