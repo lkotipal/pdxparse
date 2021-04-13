@@ -1144,6 +1144,7 @@ data ScriptMessage
     | MsgMapSetupRandom
     | MsgValidForPU {scriptMessageYn :: Bool}
     | MsgIsGreatPower {scriptMessageYn :: Bool}
+    | MsgTradeShare {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7617,6 +7618,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " a [[great power]]"
+                ]
+        MsgTradeShare {scriptMessageIcon = _, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _whom
+                , " controls at least "
+                , toMessage (plainPc _amt)
+                , " of the [[trade]] in the [[trade node]]"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
