@@ -633,6 +633,7 @@ handlersNumericIcons = Tr.fromList
         ,("sunk_ship_morale_hit_recieved"     , numericIcon "morale hit when losing a ship" MsgSunkShipMoraleHitRecieved)
         ,("trade_company_investment_cost"     , numericIcon "trade company investment cost" MsgTradeCompanyInvestmentCost)
         ,("transport_cost"                    , numericIcon "transport cost" MsgTransportCost)
+        ,("treasure_fleet_income"             , numericIcon "treasure fleet income" MsgTreasureFleetIncome)
         ,("vaisyas_loyalty_modifier"          , numericIcon "vaishyas loyalty" MsgVaisyasLoyaltyModifier)
         ,("warscore_cost_vs_other_religion"   , numericIcon "war score cost vs other religions" MsgWarscoreCostVsOtherReligion)
         ,("yearly_harmony"                    , numericIcon "yearly harmony increase" MsgYearlyHarmony)

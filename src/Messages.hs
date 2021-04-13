@@ -1136,6 +1136,7 @@ data ScriptMessage
     | MsgSunkShipMoraleHitRecieved {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTradeCompanyInvestmentCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTransportCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgTreasureFleetIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgVaisyasLoyaltyModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgWarscoreCostVsOtherReligion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyHarmony {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -6903,9 +6904,9 @@ instance RenderMessage Script ScriptMessage where
         MsgAllowedMarineFraction {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Marines force limit"
+                , " {{DLC-only|Marines force limit|"
+                , toMessage (reducedNum plainNumSign _amt)
+                , "}}"
                 ]
         MsgAllowedNumOfBuildings {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7019,9 +7020,9 @@ instance RenderMessage Script ScriptMessage where
         MsgCenterOfTradeUpgradeCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign False) _amt)
-                , " Center of trade upgrade cost"
+                , " {{DLC-only|Center of trade upgrade cost|"
+                , toMessage (reducedNum plainNumSign _amt)
+                , "}}"
                 ]
         MsgChurchLoyaltyModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7073,9 +7074,9 @@ instance RenderMessage Script ScriptMessage where
         MsgExpelMinoritiesCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign False) _amt)
-                , " Expel minorities cost"
+                , " {{DLC-only|Expel minorities cost|"
+                , toMessage (reducedNum plainNumSign _amt)
+                , "}}"
                 ]
         MsgFemaleAdvisorChance {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7564,6 +7565,13 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Transport cost"
+                ]
+        MsgTreasureFleetIncome {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " {{DLC-only|Treasure fleet income|"
+                , toMessage (reducedNum plainNumSign _amt)
+                , "}}"
                 ]
         MsgVaisyasLoyaltyModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
