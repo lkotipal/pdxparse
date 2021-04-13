@@ -14,7 +14,7 @@ import Control.Monad.Except (MonadError (..))
 import Control.Monad.State (MonadState (..), gets)
 import Control.Monad.Trans (MonadIO (..))
 
-import Data.List (intersperse, foldl')
+import Data.List (intersperse, find, foldl')
 import Data.Maybe (isJust, isNothing, fromMaybe, fromJust, catMaybes)
 import Data.Monoid ((<>))
 
@@ -148,11 +148,19 @@ writeEU4Missions = do
                     -- table footer
                     ["|}", PP.line]
 
+        -- TODO: Could create cache of icons instead of going through all missions every time
+        findIcon :: [EU4MissionTreeBranch] -> Text -> Text
+        findIcon [] n = n
+        findIcon (mtb:mtbs) n = case find (\m -> (eu4m_id m) == n) (eu4mtb_missions mtb) of
+            Just m -> eu4m_icon m
+            Nothing -> findIcon mtbs n
+
         pp_prereq :: (EU4Info g, Monad m) => Text -> PPT g m Doc
         pp_prereq req = do
-            -- TODO: Need icon
+            missions <- getMissions
             title <- getGameL10n $ req <> "_title"
-            return $ mconcat [Doc.strictText title, PP.line]
+            let icon = findIcon (HM.elems missions) req
+            return $ mconcat [Doc.strictText $ "[[File:" <> icon <> ".png|24px]]" <> " " <> title, PP.line]
 
         pp_m :: (EU4Info g, Monad m) => EU4Mission -> PPT g m Doc
         pp_m m = do
