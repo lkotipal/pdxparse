@@ -4095,7 +4095,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign False _amt)
+                , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Missionary Maintenance Cost"
                 ]
         MsgStabilityCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
