@@ -5281,7 +5281,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign False) _amt)
-                , " Army tradition decay"
+                , " Yearly army tradition decay"
                 ]
         MsgNavyTraditionDecay {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
