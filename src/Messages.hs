@@ -4897,7 +4897,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (colourNumSign True _amt)
+                , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Vassal force limit contribution"
                 ]
         MsgUnjustifiedDemands {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
