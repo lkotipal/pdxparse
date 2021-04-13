@@ -621,6 +621,7 @@ handlersNumericIcons = Tr.fromList
         ,("possible_policy"                   , numericIcon "possible policies" MsgPossiblePolicy)
         ,("power_projection_from_insults"     , numericIcon "power projection from insults" MsgPowerProjectionFromInsults)
         ,("pr_captains_influence"             , numericIcon "captains influence" MsgPrCaptainsInfluence)
+        ,("province_has_center_of_trade_of_level" , numericIcon "center of trade" MsgProviceHasCenterOfTrade)
         ,("reelection_cost"                   , numericIcon "reelection cost" MsgReelectionCost)
         ,("reform_progress_growth"            , numericIcon "reform progress growth" MsgReformProgressGrowth)
         ,("reinforce_cost_modifier"           , numericIcon "reinforce cost" MsgReinforceCostModifier)
