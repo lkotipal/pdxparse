@@ -1032,6 +1032,7 @@ data ScriptMessage
     | MsgNavalLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavalLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgCountryOrNonSovereignSubjectHolds {scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6772,6 +6773,12 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage $ bold (roundNum _amt)
                 , " siege"
+                ]
+        MsgCountryOrNonSovereignSubjectHolds {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Province is controlled by "
+                , _whom
+                , " or its non-tributary subjects"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
