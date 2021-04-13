@@ -442,7 +442,7 @@ data ScriptMessage
     | MsgAddTreasury {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddYearsOfIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDevelCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgLocalDevelopmentCost {scriptMessageYn :: Bool, scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLocalDevelopmentCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNewHeir
     | MsgNewHeirAttribs
     | MsgNewConsort
@@ -4070,17 +4070,16 @@ instance RenderMessage Script ScriptMessage where
         MsgDevelCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " {{DLC-only|Development cost|"
-                , toMessage (reducedNum plainNumSign _amt)
-                , "}}"
+                , " "
+                , toMessage (reducedNum (colourPcSign False) _amt)
+                , " Development cost"
                 ]
-        MsgLocalDevelopmentCost {scriptMessageYn = _yn, scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgLocalDevelopmentCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , "{{DLC-only|Local development cost|"
-                , toMessage (reducedNum plainNumSign _amt)
-                , ifThenElseT _yn "" "|replace=no"
-                , "}}"
+                , " "
+                , toMessage (reducedNum (colourPcSign False) _amt)
+                , " Local development cost"
                 ]
         MsgGainReligiousCB
             -> "{{icon|cb on religious enemies|28px}} Gain permanent \"Holy War\" and \"Purging of Heresy\" [[Casus Belli]] against heathens and heretics respectively."

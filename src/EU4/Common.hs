@@ -300,8 +300,6 @@ handlersNumericIcons = Tr.fromList
         ,("create_conquistador"      , numericIcon "conquistador" MsgCreateConquistador)
         ,("create_explorer"          , numericIcon "explorer" MsgCreateExplorer)
         ,("create_general"           , numericIcon "general" MsgCreateGeneral)
-        -- used only with Common Sense, absent otherwise
-        ,("cs_only_local_development_cost", numericIcon "local development cost" (MsgLocalDevelopmentCost False))
         ,("development"              , numericIcon "development" MsgDevelopment)
         ,("development_cost"         , numericIcon "development cost" MsgDevelCost)
         ,("dip"                      , numericIcon "dip" MsgRulerDIP)
@@ -335,8 +333,7 @@ handlersNumericIcons = Tr.fromList
         ,("local_colonial_growth"    , numericIcon "local settler increase" MsgLocalSettlerIncrease)
         ,("local_culture_conversion_cost", numericIcon "local culture conversion cost" MsgLocalCultureConversionCost)
         ,("local_defensiveness"      , numericIcon "local defensiveness" MsgLocalDefensiveness)
-        -- replaced with local production efficiency without Common Sense
-        ,("local_development_cost"   , numericIcon "local development cost" (MsgLocalDevelopmentCost True))
+        ,("local_development_cost"   , numericIcon "local development cost" MsgLocalDevelopmentCost )
         ,("local_hostile_movement_speed", numericIcon "local hostile movement speed" MsgLocalHostileMovementSpeed)
         ,("local_institution_spread" , numericIcon "local institution spread" MsgLocalInstitutionSpread)
         ,("local_manpower_modifier"  , numericIcon "local manpower modifier" MsgLocalManpowerMod)
