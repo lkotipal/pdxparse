@@ -6783,7 +6783,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgCountryOrNonSovereignSubjectHolds {scriptMessageWhom = _whom}
             -> mconcat
-                [ "Province is controlled by "
+                [ "Province is owned by "
                 , _whom
                 , " or its non-tributary subjects"
                 ]
