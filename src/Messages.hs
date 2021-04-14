@@ -6923,9 +6923,9 @@ instance RenderMessage Script ScriptMessage where
         MsgAmountOfBanners {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Possible manchu banners"
+                , " {{DLC-only|Possible manchu banners|"
+                , toMessage (reducedNum plainNumSign _amt)
+                , "}}"
                 ]
         MsgAppointCardinalCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
