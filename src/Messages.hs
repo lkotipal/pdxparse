@@ -6405,7 +6405,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Yearly meritocracy"
+                , " {{DLC-only|Yearly meritocracy}}"
                 ]
         MsgAddInnovativenessBigEffect
             -> "If DLC {{icon|rb}} Rule Britannia is active, gain {{icon|innovativeness}} {{green|3}} innovativeness"
