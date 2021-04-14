@@ -4001,7 +4001,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Colonists"
+                , plural _amt " Colonist" " Colonists"
                 ]
         MsgMayExplore
             -> "{{icon|may explore|28px}} Can recruit explorers and conquistadors. Explorers may explore ocean provinces."
@@ -4203,7 +4203,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Missionaries"
+                , plural _amt " Missionary" " Missionaries"
                 ]
         MsgMissionaryMaintenanceCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5003,7 +5003,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Diplomatic relations"
+                , plural _amt " Diplomatic relation" " Diplomatic relations"
                 ]
         MsgVassalForcelimitContribution {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5143,7 +5143,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Possible advisors"
+                , plural _amt " Possible advisor" " Possible advisors"
                 ]
         MsgReduceInflationCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5157,14 +5157,14 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Leader(s)<!-- sic --> without upkeep"
+                , plural _amt " Leader without upkeep" " Leaders without upkeep"
                 ]
         MsgAdvisorCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign False) _amt)
-                , " Advisor costs"
+                , " Advisor cost"
                 ]
         MsgCoreCreationCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5248,7 +5248,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Diplomats"
+                , plural _amt " Diplomat" " Diplomats"
                 ]
         MsgWarExhaustionCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5313,7 +5313,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Merchants"
+                , plural _amt " Merchant" " Merchants"
                 ]
         MsgRecruitmentTime {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
