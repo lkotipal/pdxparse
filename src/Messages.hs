@@ -5355,7 +5355,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
-                , " National spy defence"
+                , " Foreign spy detection"
                 ]
         MsgMaySabotageReputation
             -> "{{icon|may sabotage reputation|28px}} May [[sabotage reputation]]"
