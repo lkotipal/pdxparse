@@ -160,7 +160,10 @@ writeEU4Missions = do
             missions <- getMissions
             title <- getGameL10n $ req <> "_title"
             let icon = findIcon (HM.elems missions) req
-            return $ mconcat [Doc.strictText $ "[[File:" <> icon <> ".png|24px]]" <> " " <> title, PP.line]
+            return $ mconcat [Doc.strictText $ "[[File:" <> icon <> ".png|24px]]" <> " [[#" <> (linkSyntax title) <> "|" <> title <> "]]", PP.line]
+            where
+                linkSyntax :: Text -> Text
+                linkSyntax t = T.replace "]" ".5D" $ T.replace "[" ".5B" t
 
         pp_m :: (EU4Info g, Monad m) => EU4Mission -> PPT g m Doc
         pp_m m = do
