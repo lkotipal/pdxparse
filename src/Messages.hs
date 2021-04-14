@@ -6301,7 +6301,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
-                , " Max promoted cultures"
+                , plural _amt " Max promoted culture" " Max promoted cultures"
                 ]
         MsgMercenaryDiscipline {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
