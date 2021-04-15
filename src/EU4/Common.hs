@@ -312,6 +312,7 @@ handlersNumericIcons = Tr.fromList
         ,("create_conquistador"      , numericIcon "conquistador" MsgCreateConquistador)
         ,("create_explorer"          , numericIcon "explorer" MsgCreateExplorer)
         ,("create_general"           , numericIcon "general" MsgCreateGeneral)
+        ,("devastation"              , numericIcon "devastation" MsgDevastation)
         ,("development"              , numericIcon "development" MsgDevelopment)
         ,("development_cost"         , numericIcon "development cost" MsgDevelCost)
         ,("dip"                      , numericIcon "dip" MsgRulerDIP)

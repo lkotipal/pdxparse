@@ -1149,6 +1149,7 @@ data ScriptMessage
     | MsgPrivateerPower {scriptMessageAmt :: Double}
     | MsgPrivateerPowerCountry {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgTrigger
+    | MsgDevastation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7652,6 +7653,12 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgTrigger
             -> "Triggered by:"
+        MsgDevastation {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " devastation is at least "
+                , toMessage $ bold (roundNum _amt)
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
