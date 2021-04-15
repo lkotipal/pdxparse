@@ -9,6 +9,7 @@ module EU4.Events (
     ,   findTriggeredEventsInDecisions
     ,   findTriggeredEventsInOnActions
     ,   findTriggeredEventsInDisasters
+    ,   findTriggeredEventsInMissions
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -320,6 +321,14 @@ ppEventSource (EU4EvtSrcDisaster id trig) = do
         , iquotes't idLoc
         , " disaster"
         ]
+ppEventSource (EU4EvtSrcMission missionId) = do
+    title <- getGameL10n (missionId <> "_title")
+    return $ Doc.strictText $ mconcat ["* Completing the <!-- "
+        , missionId
+        , " -->"
+        , iquotes't title
+        , " mission"
+        ]
 
 ppTriggeredBy :: (EU4Info g, Monad m) => Text -> PPT g m Doc
 ppTriggeredBy eventId = do
@@ -617,3 +626,9 @@ findTriggeredEventsInDisasters hm scr = foldl' findInDisaster hm scr
         findInDisaster' id hm [pdx| on_end = $event |] = addEventTriggers hm [(event, EU4EvtSrcDisaster id "End")]
         findInDisaster' id hm [pdx| on_monthly = @scr |] = addEventTriggers hm ((addEventSource (EU4EvtSrcDisaster id "Monthly pulse")) (findInStmts scr))
         findInDisaster' _ hm _ = hm
+
+findTriggeredEventsInMissions :: EU4EventTriggers -> [EU4MissionTreeBranch] -> EU4EventTriggers
+findTriggeredEventsInMissions hm mtbs = foldl' (\h -> \m -> foldl' findInMission h (eu4mtb_missions m)) hm mtbs
+    where
+        findInMission :: EU4EventTriggers -> EU4Mission -> EU4EventTriggers
+        findInMission hm m = addEventTriggers hm $ addEventSource (EU4EvtSrcMission (eu4m_id m)) (findInStmts (eu4m_effect m))

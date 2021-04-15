@@ -176,6 +176,7 @@ data EU4EventSource =
     | EU4EvtSrcDecision Text Text  -- Effect of taking a decision (args are id and localized decision text)
     | EU4EvtSrcOnAction Text       -- An effect from on_actions (arg is the trigger)
     | EU4EvtSrcDisaster Text Text  -- Effect of a disaster (args are id and trigger)
+    | EU4EvtSrcMission Text        -- Effect of completing a mission (arg is the mission id)
     deriving Show
 
 type EU4EventTriggers = HashMap Text [EU4EventSource]

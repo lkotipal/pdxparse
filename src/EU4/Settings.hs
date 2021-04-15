@@ -43,7 +43,8 @@ import EU4.Modifiers ( parseEU4Modifiers, writeEU4Modifiers
 import EU4.Missions (parseEU4Missions , writeEU4Missions)
 import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
-                   , findTriggeredEventsInOnActions, findTriggeredEventsInDisasters)
+                   , findTriggeredEventsInOnActions, findTriggeredEventsInDisasters
+                   , findTriggeredEventsInMissions)
 --import EU4.Policies (parseEU4Policies, writeEU4Policies)
 
 -- | EU4 game type. This is only interesting for its instances.
@@ -226,7 +227,8 @@ parseEU4Scripts = do
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
         te3 = findTriggeredEventsInOnActions te2 (concat (HM.elems on_actions))
         te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
-    --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te4))
+        te5 = findTriggeredEventsInMissions te4 (HM.elems missions)
+    --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))
     modify $ \(EU4D s) -> EU4D $
             s { eu4events = events
             ,   eu4decisions = decisions
@@ -234,7 +236,7 @@ parseEU4Scripts = do
             ,   eu4modifiers = modifiers
             ,   eu4opmods = opinionModifiers
             ,   eu4missions = missions
-            ,   eu4eventTriggers = te4
+            ,   eu4eventTriggers = te5
             }
 
 -- | Output the game data as wiki text.
