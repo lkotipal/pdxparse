@@ -786,6 +786,7 @@ handlersProvince = Tr.fromList
         ,("discover_province" , withProvince MsgDiscoverProvince)
         ,("owns"              , withProvince MsgOwns)
         ,("owns_core_province", withProvince MsgOwnsCore)
+        ,("owns_or_non_sovereign_subject_of" , withProvince MsgOwnsOrNonTribSubject)
         ,("owns_or_vassal_of" , withProvince MsgOwnsOrVassal)
         ,("province_id"       , withProvince MsgProvinceIs)
         ,("set_capital"       , withProvince MsgSetCapital)

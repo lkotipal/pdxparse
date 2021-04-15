@@ -1151,6 +1151,7 @@ data ScriptMessage
     | MsgTrigger
     | MsgDevastation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasEstatePrivilege {scriptMessageWhat :: Text}
+    | MsgOwnsOrNonTribSubject {scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7665,6 +7666,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has the "
                 , _what
                 , " estate privilege"
+                ]
+        MsgOwnsOrNonTribSubject {scriptMessageWhat = _what}
+            -> mconcat
+                [ _what
+                , " is owned by the country or or its non-tributary subjects"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
