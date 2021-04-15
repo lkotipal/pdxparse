@@ -43,7 +43,7 @@ import EU4.Modifiers ( parseEU4Modifiers, writeEU4Modifiers
 import EU4.Missions (parseEU4Missions , writeEU4Missions)
 import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
-                   , findTriggeredEventsInOnActions)
+                   , findTriggeredEventsInOnActions, findTriggeredEventsInDisasters)
 --import EU4.Policies (parseEU4Policies, writeEU4Policies)
 
 -- | EU4 game type. This is only interesting for its instances.
@@ -73,6 +73,7 @@ instance IsGame EU4 where
                 ,   eu4missions = HM.empty
                 ,   eu4eventTriggers = HM.empty
                 ,   eu4onactionsScripts = HM.empty
+                ,   eu4disasterScripts = HM.empty
                 }))
                 (EU4S $ EU4State {
                     eu4currentFile = Nothing
@@ -142,6 +143,9 @@ instance EU4Info EU4 where
     getOnActionsScripts = do
         EU4D ed <- get
         return (eu4onactionsScripts ed)
+    getDisasterScripts = do
+        EU4D ed <- get
+        return (eu4disasterScripts ed)
 
 instance IsGameData (GameData EU4) where
     getSettings (EU4D ed) = eu4settings ed
@@ -171,6 +175,7 @@ readEU4Scripts = do
                     "modifiers" -> "common" </> "event_modifiers"
                     "opinion_modifiers" -> "common" </> "opinion_modifiers"
                     "on_actions" -> "common" </> "on_actions"
+                    "disasters" -> "common" </> "disasters"
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
@@ -193,6 +198,7 @@ readEU4Scripts = do
     opinion_modifiers <- readEU4Script "opinion_modifiers"
     missions <- readEU4Script "missions"
     on_actions <- readEU4Script "on_actions"
+    disasters <- readEU4Script "disasters"
     modify $ \(EU4D s) -> EU4D $ s {
             eu4ideaGroupScripts = ideaGroups
         ,   eu4decisionScripts = decisions
@@ -201,6 +207,7 @@ readEU4Scripts = do
         ,   eu4opmodScripts = opinion_modifiers
         ,   eu4missionScripts = missions
         ,   eu4onactionsScripts = on_actions
+        ,   eu4disasterScripts = disasters
         }
 
 -- | Interpret the script ASTs as usable data.
@@ -214,10 +221,12 @@ parseEU4Scripts = do
     events <- parseEU4Events =<< getEventScripts
     missions <- parseEU4Missions =<< getMissionScripts
     on_actions <- getOnActionsScripts
+    disasters <- getDisasterScripts
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
         te3 = findTriggeredEventsInOnActions te2 (concat (HM.elems on_actions))
-    --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te3))
+        te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
+    --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te4))
     modify $ \(EU4D s) -> EU4D $
             s { eu4events = events
             ,   eu4decisions = decisions
@@ -225,7 +234,7 @@ parseEU4Scripts = do
             ,   eu4modifiers = modifiers
             ,   eu4opmods = opinionModifiers
             ,   eu4missions = missions
-            ,   eu4eventTriggers = te3
+            ,   eu4eventTriggers = te4
             }
 
 -- | Output the game data as wiki text.

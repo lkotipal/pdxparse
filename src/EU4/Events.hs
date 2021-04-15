@@ -8,6 +8,7 @@ module EU4.Events (
     ,   findTriggeredEventsInEvents
     ,   findTriggeredEventsInDecisions
     ,   findTriggeredEventsInOnActions
+    ,   findTriggeredEventsInDisasters
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -309,6 +310,16 @@ ppEventSource (EU4EvtSrcDecision id loc) = do
         ]
 ppEventSource (EU4EvtSrcOnAction act) = do
     return $ Doc.strictText act
+ppEventSource (EU4EvtSrcDisaster id trig) = do
+    idLoc <- getGameL10n id
+    return $ Doc.strictText $ mconcat ["* "
+        , trig
+        , " of the <!-- "
+        , id
+        , " -->"
+        , iquotes't idLoc
+        , " disaster"
+        ]
 
 ppTriggeredBy :: (EU4Info g, Monad m) => Text -> PPT g m Doc
 ppTriggeredBy eventId = do
@@ -470,12 +481,12 @@ findInStmt _ = []
 findInStmts :: [GenericStatement] -> [Text]
 findInStmts stmts = concatMap findInStmt stmts
 
-addEventsource :: EU4EventSource -> [Text] -> [(Text, EU4EventSource)]
-addEventsource es l = map (\t -> (t, es)) l
+addEventSource :: EU4EventSource -> [Text] -> [(Text, EU4EventSource)]
+addEventSource es l = map (\t -> (t, es)) l
 
 findInOptions :: Text -> [EU4Option] -> [(Text, EU4EventSource)]
 findInOptions eventId opts = concatMap (\o -> case eu4opt_name o of
-    Just optName -> addEventsource (EU4EvtSrcOption eventId optName) (maybe [] (concatMap findInStmt) (eu4opt_effects o))
+    Just optName -> addEventSource (EU4EvtSrcOption eventId optName) (maybe [] (concatMap findInStmt) (eu4opt_effects o))
     _ -> []
     ) opts
 
@@ -495,21 +506,21 @@ findTriggeredEventsInEvents hm evts = addEventTriggers hm (concatMap findInEvent
             (case eu4evt_options evt of
                 Just opts -> findInOptions eventId opts
                 _ -> []) ++
-            (addEventsource (EU4EvtSrcImmediate eventId) (maybe [] findInStmts (eu4evt_immediate evt))) ++
-            (addEventsource (EU4EvtSrcAfter eventId) (maybe [] findInStmts (eu4evt_after evt)))
+            (addEventSource (EU4EvtSrcImmediate eventId) (maybe [] findInStmts (eu4evt_immediate evt))) ++
+            (addEventSource (EU4EvtSrcAfter eventId) (maybe [] findInStmts (eu4evt_after evt)))
         findInEvent _ = []
 
 findTriggeredEventsInDecisions :: EU4EventTriggers -> [EU4Decision] -> EU4EventTriggers
 findTriggeredEventsInDecisions hm ds = addEventTriggers hm (concatMap findInDecision ds)
     where
         findInDecision :: EU4Decision -> [(Text, EU4EventSource)]
-        findInDecision d = addEventsource (EU4EvtSrcDecision (dec_name d) (dec_name_loc d)) (findInStmts (dec_effect d))
+        findInDecision d = addEventSource (EU4EvtSrcDecision (dec_name d) (dec_name_loc d)) (findInStmts (dec_effect d))
 
 findTriggeredEventsInOnActions :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
 findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
     where
         findInAction :: EU4EventTriggers -> GenericStatement -> EU4EventTriggers
-        findInAction hm stmt@[pdx| $lhs = @scr |] = addEventTriggers hm (addEventsource (EU4EvtSrcOnAction (actionName lhs)) (findInStmts scr))
+        findInAction hm stmt@[pdx| $lhs = @scr |] = addEventTriggers hm (addEventSource (EU4EvtSrcOnAction (actionName lhs)) (findInStmts scr))
         findInAction hm stmt = (trace $ "Unknown on_actions statement: " ++ show stmt) $ hm
 
         actionName :: Text -> Text
@@ -593,3 +604,16 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_war_won", "")
             --,("on_weak_heir_claim", "")
             ]
+
+findTriggeredEventsInDisasters :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
+findTriggeredEventsInDisasters hm scr = foldl' findInDisaster hm scr
+    where
+        findInDisaster :: EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInDisaster hm stmt@[pdx| $id = @scr |] = foldl' (findInDisaster' id) hm scr
+        findInDisaster hm stmt = (trace $ "Unknown top-level disaster statement: " ++ show stmt) $ hm
+
+        findInDisaster' :: Text -> EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInDisaster' id hm [pdx| on_start = $event |] = addEventTriggers hm [(event, EU4EvtSrcDisaster id "Start")]
+        findInDisaster' id hm [pdx| on_end = $event |] = addEventTriggers hm [(event, EU4EvtSrcDisaster id "End")]
+        findInDisaster' id hm [pdx| on_monthly = @scr |] = addEventTriggers hm ((addEventSource (EU4EvtSrcDisaster id "Monthly pulse")) (findInStmts scr))
+        findInDisaster' _ hm _ = hm
