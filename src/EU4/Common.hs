@@ -745,6 +745,7 @@ handlersCompound = Tr.fromList
         ,("random_trade_node"       , scope EU4TradeNode . compoundMessage MsgRandomTradeNode)
         ,("region_for_scope_province" , scope EU4Province . compoundMessage MsgRegionProvinceScope)
         ,("strongest_trade_power"   , scope EU4Country   . compoundMessage MsgStrongestTradePower) -- always needs editing
+        ,("trigger"                 ,                      compoundMessage MsgTrigger) -- observed in random_list (probably something unhandled if seen elsewhere)
         ,("while"                   , scope EU4Country   . compoundMessage MsgWhile) -- always needs editing
         ]
 

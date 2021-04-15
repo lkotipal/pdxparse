@@ -1148,6 +1148,7 @@ data ScriptMessage
     | MsgProviceHasCenterOfTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrivateerPower {scriptMessageAmt :: Double}
     | MsgPrivateerPowerCountry {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgTrigger
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7649,7 +7650,8 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage $ bold (plainPc _amt)
                 , " trade power from [[privateering]]"
                 ]
-
+        MsgTrigger
+            -> "Triggered by:"
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
