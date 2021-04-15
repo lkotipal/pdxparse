@@ -1152,6 +1152,7 @@ data ScriptMessage
     | MsgDevastation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasEstatePrivilege {scriptMessageWhat :: Text}
     | MsgOwnsOrNonTribSubject {scriptMessageWhat :: Text}
+    | MsgHasConsortRegency {scriptMessageYn :: Bool}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7671,6 +7672,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _what
                 , " is owned by the country or or its non-tributary subjects"
+                ]
+        MsgHasConsortRegency {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " in a consort regency"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

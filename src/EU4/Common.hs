@@ -976,6 +976,7 @@ handlersYesNo = Tr.fromList
         ,("has_cardinal"                , withBool MsgHasCardinal)
         ,("has_completed_all_reforms_trigger" , withBool MsgHasCompletedAllReforms)
         ,("has_consort"                 , withBool MsgHasConsort)
+        ,("has_consort_regency"         , withBool MsgHasConsortRegency)
         ,("has_custom_ideas"            , withBool MsgHasCustomIdeas)
         ,("has_factions"                , withBool MsgHasFactions)
         ,("has_female_heir"             , withBool MsgHasFemaleHeir)
