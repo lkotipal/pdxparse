@@ -51,13 +51,14 @@ data EU4Data = EU4Data {
     ,   eu4modifiers :: HashMap Text EU4Modifier
     ,   eu4opmods :: HashMap Text EU4OpinionModifier
     ,   eu4missions :: HashMap Text EU4MissionTreeBranch
+    ,   eu4eventTriggers :: EU4EventTriggers
     ,   eu4eventScripts :: HashMap FilePath GenericScript
     ,   eu4decisionScripts :: HashMap FilePath GenericScript
     ,   eu4ideaGroupScripts :: HashMap FilePath GenericScript
     ,   eu4modifierScripts :: HashMap FilePath GenericScript
     ,   eu4opmodScripts :: HashMap FilePath GenericScript
     ,   eu4missionScripts :: HashMap FilePath GenericScript
-    ,   eu4eventTriggers :: EU4EventTriggers
+    ,   eu4onactionsScripts :: HashMap FilePath GenericScript
     -- etc.
     }
 
@@ -107,6 +108,8 @@ class (IsGame g,
     getMissions :: Monad m => PPT g m (HashMap Text EU4MissionTreeBranch)
     -- | get the (known) event triggers
     getEventTriggers :: Monad m => PPT g m EU4EventTriggers
+    -- | get the on actions script files
+    getOnActionsScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
 
 -------------------
 -- Feature types --
@@ -168,6 +171,7 @@ data EU4EventSource =
     | EU4EvtSrcAfter Text          -- After effect of an event (arg is event ID)
     | EU4EvtSrcOption Text Text    -- Effect of choosing an event option (args are event ID and option ID)
     | EU4EvtSrcDecision Text Text  -- Effect of taking a decision (args are id and localized decision text)
+    | EU4EvtSrcOnAction Text       -- An effect from on_actions (arg is the trigger)
     deriving Show
 
 type EU4EventTriggers = HashMap Text [EU4EventSource]

@@ -7,6 +7,7 @@ module EU4.Events (
     ,   writeEU4Events
     ,   findTriggeredEventsInEvents
     ,   findTriggeredEventsInDecisions
+    ,   findTriggeredEventsInOnActions
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -306,7 +307,8 @@ ppEventSource (EU4EvtSrcDecision id loc) = do
         , " -->"
         , iquotes't loc
         ]
---ppEventSource es = return $ Doc.strictText $ T.pack $ show es
+ppEventSource (EU4EvtSrcOnAction act) = do
+    return $ Doc.strictText act
 
 ppTriggeredBy :: (EU4Info g, Monad m) => Text -> PPT g m Doc
 ppTriggeredBy eventId = do
@@ -368,7 +370,7 @@ pp_event evt = case (eu4evt_id evt
             (if isTriggeredOnly then
                 ["| triggered only = ", triggered_pp, PP.line
                 ]
-                ++ maybe [] (:[PP.line]) mmtth_pp'd
+                ++ maybe [] (:[PP.line]) mmtth_pp'd -- TODO: Get rid of misleading "1 day" line
             else []) ++
             trigger_pp'd ++
             -- mean_time_to_happen is only really mtth if it's *not*
@@ -448,7 +450,20 @@ findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "provinc
             Just (Right t) -> Just t
             _ -> (trace $ "Invalid event id statement: " ++ show stmt) $ Nothing
         getId (_ : ss) = getId ss
-findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "events" || lhs == "random_events" = (trace $ "Not implemented: " ++ show stmt) $ []
+findInStmt [pdx| events = @scr |]  = catMaybes $ map extractEvent scr
+    where
+        extractEvent :: GenericStatement -> Maybe Text
+        extractEvent (StatementBare (GenericLhs e [])) = Just e
+        extractEvent (StatementBare (IntLhs e)) = Just (T.pack (show e))
+        extractEvent stmt = (trace $ "Unknown in events statement: " ++ show stmt) $ Nothing
+findInStmt [pdx| random_events = @scr |] = catMaybes $ map extractRandomEvent scr
+    where
+        extractRandomEvent :: GenericStatement -> Maybe Text
+        extractRandomEvent stmt@[pdx| %_ = ?!id |] = case id of
+            Just (Left n) -> Just $ T.pack (show (n :: Int))
+            Just (Right t) -> Just t
+            _ -> (trace $ "Invalid event id in random_events: " ++ show stmt) $ Nothing
+        extractRandomEvent stmt = (trace $ "Unknown in random_events statement: " ++ show stmt) $ Nothing
 findInStmt [pdx| %_ = @scr |] = findInStmts scr
 findInStmt _ = []
 
@@ -489,3 +504,92 @@ findTriggeredEventsInDecisions hm ds = addEventTriggers hm (concatMap findInDeci
     where
         findInDecision :: EU4Decision -> [(Text, EU4EventSource)]
         findInDecision d = addEventsource (EU4EvtSrcDecision (dec_name d) (dec_name_loc d)) (findInStmts (dec_effect d))
+
+findTriggeredEventsInOnActions :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
+findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
+    where
+        findInAction :: EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInAction hm stmt@[pdx| $lhs = @scr |] = addEventTriggers hm (addEventsource (EU4EvtSrcOnAction (actionName lhs)) (findInStmts scr))
+        findInAction hm stmt = (trace $ "Unknown on_actions statement: " ++ show stmt) $ hm
+
+        actionName :: Text -> Text
+        actionName n = HM.lookupDefault ("<pre>" <> n <> "</pre>") n actionNameTable
+
+        -- TODO: This should in principle be localizable at some point
+        actionNameTable :: HashMap Text Text
+        actionNameTable = HM.fromList
+            [("on_annexed", "When a nation is annexed")
+            --,("on_battle_lost_country", "")
+            --,("on_battle_lost_province", "")
+            --,("on_battle_lost_unit", "")
+            --,("on_battle_won_province", "")
+            --,("on_become_free_city", "")
+            ,("on_bi_yearly_pulse", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse]]")
+            ,("on_bi_yearly_pulse_2", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse]]")
+            ,("on_bi_yearly_pulse_3", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse]]")
+            ,("on_bi_yearly_pulse_4", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse]]")
+            --,("on_buy_religious_reform", "")
+            --,("on_change_hre_religion", "")
+            --,("on_circumnavigation", "")
+            --,("on_colonial_liberation", "")
+            --,("on_colonial_pulse", "")
+            --,("on_colonial_reintegration", "")
+            --,("on_conquistador_empty", "")
+            --,("on_conquistador_native", "")
+            --,("on_death_election", "")
+            --,("on_death_foreign_slave_ruler", "")
+            --,("on_death_has_harem", "")
+            --,("on_dependency_gained", "")
+            --,("on_diplomatic_annex", "")
+            --,("on_dismantle_revolution", "")
+            --,("on_explore_coast", "")
+            --,("on_fetishist_cult_change", "")
+            ,("on_five_year_pulse", "The [[list_of_event_lists#5_year_pulse|five year pulse]]")
+            ,("on_five_year_pulse_2", "The [[list_of_event_lists#5_year_pulse|five year pulse]]")
+            ,("on_five_year_pulse_3", "The [[list_of_event_lists#5_year_pulse|five year pulse]]")
+            --,("on_flagship_captured", "")
+            --,("on_flagship_destroyed", "")
+            ,("on_four_year_pulse", "The [[List_of_event_lists#4_year_pulse|4 year pulse]]")
+            --,("on_harmonized_buddhism", "")
+            --,("on_harmonized_christian", "")
+            --,("on_harmonized_dharmic", "")
+            --,("on_harmonized_jewish_group", "")
+            --,("on_harmonized_mahayana", "")
+            --,("on_harmonized_muslim", "")
+            --,("on_harmonized_pagan", "")
+            --,("on_harmonized_shinto", "")
+            --,("on_harmonized_vajrayana", "")
+            --,("on_harmonized_zoroastrian_group", "")
+            --,("on_heir_needed_theocracy", "")
+            --,("on_hre_non_defense", "")
+            --,("on_hre_religion_white_peace", "")
+            --,("on_integrate", "")
+            --,("on_lock_hre_religion", "")
+            --,("on_mandate_of_heaven_gained", "")
+            --,("on_monarch_death", "")
+            --,("on_new_consort", "")
+            --,("on_new_monarch", "")
+            --,("on_new_term_election", "")
+            ,("on_overextension_pulse", "The overextension pulse")
+            --,("on_peace_actor", "")
+            --,("on_peace_recipient", "")
+            --,("on_province_owner_change", "")
+            --,("on_regent", "")
+            --,("on_religion_change", "")
+            --,("on_remove_free_city", "")
+            --,("on_replace_governor", "")
+            --,("on_revoke_estate_land", "")
+            --,("on_siege_lost_country", "")
+            --,("on_siege_lost_province", "")
+            --,("on_siege_won_country", "")
+            --,("on_siege_won_province", "")
+            --,("on_startup", "")
+            --,("on_successive_emperor", "")
+            ,("on_thri_yearly_pulse", "The [[list_of_event_lists#3_year_pulse|three year pulse]]")
+            ,("on_thri_yearly_pulse_2", "The [[list_of_event_lists#3_year_pulse|three year pulse]]")
+            ,("on_thri_yearly_pulse_3", "The [[list_of_event_lists#3_year_pulse|three year pulse]]")
+            ,("on_thri_yearly_pulse_4", "The [[list_of_event_lists#3_year_pulse|three year pulse]]")
+            --,("on_war_lost", "")
+            --,("on_war_won", "")
+            --,("on_weak_heir_claim", "")
+            ]
