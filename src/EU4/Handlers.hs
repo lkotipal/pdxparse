@@ -97,6 +97,7 @@ module EU4.Handlers (
     ,   hasCasusBelli
     ,   rhsAlways
     ,   rhsAlwaysYes
+    ,   privateerPower
     -- testing
     ,   isPronoun
     ,   flag
@@ -691,6 +692,7 @@ scriptIconTable = HM.fromList
     ,("zaidi_school", "zaidi")
     -- buildings
     ,("cathedral", "western_cathedral")
+    ,("mills", "mill")
     -- institutions
     ,("new_world_i", "colonialism")
     -- personalities (from ruler_personalities/00_core.txt)
@@ -1041,6 +1043,16 @@ data TextValue = TextValue
         }
 newTV :: TextValue
 newTV = TextValue Nothing Nothing
+
+parseTV whatlabel vallabel scr = foldl' addLine newTV scr
+    where
+        addLine :: TextValue -> GenericStatement -> TextValue
+        addLine tv [pdx| $label = ?what |] | label == whatlabel
+            = tv { tv_what = Just what }
+        addLine tv [pdx| $label = !val |] | label == vallabel
+            = tv { tv_value = Just val }
+        addLine nor _ = nor
+
 textValue :: forall g m. (IsGameState (GameState g), Monad m) =>
     Text                                             -- ^ Label for "what"
         -> Text                                      -- ^ Label for "how much"
@@ -1049,14 +1061,8 @@ textValue :: forall g m. (IsGameState (GameState g), Monad m) =>
         -> (Text -> PPT g m (Text, Text)) -- ^ Action to localize and get icon (applied to RHS of "what")
         -> StatementHandler g m
 textValue whatlabel vallabel smallmsg bigmsg loc stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_tv (foldl' addLine newTV scr)
+    = msgToPP =<< pp_tv (parseTV whatlabel vallabel scr)
     where
-        addLine :: TextValue -> GenericStatement -> TextValue
-        addLine tv [pdx| $label = ?what |] | label == whatlabel
-            = tv { tv_what = Just what }
-        addLine tv [pdx| $label = !val |] | label == vallabel
-            = tv { tv_value = Just val }
-        addLine nor _ = nor
         pp_tv :: TextValue -> PPT g m ScriptMessage
         pp_tv tv = case (tv_what tv, tv_value tv) of
             (Just what, Just value) -> do
@@ -2139,6 +2145,7 @@ hasDlc [pdx| %_ = ?dlc |]
             ,("Third Rome", "tr")
             ,("Cradle of Civilization", "coc")
             ,("Rule Britannia", "rb")
+            ,("Golden Century", "goc")
             ,("Dharma", "dhr")
             ,("Emperor", "emp")
             ]
@@ -2861,3 +2868,22 @@ hasCasusBelli stmt@[pdx| %_ = @scr |]
                 return $ MsgHasCasusBelli (Doc.doc2text what_loc) atom_loc
             _ -> return $ preMessage stmt
 hasCasusBelli stmt = preStatement stmt
+
+---------------------------------
+-- Handler for privateer_power --
+---------------------------------
+
+privateerPower :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+privateerPower stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_pp (parseTV "country" "share" scr)
+    where
+        pp_pp :: TextValue -> PPT g m ScriptMessage
+        pp_pp tv = case (tv_what tv, tv_value tv) of
+            (Just what, Just val) -> do
+                what_loc <- flag (Just EU4Country) what
+                return $ MsgPrivateerPowerCountry (Doc.doc2text what_loc) val
+            (Nothing, Just val) -> do
+                return $ MsgPrivateerPower val
+            _ -> return $ preMessage stmt
+privateerPower stmt = preStatement stmt
+

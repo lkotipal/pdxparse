@@ -1146,6 +1146,8 @@ data ScriptMessage
     | MsgIsGreatPower {scriptMessageYn :: Bool}
     | MsgTradeShare {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgProviceHasCenterOfTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgPrivateerPower {scriptMessageAmt :: Double}
+    | MsgPrivateerPowerCountry {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7634,6 +7636,20 @@ instance RenderMessage Script ScriptMessage where
                 , " center of trade of at least level "
                 , toMessage $ bold (roundNum _amt)
                 ]
+        MsgPrivateerPower {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The country has at least "
+                , toMessage $ bold (plainPc _amt)
+                , " trade power from [[privateering]]"
+                ]
+        MsgPrivateerPowerCountry {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _whom
+                , " has at least "
+                , toMessage $ bold (plainPc _amt)
+                , " trade power from [[privateering]]"
+                ]
+
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

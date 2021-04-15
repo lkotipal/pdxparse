@@ -1171,6 +1171,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_opinion"                  , hasOpinion MsgHasOpinion)
         ,("has_opinion_modifier"         , opinion MsgHasOpinionMod (\modid what who _years -> MsgHasOpinionMod modid what who))
         ,("is_in_war"                    , isInWar)
+        ,("privateer_power"              , privateerPower)
         ,("province_event"               , scope EU4Province . triggerEvent MsgProvinceEvent)
         ,("remove_opinion"               , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
         ,("reverse_has_opinion"          , hasOpinion MsgReverseHasOpinion)
