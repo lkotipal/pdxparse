@@ -5734,7 +5734,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
-                , " administrative efficiency"
+                , " Administrative efficiency"
                 ]
         MsgAdminEfficiency {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
