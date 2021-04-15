@@ -285,25 +285,25 @@ ppEventSource :: (EU4Info g, Monad m) => EU4EventSource -> PPT g m Doc
 ppEventSource (EU4EvtSrcOption eventId optionId) = do
     eventLoc <- ppEventLoc eventId
     optLoc <- getGameL10n optionId
-    return $ Doc.strictText $ mconcat [ "* The event "
+    return $ Doc.strictText $ mconcat [ "The event "
         , eventLoc
         , " option "
         , iquotes't optLoc
         ]
 ppEventSource (EU4EvtSrcAfter eventId) = do
     eventLoc <- ppEventLoc eventId
-    return $ Doc.strictText $ mconcat [ "* After choosing an option an option in the "
+    return $ Doc.strictText $ mconcat [ "After choosing an option an option in the "
         , eventLoc
         , " event"
         ]
 ppEventSource (EU4EvtSrcImmediate eventId) = do
     eventLoc <- ppEventLoc eventId
-    return $ Doc.strictText $ mconcat [ "* As an immediate effect of the "
+    return $ Doc.strictText $ mconcat [ "As an immediate effect of the "
         , eventLoc
         , " event"
         ]
 ppEventSource (EU4EvtSrcDecision id loc) = do
-    return $ Doc.strictText $ mconcat ["* Taking the decision "
+    return $ Doc.strictText $ mconcat ["Taking the decision "
         , "<!-- "
         , id
         , " -->"
@@ -313,8 +313,7 @@ ppEventSource (EU4EvtSrcOnAction act) = do
     return $ Doc.strictText act
 ppEventSource (EU4EvtSrcDisaster id trig) = do
     idLoc <- getGameL10n id
-    return $ Doc.strictText $ mconcat ["* "
-        , trig
+    return $ Doc.strictText $ mconcat [trig
         , " of the <!-- "
         , id
         , " -->"
@@ -323,7 +322,7 @@ ppEventSource (EU4EvtSrcDisaster id trig) = do
         ]
 ppEventSource (EU4EvtSrcMission missionId) = do
     title <- getGameL10n (missionId <> "_title")
-    return $ Doc.strictText $ mconcat ["* Completing the <!-- "
+    return $ Doc.strictText $ mconcat ["Completing the <!-- "
         , missionId
         , " -->"
         , iquotes't title
@@ -337,7 +336,12 @@ ppTriggeredBy eventId = do
     case mtriggers of
         Just triggers -> do
             ts <- mapM ppEventSource triggers
-            return $ mconcat $ [PP.line] ++ (intersperse PP.line ts)
+            -- FIXME: This is a bit ugly, but we only want a list if there's more than one trigger
+            let ts' = if length ts < 2 then
+                    ts
+                else
+                    map (\d -> Doc.strictText $ "* " <> (Doc.doc2text d)) ts
+            return $ mconcat $ [PP.line] ++ (intersperse PP.line ts')
         _ -> return $ Doc.strictText "(please describe trigger here)"
 
 -- | Pretty-print an event. If some essential parts are missing from the data,
