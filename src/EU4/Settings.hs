@@ -7,6 +7,8 @@ module EU4.Settings (
     ,   module EU4.Types
     ) where
 
+import Debug.Trace (trace, traceM)
+
 import Control.Monad (join, when, forM, filterM, void)
 import Control.Monad.Trans (MonadIO (..), liftIO)
 import Control.Monad.Reader (MonadReader (..), ReaderT (..), asks)
@@ -39,7 +41,7 @@ import EU4.IdeaGroups (parseEU4IdeaGroups, writeEU4IdeaGroups)
 import EU4.Modifiers ( parseEU4Modifiers, writeEU4Modifiers
                      , parseEU4OpinionModifiers, writeEU4OpinionModifiers)
 import EU4.Missions (parseEU4Missions , writeEU4Missions)
-import EU4.Events (parseEU4Events, writeEU4Events)
+import EU4.Events (parseEU4Events, writeEU4Events, findTriggeredEventsInEvents, findTriggeredEventsInDecisions)
 --import EU4.Policies (parseEU4Policies, writeEU4Policies)
 
 -- | EU4 game type. This is only interesting for its instances.
@@ -67,6 +69,7 @@ instance IsGame EU4 where
                 ,   eu4opmodScripts = HM.empty
                 ,   eu4missionScripts = HM.empty
                 ,   eu4missions = HM.empty
+                ,   eu4eventTriggers = HM.empty
                 }))
                 (EU4S $ EU4State {
                     eu4currentFile = Nothing
@@ -130,6 +133,9 @@ instance EU4Info EU4 where
     getMissions = do
         EU4D ed <- get
         return (eu4missions ed)
+    getEventTriggers = do
+        EU4D ed <- get
+        return (eu4eventTriggers ed)
 
 instance IsGameData (GameData EU4) where
     getSettings (EU4D ed) = eu4settings ed
@@ -198,7 +204,9 @@ parseEU4Scripts = do
     decisions <- parseEU4Decisions =<< getDecisionScripts
     events <- parseEU4Events =<< getEventScripts
     missions <- parseEU4Missions =<< getMissionScripts
-
+    let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
+        te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
+    --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te2))
     modify $ \(EU4D s) -> EU4D $
             s { eu4events = events
             ,   eu4decisions = decisions
@@ -206,6 +214,7 @@ parseEU4Scripts = do
             ,   eu4modifiers = modifiers
             ,   eu4opmods = opinionModifiers
             ,   eu4missions = missions
+            ,   eu4eventTriggers = te2
             }
 
 -- | Output the game data as wiki text.

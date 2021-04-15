@@ -8,6 +8,7 @@ module EU4.Types (
     ,   EU4Info (..)
         -- * Features
     ,   EU4EvtDesc (..), EU4Event (..), EU4Option (..)
+    ,   EU4EventSource (..), EU4EventTriggers
     ,   EU4Decision (..)
     ,   IdeaGroup (..), Idea (..), IdeaTable
     ,   EU4Modifier (..), EU4OpinionModifier (..)
@@ -56,6 +57,7 @@ data EU4Data = EU4Data {
     ,   eu4modifierScripts :: HashMap FilePath GenericScript
     ,   eu4opmodScripts :: HashMap FilePath GenericScript
     ,   eu4missionScripts :: HashMap FilePath GenericScript
+    ,   eu4eventTriggers :: EU4EventTriggers
     -- etc.
     }
 
@@ -103,6 +105,8 @@ class (IsGame g,
     getMissionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | get the parsed mission trees
     getMissions :: Monad m => PPT g m (HashMap Text EU4MissionTreeBranch)
+    -- | get the (known) event triggers
+    getEventTriggers :: Monad m => PPT g m EU4EventTriggers
 
 -------------------
 -- Feature types --
@@ -157,6 +161,16 @@ data EU4Option = EU4Option
     ,   eu4opt_ai_chance :: Maybe GenericScript -- ^ Probability that the AI will choose this option
     ,   eu4opt_effects :: Maybe GenericScript   -- ^ What happens if the player/AI chooses this option
     } deriving (Show)
+
+
+data EU4EventSource =
+      EU4EvtSrcImmediate Text      -- Immediate effect of an event (arg is event ID)
+    | EU4EvtSrcAfter Text          -- After effect of an event (arg is event ID)
+    | EU4EvtSrcOption Text Text    -- Effect of choosing an event option (args are event ID and option ID)
+    | EU4EvtSrcDecision Text Text  -- Effect of taking a decision (args are id and localized decision text)
+    deriving Show
+
+type EU4EventTriggers = HashMap Text [EU4EventSource]
 
 -- | Table of idea groups, keyed by ID (e.g. @administrative_ideas@).
 type IdeaTable = HashMap Text IdeaGroup

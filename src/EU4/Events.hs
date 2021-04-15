@@ -5,9 +5,11 @@ Description : Feature handler for Europa Universalis IV events
 module EU4.Events (
         parseEU4Events
     ,   writeEU4Events
+    ,   findTriggeredEventsInEvents
+    ,   findTriggeredEventsInDecisions
     ) where
 
-import Debug.Trace (traceM)
+import Debug.Trace (trace, traceM)
 
 import Control.Arrow ((&&&))
 import Control.Monad (liftM, forM, foldM, when, (<=<))
@@ -33,6 +35,7 @@ import qualified Doc
 import EU4.Common -- everything
 import FileIO (Feature (..), writeFeatures)
 import Messages (imsg2doc)
+import MessageTools (iquotes)
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..), Game (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
@@ -247,6 +250,8 @@ optionAddEffect :: Monad m => Maybe GenericScript -> GenericStatement -> PPT g m
 optionAddEffect Nothing stmt = optionAddEffect (Just []) stmt
 optionAddEffect (Just effs) stmt = return $ Just (effs ++ [stmt])
 
+iquotes't = Doc.doc2text . iquotes
+
 -- | Present an event's description block.
 ppDescs :: (EU4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
                                 -> [EU4EvtDesc] -> PPT g m Doc
@@ -265,6 +270,53 @@ ppDescs _ descs = ("| cond_event_text = " <>) . PP.vsep <$> mapM ppDesc descs wh
     fmtDesc key = flip liftM (getGameL10nIfPresent key) $ \case
         Nothing -> Doc.strictText key
         Just txt -> "''" <> Doc.strictText (Doc.nl2br txt) <> "''"
+
+ppEventLoc :: (EU4Info g, Monad m) => Text -> PPT g m Text
+ppEventLoc id = do
+    loc <- getEventTitle id -- Note: Hidden events often have empty titles, see e.g. fetishist_flavor.400
+    case loc of
+        (Just t) | T.length (T.strip t) /= 0 -> return $ "<!-- " <> id <> " -->" <> iquotes't t -- TODO: Add link if possible
+        _ -> return $ "<tt>" <> id <> "</tt>"
+
+ppEventSource :: (EU4Info g, Monad m) => EU4EventSource -> PPT g m Doc
+ppEventSource (EU4EvtSrcOption eventId optionId) = do
+    eventLoc <- ppEventLoc eventId
+    optLoc <- getGameL10n optionId
+    return $ Doc.strictText $ mconcat [ "* The event "
+        , eventLoc
+        , " option "
+        , iquotes't optLoc
+        ]
+ppEventSource (EU4EvtSrcAfter eventId) = do
+    eventLoc <- ppEventLoc eventId
+    return $ Doc.strictText $ mconcat [ "* After choosing an option an option in the "
+        , eventLoc
+        , " event"
+        ]
+ppEventSource (EU4EvtSrcImmediate eventId) = do
+    eventLoc <- ppEventLoc eventId
+    return $ Doc.strictText $ mconcat [ "* As an immediate effect of the "
+        , eventLoc
+        , " event"
+        ]
+ppEventSource (EU4EvtSrcDecision id loc) = do
+    return $ Doc.strictText $ mconcat ["* Taking the decision "
+        , "<!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        ]
+--ppEventSource es = return $ Doc.strictText $ T.pack $ show es
+
+ppTriggeredBy :: (EU4Info g, Monad m) => Text -> PPT g m Doc
+ppTriggeredBy eventId = do
+    eventTriggers <- getEventTriggers
+    let mtriggers = HM.lookup eventId eventTriggers
+    case mtriggers of
+        Just triggers -> do
+            ts <- mapM ppEventSource triggers
+            return $ mconcat $ [PP.line] ++ (intersperse PP.line ts)
+        _ -> return $ Doc.strictText "(please describe trigger here)"
 
 -- | Pretty-print an event. If some essential parts are missing from the data,
 -- throw an exception.
@@ -296,6 +348,7 @@ pp_event evt = case (eu4evt_id evt
         trigger_pp'd <- evtArg "trigger" eu4evt_trigger pp_script
         mmtth_pp'd <- mapM pp_mtth (eu4evt_mean_time_to_happen evt)
         immediate_pp'd <- evtArg "immediate" eu4evt_immediate pp_script
+        triggered_pp <- ppTriggeredBy eid
         -- Keep track of incomplete events
         when (not isTriggeredOnly && isNothing mmtth_pp'd) $
             -- TODO: use logging instead of trace
@@ -313,7 +366,7 @@ pp_event evt = case (eu4evt_id evt
             -- scripts that trigger them with a probability based on a
             -- weight (e.g. on_bi_yearly_pulse).
             (if isTriggeredOnly then
-                ["| triggered only = (please describe trigger here)", PP.line
+                ["| triggered only = ", triggered_pp, PP.line
                 ]
                 ++ maybe [] (:[PP.line]) mmtth_pp'd
             else []) ++
@@ -382,3 +435,57 @@ pp_option evtid hidden triggered opt = do
                 -- 1 = no
                 ["}}"
                 ]
+
+findInStmt :: GenericStatement -> [Text]
+findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "province_event" = case getId scr of
+    Just triggeredId -> [triggeredId]
+    _ -> (trace $ "Unrecognized event trigger: " ++ show stmt) $ []
+    where
+        getId :: [GenericStatement] -> Maybe Text
+        getId [] = Nothing
+        getId (stmt@[pdx| id = ?!id |] : _) = case id of
+            Just (Left n) -> Just $ T.pack (show (n :: Int))
+            Just (Right t) -> Just t
+            _ -> (trace $ "Invalid event id statement: " ++ show stmt) $ Nothing
+        getId (_ : ss) = getId ss
+findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "events" || lhs == "random_events" = (trace $ "Not implemented: " ++ show stmt) $ []
+findInStmt [pdx| %_ = @scr |] = findInStmts scr
+findInStmt _ = []
+
+findInStmts :: [GenericStatement] -> [Text]
+findInStmts stmts = concatMap findInStmt stmts
+
+addEventsource :: EU4EventSource -> [Text] -> [(Text, EU4EventSource)]
+addEventsource es l = map (\t -> (t, es)) l
+
+findInOptions :: Text -> [EU4Option] -> [(Text, EU4EventSource)]
+findInOptions eventId opts = concatMap (\o -> case eu4opt_name o of
+    Just optName -> addEventsource (EU4EvtSrcOption eventId optName) (maybe [] (concatMap findInStmt) (eu4opt_effects o))
+    _ -> []
+    ) opts
+
+addEventTriggers :: EU4EventTriggers -> [(Text, EU4EventSource)] -> EU4EventTriggers
+addEventTriggers hm l = foldl' ins hm l
+    where
+        ins :: EU4EventTriggers -> (Text, EU4EventSource) -> EU4EventTriggers
+        ins hm (k, v) = HM.alter (\orig -> case orig of
+            Just l -> Just $ l ++ [v]
+            Nothing -> Just [v]) k hm
+
+findTriggeredEventsInEvents :: EU4EventTriggers -> [EU4Event] -> EU4EventTriggers
+findTriggeredEventsInEvents hm evts = addEventTriggers hm (concatMap findInEvent evts)
+    where
+        findInEvent :: EU4Event -> [(Text, EU4EventSource)]
+        findInEvent evt@EU4Event{eu4evt_id = Just eventId} =
+            (case eu4evt_options evt of
+                Just opts -> findInOptions eventId opts
+                _ -> []) ++
+            (addEventsource (EU4EvtSrcImmediate eventId) (maybe [] findInStmts (eu4evt_immediate evt))) ++
+            (addEventsource (EU4EvtSrcAfter eventId) (maybe [] findInStmts (eu4evt_after evt)))
+        findInEvent _ = []
+
+findTriggeredEventsInDecisions :: EU4EventTriggers -> [EU4Decision] -> EU4EventTriggers
+findTriggeredEventsInDecisions hm ds = addEventTriggers hm (concatMap findInDecision ds)
+    where
+        findInDecision :: EU4Decision -> [(Text, EU4EventSource)]
+        findInDecision d = addEventsource (EU4EvtSrcDecision (dec_name d) (dec_name_loc d)) (findInStmts (dec_effect d))
