@@ -380,8 +380,6 @@ handlersNumericIcons = Tr.fromList
         ,("num_of_allies"            , numericIcon "alliance" MsgNumAllies)
         ,("num_of_cardinals"         , numericIcon "cardinal" MsgNumCardinals)
         ,("num_of_colonists"         , numericIcon "colonists" MsgNumColonists)
-        ,("num_of_heavy_ship"        , numericIcon "heavy ship" MsgNumHeavyShips)
-        ,("num_of_light_ship"        , numericIcon "light ship" MsgNumLightShips)
         ,("num_of_merchants"         , numericIcon "merchant" MsgNumMerchants)
         ,("num_of_missionaries"      , numericIcon "missionary" MsgNumMissionaries)
         ,("num_of_royal_marriages"   , numericIcon "royal marriage" MsgNumRoyalMarriages)
@@ -811,7 +809,12 @@ handlersFlagOrProvince = Tr.fromList
 -- | Handlers for statements whose RHS is a number OR a tag/pronoun, with icon
 handlersNumericOrFlag :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericOrFlag = Tr.fromList
-        [("adm_tech", withTagOrNumber "adm tech" MsgADMTech MsgADMTechAs)
+        [("adm_tech"             , withTagOrNumber "adm tech" MsgADMTech MsgADMTechAs)
+        ,("army_size"            , withTagOrNumber "" MsgArmySize MsgArmySizeMatches) -- FIXME: Don't really need icon
+        ,("navy_size"            , withTagOrNumber "" MsgNavySize MsgNavySizeMatches) -- FIXME: Don't really need icon
+        ,("num_of_light_ship"    , withTagOrNumber "light ship" MsgNumLightShips MsgNumLightShipsMatches)
+        ,("num_of_heavy_ship"    , withTagOrNumber "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
+        ,("num_of_galley"        , withTagOrNumber "galley" MsgNumGalleyShips MsgNumGalleyShipsMatches)
         ]
 
 -- TODO: parse advisor files

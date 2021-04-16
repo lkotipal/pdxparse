@@ -316,7 +316,11 @@ data ScriptMessage
     | MsgNumCardinals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumColonists {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumHeavyShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumHeavyShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgNumLightShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumLightShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgNumGalleyShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumGalleyShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgNumMerchants {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgStability {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTotalDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1155,6 +1159,10 @@ data ScriptMessage
     | MsgHasConsortRegency {scriptMessageYn :: Bool}
     | MsgIsOwnedByTradeCompany {scriptMessageYn :: Bool}
     | MsgWasTag {scriptMessageWhom :: Text}
+    | MsgArmySize {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgArmySizeMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgNavySize {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNavySizeMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -2475,6 +2483,20 @@ instance RenderMessage Script ScriptMessage where
                 , " heavy "
                 , plural _amt "ship" "ships"
                 ]
+        MsgNumHeavyShipsMatches {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has at least as many "
+                , _icon
+                , " heavy ships as "
+                , _whom
+                ]
+        MsgNumLightShipsMatches {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has at least as many "
+                , _icon
+                , " light ships as "
+                , _whom
+                ]
         MsgNumLightShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -2482,6 +2504,22 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (roundNum _amt)
                 , " light "
+                , plural _amt "ship" "ships"
+                ]
+        MsgNumGalleyShipsMatches {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has at least as many "
+                , _icon
+                , " galley ships as "
+                , _whom
+                ]
+        MsgNumGalleyShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (roundNum _amt)
+                , " galley "
                 , plural _amt "ship" "ships"
                 ]
         MsgNumMerchants {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -7690,6 +7728,26 @@ instance RenderMessage Script ScriptMessage where
         MsgWasTag {scriptMessageWhom = _whom}
             -> mconcat
                 [ "The country was previously "
+                , _whom
+                ]
+        MsgArmySize {scriptMessageIcon = _, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Army size is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgArmySizeMatches {scriptMessageIcon = _, scriptMessageWhom = _whom}
+            -> mconcat
+                ["Army size is at least as large as that of "
+                , _whom
+                ]
+        MsgNavySize {scriptMessageIcon = _, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Navy size is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgNavySizeMatches {scriptMessageIcon = _, scriptMessageWhom = _whom}
+            -> mconcat
+                ["Navy size is at least as large as that of "
                 , _whom
                 ]
 
