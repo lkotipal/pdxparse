@@ -6077,7 +6077,7 @@ instance RenderMessage Script ScriptMessage where
         MsgArmySizePc {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Army size is at least "
-                , toMessage (plainPc _amt)
+                , toMessage (reducedNum plainPc _amt)
                 , " of force limit"
                 ]
         MsgBuildHeavyShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
