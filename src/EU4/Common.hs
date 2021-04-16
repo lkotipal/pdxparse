@@ -927,6 +927,7 @@ handlersSimpleFlag = Tr.fromList
         ,("truce_with"              , withFlag MsgTruceWith)
         ,("vassal_of"               , withFlag MsgVassalOf)
         ,("war_with"                , withFlag MsgAtWarWith)
+        ,("was_tag"                 , withFlag MsgWasTag)
         ,("white_peace"             , withFlag MsgMakeWhitePeace)
         ]
 

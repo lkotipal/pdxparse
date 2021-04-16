@@ -1154,6 +1154,7 @@ data ScriptMessage
     | MsgOwnsOrNonTribSubject {scriptMessageWhat :: Text}
     | MsgHasConsortRegency {scriptMessageYn :: Bool}
     | MsgIsOwnedByTradeCompany {scriptMessageYn :: Bool}
+    | MsgWasTag {scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7685,6 +7686,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Province "
                 , toMessage (ifThenElseT _yn "belongs" "does ''not'' belong")
                 , " to a trade company"
+                ]
+        MsgWasTag {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "The country was previously "
+                , _whom
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
