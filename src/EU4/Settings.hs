@@ -17,9 +17,9 @@ import Control.Monad.State (MonadState (..), StateT (..), modify, gets)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
 
-import Data.Maybe (listToMaybe)
+import Data.Maybe (listToMaybe, catMaybes)
 
-import Data.Text (Text)
+import Data.Text (Text, toLower)
 
 import System.Directory (getDirectoryContents, doesFileExist)
 import System.FilePath ((</>))
@@ -75,6 +75,7 @@ instance IsGame EU4 where
                 ,   eu4eventTriggers = HM.empty
                 ,   eu4onactionsScripts = HM.empty
                 ,   eu4disasterScripts = HM.empty
+                ,   eu4geoData = HM.empty
                 }))
                 (EU4S $ EU4State {
                     eu4currentFile = Nothing
@@ -147,6 +148,9 @@ instance EU4Info EU4 where
     getDisasterScripts = do
         EU4D ed <- get
         return (eu4disasterScripts ed)
+    getGeoData = do
+        EU4D ed <- get
+        return (eu4geoData ed)
 
 instance IsGameData (GameData EU4) where
     getSettings (EU4D ed) = eu4settings ed
@@ -167,9 +171,19 @@ instance IsGameState (GameState EU4) where
 --         script.
 readEU4Scripts :: forall m. MonadIO m => PPT EU4 m ()
 readEU4Scripts = do
-    let readEU4Script :: String -> PPT EU4 m (HashMap String GenericScript)
+    settings <- gets getSettings
+    let readOneScript :: String -> String -> PPT EU4 m (String, GenericScript)
+        readOneScript category target = do
+            content <- liftIO $ readScript settings target
+            when (null content) $
+                liftIO $ hPutStrLn stderr $
+                    "Warning: " ++ target
+                        ++ " contains no scripts - failed parse? Expected feature type "
+                        ++ category
+            return (target, content)
+
+        readEU4Script :: String -> PPT EU4 m (HashMap String GenericScript)
         readEU4Script category = do
-            settings <- gets getSettings
             let sourceSubdir = case category of
                     "policies" -> "common" </> "policies"
                     "ideagroups" -> "common" </> "ideas"
@@ -177,20 +191,37 @@ readEU4Scripts = do
                     "opinion_modifiers" -> "common" </> "opinion_modifiers"
                     "on_actions" -> "common" </> "on_actions"
                     "disasters" -> "common" </> "disasters"
+                    "tradenodes" -> "common" </> "tradenodes"
+                    "trade_companies" -> "common" </> "trade_companies"
+                    "colonial_regions" -> "common" </> "colonial_regions"
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
                                      =<< getDirectoryContents sourceDir)
-            results <- forM files $ \filename -> do
-                let target = sourceSubdir </> filename
-                content <- liftIO $ readScript settings target
-                when (null content) $
-                    liftIO $ hPutStrLn stderr $
-                        "Warning: " ++ target
-                            ++ " contains no scripts - failed parse? Expected feature type "
-                            ++ category
-                return (target, content)
+            results <- forM files $ \filename -> readOneScript category (sourceSubdir </> filename)
             return $ foldl (flip (uncurry HM.insert)) HM.empty results
+
+        getOnlyLhs :: GenericStatement -> Maybe Text
+        getOnlyLhs (Statement (GenericLhs lhs _) _ _) = Just (toLower lhs)
+        getOnlyLhs stmt = (trace $ "Unsupported statement: " ++ (show stmt)) $ Nothing
+
+        toHashMap :: EU4GeoType -> [Text] -> HashMap Text EU4GeoType
+        toHashMap gt l = foldr (\t -> HM.insert t gt) HM.empty l
+
+        geoDirs = [ (EU4GeoTradeCompany, "trade_companies")
+                  , (EU4GeoColonialRegion, "colonial_regions")
+                  -- TODO: Do we need "tradenodes" ?
+                  ]
+
+        mapGeoFiles = [ (EU4GeoArea, "area.txt")
+                      , (EU4GeoContinent, "continent.txt")
+                      , (EU4GeoRegion, "region.txt")
+                      , (EU4GeoSuperRegion, "superregion.txt")]
+
+        readGeoData :: (EU4GeoType, String) -> PPT EU4 m (HashMap Text EU4GeoType)
+        readGeoData (gt, dir) = do
+            hm <- readEU4Script dir
+            return $ toHashMap gt (catMaybes $ map getOnlyLhs (concat (HM.elems hm)))
 
     ideaGroups <- readEU4Script "ideagroups"
     decisions <- readEU4Script "decisions"
@@ -200,6 +231,19 @@ readEU4Scripts = do
     missions <- readEU4Script "missions"
     on_actions <- readEU4Script "on_actions"
     disasters <- readEU4Script "disasters"
+
+    ---------------------
+    -- Geographic data --
+    ---------------------
+    --
+    -- Arguably this shouldn't be parsed here, but we don't care
+    -- about the actual script data.
+    --
+    geoData <- forM geoDirs readGeoData
+    geoMapData <- forM mapGeoFiles  $ \(geoType, filename) -> do
+        (_, d) <- readOneScript "map" (buildPath settings "map" </> filename)
+        return $ toHashMap geoType (catMaybes $ map getOnlyLhs d)
+
     modify $ \(EU4D s) -> EU4D $ s {
             eu4ideaGroupScripts = ideaGroups
         ,   eu4decisionScripts = decisions
@@ -209,6 +253,7 @@ readEU4Scripts = do
         ,   eu4missionScripts = missions
         ,   eu4onactionsScripts = on_actions
         ,   eu4disasterScripts = disasters
+        ,   eu4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
         }
 
 -- | Interpret the script ASTs as usable data.

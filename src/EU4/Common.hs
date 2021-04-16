@@ -10,7 +10,7 @@ module EU4.Common (
     ,   iconKey, iconFile, iconFileB
     ,   AIWillDo (..), AIModifier (..)
     ,   ppAiWillDo, ppAiMod
-    ,   extractStmt, matchLhsText
+    ,   extractStmt, matchLhsText, matchExactText
     ,   module EU4.Types
     ) where
 
@@ -184,7 +184,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
-        ,("type" , rhsAlways "all" MsgTypeAll) -- FIXME: This is a hack to handle xxxx_area = { type = all }
+        ,("type" , rhsAlways "all" MsgTypeAll) -- FIXME: This is a hack to handle region_for_scope_province = { type = all }
         ,("auto_explore_adjacent_to_colony", rhsAlwaysYes MsgAutoExploreAdjacentToColony)
         ,("can_fabricate_for_vassals", rhsAlwaysYes MsgCanFabricateForVassals)
         ,("idea_claim_colonies"    , rhsAlwaysYes MsgIdeaClaimColonies)
@@ -1264,17 +1264,12 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
                         return (lflag : scriptMsgs)
                 _ -> preStatement stmt
              else do
+                geoData <- getGeoData
                 mloc <- getGameL10nIfPresent label
                 case mloc of
                     -- Check for localizable atoms, e.g. regions
                     Just loc -> case rhs of
-                        CompoundRhs scr -> do
-                            let (mtypeStmt, rest) = extractStmt (matchLhsText "type") scr
-                            [header] <- plainMsg $ (case mtypeStmt of
-                                Just [pdx| %_ = all |] -> "All provinces in "
-                                _ -> "") <> loc <> ":"
-                            scriptMsgs <- scope EU4Country $ ppMany rest
-                            return (header : scriptMsgs)
+                        CompoundRhs scr -> ppMaybeGeo label loc scr
                         _ -> compound loc stmt
                     Nothing -> preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
@@ -1284,11 +1279,39 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
         case rhs of
             CompoundRhs scr -> do
                 header <- msgToPP (MsgProvince prov_loc)
-                scriptMsgs <- ppMany scr
+                scriptMsgs <- scope EU4Province $ ppMany scr
                 return (header ++ scriptMsgs)
             _ -> preStatement stmt
     CustomLhs _ -> preStatement stmt
 ppOne stmt = preStatement stmt
+
+ppMaybeGeo :: (EU4Info g, Monad m) => Text -> Text -> GenericScript -> PPT g m IndentedMessages
+ppMaybeGeo label loc scr = do
+    geoData <- getGeoData
+    let (mtypeStmt, rest) = extractStmt (matchExactText "type" "all") scr
+    case HM.lookup label geoData of
+        Just geoType -> do
+            [header] <- plainMsg $ (if isJust mtypeStmt then "All provinces" else "Provinces")
+                <> " in the " <> loc <> " " <> (describe geoType) <> ":"
+            scriptMsgs <- scope EU4Province $ ppMany rest
+            return (header : scriptMsgs)
+        Nothing -> do
+            let actScope = if (T.toLower label) `elem` ["emperor", "revolution_target", "crusade_target"] then
+                    EU4Country
+                else
+                    EU4Province
+            [header] <- plainMsg $ loc <> ":"
+            scriptMsgs <- scope actScope $ ppMany scr
+            return (header : scriptMsgs)
+
+    where
+        describe :: EU4GeoType -> Text
+        describe EU4GeoArea = "area"
+        describe EU4GeoRegion = "region"
+        describe EU4GeoSuperRegion = "subcontinent"
+        describe EU4GeoContinent = "continent"
+        describe EU4GeoTradeCompany = "trade company region"
+        describe EU4GeoColonialRegion = "region" -- No need to say "colonial region" since that's implied by the localized name
 
 -- | Try to extra one matching statement
 extractStmt :: (a -> Bool) -> [a] -> (Maybe a, [a])
@@ -1305,3 +1328,8 @@ extractStmt p xs = extractStmt' p xs []
 matchLhsText :: Text -> GenericStatement -> Bool
 matchLhsText t s@[pdx| $lhs = %_ |] | t == lhs = True
 matchLhsText _ _ = False
+
+-- | Predicate for matching text on boths sides
+matchExactText :: Text -> Text -> GenericStatement -> Bool
+matchExactText l r s@[pdx| $lhs = $rhs |] | l == lhs && r == T.toLower rhs = True
+matchExactText _ _ _ = False

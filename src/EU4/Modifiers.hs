@@ -12,7 +12,7 @@ import Control.Monad (foldM, forM, join)
 import Control.Monad.Except (MonadError (..))
 import Control.Monad.Trans (MonadIO (..))
 
-import Data.Maybe (fromJust, catMaybes)
+import Data.Maybe (isJust, fromJust, catMaybes)
 import Data.Monoid ((<>))
 
 import Data.HashMap.Strict (HashMap)
@@ -29,6 +29,7 @@ import SettingsTypes ( PPT{-, Settings (..)-}{-, Game (..)-}
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions)
 import EU4.Types -- everything
+import EU4.Common (extractStmt, matchExactText)
 
 import Debug.Trace (trace, traceM)
 
@@ -62,16 +63,12 @@ parseEU4Modifier [pdx| $modid = @effects |]
         mlocid <- getGameL10nIfPresent modid
 
         -- Handle religions modifiers
-        -- FIXME: This is a pretty terrible way of doing it...
-        let oldLength = length effects
-            rest = flip filter effects $ \stmt -> case stmt of
-                [pdx| religion = yes |] -> False
-                _ -> True
+        let (mrelstmt, rest) = extractStmt (matchExactText "religion" "yes") effects
         return . Right . Just $ EU4Modifier {
                 modName = modid
             ,   modLocName = mlocid
             ,   modPath = file
-            ,   modReligious = length rest /= oldLength
+            ,   modReligious = isJust mrelstmt
             ,   modEffects = rest
             }
 parseEU4Modifier _ = withCurrentFile $ \file ->

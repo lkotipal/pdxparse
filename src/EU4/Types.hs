@@ -18,6 +18,7 @@ module EU4.Types (
     ,   EU4Scope (..)
     ,   AIWillDo (..)
     ,   AIModifier (..)
+    ,   EU4GeoType (..)
     ,   aiWillDo
     ,   isGeographic
     -- utilities that can't go anywhere else
@@ -52,6 +53,7 @@ data EU4Data = EU4Data {
     ,   eu4opmods :: HashMap Text EU4OpinionModifier
     ,   eu4missions :: HashMap Text EU4MissionTreeBranch
     ,   eu4eventTriggers :: EU4EventTriggers
+    ,   eu4geoData :: HashMap Text EU4GeoType
     ,   eu4eventScripts :: HashMap FilePath GenericScript
     ,   eu4decisionScripts :: HashMap FilePath GenericScript
     ,   eu4ideaGroupScripts :: HashMap FilePath GenericScript
@@ -105,14 +107,16 @@ class (IsGame g,
     getDecisions :: Monad m => PPT g m (HashMap Text EU4Decision)
     -- | Get the contents of all mission script files
     getMissionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | get the parsed mission trees
+    -- | Get the parsed mission trees
     getMissions :: Monad m => PPT g m (HashMap Text EU4MissionTreeBranch)
-    -- | get the (known) event triggers
+    -- | Get the (known) event triggers
     getEventTriggers :: Monad m => PPT g m EU4EventTriggers
-    -- | get the on actions script files
+    -- | Get the on actions script files
     getOnActionsScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | get the on disaster script files
+    -- | Get the on disaster script files
     getDisasterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed geographic data
+    getGeoData :: Monad m => PPT g m (HashMap Text EU4GeoType)
 
 -------------------
 -- Feature types --
@@ -275,6 +279,16 @@ data EU4Scope
     | EU4Bonus
     | EU4From -- ^ Usually country or province, varies by context
     deriving (Show, Eq, Ord, Enum, Bounded)
+
+data EU4GeoType
+    = EU4GeoArea
+    | EU4GeoRegion
+    | EU4GeoSuperRegion
+    | EU4GeoContinent
+    | EU4GeoTradeCompany
+    | EU4GeoColonialRegion
+    -- Province groups aren't used in the base game (as of 1.30.6)
+    deriving (Show)
 
 -- | AI decision factors.
 data AIWillDo = AIWillDo
