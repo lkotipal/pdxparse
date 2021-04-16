@@ -7665,7 +7665,7 @@ instance RenderMessage Script ScriptMessage where
         MsgHasEstatePrivilege {scriptMessageWhat = _what}
             -> mconcat
                 [ "Has the "
-                , _what
+                , toMessage (iquotes _what)
                 , " estate privilege"
                 ]
         MsgOwnsOrNonTribSubject {scriptMessageWhat = _what}
