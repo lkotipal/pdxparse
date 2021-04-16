@@ -139,6 +139,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("cb_on_overseas"         , rhsAlwaysYes MsgGainOverseasCB) -- Full Expansion
         ,("cb_on_primitives"       , rhsAlwaysYes MsgGainPrimitivesCB) -- Full Exploration
         ,("cb_on_religious_enemies", rhsAlwaysYes MsgGainReligiousCB) -- Deus Vult
+        ,("change_government_to_monarchy", rhsAlwaysYes $ MsgChangeGovernment "monarchy")
         ,("check_if_non_state_advisor_effect", const $ msgToPP MsgCheckIfNonStateAdvisorEffect) -- Ignore actual percentages
         ,("divorce_consort_effect", rhsAlwaysYes MsgDivorceConsortEffect)
         ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)

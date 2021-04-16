@@ -1149,7 +1149,7 @@ ppAiMod (AIModifier Nothing _) =
 -- | Verify assumption about rhs
 rhsAlways :: (EU4Info g, Monad m) => Text -> ScriptMessage -> StatementHandler g m
 rhsAlways assumedRhs msg [pdx| %_ = ?rhs |] | T.toLower rhs == assumedRhs = msgToPP $ msg
-rhsAlways _ _ stmt = preStatement stmt
+rhsAlways _ _ stmt = (trace $ "Expectation is wrong in statement " ++ show stmt) $ preStatement stmt
 
 rhsAlwaysYes :: (EU4Info g, Monad m) => ScriptMessage -> StatementHandler g m
 rhsAlwaysYes = rhsAlways "yes"
