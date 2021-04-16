@@ -1025,6 +1025,7 @@ handlersYesNo = Tr.fromList
         ,("is_nomad"                    , withBool MsgIsNomad)
         ,("is_orangists_in_power"       , withBool MsgIsOrangistsInPower)
         ,("is_overseas"                 , withBool MsgIsOverseas)
+        ,("is_owned_by_trade_company"   , withBool MsgIsOwnedByTradeCompany)
         ,("is_part_of_hre"              , withBool MsgIsPartOfHRE)
         ,("is_playing_custom_nation"    , withBool MsgIsCustomNation)
         ,("is_random_new_world"         , withBool MsgRandomNewWorld)
