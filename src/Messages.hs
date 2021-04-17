@@ -1165,6 +1165,7 @@ data ScriptMessage
     | MsgNavySizeMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgAddCuriaTreasury {scriptMessageAmt :: Double}
     | MsgReduceCuriaTreasury {scriptMessageAmt :: Double}
+    | MsgHasClimate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7763,6 +7764,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "Reduce [[curia]] treasury by {{icon|ducats}} "
                 , toMessage (colourNum True _amt)
                 , " ducats "
+                ]
+        MsgHasClimate {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Climate is "
+                , _icon
+                , " "
+                , _what
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

@@ -878,6 +878,7 @@ handlersSimpleIcon = Tr.fromList
         ,("current_age"             , withLocAtomIcon MsgCurrentAge)
         ,("enable_religion"         , withLocAtomIcon MsgEnableReligion)
         ,("has_adopted_cult"        , withLocAtomIcon MsgHasAdoptedCult)
+        ,("has_climate"             , withLocAtomIcon MsgHasClimate)
         ,("has_building"            , withLocAtomIconBuilding MsgHasBuilding)
         ,("has_idea_group"          , withLocAtomIcon MsgHasIdeaGroup) -- FIXME: icon fails
         ,("has_institution"         , withLocAtomIcon MsgHasInstitution)
