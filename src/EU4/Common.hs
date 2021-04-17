@@ -774,6 +774,7 @@ handlersLocRhs = Tr.fromList
         ,("has_construction"      , withLocAtom MsgConstructing)
         ,("has_disaster"          , withLocAtom MsgDisasterOngoing)
         ,("has_estate_privilege"  , withLocAtom MsgHasEstatePrivilege)
+        ,("has_faction"           , withLocAtom MsgHasFaction)
         ,("has_great_project"     , withLocAtom MsgConstructingGreatProject)
         ,("has_idea"              , withLocAtom MsgHasIdea)
         ,("has_reform"            , withLocAtom MsgHasReform)

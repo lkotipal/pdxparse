@@ -422,6 +422,7 @@ data ScriptMessage
     | MsgReverseGainCBDuration {scriptMessageCbtype :: Text, scriptMessageWho :: Text, scriptMessageMonths :: Double}
     | MsgFactionGainInfluence {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgFactionInPower {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgHasFaction {scriptMessageWhat :: Text}
     | MsgHasFactions {scriptMessageYn :: Bool}
     | MsgHasAdoptedCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasUnlockedCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -3126,6 +3127,12 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _whom
                 , " faction is in power"
+                ]
+        MsgHasFaction {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has the "
+                , _what
+                , " faction"
                 ]
         MsgHasFactions {scriptMessageYn = _yn}
             -> mconcat
