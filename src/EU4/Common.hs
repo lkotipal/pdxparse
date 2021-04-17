@@ -195,6 +195,15 @@ handlersRhsIrrelevant = Tr.fromList
         ,("may_recruit_female_generals", rhsAlwaysYes MsgMayRecruitFemaleGenerals)
         ,("no_religion_penalty"    , rhsAlwaysYes MsgNoReligionPenalty)
         ,("map_setup"              , rhsAlways "map_setup_random" MsgMapSetupRandom) -- In 1.30.6 all uses are "map_setup = map_setup_random"
+
+        -- Curia effects (from common/scripted_effects/01_scripted_effects_for_simple_bonuses_penalties.txt)
+        ,("add_curia_treasur_small_effect" {-sic-} , rhsAlwaysYes (MsgAddCuriaTreasury 25))
+        ,("add_curia_treasury_medium_effect"       , rhsAlwaysYes (MsgAddCuriaTreasury 50))
+        ,("add_curia_treasury_big_effect"          , rhsAlwaysYes (MsgAddCuriaTreasury 100))
+        ,("add_curia_treasury_huge_effect"         , rhsAlwaysYes (MsgAddCuriaTreasury 1000))
+        ,("reduce_curia_treasury_medium_effect"    , rhsAlwaysYes (MsgReduceCuriaTreasury (-50)))
+        ,("reduce_curia_treasury_big_effect"       , rhsAlwaysYes (MsgReduceCuriaTreasury (-100)))
+        ,("reduce_curia_treasury_huge_effect"      , rhsAlwaysYes (MsgReduceCuriaTreasury (-1000)))
         ]
 
 -- | Handlers for numeric statements

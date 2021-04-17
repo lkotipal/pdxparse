@@ -613,7 +613,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_revoke_estate_land", "")
             --,("on_siege_lost_country", "")
             --,("on_siege_lost_province", "")
-            --,("on_siege_won_country", "")
+            ,("on_siege_won_country", "Our country winning a siege against ''From''") -- root = winning country, from = location
             --,("on_siege_won_province", "")
             --,("on_startup", "")
             --,("on_successive_emperor", "")

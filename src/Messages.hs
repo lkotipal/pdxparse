@@ -1163,6 +1163,8 @@ data ScriptMessage
     | MsgArmySizeMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgNavySize {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavySizeMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgAddCuriaTreasury {scriptMessageAmt :: Double}
+    | MsgReduceCuriaTreasury {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7749,6 +7751,18 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 ["Navy size is at least as large as that of "
                 , _whom
+                ]
+        MsgAddCuriaTreasury {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Add {{icon|ducats}} "
+                , toMessage (colourNum True _amt)
+                , " ducats to the [[curia]] treasury"
+                ]
+        MsgReduceCuriaTreasury {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Reduce [[curia]] treasury by {{icon|ducats}} "
+                , toMessage (colourNum True _amt)
+                , " ducats "
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
