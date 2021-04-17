@@ -261,7 +261,7 @@ ppDescs :: (EU4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
 ppDescs True _ = return "| cond_event_text = (This event is hidden and has no description.)"
 ppDescs _ [] = return "| event_text = (No description)"
 ppDescs _ [EU4EvtDescSimple key] = ("| event_text = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
-ppDescs _ descs = ("| cond_event_text = " <>) . PP.vsep <$> mapM ppDesc descs where
+ppDescs _ descs = (("| cond_event_text = yes" <> PP.line <> "| event_text = ") <>) . PP.vsep <$> mapM ppDesc descs where
     ppDesc (EU4EvtDescSimple key) = ("Otherwise:<br>:" <>) <$> fmtDesc key
     ppDesc (EU4EvtDescConditional scr key) = mconcat <$> sequenceA
         [pure "The following description is used if:", pure PP.line
