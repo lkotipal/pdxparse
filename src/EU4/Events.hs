@@ -281,6 +281,10 @@ ppEventLoc id = do
         (Just t) | T.length (T.strip t) /= 0 -> return $ "<!-- " <> id <> " -->" <> iquotes't t -- TODO: Add link if possible
         _ -> return $ "<tt>" <> id <> "</tt>"
 
+formatWeight :: EU4EventWeight -> Text
+formatWeight Nothing = ""
+formatWeight (Just (n, d)) = T.pack (" (Base weight: " ++ show n ++ "/" ++ show d ++ ")")
+
 ppEventSource :: (EU4Info g, Monad m) => EU4EventSource -> PPT g m Doc
 ppEventSource (EU4EvtSrcOption eventId optionId) = do
     eventLoc <- ppEventLoc eventId
@@ -309,9 +313,9 @@ ppEventSource (EU4EvtSrcDecision id loc) = do
         , " -->"
         , iquotes't loc
         ]
-ppEventSource (EU4EvtSrcOnAction act) = do
-    return $ Doc.strictText act
-ppEventSource (EU4EvtSrcDisaster id trig) = do
+ppEventSource (EU4EvtSrcOnAction act weight) = do
+    return $ Doc.strictText $ act <> formatWeight weight
+ppEventSource (EU4EvtSrcDisaster id trig weight) = do
     idLoc <- getGameL10n id
     return $ Doc.strictText $ mconcat [trig
         , " of the <!-- "
@@ -319,6 +323,7 @@ ppEventSource (EU4EvtSrcDisaster id trig) = do
         , " -->"
         , iquotes't idLoc
         , " disaster"
+        , formatWeight weight
         ]
 ppEventSource (EU4EvtSrcMission missionId) = do
     title <- getGameL10n (missionId <> "_title")
@@ -372,7 +377,7 @@ pp_event evt = case (eu4evt_id evt
             isTriggeredOnly = fromMaybe False $ eu4evt_is_triggered_only evt
             evtId = Doc.strictText eid
         trigger_pp'd <- evtArg "trigger" eu4evt_trigger pp_script
-        mmtth_pp'd <- mapM pp_mtth (eu4evt_mean_time_to_happen evt)
+        mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (eu4evt_mean_time_to_happen evt)
         immediate_pp'd <- evtArg "immediate" eu4evt_immediate pp_script
         triggered_pp <- ppTriggeredBy eid
         -- Keep track of incomplete events
@@ -394,7 +399,7 @@ pp_event evt = case (eu4evt_id evt
             (if isTriggeredOnly then
                 ["| triggered only = ", triggered_pp, PP.line
                 ]
-                ++ maybe [] (:[PP.line]) mmtth_pp'd -- TODO: Get rid of misleading "1 day" line
+                ++ maybe [] (:[PP.line]) mmtth_pp'd
             else []) ++
             trigger_pp'd ++
             -- mean_time_to_happen is only really mtth if it's *not*
@@ -462,9 +467,9 @@ pp_option evtid hidden triggered opt = do
                 ["}}"
                 ]
 
-findInStmt :: GenericStatement -> [Text]
+findInStmt :: GenericStatement -> [(EU4EventWeight, Text)]
 findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "province_event" = case getId scr of
-    Just triggeredId -> [triggeredId]
+    Just triggeredId -> [(Nothing, triggeredId)]
     _ -> (trace $ "Unrecognized event trigger: " ++ show stmt) $ []
     where
         getId :: [GenericStatement] -> Maybe Text
@@ -476,30 +481,33 @@ findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "provinc
         getId (_ : ss) = getId ss
 findInStmt [pdx| events = @scr |]  = catMaybes $ map extractEvent scr
     where
-        extractEvent :: GenericStatement -> Maybe Text
-        extractEvent (StatementBare (GenericLhs e [])) = Just e
-        extractEvent (StatementBare (IntLhs e)) = Just (T.pack (show e))
+        extractEvent :: GenericStatement -> Maybe (EU4EventWeight, Text)
+        extractEvent (StatementBare (GenericLhs e [])) = Just (Nothing, e)
+        extractEvent (StatementBare (IntLhs e)) = Just (Nothing, T.pack (show e))
         extractEvent stmt = (trace $ "Unknown in events statement: " ++ show stmt) $ Nothing
-findInStmt [pdx| random_events = @scr |] = catMaybes $ map extractRandomEvent scr
+findInStmt [pdx| random_events = @scr |] =
+    let evts = catMaybes $ map extractRandomEvent scr
+        total = sum $ map fst evts
+    in map (\t -> (Just (fst t, total), snd t)) evts
     where
-        extractRandomEvent :: GenericStatement -> Maybe Text
-        extractRandomEvent stmt@[pdx| %_ = ?!id |] = case id of
-            Just (Left n) -> Just $ T.pack (show (n :: Int))
-            Just (Right t) -> Just t
+        extractRandomEvent :: GenericStatement -> Maybe (Integer, Text)
+        extractRandomEvent stmt@[pdx| !weight = ?!id |] = case id of
+            Just (Left n) -> Just (fromIntegral weight, T.pack (show (n :: Int)))
+            Just (Right t) -> Just (fromIntegral weight, t)
             _ -> (trace $ "Invalid event id in random_events: " ++ show stmt) $ Nothing
         extractRandomEvent stmt = (trace $ "Unknown in random_events statement: " ++ show stmt) $ Nothing
 findInStmt [pdx| %_ = @scr |] = findInStmts scr
 findInStmt _ = []
 
-findInStmts :: [GenericStatement] -> [Text]
+findInStmts :: [GenericStatement] -> [(EU4EventWeight, Text)]
 findInStmts stmts = concatMap findInStmt stmts
 
-addEventSource :: EU4EventSource -> [Text] -> [(Text, EU4EventSource)]
-addEventSource es l = map (\t -> (t, es)) l
+addEventSource :: (EU4EventWeight -> EU4EventSource) -> [(EU4EventWeight, Text)] -> [(Text, EU4EventSource)]
+addEventSource es l = map (\t -> (snd t, es (fst t))) l
 
 findInOptions :: Text -> [EU4Option] -> [(Text, EU4EventSource)]
 findInOptions eventId opts = concatMap (\o -> case eu4opt_name o of
-    Just optName -> addEventSource (EU4EvtSrcOption eventId optName) (maybe [] (concatMap findInStmt) (eu4opt_effects o))
+    Just optName -> addEventSource (const (EU4EvtSrcOption eventId optName)) (maybe [] (concatMap findInStmt) (eu4opt_effects o))
     _ -> []
     ) opts
 
@@ -519,15 +527,15 @@ findTriggeredEventsInEvents hm evts = addEventTriggers hm (concatMap findInEvent
             (case eu4evt_options evt of
                 Just opts -> findInOptions eventId opts
                 _ -> []) ++
-            (addEventSource (EU4EvtSrcImmediate eventId) (maybe [] findInStmts (eu4evt_immediate evt))) ++
-            (addEventSource (EU4EvtSrcAfter eventId) (maybe [] findInStmts (eu4evt_after evt)))
+            (addEventSource (const (EU4EvtSrcImmediate eventId)) (maybe [] findInStmts (eu4evt_immediate evt))) ++
+            (addEventSource (const (EU4EvtSrcAfter eventId)) (maybe [] findInStmts (eu4evt_after evt)))
         findInEvent _ = []
 
 findTriggeredEventsInDecisions :: EU4EventTriggers -> [EU4Decision] -> EU4EventTriggers
 findTriggeredEventsInDecisions hm ds = addEventTriggers hm (concatMap findInDecision ds)
     where
         findInDecision :: EU4Decision -> [(Text, EU4EventSource)]
-        findInDecision d = addEventSource (EU4EvtSrcDecision (dec_name d) (dec_name_loc d)) (findInStmts (dec_effect d))
+        findInDecision d = addEventSource (const (EU4EvtSrcDecision (dec_name d) (dec_name_loc d))) (findInStmts (dec_effect d))
 
 findTriggeredEventsInOnActions :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
 findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
@@ -626,8 +634,8 @@ findTriggeredEventsInDisasters hm scr = foldl' findInDisaster hm scr
         findInDisaster hm stmt = (trace $ "Unknown top-level disaster statement: " ++ show stmt) $ hm
 
         findInDisaster' :: Text -> EU4EventTriggers -> GenericStatement -> EU4EventTriggers
-        findInDisaster' id hm [pdx| on_start = $event |] = addEventTriggers hm [(event, EU4EvtSrcDisaster id "Start")]
-        findInDisaster' id hm [pdx| on_end = $event |] = addEventTriggers hm [(event, EU4EvtSrcDisaster id "End")]
+        findInDisaster' id hm [pdx| on_start = $event |] = addEventTriggers hm [(event, EU4EvtSrcDisaster id "Start" Nothing)]
+        findInDisaster' id hm [pdx| on_end = $event |] = addEventTriggers hm [(event, EU4EvtSrcDisaster id "End" Nothing)]
         findInDisaster' id hm [pdx| on_monthly = @scr |] = addEventTriggers hm ((addEventSource (EU4EvtSrcDisaster id "Monthly pulse")) (findInStmts scr))
         findInDisaster' _ hm _ = hm
 
@@ -635,4 +643,4 @@ findTriggeredEventsInMissions :: EU4EventTriggers -> [EU4MissionTreeBranch] -> E
 findTriggeredEventsInMissions hm mtbs = foldl' (\h -> \m -> foldl' findInMission h (eu4mtb_missions m)) hm mtbs
     where
         findInMission :: EU4EventTriggers -> EU4Mission -> EU4EventTriggers
-        findInMission hm m = addEventTriggers hm $ addEventSource (EU4EvtSrcMission (eu4m_id m)) (findInStmts (eu4m_effect m))
+        findInMission hm m = addEventTriggers hm $ addEventSource (const (EU4EvtSrcMission (eu4m_id m))) (findInStmts (eu4m_effect m))

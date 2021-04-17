@@ -352,8 +352,8 @@ newMTTHMod :: MTTHModifier
 newMTTHMod = MTTHModifier Nothing []
 
 -- | Format a @mean_time_to_happen@ clause as wiki text.
-pp_mtth :: (EU4Info g, Monad m) => GenericScript -> PPT g m Doc
-pp_mtth = pp_mtth' . foldl' addField newMTTH
+pp_mtth :: (EU4Info g, Monad m) => Bool -> GenericScript -> PPT g m Doc
+pp_mtth isTriggeredOnly = pp_mtth' . foldl' addField newMTTH
     where
         addField mtth [pdx| years    = !n   |] = mtth { mtth_years = Just n }
         addField mtth [pdx| months   = !n   |] = mtth { mtth_months = Just n }
@@ -373,7 +373,7 @@ pp_mtth = pp_mtth' . foldl' addField newMTTH
                 hasMonths = isJust mmonths
                 hasDays = isJust mdays
                 hasModifiers = not (null modifiers)
-            return . mconcat $
+            return . mconcat $ (if isTriggeredOnly then [] else
                 case myears of
                     Just years ->
                         [PP.int years, PP.space, Doc.strictText $ plural years "year" "years"]
@@ -395,9 +395,12 @@ pp_mtth = pp_mtth' . foldl' addField newMTTH
                         ++
                         [PP.int days, PP.space, Doc.strictText $ plural days "day" "days"]
                     _ -> []
-                ++
+                ) ++
                 (if hasModifiers then
-                    [PP.line, "<br/>'''Modifiers'''", PP.line]
+                    (if isTriggeredOnly then
+                        [PP.line, "'''Weight modifiers'''", PP.line]
+                    else
+                        [PP.line, "<br/>'''Modifiers'''", PP.line])
                     ++ modifiers_pp'd
                  else [])
         pp_mtthmod (MTTHModifier (Just factor) conditions) =

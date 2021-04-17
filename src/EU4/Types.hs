@@ -8,7 +8,7 @@ module EU4.Types (
     ,   EU4Info (..)
         -- * Features
     ,   EU4EvtDesc (..), EU4Event (..), EU4Option (..)
-    ,   EU4EventSource (..), EU4EventTriggers
+    ,   EU4EventSource (..), EU4EventTriggers, EU4EventWeight
     ,   EU4Decision (..)
     ,   IdeaGroup (..), Idea (..), IdeaTable
     ,   EU4Modifier (..), EU4OpinionModifier (..)
@@ -172,15 +172,16 @@ data EU4Option = EU4Option
     ,   eu4opt_effects :: Maybe GenericScript   -- ^ What happens if the player/AI chooses this option
     } deriving (Show)
 
+type EU4EventWeight = Maybe (Integer, Integer) -- Rational reduces the number, which we don't want
 
 data EU4EventSource =
-      EU4EvtSrcImmediate Text      -- Immediate effect of an event (arg is event ID)
-    | EU4EvtSrcAfter Text          -- After effect of an event (arg is event ID)
-    | EU4EvtSrcOption Text Text    -- Effect of choosing an event option (args are event ID and option ID)
-    | EU4EvtSrcDecision Text Text  -- Effect of taking a decision (args are id and localized decision text)
-    | EU4EvtSrcOnAction Text       -- An effect from on_actions (arg is the trigger)
-    | EU4EvtSrcDisaster Text Text  -- Effect of a disaster (args are id and trigger)
-    | EU4EvtSrcMission Text        -- Effect of completing a mission (arg is the mission id)
+      EU4EvtSrcImmediate Text                       -- Immediate effect of an event (arg is event ID)
+    | EU4EvtSrcAfter Text                           -- After effect of an event (arg is event ID)
+    | EU4EvtSrcOption Text Text                     -- Effect of choosing an event option (args are event ID and option ID)
+    | EU4EvtSrcDecision Text Text                   -- Effect of taking a decision (args are id and localized decision text)
+    | EU4EvtSrcOnAction Text EU4EventWeight         -- An effect from on_actions (args are the trigger and weight)
+    | EU4EvtSrcDisaster Text Text EU4EventWeight    -- Effect of a disaster (args are id, trigger and weight)
+    | EU4EvtSrcMission Text                         -- Effect of completing a mission (arg is the mission id)
     deriving Show
 
 type EU4EventTriggers = HashMap Text [EU4EventSource]
