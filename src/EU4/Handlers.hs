@@ -102,6 +102,7 @@ module EU4.Handlers (
     -- testing
     ,   isPronoun
     ,   flag
+    ,   estatePrivilege
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -2907,3 +2908,15 @@ tradingBonus stmt@[pdx| %_ = @scr |]
             _ -> return $ preMessage stmt
 tradingBonus stmt = preStatement stmt
 
+-----------------------------------
+-- Handler for estate privileges --
+-----------------------------------
+estatePrivilege :: forall g m. (EU4Info g, Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
+estatePrivilege msg [pdx| %_ = @scr |] | length scr == 1 = estatePrivilege' (head scr)
+    where
+        estatePrivilege' :: GenericStatement -> PPT g m IndentedMessages
+        estatePrivilege' [pdx| privilege = $priv |] = do
+            locText <- getGameL10n priv
+            msgToPP $ msg locText
+        estatePrivilege' stmt = preStatement stmt
+estatePrivilege _ stmt = preStatement stmt

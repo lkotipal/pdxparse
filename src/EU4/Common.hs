@@ -1256,6 +1256,10 @@ handlersMisc = Tr.fromList
         ,("range"               , range)
         ,("set_government_rank" , setGovtRank)
         ,("set_saved_name"      , setSavedName)
+        -- Estate monopoly privileges
+        ,("apply_estate_monopoly_modifier"  , estatePrivilege MsgApplyEstateModifer)
+        ,("reapply_estate_privilege"        , estatePrivilege MsgReapplyEstatePrivilege)
+        ,("remove_estate_monopoly_modifier" , estatePrivilege MsgRemoveEstateModifer)
         ]
 
 -- | Handlers for ignored statements

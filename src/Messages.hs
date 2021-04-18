@@ -1170,6 +1170,9 @@ data ScriptMessage
     | MsgHasClimate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgTradingBonus {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgNumSubjects {scriptMessageAmt :: Double}
+    | MsgApplyEstateModifer {scriptMessageWhat :: Text}
+    | MsgRemoveEstateModifer {scriptMessageWhat :: Text}
+    | MsgReapplyEstatePrivilege {scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7785,6 +7788,21 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has at least "
                 , toMessage (plainNum _amt)
                 , plural _amt " subject" " subjects"
+                ]
+        MsgApplyEstateModifer {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Apply estate privilege modifier for "
+                , toMessage (iquotes _what)
+                ]
+        MsgRemoveEstateModifer {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Remove estate privilege modifier for "
+                , toMessage (iquotes _what)
+                ]
+        MsgReapplyEstatePrivilege {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Reapply estate privilege "
+                , toMessage (iquotes _what)
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
