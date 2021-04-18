@@ -1200,6 +1200,7 @@ handlersSpecialComplex = Tr.fromList
         ,("religion_years"               , religionYears)
         ,("reverse_add_casus_belli"      , addCB False)
         ,("set_variable"                 , setVariable)
+        ,("trading_bonus"                , tradingBonus)
         ,("trigger_switch"               , triggerSwitch)
         ]
 

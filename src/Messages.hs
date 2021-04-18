@@ -1167,6 +1167,7 @@ data ScriptMessage
     | MsgAddCuriaTreasury {scriptMessageAmt :: Double}
     | MsgReduceCuriaTreasury {scriptMessageAmt :: Double}
     | MsgHasClimate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgTradingBonus {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7775,6 +7776,13 @@ instance RenderMessage Script ScriptMessage where
         MsgHasClimate {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Climate is "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgTradingBonus {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Country has the [[trading in]] bonus for "
                 , _icon
                 , " "
                 , _what

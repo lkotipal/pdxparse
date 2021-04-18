@@ -98,6 +98,7 @@ module EU4.Handlers (
     ,   rhsAlways
     ,   rhsAlwaysYes
     ,   privateerPower
+    ,   tradingBonus
     -- testing
     ,   isPronoun
     ,   flag
@@ -2889,4 +2890,19 @@ privateerPower stmt@[pdx| %_ = @scr |]
                 return $ MsgPrivateerPower val
             _ -> return $ preMessage stmt
 privateerPower stmt = preStatement stmt
+
+-------------------------------
+-- Handler for trading_bonus --
+-------------------------------
+tradingBonus :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+tradingBonus stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_tb (parseTA "trade_goods" "value" scr)
+    where
+        pp_tb :: TextAtom -> PPT g m ScriptMessage
+        pp_tb ta = case (ta_what ta, ta_atom ta) of
+            (Just what, Just atom) | T.toLower atom == "yes" -> do
+                what_loc <- getGameL10n what
+                return $ MsgTradingBonus (iconText what) what_loc
+            _ -> return $ preMessage stmt
+tradingBonus stmt = preStatement stmt
 
