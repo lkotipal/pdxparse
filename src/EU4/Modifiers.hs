@@ -11,9 +11,12 @@ import Control.Arrow ((&&&))
 import Control.Monad (foldM, forM, join)
 import Control.Monad.Except (MonadError (..))
 import Control.Monad.Trans (MonadIO (..))
+import Control.Monad.State (gets)
 
 import Data.Maybe (isJust, fromJust, catMaybes)
 import Data.Monoid ((<>))
+import Data.List (sortOn, intersperse, foldl')
+import Data.Set (toList, fromList)
 
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
@@ -23,13 +26,18 @@ import qualified Data.Text as T
 
 import Abstract -- everything
 import QQ (pdx)
-import SettingsTypes ( PPT{-, Settings (..)-}{-, Game (..)-}
+import SettingsTypes ( PPT, Settings (..){-, Game (..)-}
                      {-, IsGame (..)-}, IsGameData (..), IsGameState (..), GameState (..)
-                     {-, getGameL10n-}, getGameL10nIfPresent
+                     , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions)
 import EU4.Types -- everything
 import EU4.Common (extractStmt, matchExactText)
+import FileIO (Feature (..), writeFeatures)
+import Text.PrettyPrint.Leijen.Text (Doc)
+import qualified Text.PrettyPrint.Leijen.Text as PP
+import qualified Doc
+import MessageTools
 
 import Debug.Trace (trace, traceM)
 
@@ -158,6 +166,76 @@ opinionModifierAddSection mmod stmt
         opinionModifierAddSection' mod _
             = trace ("unrecognised form for opinion modifier section") $ return mod
 
-writeEU4OpinionModifiers :: (IsGameState (GameState g), MonadError Text m) =>
-    GenericStatement -> PPT g m (Either Text (Maybe EU4OpinionModifier))
-writeEU4OpinionModifiers _ = throwError "Sorry, writing all opinion modifiers not yet supported."
+writeEU4OpinionModifiers :: (EU4Info g, MonadIO m) => PPT g m ()
+writeEU4OpinionModifiers = do
+    opinionModifiers <- getOpinionModifiers
+    writeFeatures "opinion_modifiers"
+                  [Feature { featurePath = Just "templates"
+                           , featureId = Just "opinion_modifier.txt"
+                           , theFeature = Right (HM.elems opinionModifiers)
+                           }]
+                  pp_opinion_modifers
+
+-- Based on https://hoi4.paradoxwikis.com/Template:Opinion
+pp_opinion_modifers :: (EU4Info g, Monad m) => [EU4OpinionModifier] -> PPT g m Doc
+pp_opinion_modifers modifiers = do
+    version <- gets (gameVersion . getSettings)
+    modifiers_pp'd <- mapM pp_opinion_modifer (sortOn omodName modifiers)
+    return . mconcat $ ["<includeonly>{{#switch:{{lc:{{{1}}} }}", PP.line]
+        ++ modifiers_pp'd ++
+        ["}}</includeonly><noinclude>{{Version|", Doc.strictText version, "}}"
+        , PP.line
+        , "Automatically generated from the file(s): "
+        , Doc.strictText $ T.pack $ concat $ intersperse ", " (map (\p -> "{{path|"++p++"}}") ((toList . fromList) (map omodPath modifiers)))
+        , PP.line, PP.line
+        , "Based on the [[HoI4:Template:Opinion|HOI4 opinion template]]"
+        , PP.line, PP.line
+        , "[[Category:Templates]]</noinclude>"
+        , PP.line
+        ]
+
+
+
+pp_opinion_modifer :: (EU4Info g, Monad m) => EU4OpinionModifier -> PPT g m Doc
+pp_opinion_modifer mod = do
+    locName <- getGameL10n (omodName mod)
+    return . mconcat $
+        [ "| "
+        , Doc.strictText (omodName mod)
+        , " = "
+        , iquotes locName
+        , " {{#ifeq:{{{2|}}}|0|| ("
+        ] ++
+        intersperse " / " (
+            (modText "{{icon|opinion}} " " Opinion" (omodOpinion mod))
+            ++ (yearlyDecay (omodOpinion mod) (omodYearlyDecay mod))
+            ++ (modText "" " Min" (omodMin mod))
+            ++ (modText "" " Max" (omodMax mod))
+            ++ (modText "" " Max for vassal" (omodMaxVassal mod))
+            ++ (modText "" " Max for sender" (omodMaxInOtherDirection mod))
+            ++ (duration (omodMonths mod) (omodYears mod))
+        ) ++
+        [ ") }}"
+        , PP.line
+        ]
+
+    where
+        modText :: Text -> Text -> Maybe Double -> [Doc]
+        modText p s (Just val) | val /= 0 = [mconcat [ Doc.strictText p, colourNumSign True val, Doc.strictText s ]]
+        modText _ _ _ = []
+
+        yearlyDecay :: Maybe Double -> Maybe Double -> [Doc]
+        yearlyDecay (Just op) (Just decay) = [mconcat [
+                colourNumSign True (if (op > 0 && decay > 0) || (op < 0 && decay < 0) then -decay else decay)
+                , Doc.strictText " Yearly decay"
+            ]]
+        yearlyDecay _ _ = []
+
+        duration :: Maybe Double -> Maybe Double -> [Doc]
+        duration (Just m) Nothing | m /= 0 = [fmt "Month" m]
+        duration Nothing (Just y) | y /= 0 = [fmt "Year" y]
+        duration (Just m) (Just y) | m /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", fmt "Month" m]]
+        duration _ _ = []
+
+        fmt :: Text -> Double -> Doc
+        fmt t v = mconcat [ plainNum v, " ", Doc.strictText $ t <> (if v == 1.0 then "" else "s") ]

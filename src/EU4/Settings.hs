@@ -291,3 +291,4 @@ writeEU4Scripts = do
     writeEU4Events
     writeEU4Decisions
     writeEU4Missions
+    writeEU4OpinionModifiers
