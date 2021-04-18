@@ -1828,6 +1828,7 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
         testPronoun (Just "THIS") = Just (Right thisPronoun)
         testPronoun (Just "FROM") = Just (Right fromPronoun)
         testPronoun (Just "emperor") = Just (Right hrePronoun)
+        testPronoun (Just other) | isJust (T.find (== ':') other) = Just (Right ("<tt>" <> other <> "</tt>")) -- event target (a bit of a hack)
         testPronoun (Just other) = Just (Left other)
         testPronoun _ = Nothing
 
@@ -1958,7 +1959,7 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
               return (Just (msg, ddm { ddm_culture = Nothing }))
         -- "Following the <foo> religion"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_religion = Just religion } = case religion of
-            Left religionText -> do
+            Left religionText  -> do
               locReligion <- getGameL10n religionText
               [msg] <- msgToPP $ MsgNewDynMemberReligion (iconText religionText) locReligion
               return (Just (msg, ddm { ddm_religion = Nothing }))
