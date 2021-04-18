@@ -236,6 +236,7 @@ handlersNumeric = Tr.fromList
         ,("num_of_ports"                     , numeric MsgNumPorts) -- same as num_of_total_ports?
         ,("num_of_rebel_armies"              , numeric MsgNumRebelArmies)
         ,("num_of_rebel_controlled_provinces", numeric MsgNumRebelControlledProvinces)
+        ,("num_of_subjects"                  , numeric MsgNumSubjects)
         ,("num_of_total_ports"               , numeric MsgNumPorts) -- same as num_of_ports?
         ,("num_of_trade_embargos"            , numeric MsgNumEmbargoes)
         ,("percentage_backing_issue"         , numeric MsgPctBackingParliamentIssue)
@@ -904,6 +905,7 @@ handlersSimpleIcon = Tr.fromList
 handlersSimpleFlag :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSimpleFlag = Tr.fromList
         [("add_claim"               , withFlag MsgGainClaim)
+        ,("add_core"                , withFlag MsgGainCore)
         ,("add_historical_rival"    , withFlag MsgAddHistoricalRival)
         ,("add_truce_with"          , withFlag MsgAddTruceWith)
         ,("alliance_with"           , withFlag MsgAlliedWith)

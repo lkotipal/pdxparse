@@ -354,6 +354,7 @@ data ScriptMessage
     | MsgDiscoverCountry {scriptMessageWhom :: Text}
     | MsgDiscoverProvince {scriptMessageWhat :: Text}
     | MsgGainClaim {scriptMessageWho :: Text}
+    | MsgGainCore {scriptMessageWho :: Text}
     | MsgGainPermanentClaimCountry {scriptMessageWho :: Text}
     | MsgGainPermanentClaimProvince {scriptMessageWhere :: Text}
     | MsgHasDiscovered {scriptMessageWhomOrWhere :: Text}
@@ -1168,6 +1169,7 @@ data ScriptMessage
     | MsgReduceCuriaTreasury {scriptMessageAmt :: Double}
     | MsgHasClimate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgTradingBonus {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgNumSubjects {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -2740,6 +2742,11 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _who
                 , " gains a claim on this province"
+                ]
+        MsgGainCore {scriptMessageWho = _who}
+            -> mconcat
+                [ _who
+                , " gains a core on this province"
                 ]
         MsgGainPermanentClaimCountry {scriptMessageWho = _who}
             -> mconcat
@@ -7772,6 +7779,12 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , _what
+                ]
+        MsgNumSubjects {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , plural _amt " subject" " subjects"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
