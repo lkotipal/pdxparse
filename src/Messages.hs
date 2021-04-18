@@ -3246,29 +3246,23 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddOpinion {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom}
             -> mconcat
-                [ "Gain opinion modifier "
-                , toMessage (iquotes _what)
-                , " <!-- "
+                [ "Gain opinion modifier {{opinion_modifier|"
                 , _modid
-                , " --> towards "
+                , "}} towards "
                 , _whom
                 ]
         MsgReverseAddOpinion {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWho = _who}
             -> mconcat
                 [ _who
-                , " gains opinion modifier "
-                , toMessage (iquotes _what)
-                , " <!-- "
+                , " gains opinion modifier {{opinion_modifier|"
                 , _modid
-                , " --> towards this country"
+                , "}} towards this country"
                 ]
         MsgAddOpinionDur {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageYears = _years}
             -> mconcat
-                [ "Gain opinion modifier "
-                , toMessage (iquotes _what)
-                , " <!-- "
+                [ "Gain opinion modifier {{opinion_modifier|"
                 , _modid
-                , " --> towards "
+                , "}} towards "
                 , _whom
                 , " for "
                 , toMessage (plainNum _years)
@@ -3277,30 +3271,24 @@ instance RenderMessage Script ScriptMessage where
         MsgReverseAddOpinionDur {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWho = _who, scriptMessageYears = _years}
             -> mconcat
                 [ _who
-                , " gains opinion modifier "
-                , toMessage (iquotes _what)
-                , " <!-- "
+                , " gains opinion modifier {{opinion_modifier|"
                 , _modid
-                , " --> towards this country for "
+                , "}} towards this country for "
                 , toMessage (plainNum _years)
                 , " years"
                 ]
         MsgHasOpinionMod {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom}
             -> mconcat
-                [ "Has opinion modifier "
-                , toMessage (iquotes _what)
-                , " <!-- "
+                [ "Has opinion modifier {{opinion_modifier|"
                 , _modid
-                , " --> towards "
+                , "}} towards "
                 , _whom
                 ]
         MsgRemoveOpinionMod {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom}
             -> mconcat
-                [ "Lose opinion modifier "
-                , toMessage (iquotes _what)
-                , " <!-- "
+                [ "Lose opinion modifier {{opinion_modifier|"
                 , _modid
-                , " --> towards "
+                , "}} towards "
                 , _whom
                 ]
         MsgAddTreasury {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -5993,19 +5981,17 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "This country and "
                 , _whom
-                , " gain opinion modifier "
-                , toMessage (iquotes _what)
-                , " <!-- "
+                , " gain opinion modifier {{opinion_modifier|"
                 , _modid
-                , " --> towards each other"
+                , "}} towards each other"
                 ]
-        MsgMutualOpinionDur {scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageDays = _days}
+        MsgMutualOpinionDur {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageDays = _days}
             -> mconcat
                 [ "This country and "
                 , _whom
-                , " gain opinion modifier "
-                , toMessage (iquotes _what)
-                , " towards each other for "
+                , " gain opinion modifier {{opinion_modifier|"
+                , _modid
+                , "}} towards each other for "
                 , toMessage (formatDays _days)
                 ]
         MsgAddNextInstitutionEmbracement {scriptMessageAmt = _amt}
