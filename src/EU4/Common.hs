@@ -803,6 +803,7 @@ handlersProvince = Tr.fromList
 handlersFlagOrProvince :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersFlagOrProvince = Tr.fromList
         [("add_claim"          , withFlagOrProvince MsgAddClaimFor MsgAddClaimOn)
+        ,("add_core"           , withFlagOrProvince MsgGainCore MsgGainCoreProvince)
         ,("add_permanent_claim", withFlagOrProvince MsgGainPermanentClaimCountry MsgGainPermanentClaimProvince)
         ,("cavalry"            , withFlagOrProvince MsgCavalrySpawnsCountry MsgCavalrySpawnsProvince)
         ,("infantry"           , withFlagOrProvince MsgInfantrySpawnsCountry MsgInfantrySpawnsProvince)
@@ -901,7 +902,6 @@ handlersSimpleIcon = Tr.fromList
 handlersSimpleFlag :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSimpleFlag = Tr.fromList
         [("add_claim"               , withFlag MsgGainClaim)
-        ,("add_core"                , withFlag MsgGainCore)
         ,("add_historical_rival"    , withFlag MsgAddHistoricalRival)
         ,("add_truce_with"          , withFlag MsgAddTruceWith)
         ,("alliance_with"           , withFlag MsgAlliedWith)
