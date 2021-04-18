@@ -1180,7 +1180,7 @@ facInfluence_iconkey fac = case fac of
         "mr_traders"       -> Just "traders influence"
         -- Revolutionary republic
         "rr_jacobins"      -> Just "jacobin influence"
-        "rr_royalists"     -> Just "royalist influence"
+        "rr_royalists"     -> Just "imperial influence"
         "rr_girondists"    -> Just "girondist influence"
         _ {- unknown -}    -> Nothing
 
@@ -1198,7 +1198,7 @@ fac_iconkey fac = case fac of
         "mr_traders"       -> Just "traders"
         -- Revolutionary republic
         "rr_jacobins"      -> Just "jacobins"
-        "rr_royalists"     -> Just "royalists"
+        "rr_royalists"     -> Just "imperials"
         "rr_girondists"    -> Just "girondists"
         _ {- unknown -}    -> Nothing
 
