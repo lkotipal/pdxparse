@@ -1011,10 +1011,10 @@ data ScriptMessage
     | MsgReligiousModifier
     | MsgIsEnemy { scriptMessageWho :: Text }
     | MsgHasSpyNetworkFrom { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
-    | MsgDefineGeneral
-    | MsgDefineConquistador
-    | MsgDefineAdmiral
-    | MsgDefineExplorer
+    | MsgDefineGeneral { scriptMessageIcon :: Text }
+    | MsgDefineConquistador { scriptMessageIcon :: Text }
+    | MsgDefineAdmiral { scriptMessageIcon :: Text }
+    | MsgDefineExplorer { scriptMessageIcon :: Text }
     | MsgMilitaryLeaderTrait { scriptMessageWhat :: Text }
     | MsgTypeAll
     | MsgSetSavedName { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageFemale :: Bool }
@@ -1173,6 +1173,7 @@ data ScriptMessage
     | MsgApplyEstateModifer {scriptMessageWhat :: Text}
     | MsgRemoveEstateModifer {scriptMessageWhat :: Text}
     | MsgReapplyEstatePrivilege {scriptMessageWhat :: Text}
+    | MsgLeaderTradition {scriptMessageNaval :: Bool, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -2370,7 +2371,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " conquistador with "
                 , toMessage (roundNum _amt)
-                , " navy tradition"
+                , " army tradition"
                 ]
         MsgCreateExplorer {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -6777,14 +6778,30 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " spy network"
                 ]
-        MsgDefineGeneral
-            -> "Gain a new general with:"
-        MsgDefineConquistador
-            -> "Gain a new conquistador with:"
-        MsgDefineAdmiral
-            -> "Gain a new admiral with:"
-        MsgDefineExplorer
-            -> "Gain a new explorer with:"
+        MsgDefineGeneral { scriptMessageIcon = _icon }
+            -> mconcat
+                [ "Gain a new "
+                , _icon
+                , " general with:"
+                ]
+        MsgDefineConquistador { scriptMessageIcon = _icon }
+            -> mconcat
+                [ "Gain a new "
+                , _icon
+                , " conquistador with:"
+                ]
+        MsgDefineAdmiral { scriptMessageIcon = _icon }
+            -> mconcat
+                [ "Gain a new "
+                , _icon
+                , " admiral with:"
+                ]
+        MsgDefineExplorer { scriptMessageIcon = _icon }
+            -> mconcat
+                [ "Gain a new "
+                , _icon
+                , " explorer with:"
+                ]
         MsgMilitaryLeaderTrait { scriptMessageWhat = _what }
             -> mconcat
                 [ "With the [[Leader trait|trait]] "
@@ -7803,6 +7820,14 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Reapply estate privilege "
                 , toMessage (iquotes _what)
+                ]
+        MsgLeaderTradition {scriptMessageNaval = _yn, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "With "
+                , toMessage (plainNum _amt)
+                , " "
+                , toMessage (ifThenElseT _yn "naval" "army")
+                , " tradition"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

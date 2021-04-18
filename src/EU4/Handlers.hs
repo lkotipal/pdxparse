@@ -93,6 +93,7 @@ module EU4.Handlers (
     ,   isInWar
     ,   hasGovermentAttribute
     ,   defineMilitaryLeader
+    ,   createMilitaryLeader
     ,   setSavedName
     ,   hasCasusBelli
     ,   rhsAlways
@@ -2747,7 +2748,8 @@ hasGovermentAttribute stmt = trace ("warning: not handled for has_government_att
 -- Handler for define_general etc. --
 -------------------------------------
 data MilitaryLeader = MilitaryLeader
-        {   ml_shock :: Maybe Double
+        {   ml_tradition :: Maybe Double
+        ,   ml_shock :: Maybe Double
         ,   ml_fire :: Maybe Double
         ,   ml_manuever :: Maybe Double
         ,   ml_siege :: Maybe Double
@@ -2757,16 +2759,18 @@ data MilitaryLeader = MilitaryLeader
         }
         deriving Show
 newML :: MilitaryLeader
-newML = MilitaryLeader Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+newML = MilitaryLeader Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
-defineMilitaryLeader :: forall g m. (EU4Info g, Monad m) => ScriptMessage -> Bool -> StatementHandler g m
-defineMilitaryLeader headline naval stmt@[pdx| %_ = @scr |] = do
+defineMilitaryLeader :: forall g m. (EU4Info g, Monad m) => Text -> Bool -> (Text -> ScriptMessage) -> StatementHandler g m
+defineMilitaryLeader icon naval headline stmt@[pdx| %_ = @scr |] = do
     currentFile <- withCurrentFile $ \f -> return f
     let msgShock     = (if naval then MsgNavalLeaderShock (iconText "naval leader shock") else MsgLandLeaderShock (iconText "land leader shock"))
         msgFire      = (if naval then MsgNavalLeaderFire (iconText "naval leader fire") else MsgLandLeaderFire (iconText "land leader fire"))
         msgManuever  = (if naval then MsgNavalLeaderManeuver (iconText "naval leader maneuver") else MsgLandLeaderManeuver (iconText "land leader maneuver"))
         msgSiege     = (if naval then MsgNavalLeaderSiege (iconText "blockade") else MsgLandLeaderSiege (iconText "land leader siege"))
         addLine :: MilitaryLeader -> GenericStatement -> MilitaryLeader
+        addLine ml [pdx| tradition = %rhs |]
+            = ml { ml_tradition = floatRhs rhs }
         addLine ml [pdx| shock = %rhs |]
             = ml { ml_shock = floatRhs rhs }
         addLine ml [pdx| fire = %rhs |]
@@ -2787,10 +2791,13 @@ defineMilitaryLeader headline naval stmt@[pdx| %_ = @scr |] = do
         pp_mil_leader ea = do
             body <- indentUp (unfoldM pp_mil_leader_attrib ea)
             liftA2 (++)
-                (msgToPP headline)
+                (msgToPP $ headline (iconText icon))
                 (pure body)
 
         pp_mil_leader_attrib :: MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
+        pp_mil_leader_attrib ml@MilitaryLeader { ml_tradition = Just trad } = do
+            [msg] <- msgToPP $ MsgLeaderTradition naval trad
+            return (Just (msg, ml { ml_tradition = Nothing }))
         pp_mil_leader_attrib ml@MilitaryLeader { ml_shock = Just shock } = do
             [msg] <- msgToPP $ msgShock shock
             return (Just (msg, ml { ml_shock = Nothing }))
@@ -2816,7 +2823,16 @@ defineMilitaryLeader headline naval stmt@[pdx| %_ = @scr |] = do
         pp_mil_leader_attrib _ = return Nothing
 
     pp_mil_leader $ foldl' addLine newML scr
-defineMilitaryLeader _ _ stmt = preStatement stmt
+defineMilitaryLeader _ _ _ stmt = preStatement stmt
+
+createMilitaryLeader :: forall g m. (EU4Info g, Monad m) => Text -> Bool -> (Text -> Double -> ScriptMessage) -> (Text -> ScriptMessage) -> StatementHandler g m
+createMilitaryLeader icon naval msgWithTradition msgHeadline stmt@[pdx| $_ = @stmts |] =
+    let (_, rest) = extractStmt (matchLhsText "culture") stmts -- FIXME: Ignoring culture when only combined with tradition
+        (mtrad, rest') = extractStmt (matchLhsText "tradition") rest in
+        case mtrad of
+            Just ([pdx| %_ = !tradition |]) | length rest' == 0 -> msgToPP $ msgWithTradition (iconText icon) tradition
+            _ -> defineMilitaryLeader icon naval msgHeadline stmt
+createMilitaryLeader _ _ _ _ stmt = preStatement stmt
 
 --------------------------------
 -- Handler for set_saved_name --
