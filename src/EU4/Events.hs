@@ -547,6 +547,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
         actionName :: Text -> Text
         actionName n = HM.lookupDefault ("<pre>" <> n <> "</pre>") n actionNameTable
 
+
         -- TODO: This should in principle be localizable at some point
         actionNameTable :: HashMap Text Text
         actionNameTable = HM.fromList
@@ -566,8 +567,8 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_colonial_liberation", "")
             --,("on_colonial_pulse", "")
             --,("on_colonial_reintegration", "")
-            --,("on_conquistador_empty", "")
-            --,("on_conquistador_native", "")
+            ,("on_conquistador_empty", "<!-- on_conquistador_empty -->{{icon|conquistador}} Conquistador is entering a uncolonized province with ''\"Hunt for the Seven Cities of Gold\"'' mission")
+            ,("on_conquistador_native", "<!-- on_conquistador_native -->{{icon|conquistador}} Conquistador is entering a province owned by natives with ''\"Hunt for the Seven Cities of Gold\"'' mission")
             --,("on_death_election", "")
             --,("on_death_foreign_slave_ruler", "")
             --,("on_death_has_harem", "")
@@ -592,19 +593,19 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_harmonized_shinto", "")
             --,("on_harmonized_vajrayana", "")
             --,("on_harmonized_zoroastrian_group", "")
-            --,("on_heir_needed_theocracy", "")
+            ,("on_heir_needed_theocracy", "<!-- on_heir_needed_theocracy -->A theocracy needing an heir")
             --,("on_hre_non_defense", "")
             --,("on_hre_religion_white_peace", "")
             --,("on_integrate", "")
             --,("on_lock_hre_religion", "")
-            --,("on_mandate_of_heaven_gained", "")
+            ,("on_mandate_of_heaven_gained", "<!-- on_mandate_of_heaven_gained -->Our country becoming the [[Emperor of China]] instead of ''From''")
             --,("on_monarch_death", "")
             --,("on_new_consort", "")
-            --,("on_new_monarch", "")
+            ,("on_new_monarch", "<!-- on_new_monarch -->Getting a new ruler")
             --,("on_new_term_election", "")
             ,("on_overextension_pulse", "The overextension pulse")
-            --,("on_peace_actor", "")
-            --,("on_peace_recipient", "")
+            ,("on_peace_actor", "<!-- on_peace_actor -->Sending a peace offer")
+            ,("on_peace_recipient", "<!-- on_peace_recipient -->Receiving a peace offer")
             --,("on_province_owner_change", "")
             --,("on_regent", "")
             --,("on_religion_change", "")
@@ -613,7 +614,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_revoke_estate_land", "")
             --,("on_siege_lost_country", "")
             --,("on_siege_lost_province", "")
-            ,("on_siege_won_country", "Our country winning a siege against ''From''") -- root = winning country, from = location
+            ,("on_siege_won_country", "<!-- on_siege_won_country -->Our country winning a siege in ''From''") -- root = winning country, from = location
             --,("on_siege_won_province", "")
             --,("on_startup", "")
             --,("on_successive_emperor", "")
