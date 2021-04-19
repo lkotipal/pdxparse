@@ -1184,6 +1184,18 @@ data ScriptMessage
     | MsgCanBuild {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgCanHaveCenterOfReformation
     | MsgCreateColony {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumInvestmentsInTradeCompanyReigion {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgHasTradeCompanyInvestmentInArea {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text}
+    | MsgIncreaseReligiousCurrencyEffect
+    | MsgReduceReligiousCurrencyEffect
+    | MsgHasPrivateers { scriptMessageYn :: Bool }
+    | MsgEveryTradeNodeMemberCountry
+    | MsgRandomTradeNodeMemberProvince
+    | MsgIsWasteland { scriptMessageYn :: Bool }
+    | MsgHasRiverEstuary
+    | MsgTradingPolicyInNode { scriptMessageNode :: Text, scriptMessagePolicy :: Text }
+    | MsgTradingPolicyInNodeAny { scriptMessageNode :: Text }
+    | MsgInstitutionDifference { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7899,6 +7911,67 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True _amt)
                 , " population"
+                ]
+        MsgNumInvestmentsInTradeCompanyReigion {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "At least "
+                , toMessage (plainNum _amt)
+                , " "
+                , _icon
+                , " "
+                , _what
+                , plural _amt " investment" " investments"
+                , " in the trade company region"
+                ]
+        MsgHasTradeCompanyInvestmentInArea {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageWho = _who}
+            -> mconcat
+                [ _who
+                , " has the "
+                , _icon
+                , " "
+                , _what
+                , " trade company investment"
+                ]
+        MsgIncreaseReligiousCurrencyEffect
+            -> "Gain {{green|15}} church power, {{green|15}} frevor, {{green|10}} patriarch authority, {{green|10}} karma, {{green|5}} authority or {{green|2}} papal influence"
+        MsgReduceReligiousCurrencyEffect
+            -> "Lose {{red|-15}} church power, {{red|-15}} frevor, {{red|-10}} patriarch authority, {{red|-10}} karma, {{red|-5}} authority or {{red|-2}} papal influence"
+        MsgHasPrivateers { scriptMessageYn = _yn }
+            -> mconcat
+                [ "The country "
+                , toMessage (ifThenElseT _yn "has" "does ''not'' have")
+                , " [[privateers]] in any trade node"
+                ]
+        MsgEveryTradeNodeMemberCountry
+            -> "All countries with owned provinces in the trade node:"
+        MsgRandomTradeNodeMemberProvince
+            -> "One random province in the trade node:"
+        MsgIsWasteland { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Province is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " [[wasteland]]"
+                ]
+        MsgHasRiverEstuary
+            -> "Province has a {{icon|estuary|28px}} river estuary"
+        MsgTradingPolicyInNode { scriptMessageNode = _node, scriptMessagePolicy = _policy }
+            -> mconcat
+                [ _node
+                , " has the "
+                , _policy
+                , " trading policy"
+                ]
+        MsgTradingPolicyInNodeAny { scriptMessageNode = _node }
+            -> mconcat
+                [ _node
+                , " has any trading policy"
+                ]
+        MsgInstitutionDifference { scriptMessageWho = _who, scriptMessageAmt = _amt }
+            -> mconcat
+                [ "The country has embraced at least "
+                , toMessage (plainNum _amt)
+                , " more [[institutions]] than "
+                , _who
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

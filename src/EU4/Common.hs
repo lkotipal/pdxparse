@@ -145,6 +145,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("divorce_consort_effect", rhsAlwaysYes MsgDivorceConsortEffect)
         ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)
         ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
+        ,("has_river_estuary_trigger", rhsAlwaysYes MsgHasRiverEstuary)
         ,("increase_heir_adm_effect", rhsAlwaysYes MsgIncreaseHeirAdmEffect)
         ,("increase_heir_dip_effect", rhsAlwaysYes MsgIncreaseHeirDipEffect)
         ,("increase_heir_mil_effect", rhsAlwaysYes MsgIncreaseHeirMilEffect)
@@ -197,7 +198,9 @@ handlersRhsIrrelevant = Tr.fromList
         ,("no_religion_penalty"    , rhsAlwaysYes MsgNoReligionPenalty)
         ,("map_setup"              , rhsAlways "map_setup_random" MsgMapSetupRandom) -- In 1.30.6 all uses are "map_setup = map_setup_random"
 
-        -- Curia effects (from common/scripted_effects/01_scripted_effects_for_simple_bonuses_penalties.txt)
+        -- Various effects from from common/scripted_effects/01_scripted_effects_for_simple_bonuses_penalties.txt
+        --
+        -- Curia effects
         ,("add_curia_treasur_small_effect" {-sic-} , rhsAlwaysYes (MsgAddCuriaTreasury 25))
         ,("add_curia_treasury_medium_effect"       , rhsAlwaysYes (MsgAddCuriaTreasury 50))
         ,("add_curia_treasury_big_effect"          , rhsAlwaysYes (MsgAddCuriaTreasury 100))
@@ -205,6 +208,10 @@ handlersRhsIrrelevant = Tr.fromList
         ,("reduce_curia_treasury_medium_effect"    , rhsAlwaysYes (MsgReduceCuriaTreasury (-50)))
         ,("reduce_curia_treasury_big_effect"       , rhsAlwaysYes (MsgReduceCuriaTreasury (-100)))
         ,("reduce_curia_treasury_huge_effect"      , rhsAlwaysYes (MsgReduceCuriaTreasury (-1000)))
+
+        -- Religious currency
+        ,("increase_religious_currency_effect"     , rhsAlwaysYes MsgIncreaseReligiousCurrencyEffect)
+        ,("reduce_religious_currency_effect"       , rhsAlwaysYes MsgReduceReligiousCurrencyEffect)
         ]
 
 -- | Handlers for numeric statements
@@ -729,6 +736,7 @@ handlersCompound = Tr.fromList
         ,("every_province"          , scope EU4Province  . compoundMessage MsgEveryProvince)
         ,("every_rival_country"     , scope EU4Country   . compoundMessage MsgEveryRival)
         ,("every_subject_country"   , scope EU4Country   . compoundMessage MsgEverySubject)
+        ,("every_trade_node_member_country" , scope EU4Country . compoundMessage MsgEveryTradeNodeMemberCountry)
         ,("hidden_effect"           ,                      compoundMessage MsgHiddenEffect)
         ,("if"                      ,                      compoundMessage MsgIf) -- always needs editing
         ,("limit"                   ,                      compoundMessage MsgLimit) -- always needs editing
@@ -753,6 +761,7 @@ handlersCompound = Tr.fromList
         ,("random_rival_country"    , scope EU4Country   . compoundMessage MsgRandomRival)
         ,("random_subject_country"  , scope EU4Country   . compoundMessage MsgRandomSubjectCountry)
         ,("random_trade_node"       , scope EU4TradeNode . compoundMessage MsgRandomTradeNode)
+        ,("random_trade_node_member_province" , scope EU4Province . compoundMessage MsgRandomTradeNodeMemberProvince)
         ,("region_for_scope_province" , scope EU4Province . compoundMessage MsgRegionProvinceScope)
         ,("strongest_trade_power"   , scope EU4Country   . compoundMessage MsgStrongestTradePower) -- always needs editing
         ,("trigger"                 ,                      compoundMessage MsgTrigger) -- observed in random_list (probably something unhandled if seen elsewhere)
@@ -1009,6 +1018,7 @@ handlersYesNo = Tr.fromList
         ,("has_owner_religion"          , withBool MsgHasOwnerReligion)
         ,("has_parliament"              , withBool MsgHasParliament)
         ,("has_port"                    , withBool MsgHasPort)
+        ,("has_privateers"              , withBool MsgHasPrivateers)
         ,("has_revolution_in_province"  , withBool MsgHasRevolutionInProvince)
         ,("has_seat_in_parliament"      , withBool MsgHasSeatInParliament)
         ,("has_states_general_mechanic" , withBool MsgHasStatesGeneralMechanic)
@@ -1060,6 +1070,7 @@ handlersYesNo = Tr.fromList
         ,("is_subject"                  , withBool MsgIsSubject)
         ,("is_tribal"                   , withBool MsgIsTribal)
         ,("is_tutorial_active"          , withBool MsgIsInTutorial)
+        ,("is_wasteland"                , withBool MsgIsWasteland)
         ,("luck"                        , withBool MsgLucky)
         ,("normal_or_historical_nations", withBool MsgNormalOrHistoricalNations)
         ,("papacy_active"               , withBool MsgPapacyIsActive)
@@ -1157,7 +1168,9 @@ handlersTextValue = Tr.fromList
         ,("had_ruler_flag"              , textValue "flag" "days" MsgHadRulerFlag MsgHadRulerFlag tryLocAndIcon)
         ,("had_ruler_flag"              , textValue "flag" "days" MsgHadRulerFlag MsgHadRulerFlag tryLocAndIcon)
         ,("has_spy_network_from"        , textValue "who" "value" MsgHasSpyNetworkFrom MsgHasSpyNetworkFrom flagTextMaybe)
+        ,("institution_difference"      , textValue "who" "value" MsgInstitutionDifference MsgInstitutionDifference flagTextMaybe)
         ,("num_of_religion"             , textValue "religion" "value" MsgNumOfReligion MsgNumOfReligion tryLocAndIcon)
+        ,("num_investments_in_trade_company_region" , textValue "investment" "value" MsgNumInvestmentsInTradeCompanyReigion MsgNumInvestmentsInTradeCompanyReigion tryLocAndIconTC)
         ,("trade_share"                 , textValue "country" "share" MsgTradeShare MsgTradeShare flagTextMaybe)
         ]
 
@@ -1201,6 +1214,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_estate_influence_modifier", hasEstateInfluenceModifier)
         ,("has_opinion"                  , hasOpinion MsgHasOpinion)
         ,("has_opinion_modifier"         , opinion MsgHasOpinionMod (\modid what who _years -> MsgHasOpinionMod modid what who))
+        ,("has_trade_company_investment_in_area", hasTradeCompanyInvestment)
         ,("is_in_war"                    , isInWar)
         ,("privateer_power"              , privateerPower)
         ,("province_event"               , scope EU4Province . triggerEvent MsgProvinceEvent)
@@ -1210,6 +1224,7 @@ handlersSpecialComplex = Tr.fromList
         ,("reverse_add_casus_belli"      , addCB False)
         ,("set_variable"                 , setVariable)
         ,("trading_bonus"                , tradingBonus)
+        ,("trading_policy_in_node"       , tradingPolicyInNode)
         ,("trigger_switch"               , triggerSwitch)
         ]
 

@@ -418,7 +418,7 @@ pp_event evt = case (eu4evt_id evt
             ["| options = ", options_pp'd, PP.line
             ,"| collapse = yes", PP.line
             ,"}}", PP.line
-            ,"<section end=", evtId, "/>"
+            ,"<section end=", evtId, "/>", PP.line
             ]
 
     (Nothing, _, _) -> throwError "eu4evt_id missing"

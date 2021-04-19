@@ -40,6 +40,7 @@ module EU4.Handlers (
     ,   numericIconBonus
     ,   tryLoc
     ,   tryLocAndIcon
+    ,   tryLocAndIconTC
     ,   textValue
     ,   textAtom
     ,   ppAiWillDo
@@ -100,6 +101,8 @@ module EU4.Handlers (
     ,   rhsAlwaysYes
     ,   privateerPower
     ,   tradingBonus
+    ,   hasTradeCompanyInvestment
+    ,   tradingPolicyInNode
     -- testing
     ,   isPronoun
     ,   flag
@@ -256,6 +259,7 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
         Just EU4Province
             | expectedScope `matchScope` EU4Province -> message MsgROOTProvince
             | expectedScope `matchScope` EU4Country -> message MsgROOTProvinceOwner
+            | expectedScope `matchScope` EU4TradeNode -> message MsgROOTTradeNode
             | otherwise                             -> message MsgROOTProvinceAsOther
         -- No synecdoche possible
         Just EU4TradeNode -> message MsgROOTTradeNode
@@ -1042,6 +1046,39 @@ tryLocAndIcon atom = do
     loc <- tryLoc atom
     return (maybe mempty id (Just (iconText atom)),
             maybe ("<tt>" <> atom <> "</tt>") id loc)
+
+-- | Same as tryLocAndIcon, but TC investments don't currenly have proper icons
+tryLocAndIconTC :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
+tryLocAndIconTC atom = do
+    loc <- tryLoc atom
+    return (maybe mempty id (Just (tcIconText atom)),
+            maybe ("<tt>" <> atom <> "</tt>") id loc)
+    where
+        iconTable :: HashMap Text Text
+        iconTable = HM.fromList
+            [("local_quarter", "local quarters")
+            ,("permanent_quarters", "permanent quarters")
+            ,("officers_mess", "officers mess")
+            ,("company_warehouse", "warehouse")
+            ,("company_depot", "depot")
+            ,("admiralty", "admiralty")
+            ,("brokers_office", "brokers office")
+            ,("brokers_exchange", "brokers exchange")
+            ,("property_appraiser", "property appraiser")
+            ,("settlements", "settlement")
+            ,("district", "district")
+            ,("townships", "township")
+            ,("company_administration", "company administration")
+            ,("military_administration", "military administration")
+            ,("governor_general_mansion", "governor generals mansion")
+            ]
+        tcIconText :: Text -> Text
+        tcIconText t =
+            let icon = case HM.lookup t iconTable of
+                    Just val -> val
+                    _ -> (T.replace "_" " " t)
+            in
+               "[[image:TC " <> icon <> ".png|28px]]"
 
 data TextValue = TextValue
         {   tv_what :: Maybe Text
@@ -2410,10 +2447,22 @@ withFlagOrProvinceEU4Scope bothCountryMsg scopeCountryParamGeogMsg scopeGeogPara
 tradeMod :: (EU4Info g, Monad m) => StatementHandler g m
 tradeMod stmt@[pdx| %_ = ?_ |]
     = withLocAtom2 MsgTradeMod MsgHasModifier stmt
-tradeMod stmt@[pdx| %_ = @_ |]
-    = textAtom "who" "name" MsgHasTradeModifier
-        (fmap Just . flagText (Just EU4Country))
-        stmt
+tradeMod stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_tm (foldl' addLine newTA scr)
+    where
+        addLine :: TextAtom -> GenericStatement -> TextAtom
+        addLine ta [pdx| who = ?who |]
+            = ta { ta_what = Just who }
+        addLine ta [pdx| $label = ?at |]
+            | label == "key" || label == "name"
+            = ta { ta_atom = Just at }
+        addLine ta scr = (trace ("tradeMod: Ignoring " ++ show scr)) $ ta
+
+        pp_tm ta = case (ta_what ta, ta_atom ta) of
+            (Just who, Just key) -> do
+                whoText <- flagText (Just EU4Country) who
+                keyText <- getGameL10n key
+                return $ MsgHasTradeModifier "" whoText keyText
+            _ -> return $ preMessage stmt
 tradeMod stmt = preStatement stmt
 
 isMonth :: (IsGameData (GameData g),
@@ -2936,3 +2985,43 @@ estatePrivilege msg [pdx| %_ = @scr |] | length scr == 1 = estatePrivilege' (hea
             msgToPP $ msg locText
         estatePrivilege' stmt = preStatement stmt
 estatePrivilege _ stmt = preStatement stmt
+
+
+------------------------------------------------------
+-- Handler for has_trade_company_investment_in_area --
+------------------------------------------------------
+hasTradeCompanyInvestment :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasTradeCompanyInvestment stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_tci (parseTA "investor" "investment" scr)
+    where
+        pp_tci :: TextAtom -> PPT g m ScriptMessage
+        pp_tci ta = case (ta_what ta, ta_atom ta) of
+            (Just investor, Just investment) -> do
+                investorLoc <- flag (Just EU4Country) investor
+                (icon, desc) <- tryLocAndIconTC investment
+                return $ MsgHasTradeCompanyInvestmentInArea icon desc (Doc.doc2text investorLoc)
+            _ -> return $ preMessage stmt
+hasTradeCompanyInvestment stmt = preStatement stmt
+
+----------------------------------------
+-- Handler for trading_policy_in_node --
+----------------------------------------
+tradingPolicyInNode :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+tradingPolicyInNode stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_tpin (parseTA "node" "policy" scr)
+    where
+        pp_tpin :: TextAtom -> PPT g m ScriptMessage
+        pp_tpin ta = case (ta_what ta, ta_atom ta) of
+            (Just node, Just policy) -> do
+                nodeLoc <- Doc.doc2text <$> allowPronoun (Just EU4TradeNode) (fmap Doc.strictText . getGameL10n) node
+                case T.toLower policy of
+                    "any" -> return $ MsgTradingPolicyInNodeAny nodeLoc
+                    _ -> do
+                        policyLoc <- getGameL10n policy
+                        return $ MsgTradingPolicyInNode nodeLoc policyLoc
+                --traceM $ "Node: " ++ (T.unpack $ nodeLoc) ++ " Policy: " ++ (T.unpack $ policyLoc)
+                -- NOTE: policy can be "any"
+                --return $ preMessage stmt
+            _ -> return $ preMessage stmt
+
+tradingPolicyInNode stmt = preStatement stmt
