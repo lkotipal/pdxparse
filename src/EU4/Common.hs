@@ -229,6 +229,7 @@ handlersNumeric = Tr.fromList
         ,("heir_age"                         , numeric MsgHeirAge)
         ,("is_year"                          , numeric MsgYearIs)
         ,("legitimacy_equivalent"            , numeric MsgLegitimacyEquivalent)
+        ,("num_free_building_slots"          , numeric MsgNumFreeBuildingSlots)
         ,("num_of_colonial_subjects"         , numeric MsgNumColonialSubjects)
         ,("num_of_colonies"                  , numeric MsgNumColonies)
         ,("num_of_loans"                     , numeric MsgNumLoans)
@@ -242,6 +243,7 @@ handlersNumeric = Tr.fromList
         ,("percentage_backing_issue"         , numeric MsgPctBackingParliamentIssue)
         ,("revolt_percentage"                , numeric MsgRevoltPercentage)
         ,("ruler_age"                        , numeric MsgRulerAge)
+        ,("trade_company_size"               , numeric MsgTradeCompanySize)
         ,("trade_income_percentage"          , numeric MsgTradeIncomePercentage)
         ,("units_in_province"                , numeric MsgUnitsInProvince)
         -- Special cases
@@ -869,6 +871,7 @@ handlersSimpleIcon = Tr.fromList
         ,("add_ruler_personality"   , withLocAtomIcon MsgAddRulerPersonality)
         ,("remove_ruler_personality"  , withLocAtomIcon MsgRemoveRulerPersonality)
         ,("advisor"                 , withLocAtomIcon MsgHasAdvisorType)
+        ,("can_build"               , withLocAtomIconBuilding MsgCanBuild)
         ,("change_technology_group" , withLocAtomIcon MsgChangeTechGroup)
         ,("change_trade_goods"      , withLocAtomIcon MsgChangeGoods)
         ,("change_unit_type"        , withLocAtomIcon MsgChangeUnitType)

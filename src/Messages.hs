@@ -1175,6 +1175,9 @@ data ScriptMessage
     | MsgRemoveEstateModifer {scriptMessageWhat :: Text}
     | MsgReapplyEstatePrivilege {scriptMessageWhat :: Text}
     | MsgLeaderTradition {scriptMessageNaval :: Bool, scriptMessageAmt :: Double}
+    | MsgTradeCompanySize {scriptMessageAmt :: Double}
+    | MsgNumFreeBuildingSlots {scriptMessageAmt :: Double}
+    | MsgCanBuild {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7834,6 +7837,25 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (ifThenElseT _yn "naval" "army")
                 , " tradition"
+                ]
+        MsgTradeCompanySize {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Trade company has at least "
+                , toMessage (plainNum _amt)
+                , " provinces"
+                ]
+        MsgNumFreeBuildingSlots {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The province has at least "
+                , toMessage (plainNum _amt)
+                , " building slots remaining"
+                ]
+        MsgCanBuild {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ _icon
+                , " "
+                , _what
+                , " can be built in the province"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
