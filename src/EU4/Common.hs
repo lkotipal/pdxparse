@@ -135,6 +135,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("boost_eunuchs_large_effect", rhsAlwaysYes MsgBoostEunuchsLargeEffect)
         ,("boost_temples_effect", rhsAlwaysYes MsgBoostTemplesEffect)
         ,("boost_temples_large_effect", rhsAlwaysYes MsgBoostTemplesLargeEffect)
+        ,("can_have_center_of_reformation_trigger" , const $ msgToPP MsgCanHaveCenterOfReformation)
         ,("cancel_construction"    , rhsAlwaysYes MsgCancelConstruction) -- Canals
         ,("cb_on_overseas"         , rhsAlwaysYes MsgGainOverseasCB) -- Full Expansion
         ,("cb_on_primitives"       , rhsAlwaysYes MsgGainPrimitivesCB) -- Full Exploration
@@ -321,6 +322,7 @@ handlersNumericIcons = Tr.fromList
         ,("consort_dip"              , numericIcon "dip" MsgConsortDIP)
         ,("consort_mil"              , numericIcon "mil" MsgConsortMIL)
         ,("corruption"               , numericIcon "corruption" MsgCorruption)
+        ,("create_colony"            , numericIcon "global settler increase" MsgCreateColony)
         ,("devastation"              , numericIcon "devastation" MsgDevastation)
         ,("development"              , numericIcon "development" MsgDevelopment)
         ,("development_cost"         , numericIcon "development cost" MsgDevelCost)
@@ -971,7 +973,9 @@ handlersIconFlagOrPronoun = Tr.fromList
         ,("primary_culture"  , locAtomTagOrProvince (const MsgPrimaryCultureIs) MsgPrimaryCultureIsAs)
         ,("religion"         , locAtomTagOrProvince MsgReligion MsgSameReligion)
         ,("religion_group"   , locAtomTagOrProvince MsgReligionGroup MsgSameReligionGroup)
+        ,("ruler_religion"   , iconOrFlag MsgRulerReligionIs MsgRulerReligionIsSame Nothing)
         ,("set_heir_religion", locAtomTagOrProvince MsgSetHeirReligion MsgSetHeirReligionAs)
+        ,("set_ruler_religion" , iconOrFlag MsgChangeRulerReligion MsgChangeRulerSameReligion Nothing)
         ,("trade_goods"      , locAtomTagOrProvince MsgProducesGoods MsgProducesSameGoods)
         ]
 

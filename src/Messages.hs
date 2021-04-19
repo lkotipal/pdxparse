@@ -385,6 +385,10 @@ data ScriptMessage
     | MsgReligionGroup {scriptMessage_ :: Text, scriptMessageWhat :: Text}
     | MsgChangeSameReligion {scriptMessageWhom :: Text}
     | MsgChangeReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgChangeRulerSameReligion {scriptMessageWhom :: Text}
+    | MsgChangeRulerReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgRulerReligionIs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgRulerReligionIsSame {scriptMessageWhom :: Text}
     | MsgIsCoreOf {scriptMessageWhom :: Text}
     | MsgHasCoreOn {scriptMessageWhat :: Text}
     | MsgHasClaim {scriptMessageWho :: Text}
@@ -1178,6 +1182,8 @@ data ScriptMessage
     | MsgTradeCompanySize {scriptMessageAmt :: Double}
     | MsgNumFreeBuildingSlots {scriptMessageAmt :: Double}
     | MsgCanBuild {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgCanHaveCenterOfReformation
+    | MsgCreateColony {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -2907,6 +2913,30 @@ instance RenderMessage Script ScriptMessage where
         MsgChangeReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Change religion to "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgChangeRulerSameReligion {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Change ruler religion to that of "
+                , _whom
+                ]
+        MsgChangeRulerReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Change ruler religion to "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgRulerReligionIsSame {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Ruler religion is the same as that of "
+                , _whom
+                ]
+        MsgRulerReligionIs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Ruler religion is "
                 , _icon
                 , " "
                 , _what
@@ -7856,6 +7886,19 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " can be built in the province"
+                ]
+        MsgCanHaveCenterOfReformation
+            -> mconcat -- Description taken from [[Protestant_events]]
+                [ "The country has its [[capital]] in Europe which does ''not'' have the modifier "
+                , toMessage (iquotes "[[Religious Center]]")
+                ]
+        MsgCreateColony {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Create new colony with "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " population"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
