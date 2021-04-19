@@ -427,6 +427,7 @@ data ScriptMessage
     | MsgReverseGainCB {scriptMessageCbtype :: Text, scriptMessageWho :: Text}
     | MsgReverseGainCBDuration {scriptMessageCbtype :: Text, scriptMessageWho :: Text, scriptMessageMonths :: Double}
     | MsgFactionGainInfluence {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgFactionHasInfluence {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgFactionInPower {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgHasFaction {scriptMessageWhat :: Text}
     | MsgHasFactions {scriptMessageYn :: Bool}
@@ -1196,6 +1197,8 @@ data ScriptMessage
     | MsgTradingPolicyInNode { scriptMessageNode :: Text, scriptMessagePolicy :: Text }
     | MsgTradingPolicyInNodeAny { scriptMessageNode :: Text }
     | MsgInstitutionDifference { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
+    | MsgEmbargoedBy { scriptMessageWho :: Text }
+    | MsgRandomAdvisor { scriptMessageIcon :: Text, scriptMessageText :: Text, scriptMessageYn :: Bool }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -3183,6 +3186,15 @@ instance RenderMessage Script ScriptMessage where
                 , " influence for the "
                 , _whom
                 , " faction"
+                ]
+        MsgFactionHasInfluence {scriptMessageIcon = _icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _whom
+                , " faction has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " influence"
                 ]
         MsgFactionInPower {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
             -> mconcat
@@ -7972,6 +7984,20 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " more [[institutions]] than "
                 , _who
+                ]
+        MsgEmbargoedBy { scriptMessageWho = _who }
+            -> mconcat
+                [ "The country is embargoed by "
+                , _who
+                ]
+        MsgRandomAdvisor { scriptMessageIcon = _icon, scriptMessageText = _text, scriptMessageYn = _yn }
+            -> mconcat
+                [ "Gain access to a "
+                , toMessage (ifThenElseT _yn "discounted " "")
+                , _icon
+                , " "
+                , _text
+                , " advisor <!-- NOTE: some properties probably left out -->"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

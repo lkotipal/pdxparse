@@ -103,6 +103,7 @@ module EU4.Handlers (
     ,   tradingBonus
     ,   hasTradeCompanyInvestment
     ,   tradingPolicyInNode
+    ,   randomAdvisor
     -- testing
     ,   isPronoun
     ,   flag
@@ -1248,11 +1249,12 @@ data FactionInfluence = FactionInfluence {
 -- | Empty 'FactionInfluence'
 newInfluence :: FactionInfluence
 newInfluence = FactionInfluence Nothing Nothing
--- | Handler for adding faction influence.
+-- | Handler for faction influence.
 factionInfluence :: (IsGameData (GameData g),
                      IsGameState (GameState g),
-                     Monad m) => StatementHandler g m
-factionInfluence stmt@[pdx| %_ = @scr |]
+                     Monad m) =>
+                     (Text -> Text -> Double -> ScriptMessage) -> StatementHandler g m
+factionInfluence msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_influence (foldl' addField newInfluence scr)
     where
         pp_influence inf = case (faction inf, influence inf) of
@@ -1260,13 +1262,13 @@ factionInfluence stmt@[pdx| %_ = @scr |]
                 let fac_icon = maybe ("<!-- " <> fac <> " -->") iconText (facInfluence_iconkey fac)
                 in do
                     fac_loc <- getGameL10n fac
-                    return $ MsgFactionGainInfluence fac_icon fac_loc infl
+                    return $ msg fac_icon fac_loc infl
             _ -> return $ preMessage stmt
         addField :: FactionInfluence -> GenericStatement -> FactionInfluence
         addField inf [pdx| faction   = ?fac |] = inf { faction = Just fac }
         addField inf [pdx| influence = !amt |] = inf { influence = Just amt }
         addField inf _ = inf -- unknown statement
-factionInfluence stmt = preStatement stmt
+factionInfluence _ stmt = preStatement stmt
 
 -- | Handler for trigger checking which faction is in power.
 factionInPower :: (IsGameData (GameData g),
@@ -3023,5 +3025,20 @@ tradingPolicyInNode stmt@[pdx| %_ = @scr |]
                 -- NOTE: policy can be "any"
                 --return $ preMessage stmt
             _ -> return $ preMessage stmt
-
 tradingPolicyInNode stmt = preStatement stmt
+
+randomAdvisor :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+randomAdvisor stmt@[pdx| %_ = @scr |] =
+    -- TODO: There are more parameters, but let's just grab the most important ones for now
+    let (mtype, rest) = extractStmt (matchLhsText "advisor_type") scr
+        (mdiscount, rest') = extractStmt (matchLhsText "discount") rest
+    in
+        case (mtype, mdiscount) of
+            (Just [pdx| %_ = $typ |], Just [pdx| %_ = $disc |]) | T.toLower disc == "yes" -> do
+                (t, i) <- tryLocAndIcon typ
+                msgToPP $ MsgRandomAdvisor i t True
+            (Just [pdx| %_ = $typ |], _) -> do
+                (t, i) <- tryLocAndIcon typ
+                msgToPP $ MsgRandomAdvisor i t False
+            _ -> preStatement stmt
+randomAdvisor stmt = preStatement stmt

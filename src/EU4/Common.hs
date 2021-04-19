@@ -950,6 +950,7 @@ handlersSimpleFlag = Tr.fromList
         ,("sieged_by"               , withFlag MsgUnderSiegeBy)
         ,("support_independence_of" , withFlag MsgSupportIndependenceOf)
         ,("tag"                     , withFlag MsgCountryIs)
+        ,("trade_embargo_by"        , withFlag MsgEmbargoedBy)
         ,("truce_with"              , withFlag MsgTruceWith)
         ,("vassal_of"               , withFlag MsgVassalOf)
         ,("war_with"                , withFlag MsgAtWarWith)
@@ -1185,7 +1186,7 @@ handlersTextAtom = Tr.fromList
 handlersSpecialComplex :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSpecialComplex = Tr.fromList
         [("add_casus_belli"              , addCB True)
-        ,("add_faction_influence"        , factionInfluence)
+        ,("add_faction_influence"        , factionInfluence MsgFactionGainInfluence)
         ,("add_government_power"         , governmentPower)
         ,("add_estate_influence_modifier", estateInfluenceModifier MsgEstateInfluenceModifier)
         ,("add_mutual_opinion_modifier_effect", opinion MsgMutualOpinion MsgMutualOpinionDur)
@@ -1210,6 +1211,7 @@ handlersSpecialComplex = Tr.fromList
         ,("define_explorer"              , defineMilitaryLeader "explorer" True MsgDefineExplorer)
         ,("define_general"               , defineMilitaryLeader "general" False MsgDefineGeneral)
         ,("employed_advisor"             , employedAdvisor)
+        ,("faction_influence"            , factionInfluence MsgFactionHasInfluence)
         ,("has_casus_belli"              , hasCasusBelli)
         ,("has_estate_influence_modifier", hasEstateInfluenceModifier)
         ,("has_opinion"                  , hasOpinion MsgHasOpinion)
@@ -1278,6 +1280,7 @@ handlersMisc = Tr.fromList
         ,("range"               , range)
         ,("set_government_rank" , setGovtRank)
         ,("set_saved_name"      , setSavedName)
+        ,("generate_advisor_of_type_and_semi_random_religion_effect" , randomAdvisor)
         -- Estate monopoly privileges
         ,("apply_estate_monopoly_modifier"  , estatePrivilege MsgApplyEstateModifer)
         ,("reapply_estate_privilege"        , estatePrivilege MsgReapplyEstatePrivilege)
