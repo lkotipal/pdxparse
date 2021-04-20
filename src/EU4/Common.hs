@@ -1244,10 +1244,16 @@ handlersSpecialComplex = Tr.fromList
         ,("reverse_has_opinion"          , hasOpinion MsgReverseHasOpinion)
         ,("religion_years"               , religionYears)
         ,("reverse_add_casus_belli"      , addCB False)
-        ,("set_variable"                 , setVariable)
         ,("trading_bonus"                , tradingBonus)
         ,("trading_policy_in_node"       , tradingPolicyInNode)
         ,("trigger_switch"               , triggerSwitch)
+
+        -- Variables
+        ,("set_variable"                 , setVariable MsgSetVariable MsgSetVariableVal)
+        ,("change_variable"              , setVariable MsgAddVariable MsgAddVariableVal)
+        ,("subtract_variable"            , setVariable MsgSubVariable MsgSubVariableVal)
+        ,("multiply_variable"            , setVariable MsgMulVariable MsgMulVariableVal)
+        ,("divide_variable"              , setVariable MsgDivVariable MsgDivVariableVal)
         ]
 
 -- | Handlers for statements pertaining to rebels

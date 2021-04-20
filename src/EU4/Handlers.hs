@@ -2740,7 +2740,7 @@ employedAdvisor stmt@[pdx| %_ = @scr |] = do
 employedAdvisor stmt = preStatement stmt
 
 ------------------------------
--- Handler for set_variable --
+-- Handler for xxx_variable --
 ------------------------------
 
 data SetVariable = SetVariable
@@ -2752,8 +2752,11 @@ data SetVariable = SetVariable
 newSV :: SetVariable
 newSV = SetVariable Nothing Nothing Nothing
 
-setVariable :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
-setVariable stmt@[pdx| %_ = @scr |]
+setVariable :: forall g m. (EU4Info g, Monad m) =>
+    (Text -> Text -> ScriptMessage) ->
+    (Text -> Double -> ScriptMessage) ->
+    StatementHandler g m
+setVariable msgWW msgWV stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_sv (foldl' addLine newSV scr)
     where
         addLine :: SetVariable -> GenericStatement -> SetVariable
@@ -2769,10 +2772,10 @@ setVariable stmt@[pdx| %_ = @scr |]
         toTT t = "<tt>" <> t <> "</tt>"
         pp_sv :: SetVariable -> PPT g m ScriptMessage
         pp_sv sv = case (sv_which sv, sv_which2 sv, sv_value sv) of
-            (Just v1, Just v2, Nothing) -> do return $ MsgSetVariable (toTT v1) (toTT v2)
-            (Just v,  Nothing, Just val) -> do return $ MsgSetVariableVal (toTT v) val
+            (Just v1, Just v2, Nothing) -> do return $ msgWW (toTT v1) (toTT v2)
+            (Just v,  Nothing, Just val) -> do return $ msgWV (toTT v) val
             _ ->  do return $ preMessage stmt
-setVariable stmt = preStatement stmt
+setVariable _ _ stmt = preStatement stmt
 
 ---------------------------
 -- Handler for is_in_war --

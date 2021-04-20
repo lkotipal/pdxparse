@@ -986,6 +986,14 @@ data ScriptMessage
     | MsgNumOwnedProvincesOrNonSovereignSubjectsWith {scriptMessageAmt :: Double}
     | MsgSetVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgSetVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgAddVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgAddVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgSubVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgSubVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgMulVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgMulVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgDivVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgDivVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgIsColonialNationOf { scriptMessageWho :: Text }
     | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
@@ -6694,6 +6702,63 @@ instance RenderMessage Script ScriptMessage where
                 [ "Set variable "
                 , _var
                 , " to "
+                , toMessage (Doc.pp_float _amt)
+                ]
+        MsgAddVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Increase variable "
+                , _var1
+                , " by the value of "
+                , _var2
+                ]
+        MsgAddVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ toMessage (ifThenElseT (_amt < 0) "Decrease" "Increase")
+                , " variable "
+                , _var
+                , " by "
+                , toMessage (Doc.pp_float (if _amt < 0 then -_amt else _amt))
+                ]
+        MsgSubVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Decrease variable "
+                , _var1
+                , " by the value of "
+                , _var2
+                ]
+        MsgSubVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Decrease variable "
+                , _var
+                , " by "
+                , toMessage (Doc.pp_float _amt)
+                ]
+        MsgMulVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Multiply variable "
+                , _var1
+                , " by the value of "
+                , _var2
+                ]
+        MsgMulVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Multiply variable "
+                , _var
+                , " by "
+                , toMessage (Doc.pp_float _amt)
+                ]
+        MsgDivVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Divide variable "
+                , _var1
+                , " by the value of "
+                , _var2
+                ]
+        MsgDivVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Divide variable "
+                , _var
+                , " by "
                 , toMessage (Doc.pp_float _amt)
                 ]
         MsgIsColonialNationOf { scriptMessageWho = _who }
