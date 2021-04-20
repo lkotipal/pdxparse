@@ -1228,6 +1228,13 @@ data ScriptMessage
     | MsgAdoptReformProgress {scriptMessageWhom :: Text}
     | MsgCuriaTreasurySize {scriptMessageAmt :: Double}
     | MsgCuriaTreasuryIncome {scriptMessageAmt :: Double}
+    | MsgChangeInnovativeness {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgIsCouncilEnabled {scriptMessageYn :: Bool}
+    | MsgCouncilPosition {scriptMessageWhat :: Text}
+    | MsgAllConcesssionsTaken {scriptMessageYn :: Bool}
+    | MsgIsDotfTier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHRESize {scriptMessageAmt :: Double}
+    | MsgInLeague {scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8220,6 +8227,51 @@ instance RenderMessage Script ScriptMessage where
                 [ "Yearly [[curia]] tithe is at least {{icon|ducats}} "
                 , toMessage (plainNum _amt)
                 , " ducats "
+                ]
+        MsgChangeInnovativeness {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " {{DLC-only|innovativeness}}"
+                ]
+        MsgIsCouncilEnabled {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Council of Trent has"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " started"
+                ]
+        MsgCouncilPosition {scriptMessageWhat = _what}
+            -> mconcat
+                [ "The country's position in the Council of Trent is "
+                , _what
+                ]
+        MsgAllConcesssionsTaken {scriptMessageYn = _yn}
+            -> mconcat
+                [ "All concessions in the Council of Trent have"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " been taken"
+                ]
+        MsgIsDotfTier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Defender of the Faith tier is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgHRESize {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The [[HRE]] has at least "
+                , toMessage (plainNum _amt)
+                , " "
+                , plural _amt "member" "members"
+                ]
+        MsgInLeague {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Is part of the "
+                , _what
+                , " league"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
