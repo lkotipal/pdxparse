@@ -210,7 +210,7 @@ tagged :: (EU4Info g, Monad m) =>
     Text -> Text -> PPT g m (Maybe Text)
 tagged vartag var = case flip Tr.lookup varTags . TE.encodeUtf8 $ vartag of
     Just msg -> Just <$> messageText (msg var)
-    Nothing -> return Nothing
+    Nothing -> return $ Just $ "<tt>" <> vartag <> ":" <> var <> "</tt>" -- just let it pass
 
 flagText :: (EU4Info g, Monad m) =>
     Maybe EU4Scope -> Text -> PPT g m Text
@@ -592,6 +592,11 @@ locAtomTagOrProvince atomMsg synMsg stmt@[pdx| %_ = $val |] =
     if isTag val || isPronoun val
        then tagOrProvinceIcon synMsg synMsg stmt
        else withLocAtomIcon atomMsg stmt
+locAtomTagOrProvince atomMsg synMsg stmt@[pdx| %_ = $vartag:$var |] = do
+    mtagloc <- tagged vartag var
+    case mtagloc of
+        Just tagloc -> msgToPP $ synMsg tagloc
+        Nothing -> preStatement stmt
 locAtomTagOrProvince _ _ stmt = preStatement stmt
 
 withProvince :: (EU4Info g, Monad m) =>

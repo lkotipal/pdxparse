@@ -1217,6 +1217,17 @@ data ScriptMessage
     | MsgAtWarWithReligiousEnemy { scriptMessageYn :: Bool }
     | MsgHasAdvisorCategory { scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
     | MsgHasAdvisorCategoryLevel { scriptMessageAmt :: Double, scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
+    | MsgAnyCountryActiveInNode
+    | MsgTradeNodeIsInTCRegion { scriptMessageYn :: Bool }
+    | MsgHasEmptyAdjProvince { scriptMessageYn :: Bool }
+    | MsgAnyTradeNodeCountry
+    | MsgIsInDeficit { scriptMessageYn :: Bool }
+    | MsgIsReligiousCenterProvince { scriptMessageYn :: Bool }
+    | MsgNumCavalry {scriptMessageAmt :: Double}
+    | MsgNumCavalryThan {scriptMessageWhom :: Text}
+    | MsgAdoptReformProgress {scriptMessageWhom :: Text}
+    | MsgCuriaTreasurySize {scriptMessageAmt :: Double}
+    | MsgCuriaTreasuryIncome {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8152,6 +8163,63 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " advisor of at least level "
                 , toMessage (plainNum _amt)
+                ]
+        MsgAnyCountryActiveInNode
+            -> "Any country active in the trade node:"
+        MsgTradeNodeIsInTCRegion { scriptMessageYn = _yn }
+            -> mconcat
+                [ "The province's trade node is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " in a trade company region"
+                ]
+        MsgHasEmptyAdjProvince { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " adjacent to an uncolonized province"
+                ]
+        MsgAnyTradeNodeCountry
+            -> "Any country with an owned province in the current trade node:"
+        MsgIsInDeficit { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " running a deficit"
+                ]
+        MsgIsReligiousCenterProvince { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " a religious center province"
+                ]
+        MsgNumCavalry {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Owns at least "
+                , toMessage (roundNum _amt)
+                , " cavalry "
+                , plural _amt "regiment" "regiments"
+                ]
+        MsgNumCavalryThan {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Owns at least as many cavalry regiments as "
+                , _whom
+                ]
+        MsgAdoptReformProgress {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Changes government to that of "
+                , _whom
+                ]
+        MsgCuriaTreasurySize {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "[[Curia]] treasury contains at least {{icon|ducats}} "
+                , toMessage (plainNum _amt)
+                , " ducats "
+                ]
+        MsgCuriaTreasuryIncome {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Yearly [[curia]] tithe is at least {{icon|ducats}} "
+                , toMessage (plainNum _amt)
+                , " ducats "
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

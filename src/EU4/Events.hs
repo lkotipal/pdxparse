@@ -608,11 +608,11 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             ,("on_peace_recipient", "<!-- on_peace_recipient -->Receiving a peace offer")
             --,("on_province_owner_change", "")
             --,("on_regent", "")
-            --,("on_religion_change", "")
+            ,("on_religion_change", "<!-- on_religion_change -->Changing religion")
             --,("on_remove_free_city", "")
             --,("on_replace_governor", "")
             --,("on_revoke_estate_land", "")
-            --,("on_siege_lost_country", "")
+            ,("on_siege_lost_country", "<!-- on_siege_lost_country -->Our country lost a siege in ''From''") -- root = losing country, from = location
             --,("on_siege_lost_province", "")
             ,("on_siege_won_country", "<!-- on_siege_won_country -->Our country winning a siege in ''From''") -- root = winning country, from = location
             --,("on_siege_won_province", "")
