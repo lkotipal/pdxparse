@@ -183,7 +183,8 @@ handlersRhsIrrelevant = Tr.fromList
         ,("reduce_reform_progress_medium_effect", rhsAlwaysYes MsgReduceReformProgressMediumEffect)
         ,("reduce_reform_progress_big_effect", rhsAlwaysYes MsgReduceReformProgressBigEffect)
         ,("remove_advisor_adm_effect", rhsAlwaysYes MsgRemoveAdvisorAdmEffect) -- "The currently employed administrative advisor leaves the country's court."
-        ,("remove_cardinal"        , rhsAlwaysYes MsgLoseCardinal)
+        ,("remove_cardinal"          , rhsAlwaysYes MsgLoseCardinal)
+        ,("remove_heir"              , rhsAlwaysYes MsgHeirRemoved)
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
@@ -231,6 +232,9 @@ handlersNumeric = Tr.fromList
         ,("authority"                        , numeric MsgAuth) -- Inti?
         ,("change_siege"                     , numeric MsgGainSiegeProgress)
         ,("colonysize"                       , numeric MsgColonySettlers)
+        ,("convert_heir_to_general"          , numeric (MsgConvertHeirGeneral False))
+        ,("convert_female_heir_to_general"   , numeric (MsgConvertHeirGeneral True))
+        ,("convert_female_ruler_to_general"  , numeric MsgConvertFemaleRulerGeneral)
         ,("drill_gain_modifier"              , numeric MsgDrillGainMod)
         ,("establish_order_cost"             , numeric MsgEstablishOrderCost)
         ,("had_recent_war"                   , numeric MsgWasAtWar)
@@ -321,6 +325,9 @@ handlersNumericIcons = Tr.fromList
         ,("change_adm"               , numericIcon "adm" MsgGainADMSkill)
         ,("change_dip"               , numericIcon "dip" MsgGainDIPSkill)
         ,("change_mil"               , numericIcon "mil" MsgGainMILSkill)
+        ,("change_heir_adm"          , numericIcon "adm" MsgGainHeirADMSkill)
+        ,("change_heir_dip"          , numericIcon "dip" MsgGainHeirDIPSkill)
+        ,("change_heir_mil"          , numericIcon "mil" MsgGainHeirMILSkill)
         ,("change_statists_vs_orangists", numericIconChange "republic" "monarchy" MsgStrengthenStatists MsgStrengthenOrangists)
         ,("colonial_governor"        , numericIconLoc "colonial governor" "colonial_governor" MsgHasAdvisorLevel)
         ,("colonist_placement_chance", numericIcon "settler chance" MsgSettlerChance)
@@ -1001,6 +1008,7 @@ handlersYesNo = Tr.fromList
         [("ai"                          , withBool MsgIsAIControlled)
         ,("allows_female_emperor"       , withBool MsgFemaleEmperorAllowed)
         ,("always"                      , withBool MsgAlways)
+        ,("at_war_with_religious_enemy" , withBool MsgAtWarWithReligiousEnemy)
         ,("back_current_issue"          , withBool MsgBackCurrentIssue)
         ,("has_active_debate"           , withBool MsgHasActiveDebate)
         ,("has_any_disaster"            , withBool MsgHasAnyDisaster)
@@ -1050,6 +1058,7 @@ handlersYesNo = Tr.fromList
         ,("is_emperor"                  , withBool MsgIsEmperor)
         ,("is_female"                   , withBool MsgIsFemale)
         ,("is_great_power"              , withBool MsgIsGreatPower)
+        ,("is_heir_leader"              , withBool MsgIsHeirLeader)
         ,("is_in_capital_area"          , withBool MsgIsInCapitalArea)
         ,("is_in_league_war"            , withBool MsgIsInLeagueWar)
         ,("is_lesser_in_union"          , withBool MsgIsLesserInUnion)
@@ -1086,6 +1095,17 @@ handlersYesNo = Tr.fromList
         ,("valid_for_personal_unions_trigger" , withBool MsgValidForPU)
         ,("was_player"                  , withBool MsgHasBeenPlayer)
         ,("was_never_end_game_tag_trigger" , withBool MsgWasNeverEndGameTag)
+
+        -- Scripted triggers for advisors
+        ,("has_adm_advisor"             , boolIconLoc "adm" "ADM" MsgHasAdvisorCategory)
+        ,("has_dip_advisor"             , boolIconLoc "dip" "DIP" MsgHasAdvisorCategory)
+        ,("has_mil_advisor"             , boolIconLoc "mil" "MIL" MsgHasAdvisorCategory)
+        ,("has_adm_advisor_2"           , boolIconLoc "adm" "ADM" (MsgHasAdvisorCategoryLevel 2))
+        ,("has_dip_advisor_2"           , boolIconLoc "dip" "DIP" (MsgHasAdvisorCategoryLevel 2))
+        ,("has_mil_advisor_2"           , boolIconLoc "mil" "MIL" (MsgHasAdvisorCategoryLevel 2))
+        ,("has_adm_advisor_3"           , boolIconLoc "adm" "ADM" (MsgHasAdvisorCategoryLevel 3))
+        ,("has_dip_advisor_3"           , boolIconLoc "dip" "DIP" (MsgHasAdvisorCategoryLevel 3))
+        ,("has_mil_advisor_3"           , boolIconLoc "mil" "MIL" (MsgHasAdvisorCategoryLevel 3))
         ]
 
 -- | Handlers for statements that may be numeric or a tag

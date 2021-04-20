@@ -90,6 +90,9 @@ data ScriptMessage
     | MsgGainADMSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainDIPSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMILSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainHeirADMSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainHeirDIPSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainHeirMILSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainSiegeProgress {scriptMessageAmt :: Double}
     | MsgGainPatAuth {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMysticism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1199,6 +1202,13 @@ data ScriptMessage
     | MsgInstitutionDifference { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgEmbargoedBy { scriptMessageWho :: Text }
     | MsgRandomAdvisor { scriptMessageIcon :: Text, scriptMessageText :: Text, scriptMessageYn :: Bool }
+    | MsgConvertFemaleRulerGeneral { scriptMessageAmt :: Double }
+    | MsgConvertHeirGeneral { scriptMessageYn :: Bool, scriptMessageAmt :: Double }
+    | MsgHeirRemoved
+    | MsgIsHeirLeader { scriptMessageYn :: Bool }
+    | MsgAtWarWithReligiousEnemy { scriptMessageYn :: Bool }
+    | MsgHasAdvisorCategory { scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
+    | MsgHasAdvisorCategoryLevel { scriptMessageAmt :: Double, scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -1463,6 +1473,36 @@ instance RenderMessage Script ScriptMessage where
         MsgGainMILSkill {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Ruler "
+                , gainsOrLoses _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " military skill"
+                ]
+        MsgGainHeirADMSkill {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Heir "
+                , gainsOrLoses _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " administrative skill"
+                ]
+        MsgGainHeirDIPSkill {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Heir "
+                , gainsOrLoses _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " diplomatic skill"
+                ]
+        MsgGainHeirMILSkill {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Heir "
                 , gainsOrLoses _amt
                 , " "
                 , _icon
@@ -7998,6 +8038,55 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _text
                 , " advisor <!-- NOTE: some properties probably left out -->"
+                ]
+        MsgConvertFemaleRulerGeneral { scriptMessageAmt = _amt }
+            -> mconcat
+                [ "Convert female ruler into a general with "
+                , toMessage (plainNum _amt)
+                , " army tradition"
+                ]
+        MsgConvertHeirGeneral { scriptMessageYn = _yn, scriptMessageAmt = _amt }
+            -> mconcat
+                [ "Convert "
+                , toMessage (ifThenElseT _yn "female" "male")
+                , " heir into a general with "
+                , toMessage (plainNum _amt)
+                , " army tradition"
+                ]
+        MsgHeirRemoved
+            -> "Current heir is removed"
+        MsgIsHeirLeader { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Heir is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " a general"
+                ]
+        MsgAtWarWithReligiousEnemy { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " at war with any country of a different religion"
+                ]
+        MsgHasAdvisorCategory { scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " employing any "
+                , _icon
+                , " "
+                , _what
+                , " advisor"
+                ]
+        MsgHasAdvisorCategoryLevel { scriptMessageAmt = _amt, scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageYn = _yn }
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " employing any "
+                , _icon
+                , " "
+                , _what
+                , " advisor of at least level "
+                , toMessage (plainNum _amt)
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
