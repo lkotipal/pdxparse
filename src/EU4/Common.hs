@@ -1317,6 +1317,7 @@ handlersMisc = Tr.fromList
         [("random", random)
         ,("random_list", randomList)
         -- Special
+        ,("add_estate_loyalty_modifier" , addEstateLoyaltyModifier)
         ,("add_core"            , addCore)
         ,("add_manpower"        , gainMen)
         ,("add_sailors"         , gainMen)

@@ -106,6 +106,7 @@ module EU4.Handlers (
     ,   tradingPolicyInNode
     ,   randomAdvisor
     ,   killLeader
+    ,   addEstateLoyaltyModifier
     -- testing
     ,   isPronoun
     ,   flag
@@ -3085,3 +3086,39 @@ killLeader stmt@[pdx| %_ = @scr |] =
                         msgToPP $ MsgKillLeaderType (iconText t) locType
             _ -> (trace $ "Not handled in killLeader: " ++ (show stmt)) $ preStatement stmt
 killLeader stmt = (trace $ "Not handled in killLeader: " ++ (show stmt)) $ preStatement stmt
+
+---------------------------------------------
+-- Handler for add_estate_loyalty_modifier --
+---------------------------------------------
+
+data EstateLoyaltyModifier = EstateLoyaltyModifier
+        { elm_estate  :: Maybe Text
+        , elm_desc :: Maybe Text
+        , elm_loyalty :: Maybe Double
+        , elm_duration :: Maybe Double
+        } deriving Show
+
+newELM :: EstateLoyaltyModifier
+newELM = EstateLoyaltyModifier Nothing Nothing Nothing Nothing
+
+addEstateLoyaltyModifier :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+addEstateLoyaltyModifier stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_elm (foldl' addLine newELM scr)
+    where
+        addLine :: EstateLoyaltyModifier -> GenericStatement -> EstateLoyaltyModifier
+        addLine elm [pdx| estate = ?val |]
+            = elm { elm_estate = Just val }
+        addLine elm [pdx| desc = ?val |]
+            = elm { elm_desc = Just val }
+        addLine elm [pdx| loyalty = %val |]
+            = elm { elm_loyalty = floatRhs val }
+        addLine elm [pdx| duration = %val |]
+            = elm { elm_duration = floatRhs val }
+        addLine elm stmt = (trace $ "Unknown in add_estate_loyalty_modifier " ++ show stmt) $ elm
+        pp_elm :: EstateLoyaltyModifier -> PPT g m ScriptMessage
+        pp_elm EstateLoyaltyModifier { elm_estate = Just estate, elm_desc = Just desc, elm_loyalty = Just loyalty, elm_duration = Just duration } = do
+            estateLoc <- getGameL10n estate
+            descLoc <- getGameL10n desc
+            return $ MsgAddEstateLoyaltyModifier (iconText estate) estateLoc descLoc duration loyalty
+        pp_elm elm = return $ (trace $ "Missing info for add_estate_loyalty_modifier " ++ show elm ++ " " ++ (show stmt)) $ preMessage stmt
+addEstateLoyaltyModifier stmt = (trace $ "Not handled in addEstateLoyaltyModifier: " ++ (show stmt)) $ preStatement stmt
+

@@ -1249,6 +1249,7 @@ data ScriptMessage
     | MsgKillLeaderType {scriptMessageIcon :: Text, scriptMessageText :: Text}
     | MsgKillLeaderRandom {scriptMessageIcon :: Text}
     | MsgKillLeaderNamed {scriptMessageIcon :: Text, scriptMessageText :: Text}
+    | MsgAddEstateLoyaltyModifier {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageDays :: Double, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8380,6 +8381,20 @@ instance RenderMessage Script ScriptMessage where
                 , " leader named "
                 , toMessage (quotes _text)
                 , " dies"
+                ]
+        MsgAddEstateLoyaltyModifier {scriptMessageIcon = _icon, scriptMessageWho = _who, scriptMessageWhat = _what, scriptMessageDays = _days, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , _who
+                , " estate "
+                , gainsOrLoses _amt
+                , " "
+                , toMessage (colourNum True _amt)
+                , " loyalty for "
+                , toMessage (formatDays _days)
+                , " due to the modifier "
+                , toMessage (iquotes _what)
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
