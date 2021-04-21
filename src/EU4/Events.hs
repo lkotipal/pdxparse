@@ -553,7 +553,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
         actionNameTable = HM.fromList
             [("on_annexed", "When a nation is annexed")
             --,("on_battle_lost_country", "")
-            --,("on_battle_lost_province", "")
+            ,("on_battle_lost_province", "<!-- on_battle_lost_province -->Losing a battle to ''From'' in the province") -- # root = location, from = winner country
             --,("on_battle_lost_unit", "")
             --,("on_battle_won_province", "")
             --,("on_become_free_city", "")

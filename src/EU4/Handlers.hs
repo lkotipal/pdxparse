@@ -105,6 +105,7 @@ module EU4.Handlers (
     ,   hasTradeCompanyInvestment
     ,   tradingPolicyInNode
     ,   randomAdvisor
+    ,   killLeader
     -- testing
     ,   isPronoun
     ,   flag
@@ -3065,3 +3066,22 @@ randomAdvisor stmt@[pdx| %_ = @scr |] =
                 msgToPP $ MsgRandomAdvisor i t False
             _ -> preStatement stmt
 randomAdvisor stmt = preStatement stmt
+
+-----------------------------
+-- Handler for kill_leader --
+-----------------------------
+killLeader :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+killLeader stmt@[pdx| %_ = @scr |] =
+    let
+        (mtype, rest) = extractStmt (matchLhsText "type") scr
+    in
+        case (mtype, rest) of
+            (Just (Statement _ _ (StringRhs name)), []) -> msgToPP $ MsgKillLeaderNamed (iconText "general") name
+            (Just (Statement _ _ (GenericRhs typ _)), []) ->
+                case T.toLower typ of
+                    "random" -> msgToPP $ MsgKillLeaderRandom (iconText "general")
+                    t -> do
+                        locType <- getGameL10n t
+                        msgToPP $ MsgKillLeaderType (iconText t) locType
+            _ -> (trace $ "Not handled in killLeader: " ++ (show stmt)) $ preStatement stmt
+killLeader stmt = (trace $ "Not handled in killLeader: " ++ (show stmt)) $ preStatement stmt

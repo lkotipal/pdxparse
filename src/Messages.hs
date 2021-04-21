@@ -555,6 +555,7 @@ data ScriptMessage
     | MsgEnableHRELeagues
     | MsgIsInLeagueWar {scriptMessageYn :: Bool}
     | MsgIsLeagueEnemy {scriptMessageWhom :: Text}
+    | MsgIsLeagueFriend {scriptMessageWhom :: Text}
     | MsgReligionYears {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageYears :: Double}
     | MsgHasIdea {scriptMessageWhat :: Text}
     | MsgHasReform {scriptMessageWhat :: Text}
@@ -1239,6 +1240,15 @@ data ScriptMessage
     | MsgHRESize {scriptMessageAmt :: Double}
     | MsgInLeague {scriptMessageWhat :: Text}
     | MsgNumOwnInstitutionProvinces {scriptMessageAmt :: Double}
+    | MsgIsLeagueLeader {scriptMessageYn :: Bool}
+    | MsgGainScaledImperialAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHasWinter {scriptMessageWhat :: Text}
+    | MsgHasLeader {scriptMessageWhom :: Text}
+    | MsgIsIsland {scriptMessageYn :: Bool}
+    | MsgIsBlockaded {scriptMessageYn :: Bool}
+    | MsgKillLeaderType {scriptMessageIcon :: Text, scriptMessageText :: Text}
+    | MsgKillLeaderRandom {scriptMessageIcon :: Text}
+    | MsgKillLeaderNamed {scriptMessageIcon :: Text, scriptMessageText :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -4098,6 +4108,11 @@ instance RenderMessage Script ScriptMessage where
         MsgIsLeagueEnemy {scriptMessageWhom = _whom}
             -> mconcat
                 [ "Is in the opposite religious league to "
+                , _whom
+                ]
+        MsgIsLeagueFriend {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is in the same religious league as "
                 , _whom
                 ]
         MsgReligionYears {scriptMessageIcon = _icon, scriptMessageName = _name, scriptMessageYears = _years}
@@ -8306,6 +8321,65 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " institution origin "
                 , plural _amt "province" "provinces"
+                ]
+        MsgIsLeagueLeader {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " the leader of a religious league"
+                ]
+        MsgGainScaledImperialAuthority {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " imperial authority (scaled)"
+                ]
+        MsgHasWinter {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has winter of type "
+                , toMessage (iquotes _what)
+                ]
+        MsgHasLeader {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has leader "
+                , toMessage (iquotes _whom)
+                ]
+        MsgIsIsland {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " an [[island]]"
+                ]
+        MsgIsBlockaded {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " [[blockaded]]"
+                ]
+        MsgKillLeaderType {scriptMessageIcon = _icon, scriptMessageText = _text}
+            -> mconcat
+                [ "A "
+                , _icon
+                , " "
+                , _text
+                , " dies"
+                ]
+        MsgKillLeaderRandom {scriptMessageIcon = _icon}
+            -> mconcat
+                [ "A random "
+                , _icon
+                , " leader dies"
+                ]
+        MsgKillLeaderNamed {scriptMessageIcon = _icon, scriptMessageText = _text}
+            -> mconcat
+                [ "The "
+                , _icon
+                , " leader named "
+                , toMessage (quotes _text)
+                , " dies"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
