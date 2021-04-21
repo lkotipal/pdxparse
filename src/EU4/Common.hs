@@ -249,6 +249,7 @@ handlersNumeric = Tr.fromList
         ,("num_of_colonies"                  , numeric MsgNumColonies)
         ,("num_of_loans"                     , numeric MsgNumLoans)
         ,("num_of_mercenaries"               , numeric MsgNumMercs)
+        ,("num_of_owned_and_controlled_institutions" , numeric MsgNumOwnInstitutionProvinces)
         ,("num_of_ports"                     , numeric MsgNumPorts) -- same as num_of_total_ports?
         ,("num_of_rebel_armies"              , numeric MsgNumRebelArmies)
         ,("num_of_rebel_controlled_provinces", numeric MsgNumRebelControlledProvinces)
@@ -1182,17 +1183,18 @@ handlersNumProvinces = Tr.fromList
         ,("wool"          , numProvinces "wool" MsgGoodsProvinces)
         ]
 
+tryLocAndIconTitle t = tryLocAndIcon (t <> "_title")
+
 -- | Handlers for text/value pairs.
 --
 -- $textvalue
 handlersTextValue :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextValue = Tr.fromList
-        [("add_incident_variable_value" , textValue "incident" "value" MsgAddIncidentVariableValue MsgAddIncidentVariableValue tryLocAndIcon)
+        [("add_incident_variable_value" , textValue "incident" "value" MsgAddIncidentVariableValue MsgAddIncidentVariableValue tryLocAndIconTitle)
         ,("add_institution_embracement" , textValue "which" "value" MsgAddInstitutionEmbracement MsgAddInstitutionEmbracement tryLocAndIcon)
         ,("add_estate_loyalty"          , textValue "estate" "loyalty" MsgAddEstateLoyalty MsgAddEstateLoyalty tryLocAndIcon)
         ,("add_spy_network_from"        , textValue "who" "value" MsgAddSpyNetworkFrom MsgAddEstateLoyalty flagTextMaybe)
         ,("add_spy_network_in"          , textValue "who" "value" MsgAddSpyNetworkIn MsgAddEstateLoyalty flagTextMaybe )
-        ,("check_variable"              , textValue "which" "value" MsgCheckVariable MsgCheckVariable tryLocAndIcon)
         ,("estate_influence"            , textValue "estate" "influence" MsgEstateInfluence MsgEstateInfluence tryLocAndIcon)
         ,("estate_influence"            , textValue "estate" "influence" MsgEstateInfluence MsgEstateInfluence tryLocAndIcon)
         ,("estate_loyalty"              , textValue "estate" "loyalty" MsgEstateLoyalty MsgEstateLoyalty tryLocAndIcon)
@@ -1207,6 +1209,7 @@ handlersTextValue = Tr.fromList
         ,("had_ruler_flag"              , textValue "flag" "days" MsgHadRulerFlag MsgHadRulerFlag tryLocAndIcon)
         ,("had_ruler_flag"              , textValue "flag" "days" MsgHadRulerFlag MsgHadRulerFlag tryLocAndIcon)
         ,("has_spy_network_from"        , textValue "who" "value" MsgHasSpyNetworkFrom MsgHasSpyNetworkFrom flagTextMaybe)
+        ,("incident_variable_value"     , textValue "incident" "value" MsgIncidentVariableValue MsgIncidentVariableValue tryLocAndIconTitle)
         ,("institution_difference"      , textValue "who" "value" MsgInstitutionDifference MsgInstitutionDifference flagTextMaybe)
         ,("num_of_religion"             , textValue "religion" "value" MsgNumOfReligion MsgNumOfReligion tryLocAndIcon)
         ,("num_investments_in_trade_company_region" , textValue "investment" "value" MsgNumInvestmentsInTradeCompanyReigion MsgNumInvestmentsInTradeCompanyReigion tryLocAndIconTC)
@@ -1272,6 +1275,7 @@ handlersSpecialComplex = Tr.fromList
         ,("subtract_variable"            , setVariable MsgSubVariable MsgSubVariableVal)
         ,("multiply_variable"            , setVariable MsgMulVariable MsgMulVariableVal)
         ,("divide_variable"              , setVariable MsgDivVariable MsgDivVariableVal)
+        ,("check_variable"               , setVariable MsgChkVariable MsgChkVariableVal)
         ]
 
 -- | Handlers for statements pertaining to rebels

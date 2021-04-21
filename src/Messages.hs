@@ -867,6 +867,7 @@ data ScriptMessage
     | MsgNationalSailorsMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCorruption {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddIncidentVariableValue {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgIncidentVariableValue {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgAddInstitutionEmbracement {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgAddIsolationism {scriptMessageAmt :: Double}
     | MsgGainMandate {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -994,6 +995,8 @@ data ScriptMessage
     | MsgMulVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgDivVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgDivVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgChkVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgChkVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgIsColonialNationOf { scriptMessageWho :: Text }
     | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
@@ -1235,6 +1238,7 @@ data ScriptMessage
     | MsgIsDotfTier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHRESize {scriptMessageAmt :: Double}
     | MsgInLeague {scriptMessageWhat :: Text}
+    | MsgNumOwnInstitutionProvinces {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6076,11 +6080,20 @@ instance RenderMessage Script ScriptMessage where
                 , " Corruption is at least "
                 , toMessage (plainNum _amt)
                 ]
-        MsgAddIncidentVariableValue {scriptMessageAmt = _amt}
+        MsgAddIncidentVariableValue {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ "The country moves towards the "
                 , ifThenElse (_amt < 0) "Open" "Isolationist"
-                , " end of the current incident by "
+                , " end of the "
+                , toMessage (quotes _what)
+                , " incident by "
+                , toMessage (plainNum (abs _amt))
+                ]
+        MsgIncidentVariableValue {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Isolationist value of the "
+                , toMessage (quotes _what)
+                , " incident is at least "
                 , toMessage (plainNum (abs _amt))
                 ]
         MsgAddInstitutionEmbracement {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
@@ -6735,7 +6748,7 @@ instance RenderMessage Script ScriptMessage where
                 , " variable "
                 , _var
                 , " by "
-                , toMessage (Doc.pp_float (if _amt < 0 then -_amt else _amt))
+                , toMessage (plainNum (if _amt < 0 then -_amt else _amt))
                 ]
         MsgSubVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
@@ -6749,7 +6762,7 @@ instance RenderMessage Script ScriptMessage where
                 [ "Decrease variable "
                 , _var
                 , " by "
-                , toMessage (Doc.pp_float _amt)
+                , toMessage (plainNum _amt)
                 ]
         MsgMulVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
@@ -6763,7 +6776,7 @@ instance RenderMessage Script ScriptMessage where
                 [ "Multiply variable "
                 , _var
                 , " by "
-                , toMessage (Doc.pp_float _amt)
+                , toMessage (plainNum _amt)
                 ]
         MsgDivVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
@@ -6777,7 +6790,21 @@ instance RenderMessage Script ScriptMessage where
                 [ "Divide variable "
                 , _var
                 , " by "
-                , toMessage (Doc.pp_float _amt)
+                , toMessage (plainNum _amt)
+                ]
+        MsgChkVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Value of variable "
+                , _var1
+                , " is at least that of "
+                , _var2
+                ]
+        MsgChkVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Value of variable "
+                , _var
+                , " is at least "
+                , toMessage (plainNum _amt)
                 ]
         MsgIsColonialNationOf { scriptMessageWho = _who }
             -> mconcat
@@ -8272,6 +8299,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is part of the "
                 , _what
                 , " league"
+                ]
+        MsgNumOwnInstitutionProvinces {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Owns at least "
+                , toMessage (plainNum _amt)
+                , " institution origin "
+                , plural _amt "province" "provinces"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
