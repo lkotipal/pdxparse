@@ -1250,6 +1250,8 @@ data ScriptMessage
     | MsgKillLeaderRandom {scriptMessageIcon :: Text}
     | MsgKillLeaderNamed {scriptMessageIcon :: Text, scriptMessageText :: Text}
     | MsgAddEstateLoyaltyModifier {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageDays :: Double, scriptMessageAmt :: Double}
+    | MsgExportVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgExportVariableWho { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text, scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8395,6 +8397,24 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (formatDays _days)
                 , " due to the modifier "
                 , toMessage (iquotes _what)
+                ]
+        MsgExportVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Export variable <tt>"
+                , _var2
+                , "</tt> to <tt>"
+                , _var1
+                , "</tt>"
+                ]
+        MsgExportVariableWho { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Export "
+                , _whom
+                , "'s internal variable <tt>"
+                , _var2
+                , "</tt> to <tt>"
+                , _var1
+                , "</tt>"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

@@ -1283,6 +1283,7 @@ handlersSpecialComplex = Tr.fromList
         ,("multiply_variable"            , setVariable MsgMulVariable MsgMulVariableVal)
         ,("divide_variable"              , setVariable MsgDivVariable MsgDivVariableVal)
         ,("check_variable"               , setVariable MsgChkVariable MsgChkVariableVal)
+        ,("export_to_variable"           , exportVariable)
         ]
 
 -- | Handlers for statements pertaining to rebels

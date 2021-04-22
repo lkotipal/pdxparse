@@ -107,6 +107,7 @@ module EU4.Handlers (
     ,   randomAdvisor
     ,   killLeader
     ,   addEstateLoyaltyModifier
+    ,   exportVariable
     -- testing
     ,   isPronoun
     ,   flag
@@ -3121,4 +3122,41 @@ addEstateLoyaltyModifier stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_elm (foldl' ad
             return $ MsgAddEstateLoyaltyModifier (iconText estate) estateLoc descLoc duration loyalty
         pp_elm elm = return $ (trace $ "Missing info for add_estate_loyalty_modifier " ++ show elm ++ " " ++ (show stmt)) $ preMessage stmt
 addEstateLoyaltyModifier stmt = (trace $ "Not handled in addEstateLoyaltyModifier: " ++ (show stmt)) $ preStatement stmt
+
+
+
+-------------------------------------
+-- Handler for export_to_variable  --
+-------------------------------------
+
+data ExportVariable = ExportVariable
+        { ev_which  :: Maybe Text
+        , ev_value :: Maybe Text
+        , ev_who :: Maybe Text
+        } deriving Show
+
+newEV :: ExportVariable
+newEV = ExportVariable Nothing Nothing Nothing
+
+exportVariable :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+exportVariable stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_ev (foldl' addLine newEV scr)
+    where
+        addLine :: ExportVariable -> GenericStatement -> ExportVariable
+        addLine ev [pdx| which = ?val |]
+            = ev { ev_which = Just val }
+        addLine ev [pdx| variable_name = ?val |]
+            = ev { ev_which = Just val }
+        addLine ev [pdx| value = ?val |]
+            = ev { ev_value = Just val }
+        addLine ev [pdx| who = ?val |]
+            = ev { ev_who = Just val }
+        addLine ev stmt = (trace $ "Unknown in export_to_variable " ++ show stmt) $ ev
+        pp_ev :: ExportVariable -> PPT g m ScriptMessage
+        pp_ev ExportVariable { ev_which = Just which, ev_value = Just value, ev_who = Nothing } =
+            return $ MsgExportVariable which value
+        pp_ev ExportVariable { ev_which = Just which, ev_value = Just value, ev_who = Just who } = do
+            whoLoc <- Doc.doc2text <$> allowPronoun (Just EU4Country) (fmap Doc.strictText . getGameL10n) who
+            return $ MsgExportVariableWho which value whoLoc
+        pp_ev ev = return $ (trace $ "Missing info for export_to_variable " ++ show ev ++ " " ++ (show stmt)) $ preMessage stmt
+exportVariable stmt = (trace $ "Not handled in export_to_variable: " ++ (show stmt)) $ preStatement stmt
 
