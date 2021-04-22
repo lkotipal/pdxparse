@@ -8199,9 +8199,9 @@ instance RenderMessage Script ScriptMessage where
                 , " trade company investment"
                 ]
         MsgIncreaseReligiousCurrencyEffect
-            -> "Gain {{green|15}} church power, {{green|15}} frevor, {{green|10}} patriarch authority, {{green|10}} karma, {{green|5}} authority or {{green|2}} papal influence"
+            -> "Gain {{green|15}} church power, {{green|15}} fervor, {{green|10%}} patriarch authority, {{green|10}} karma, {{green|5}} authority or {{green|2}} papal influence"
         MsgReduceReligiousCurrencyEffect
-            -> "Lose {{red|-15}} church power, {{red|-15}} frevor, {{red|-10}} patriarch authority, {{red|-10}} karma, {{red|-5}} authority or {{red|-2}} papal influence"
+            -> "Lose {{red|-15}} church power, {{red|-15}} fervor, {{red|-10%}} patriarch authority, {{red|-10}} karma, {{red|-5}} authority or {{red|-2}} papal influence"
         MsgHasPrivateers { scriptMessageYn = _yn }
             -> mconcat
                 [ "The country "
