@@ -1252,6 +1252,10 @@ data ScriptMessage
     | MsgAddEstateLoyaltyModifier {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageDays :: Double, scriptMessageAmt :: Double}
     | MsgExportVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgExportVariableWho { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text, scriptMessageWhom :: Text}
+    | MsgCanBeOverlord {scriptMessageType :: Text}
+    | MsgTrust {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgTechDifference {scriptMessageAmt :: Double}
+    | MsgAiAttitude {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7081,7 +7085,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgIsSubjectOfType { scriptMessageType = _type }
             -> mconcat
-                [ "Is Subject type "
+                [ "Is subject type "
                 , _type
                 ]
         MsgHasRuler { scriptMessageWho = _who }
@@ -8415,6 +8419,36 @@ instance RenderMessage Script ScriptMessage where
                 , "</tt> to <tt>"
                 , _var1
                 , "</tt>"
+                ]
+        MsgCanBeOverlord {scriptMessageType = _type}
+            -> mconcat
+                [ "Can have "
+                , _type
+                , " [[subjects]]"
+                ]
+        MsgTrust {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at "
+                , toMessage (plainNum _amt)
+                , " [[trust]] with "
+                , _whom
+                ]
+        MsgTechDifference {scriptMessageAmt = _amt} -- TODO: Better description when amount is negative
+            -> mconcat
+                [ "Is at least "
+                , toMessage (Doc.pp_float _amt)
+                , " "
+                , toMessage (plural _amt "technology" "technologies")
+                , " ahead"
+                ]
+        MsgAiAttitude {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "The AI's attitude towards "
+                , _whom
+                , " is "
+                , _icon
+                , " "
+                , _what
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

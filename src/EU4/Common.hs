@@ -259,6 +259,7 @@ handlersNumeric = Tr.fromList
         ,("percentage_backing_issue"         , numeric MsgPctBackingParliamentIssue)
         ,("revolt_percentage"                , numeric MsgRevoltPercentage)
         ,("ruler_age"                        , numeric MsgRulerAge)
+        ,("tech_difference"                  , numeric MsgTechDifference)
         ,("trade_company_size"               , numeric MsgTradeCompanySize)
         ,("trade_income_percentage"          , numeric MsgTradeIncomePercentage)
         ,("units_in_province"                , numeric MsgUnitsInProvince)
@@ -789,6 +790,7 @@ handlersLocRhs :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersLocRhs = Tr.fromList
         [("add_great_project"     , withLocAtom MsgStartConstructingGreatProject)
         ,("add_government_reform" , withLocAtom MsgAddGovernmentReform)
+        ,("can_be_overlord"       , withLocAtom MsgCanBeOverlord)
         ,("change_government"     , withLocAtom MsgChangeGovernment)
         ,("change_province_name"  , withLocAtom MsgChangeProvinceName) -- will usually fail localization
         ,("colonial_region"       , withLocAtom MsgColonialRegion)
@@ -1221,6 +1223,7 @@ handlersTextValue = Tr.fromList
         ,("num_of_religion"             , textValue "religion" "value" MsgNumOfReligion MsgNumOfReligion tryLocAndIcon)
         ,("num_investments_in_trade_company_region" , textValue "investment" "value" MsgNumInvestmentsInTradeCompanyReigion MsgNumInvestmentsInTradeCompanyReigion tryLocAndIconTC)
         ,("trade_share"                 , textValue "country" "share" MsgTradeShare MsgTradeShare flagTextMaybe)
+        ,("trust"                       , textValue "who" "value" MsgTrust MsgTrust flagTextMaybe)
         ]
 
 -- | Handlers for text/atom pairs
@@ -1240,6 +1243,7 @@ handlersSpecialComplex = Tr.fromList
         ,("add_mutual_opinion_modifier_effect", opinion MsgMutualOpinion MsgMutualOpinionDur)
         ,("add_opinion"                  , opinion MsgAddOpinion MsgAddOpinionDur)
         ,("add_trust"                    , trust)
+        ,("ai_attitude"                  , aiAttitude)
         ,("reverse_add_opinion"          , opinion MsgReverseAddOpinion MsgReverseAddOpinionDur)
         ,("area"                         , area)
         ,("create_admiral"               , createMilitaryLeader "admiral" True MsgCreateAdmiral MsgDefineAdmiral)
@@ -1353,6 +1357,7 @@ handlersIgnored = Tr.fromList
         ,("tooltip"       , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
+        ,("picture"       , return $ return []) -- Some modifiers have custom pictures
         ]
 
 -- | Extract the appropriate message(s) from a single statement. Note that this

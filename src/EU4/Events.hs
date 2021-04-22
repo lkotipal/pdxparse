@@ -622,8 +622,8 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             ,("on_thri_yearly_pulse_2", "The [[list_of_event_lists#3_year_pulse|three year pulse II]]")
             ,("on_thri_yearly_pulse_3", "The [[list_of_event_lists#3_year_pulse|three year pulse III]]")
             ,("on_thri_yearly_pulse_4", "The [[list_of_event_lists#3_year_pulse|three year pulse IV]]")
-            --,("on_war_lost", "")
-            --,("on_war_won", "")
+            ,("on_war_lost", "<!-- on_war_lost -->Losing a war against ''From''") -- # root = loser country, from = winner country
+            ,("on_war_won", "<!-- on_war_won -->Winning a war against ''From''") -- root = winning country, from = loser country
             --,("on_weak_heir_claim", "")
             ]
 

@@ -108,6 +108,7 @@ module EU4.Handlers (
     ,   killLeader
     ,   addEstateLoyaltyModifier
     ,   exportVariable
+    ,   aiAttitude
     -- testing
     ,   isPronoun
     ,   flag
@@ -762,6 +763,21 @@ scriptIconTable = HM.fromList
     ,("well_advised_personality", "well advised")
     ,("well_connected_personality", "well connected")
     ,("zealot_personality", "zealot")
+    -- AI attitudes
+    ,("attitude_allied"      , "ally attitude")
+    ,("attitude_defensive"   , "defensive attitude")
+    ,("attitude_disloyal"    , "disloyal attitude")
+    ,("attitude_domineering" , "domineering attitude")
+    ,("attitude_friendly"    , "friendly attitude")
+    ,("attitude_hostile"     , "hostile attitude")
+    ,("attitude_loyal"       , "loyal attitude")
+    ,("attitude_neutral"     , "neutral attitude")
+    ,("attitude_outraged"    , "outraged attitude")
+    ,("attitude_overlord"    , "overlord attitude")
+    ,("attitude_protective"  , "protective attitude")
+    ,("attitude_rebellious"  , "rebellious attitude")
+    ,("attitude_rivalry"     , "rivalry attitude")
+    ,("attitude_threatened"  , "threatened attitude")
     ]
 
 -- Given a script atom, return the corresponding icon key, if any.
@@ -3159,4 +3175,20 @@ exportVariable stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_ev (foldl' addLine newEV
             return $ MsgExportVariableWho which value whoLoc
         pp_ev ev = return $ (trace $ "Missing info for export_to_variable " ++ show ev ++ " " ++ (show stmt)) $ preMessage stmt
 exportVariable stmt = (trace $ "Not handled in export_to_variable: " ++ (show stmt)) $ preStatement stmt
+
+-----------------------------
+-- Handler for ai_attitude --
+-----------------------------
+aiAttitude :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+aiAttitude stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_aia (parseTA "who" "attitude" scr)
+    where
+        pp_aia :: TextAtom -> PPT g m ScriptMessage
+        pp_aia ta = case (ta_what ta, ta_atom ta) of
+            (Just who, Just attitude) -> do
+                whoLoc <- flagText (Just EU4Country) who
+                attLoc <- getGameL10n attitude
+                return $ MsgAiAttitude (iconText attitude) attLoc whoLoc
+            _ -> return $ preMessage stmt
+aiAttitude stmt = preStatement stmt
 
