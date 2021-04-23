@@ -109,6 +109,7 @@ module EU4.Handlers (
     ,   addEstateLoyaltyModifier
     ,   exportVariable
     ,   aiAttitude
+    ,   estateLandShareEffect
     -- testing
     ,   isPronoun
     ,   flag
@@ -2379,6 +2380,7 @@ calcTrueIf stmt = preStatement stmt
 
 ------------------------------------------------
 -- Handler for num_of_owned_provinces_**_with --
+-- also used for development_in_provinces     --
 ------------------------------------------------
 
 numOwnedProvincesWith :: (EU4Info g, Monad m) => (Double -> ScriptMessage) -> StatementHandler g m
@@ -2389,6 +2391,8 @@ numOwnedProvincesWith msg stmt@[pdx| %_ = @stmts |] = do
             restMsgs <- ppMany rest
             withCurrentIndent $ \i ->
                 return $ (i, msg count) : restMsgs
+        Just [pdx| %_ = estate |] -> do -- FIXME: Since 1.30 this doesn't seem to do anything? (Only found in estate events)
+            return []
         _ -> preStatement stmt
 numOwnedProvincesWith _ stmt = preStatement stmt
 
@@ -3191,4 +3195,16 @@ aiAttitude stmt@[pdx| %_ = @scr |]
                 return $ MsgAiAttitude (iconText attitude) attLoc whoLoc
             _ -> return $ preMessage stmt
 aiAttitude stmt = preStatement stmt
+
+------------------------------------------------------
+-- Handler for {give,take}_estate_land_share_<size> --
+------------------------------------------------------
+estateLandShareEffect :: forall g m. (EU4Info g, Monad m) => (Text -> Text -> ScriptMessage) -> StatementHandler g m
+estateLandShareEffect msg stmt@[pdx| %_ = @scr |] | [pdx| estate = ?estate |] : [] <- scr =
+    case T.toLower estate of
+        "all" -> (trace "TODO: Handle \"estate = all\" in estateLandShareEffect") $ preStatement stmt
+        _ -> do
+                eLoc <- getGameL10n estate
+                msgToPP $ msg (iconText estate) eLoc
+estateLandShareEffect _ stmt = preStatement stmt
 

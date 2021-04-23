@@ -453,6 +453,7 @@ data ScriptMessage
     | MsgMutualOpinion {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgMutualOpinionDur {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageDays :: Double}
     | MsgHasOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgReverseHasOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgRemoveOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgAddTreasury {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddYearsOfIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1032,6 +1033,7 @@ data ScriptMessage
     | MsgReligiousModifier
     | MsgIsEnemy { scriptMessageWho :: Text }
     | MsgHasSpyNetworkFrom { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
+    | MsgHasSpyNetworkIn { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgDefineGeneral { scriptMessageIcon :: Text }
     | MsgDefineConquistador { scriptMessageIcon :: Text }
     | MsgDefineAdmiral { scriptMessageIcon :: Text }
@@ -1256,6 +1258,15 @@ data ScriptMessage
     | MsgTrust {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgTechDifference {scriptMessageAmt :: Double}
     | MsgAiAttitude {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgAllAllies
+    | MsgAllElectors
+    | MsgAllKnownCountries
+    | MsgDevelopmentInProvinces {scriptMessageAmt :: Double}
+    | MsgEstateLandShareEffect {scriptMessageAmt :: Double, scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgIsInTradeLeagueWith {scriptMessageWhom :: Text}
+    | MsgIsTradeLeagueLeader {scriptMessageYn :: Bool}
+    | MsgInstitutionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgCenterOfTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -3444,6 +3455,13 @@ instance RenderMessage Script ScriptMessage where
                 , _modid
                 , "}} towards "
                 , _whom
+                ]
+        MsgReverseHasOpinionMod {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _whom
+                , " has opinion modifier {{opinion_modifier|"
+                , _modid
+                , "}} towards this country"
                 ]
         MsgRemoveOpinionMod {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom}
             -> mconcat
@@ -7013,6 +7031,13 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " spy network"
                 ]
+        MsgHasSpyNetworkIn {scriptMessageIcon = _icon, scriptMessageWho = _who, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The country has at least "
+                , toMessage (plainNum _amt)
+                , " spy network in "
+                , _who
+                ]
         MsgDefineGeneral { scriptMessageIcon = _icon }
             -> mconcat
                 [ "Gain a new "
@@ -8449,6 +8474,57 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , _what
+                ]
+        MsgAllAllies
+            -> "All allies:"
+        MsgAllElectors
+            -> "All electors:"
+        MsgAllKnownCountries
+            -> "All discovered countries:"
+        MsgDevelopmentInProvinces {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "At least {{icon|Development}} "
+                , toMessage (plainNum _amt)
+                , " development in owned provinces where:"
+                ]
+        MsgEstateLandShareEffect {scriptMessageAmt = _amt, scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "The "
+                , _icon
+                , " "
+                , _whom
+                , " estate "
+                , gainsOrLoses _amt
+                , " "
+                , toMessage (colourPcSign False _amt)
+                , " share of the land"
+                ]
+        MsgIsInTradeLeagueWith {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is in the same [[trade league]] as "
+                , _whom
+                ]
+        MsgIsTradeLeagueLeader {scriptMessageYn = _yn}
+            -> mconcat
+                ["Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " the leader of a [[trade league]]"
+                ]
+        MsgInstitutionEnabled {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "The "
+                , _icon
+                , " "
+                , _what
+                , " institution is enabled"
+                ]
+        MsgCenterOfTrade {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Create a "
+                , _icon
+                , " level "
+                , toMessage (bold (roundNum _amt))
+                , " center of trade"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
