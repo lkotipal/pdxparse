@@ -39,9 +39,8 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions)
 
-
 newMission :: Text -> EU4Mission
-newMission id = EU4Mission id "(unknown)" [] undefined undefined
+newMission id = EU4Mission id "(unknown)" 0 [] undefined undefined
 
 newMissionBranch :: FilePath -> Text -> EU4MissionTreeBranch
 newMissionBranch path id = EU4MissionTreeBranch path id 0 Nothing []
@@ -95,7 +94,8 @@ parseEU4MissionTree [pdx| $serid = @scr |] = withCurrentFile $ \file -> do
         handleMission m [pdx| icon = $rhs |] = do -- <gfx> The icon to use for the mission
             return m { eu4m_icon = rhs }
         handleMission m [pdx| generic = %rhs |] = return m -- <bool> Whether this mission is considered generic.
-        handleMission m [pdx| position = %rhs |] = return m -- <int> Which row the mission appears in. 1 is top.
+        handleMission m [pdx| position = !pos |] = -- <int> Which row the mission appears in. 1 is top.
+            return m { eu4m_position = pos }
         handleMission m [pdx| completed_by = %rhs |] = return m -- <date> Automatically completes mission in history.
         handleMission m [pdx| ai_weight = %rhs |] = return m -- ?
         handleMission m [pdx| ai_priority = %rhs |] = return m -- ?
@@ -130,7 +130,7 @@ writeEU4Missions = do
         pp_mtb mtb = do
             version <- gets (gameVersion . getSettings)
             potential <- mapM (scope EU4Country . pp_script) (eu4mtb_potential mtb)
-            missionText <- mapM pp_m (eu4mtb_missions mtb)
+            missionText <- mapM (pp_m (eu4mtb_slot mtb)) (eu4mtb_missions mtb)
             return $ mconcat  $ [
                         Doc.strictText $ "===" <> eu4mtb_id mtb <> "===", PP.line, -- apparently there's no localization of the headline
                         "{{SVersion|", Doc.strictText version, "}}", PP.line
@@ -165,15 +165,18 @@ writeEU4Missions = do
                 linkSyntax :: Text -> Text
                 linkSyntax t = T.replace "]" ".5D" $ T.replace "[" ".5B" t
 
-        pp_m :: (EU4Info g, Monad m) => EU4Mission -> PPT g m Doc
-        pp_m m = do
+        pp_m :: (EU4Info g, Monad m) => Int -> EU4Mission -> PPT g m Doc
+        pp_m slot m = do
             title <- getGameL10n $ (eu4m_id m) <> "_title"
             desc <- getGameL10n $ (eu4m_id m) <> "_desc"
             trigger <- scope EU4Country (pp_script (eu4m_trigger m))
             effect <- scope EU4Country (pp_script (eu4m_effect m))
             prereqs <- mapM pp_prereq (eu4m_prerequisites m)
             return $ mconcat  $ [
-                "|-", PP.line,
+                "|-",
+                -- {{mpos|x=1|y=3|name=Unite the Low Countries}}
+                " <!-- {{mpos|x=", Doc.strictText $ T.pack (show slot), "|y=", Doc.strictText $ T.pack (show $ eu4m_position m), "|name=", Doc.strictText title ,"}} -->",
+                PP.line,
                 "| {{iconbox|", Doc.strictText title, "|", Doc.strictText desc, "|image=", Doc.strictText (eu4m_icon m), ".png}}", PP.line,
                 "|", PP.line, trigger, PP.line,
                 "|", PP.line, effect, PP.line,

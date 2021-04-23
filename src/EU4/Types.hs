@@ -247,6 +247,7 @@ data EU4OpinionModifier = EU4OpinionModifier
 data EU4Mission = EU4Mission
     {   eu4m_id :: Text
     ,   eu4m_icon :: Text
+    ,   eu4m_position :: Int -- Which row the mission appears in. 1 is top.
     ,   eu4m_prerequisites :: [Text]
     ,   eu4m_trigger :: GenericScript
     ,   eu4m_effect :: GenericScript
