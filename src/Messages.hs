@@ -1267,6 +1267,9 @@ data ScriptMessage
     | MsgIsTradeLeagueLeader {scriptMessageYn :: Bool}
     | MsgInstitutionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgCenterOfTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgArmyStrength {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgNavalStrength {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgRemoveBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8525,6 +8528,27 @@ instance RenderMessage Script ScriptMessage where
                 , " level "
                 , toMessage (bold (roundNum _amt))
                 , " center of trade"
+                ]
+        MsgArmyStrength {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Army strength is at least "
+                , toMessage (plainNum _amt)
+                , " times that of "
+                , _whom
+                ]
+        MsgNavalStrength {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Naval strength is at least "
+                , toMessage (plainNum _amt)
+                , " times that of "
+                , _whom
+                ]
+        MsgRemoveBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Remove "
+                , _icon
+                , " "
+                , _what
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
