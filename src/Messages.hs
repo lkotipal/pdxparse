@@ -1270,6 +1270,8 @@ data ScriptMessage
     | MsgArmyStrength {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgNavalStrength {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgRemoveBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHigherDevelopmentThan {scriptMessageWhat :: Text}
+    | MsgCrownlandShare {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8549,6 +8551,17 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , _what
+                ]
+        MsgHigherDevelopmentThan {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has higher development than "
+                , _what
+                ]
+        MsgCrownlandShare {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage $ (plainPc _amt)
+                , " [[crown land]] ownership"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
