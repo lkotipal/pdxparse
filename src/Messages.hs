@@ -1240,6 +1240,7 @@ data ScriptMessage
     | MsgAllConcesssionsTaken {scriptMessageYn :: Bool}
     | MsgIsDotfTier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHRESize {scriptMessageAmt :: Double}
+    | MsgHREExists
     | MsgInLeague {scriptMessageWhat :: Text}
     | MsgNumOwnInstitutionProvinces {scriptMessageAmt :: Double}
     | MsgIsLeagueLeader {scriptMessageYn :: Bool}
@@ -8346,6 +8347,8 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , plural _amt "member" "members"
                 ]
+        MsgHREExists -- Special case for hre_size = 1
+            -> "{{icon|imperial authority}} Holy Roman Empire exists"
         MsgInLeague {scriptMessageWhat = _what}
             -> mconcat
                 [ "Is part of the "

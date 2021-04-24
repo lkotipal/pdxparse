@@ -242,7 +242,7 @@ handlersNumeric = Tr.fromList
         ,("establish_order_cost"             , numeric MsgEstablishOrderCost)
         ,("had_recent_war"                   , numeric MsgWasAtWar)
         ,("heir_age"                         , numeric MsgHeirAge)
-        ,("hre_size"                         , numeric MsgHRESize)
+        ,("hre_size"                         , numeric (\s -> if s == 1 then MsgHREExists else MsgHRESize s))
         ,("is_year"                          , numeric MsgYearIs)
         ,("legitimacy_equivalent"            , numeric MsgLegitimacyEquivalent)
         ,("num_free_building_slots"          , numeric MsgNumFreeBuildingSlots)
