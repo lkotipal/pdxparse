@@ -39,6 +39,12 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions)
 
+-- TODO: Maybe this should be a setting instead?
+-- useIconBox:
+--   True -> Format as french missions
+--   False -> Format as generic missions
+useIconBox = True
+
 newMission :: Text -> EU4Mission
 newMission id = EU4Mission id "(unknown)" 0 [] undefined undefined
 
@@ -139,11 +145,18 @@ writeEU4Missions = do
                         _ -> [])
                      ++ [
                      -- table header
-                    "{| class=\"mildtable\"", PP.line,
-                    "! width=\"325px\" | Mission", PP.line,
-                    "! width=\"25%\" | Completion requirements", PP.line,
-                    "! width=\"25%\" | Effects", PP.line,
-                    "! Prerequisites", PP.line] ++
+                    "{| class=\"mildtable\"", PP.line] ++
+                    (if useIconBox then
+                        ["! width=\"325px\" | Mission", PP.line,
+                         "! width=\"25%\" | Completion requirements", PP.line,
+                         "! width=\"25%\" | Effects", PP.line,
+                         "! Prerequisites", PP.line]
+                    else
+                        ["! width=\"2%\" | !! width=\"17%\" | Mission", PP.line,
+                         "! width=\"20%\" | Completion requirements", PP.line,
+                         "! width=\"30%\" | Effects", PP.line,
+                         "! width=\"20%\" | Prerequisites", PP.line]
+                    ) ++
                     missionText ++
                     -- table footer
                     ["|}", PP.line]
@@ -161,9 +174,6 @@ writeEU4Missions = do
             title <- getGameL10n $ req <> "_title"
             let icon = findIcon (HM.elems missions) req
             return $ mconcat [Doc.strictText $ "[[File:" <> icon <> ".png|24px]]" <> " [[#" <> (linkSyntax title) <> "|" <> title <> "]]", PP.line]
-            where
-                linkSyntax :: Text -> Text
-                linkSyntax t = T.replace "]" ".5D" $ T.replace "[" ".5B" t
 
         pp_m :: (EU4Info g, Monad m) => Int -> EU4Mission -> PPT g m Doc
         pp_m slot m = do
@@ -174,11 +184,15 @@ writeEU4Missions = do
             prereqs <- mapM pp_prereq (eu4m_prerequisites m)
             return $ mconcat  $ [
                 "|-",
-                -- {{mpos|x=1|y=3|name=Unite the Low Countries}}
-                " <!-- {{mpos|x=", Doc.strictText $ T.pack (show slot), "|y=", Doc.strictText $ T.pack (show $ eu4m_position m), "|name=", Doc.strictText title ,"}} -->",
-                PP.line,
-                "| {{iconbox|", Doc.strictText title, "|", Doc.strictText desc, "|image=", Doc.strictText (eu4m_icon m), ".png}}", PP.line,
-                "|", PP.line, trigger, PP.line,
+                " <!-- {{mpos|x=", Doc.strictText $ T.pack (show slot), "|y=", Doc.strictText $ T.pack (show $ eu4m_position m), "|name=", Doc.strictText $ linkSyntax title ,"}} -->"] ++
+                (if useIconBox then
+                    [PP.line, "| {{iconbox|", Doc.strictText title, "|", Doc.strictText desc, "|image=", Doc.strictText (eu4m_icon m), ".png}}", PP.line]
+                else
+                    [ "id=\"", Doc.strictText title, "\"", PP.line, "|[[File:", Doc.strictText (eu4m_icon m), ".png]] || ", Doc.strictText title, PP.line]
+                )
+                ++ ["|", PP.line, trigger, PP.line,
                 "|", PP.line, effect, PP.line,
                 "| "] ++ prereqs ++ [PP.line]
 
+        linkSyntax :: Text -> Text
+        linkSyntax t = T.replace "]" ".5D" $ T.replace "[" ".5B" t
