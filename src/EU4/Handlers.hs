@@ -3073,20 +3073,54 @@ tradingPolicyInNode stmt@[pdx| %_ = @scr |]
             _ -> return $ preMessage stmt
 tradingPolicyInNode stmt = preStatement stmt
 
+--------------------------------------------------------------------------
+-- Handler for generate_advisor_of_type_and_semi_random_religion_effect --
+--------------------------------------------------------------------------
+
+data RandomAdvisor = RandomAdvisor
+        { ra_type :: Maybe Text
+        , ra_type_non_state :: Maybe Text
+        , ra_scaled_skill :: Bool
+        , ra_skill :: Maybe Double
+        , ra_discount :: Bool
+        } deriving Show
+
+newRA :: RandomAdvisor
+newRA = RandomAdvisor Nothing Nothing False Nothing False
+
 randomAdvisor :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
-randomAdvisor stmt@[pdx| %_ = @scr |] =
-    -- TODO: There are more parameters, but let's just grab the most important ones for now
-    let (mtype, rest) = extractStmt (matchLhsText "advisor_type") scr
-        (mdiscount, rest') = extractStmt (matchLhsText "discount") rest
-    in
-        case (mtype, mdiscount) of
-            (Just [pdx| %_ = $typ |], Just [pdx| %_ = $disc |]) | T.toLower disc == "yes" -> do
-                (t, i) <- tryLocAndIcon typ
-                msgToPP $ MsgRandomAdvisor i t True
-            (Just [pdx| %_ = $typ |], _) -> do
-                (t, i) <- tryLocAndIcon typ
-                msgToPP $ MsgRandomAdvisor i t False
-            _ -> preStatement stmt
+randomAdvisor stmt@[pdx| %_ = @scr |] = pp_ra (foldl' addLine newRA scr)
+    where
+        addLine :: RandomAdvisor -> GenericStatement -> RandomAdvisor
+        addLine ra [pdx| advisor_type = $typ |] = ra { ra_type = Just typ }
+        addLine ra [pdx| advisor_type_if_not_state= $typ |] = ra { ra_type_non_state = Just typ }
+        addLine ra [pdx| scaled_skill = $yn |] = ra { ra_scaled_skill = T.toLower yn == "yes" }
+        addLine ra [pdx| skill = !skill |] = ra { ra_skill = Just skill }
+        addLine ra [pdx| discount = $yn |] = ra { ra_discount = T.toLower yn == "yes" }
+        addLine ra stmt = (trace $ "randomAdvisor: Ignoring " ++ (show stmt)) $ ra
+
+        pp_ra_attrib :: RandomAdvisor -> PPT g m (Maybe (IndentedMessage, RandomAdvisor))
+        pp_ra_attrib ra@RandomAdvisor{ra_type_non_state = Just typ} | T.toLower typ /= maybe "" T.toLower (ra_type ra) = do
+            (t, i) <- tryLocAndIcon typ
+            [msg] <- msgToPP $ MsgRandomAdvisorNonState i t
+            return (Just (msg, ra { ra_type_non_state = Nothing }))
+        pp_ra_attrib ra@RandomAdvisor{ra_skill = Just skill} = do
+            [msg] <- msgToPP $ MsgRandomAdvisorSkill skill
+            return (Just (msg, ra { ra_skill = Nothing }))
+        pp_ra_attrib ra@RandomAdvisor{ra_scaled_skill = True} = do
+            [msg] <- msgToPP $ MsgRandomAdvisorScaledSkill
+            return (Just (msg, ra { ra_scaled_skill = False }))
+        pp_ra_attrib ra = return Nothing
+
+        pp_ra :: RandomAdvisor -> PPT g m IndentedMessages
+        pp_ra ra@RandomAdvisor{ra_type = Just typ, ra_discount = discount} = do
+            (t, i) <- tryLocAndIcon typ
+            body <- indentUp (unfoldM pp_ra_attrib ra)
+            liftA2 (++)
+                (msgToPP $ MsgRandomAdvisor i t discount)
+                (pure body)
+        pp_ra ra = (trace $ show ra) $ preStatement stmt
+
 randomAdvisor stmt = preStatement stmt
 
 -----------------------------

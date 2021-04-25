@@ -1216,6 +1216,9 @@ data ScriptMessage
     | MsgInstitutionDifference { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgEmbargoedBy { scriptMessageWho :: Text }
     | MsgRandomAdvisor { scriptMessageIcon :: Text, scriptMessageText :: Text, scriptMessageYn :: Bool }
+    | MsgRandomAdvisorSkill { scriptMessageAmt :: Double }
+    | MsgRandomAdvisorScaledSkill
+    | MsgRandomAdvisorNonState { scriptMessageIcon :: Text, scriptMessageText :: Text }
     | MsgConvertFemaleRulerGeneral { scriptMessageAmt :: Double }
     | MsgConvertHeirGeneral { scriptMessageYn :: Bool, scriptMessageAmt :: Double }
     | MsgHeirRemoved
@@ -8200,7 +8203,21 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , _text
-                , " advisor <!-- NOTE: some properties probably left out -->"
+                , " advisor, where:"
+                ]
+        MsgRandomAdvisorSkill { scriptMessageAmt = _amt }
+            -> mconcat
+                [ "Skill level is "
+                , toMessage (plainNum _amt)
+                ]
+        MsgRandomAdvisorScaledSkill
+            -> "Skill level is based on monthly income (1 if less than 15, 2 if less than 25, 3 otherwise)"
+        MsgRandomAdvisorNonState { scriptMessageIcon = _icon, scriptMessageText = _text } -- TODO: Perhaps something less convoluted
+            -> mconcat
+                [ "If the randomly selected religion is not the state religion the advisor type changes to "
+                , _icon
+                , " "
+                , _text
                 ]
         MsgConvertFemaleRulerGeneral { scriptMessageAmt = _amt }
             -> mconcat
