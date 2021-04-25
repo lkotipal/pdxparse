@@ -188,7 +188,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
-        ,("type" , rhsAlways "all" MsgTypeAll) -- FIXME: This is a hack to handle region_for_scope_province = { type = all }
+        ,("type" , rhsAlways "all" MsgTypeAll) -- FIXME: This is a hack to handle region_for_scope_province/area_for_scope_province = { type = all }
         ,("auto_explore_adjacent_to_colony", rhsAlwaysYes MsgAutoExploreAdjacentToColony)
         ,("can_fabricate_for_vassals", rhsAlwaysYes MsgCanFabricateForVassals)
         ,("idea_claim_colonies"    , rhsAlwaysYes MsgIdeaClaimColonies)
@@ -717,9 +717,13 @@ handlersCompound = Tr.fromList
         ,("all_neighbor_country"    , scope EU4Country   . compoundMessage MsgAllNeighborCountries)
         ,("all_owned_province"      , scope EU4Province  . compoundMessage MsgEveryOwnedProvince)
         ,("all_province"            , scope EU4Province  . compoundMessage MsgAllProvince)
+        ,("all_rival_country"       , scope EU4Country   . compoundMessage MsgAllRivalCountries)
         ,("all_subject_country"     , scope EU4Country   . compoundMessage MsgAllSubjectCountries)
+        ,("all_trade_node"          , scope EU4TradeNode . compoundMessage MsgAllTradeNodes)
+        ,("all_trade_node_member_province" , scope EU4Province . compoundMessage MsgAllTradeNodeProvince)
         ,("any_active_trade_node"   , scope EU4TradeNode . compoundMessage MsgAnyActiveTradeNode)
         ,("any_ally"                , scope EU4Country   . compoundMessage MsgAnyAlly)
+        ,("any_army"                ,                      compoundMessage MsgAnyArmy)
         ,("any_core_country"        , scope EU4Country   . compoundMessage MsgAnyCoreCountry) -- used in province scope
         ,("any_core_province"       , scope EU4Province  . compoundMessage MsgAnyCoreProvince)
         ,("any_country"             , scope EU4Country   . compoundMessage MsgAnyCountry)
@@ -733,11 +737,13 @@ handlersCompound = Tr.fromList
         ,("any_owned_province"      , scope EU4Province  . compoundMessage MsgAnyOwnedProvince)
         ,("any_privateering_country", scope EU4TradeNode . compoundMessage MsgAnyPrivateeringCountry)
         ,("any_province"            , scope EU4Province  . compoundMessage MsgAnyProvince)
+        ,("any_province_in_state"   , scope EU4Province  . compoundMessage MsgAnyProvinceInState)
         ,("any_rival_country"       , scope EU4Country   . compoundMessage MsgAnyRival)
         ,("any_subject_country"     , scope EU4Country   . compoundMessage MsgAnySubject)
         ,("any_trade_node"          , scope EU4TradeNode . compoundMessage MsgAnyTradeNode)
         ,("any_trade_node_member_country" , scope EU4Country . compoundMessage MsgAnyTradeNodeCountry)
         ,("any_trade_node_member_province" , scope EU4Province . compoundMessage MsgAnyTradeNodeProvince)
+        ,("area_for_scope_province" , scope EU4Province  . compoundMessage MsgAreaOfProvince)
         ,("capital_scope"           , scope EU4Province  . compoundMessage MsgCapital)
         ,("colonial_parent"         , scope EU4Country   . compoundMessage MsgColonialParent)
         ,("controller"              , scope EU4Country   . compoundMessage MsgController)
@@ -759,6 +765,7 @@ handlersCompound = Tr.fromList
         ,("every_rival_country"     , scope EU4Country   . compoundMessage MsgEveryRival)
         ,("every_subject_country"   , scope EU4Country   . compoundMessage MsgEverySubject)
         ,("every_trade_node_member_country" , scope EU4Country . compoundMessage MsgEveryTradeNodeMemberCountry)
+        ,("home_trade_node"         , scope EU4TradeNode . compoundMessage MsgHomeTradeNode)
         ,("hidden_effect"           ,                      compoundMessage MsgHiddenEffect)
         ,("if"                      ,                      compoundMessage MsgIf) -- always needs editing
         ,("limit"                   ,                      compoundMessage MsgLimit) -- always needs editing
@@ -777,6 +784,7 @@ handlersCompound = Tr.fromList
         ,("random_known_country"    , scope EU4Country   . compoundMessage MsgRandomKnownCountry)
         ,("random_neighbor_country" , scope EU4Country   . compoundMessage MsgRandomNeighborCountry)
         ,("random_neighbor_province", scope EU4Province  . compoundMessage MsgRandomNeighborProvince)
+        ,("random_owned_area"       , scope EU4Province  . compoundMessage MsgRandomOwnedArea)
         ,("random_owned_province"   , scope EU4Province  . compoundMessage MsgRandomOwnedProvince)
         ,("random_privateering_country", scope EU4TradeNode . compoundMessage MsgRandomPrivateeringCountry)
         ,("random_province"         , scope EU4Province  . compoundMessage MsgRandomProvince)

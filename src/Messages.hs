@@ -1278,6 +1278,14 @@ data ScriptMessage
     | MsgHigherDevelopmentThan {scriptMessageWhat :: Text}
     | MsgCrownlandShare {scriptMessageAmt :: Double}
     | MsgNumEstatePrivileges {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgAnyProvinceInState
+    | MsgRandomOwnedArea
+    | MsgAreaOfProvince
+    | MsgAnyArmy
+    | MsgAllTradeNodes
+    | MsgAllRivalCountries
+    | MsgAllTradeNodeProvince
+    | MsgHomeTradeNode
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8627,6 +8635,22 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " privileges"
                 ]
+        MsgAnyProvinceInState
+            -> "Any province in the currently considered state:"
+        MsgRandomOwnedArea
+            -> "Random owned area:"
+        MsgAreaOfProvince
+            -> "The area of the currently considered province:"
+        MsgAnyArmy
+            -> "Any army:"
+        MsgAllTradeNodes
+            -> "All trade nodes:"
+        MsgAllRivalCountries
+            -> "All rivaled countries:"
+        MsgAllTradeNodeProvince
+            -> "All provinces in this trade node:"
+        MsgHomeTradeNode
+            -> "Home [[trade node]]:"
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
