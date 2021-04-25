@@ -1269,6 +1269,7 @@ data ScriptMessage
     | MsgAllKnownCountries
     | MsgDevelopmentInProvinces {scriptMessageAmt :: Double}
     | MsgEstateLandShareEffect {scriptMessageAmt :: Double, scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgEstateLandShareEffectAll {scriptMessageAmt :: Double}
     | MsgIsInTradeLeagueWith {scriptMessageWhom :: Text}
     | MsgIsTradeLeagueLeader {scriptMessageYn :: Bool}
     | MsgInstitutionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -8565,6 +8566,14 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _whom
                 , " estate "
+                , gainsOrLoses _amt
+                , " "
+                , toMessage (colourPcSign False _amt)
+                , " share of the land"
+                ]
+        MsgEstateLandShareEffectAll {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Every estate "
                 , gainsOrLoses _amt
                 , " "
                 , toMessage (colourPcSign False _amt)

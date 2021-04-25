@@ -1209,6 +1209,7 @@ handlersNumProvinces = Tr.fromList
         ,("wool"          , numProvinces "wool" MsgGoodsProvinces)
         ]
 
+-- Helpers for text/value pairs
 tryLocAndIconTitle t = tryLocAndIcon (t <> "_title")
 
 -- | Handlers for text/value pairs.
@@ -1223,17 +1224,11 @@ handlersTextValue = Tr.fromList
         ,("add_spy_network_in"          , textValue "who" "value" MsgAddSpyNetworkIn MsgAddSpyNetworkIn flagTextMaybe)
         ,("army_strength"               , textValue "who" "value" MsgArmyStrength MsgArmyStrength flagTextMaybe)
         ,("estate_influence"            , textValue "estate" "influence" MsgEstateInfluence MsgEstateInfluence tryLocAndIcon)
-        ,("estate_influence"            , textValue "estate" "influence" MsgEstateInfluence MsgEstateInfluence tryLocAndIcon)
-        ,("estate_loyalty"              , textValue "estate" "loyalty" MsgEstateLoyalty MsgEstateLoyalty tryLocAndIcon)
         ,("estate_loyalty"              , textValue "estate" "loyalty" MsgEstateLoyalty MsgEstateLoyalty tryLocAndIcon)
         ,("estate_territory"            , textValue "estate" "territory" MsgEstateTerritory MsgEstateTerritory tryLocAndIcon)
         ,("had_country_flag"            , textValue "flag" "days" MsgHadCountryFlag MsgHadCountryFlag tryLocAndIcon)
-        ,("had_country_flag"            , textValue "flag" "days" MsgHadCountryFlag MsgHadCountryFlag tryLocAndIcon)
-        ,("had_global_flag"             , textValue "flag" "days" MsgHadGlobalFlag MsgHadGlobalFlag tryLocAndIcon)
         ,("had_global_flag"             , textValue "flag" "days" MsgHadGlobalFlag MsgHadGlobalFlag tryLocAndIcon)
         ,("had_province_flag"           , textValue "flag" "days" MsgHadProvinceFlag MsgHadProvinceFlag tryLocAndIcon)
-        ,("had_province_flag"           , textValue "flag" "days" MsgHadProvinceFlag MsgHadProvinceFlag tryLocAndIcon)
-        ,("had_ruler_flag"              , textValue "flag" "days" MsgHadRulerFlag MsgHadRulerFlag tryLocAndIcon)
         ,("had_ruler_flag"              , textValue "flag" "days" MsgHadRulerFlag MsgHadRulerFlag tryLocAndIcon)
         ,("has_spy_network_from"        , textValue "who" "value" MsgHasSpyNetworkFrom MsgHasSpyNetworkFrom flagTextMaybe)
         ,("has_spy_network_in"          , textValue "who" "value" MsgHasSpyNetworkIn MsgHasSpyNetworkIn flagTextMaybe)
@@ -1349,6 +1344,7 @@ handlersMisc = Tr.fromList
         ,("add_manpower"        , gainMen)
         ,("add_sailors"         , gainMen)
         ,("calc_true_if"        , calcTrueIf)
+        ,("change_estate_land_share" , changeEstateLandShare)
         ,("development_in_provinces" , numOwnedProvincesWith MsgDevelopmentInProvinces)
         ,("dominant_culture"    , dominantCulture)
         ,("dynasty"             , dynasty)
@@ -1371,16 +1367,16 @@ handlersMisc = Tr.fromList
         ,("reapply_estate_privilege"        , estatePrivilege MsgReapplyEstatePrivilege)
         ,("remove_estate_monopoly_modifier" , estatePrivilege MsgRemoveEstateModifer)
         -- Estate land share effects (from 01_scripted_effects_for_estates.txt)
-        ,("give_estate_land_share_small"    , estateLandShareEffect (MsgEstateLandShareEffect 1))
-        ,("give_estate_land_share_medium"   , estateLandShareEffect (MsgEstateLandShareEffect 2))
-        ,("give_estate_land_share_large"    , estateLandShareEffect (MsgEstateLandShareEffect 3))
-        ,("give_estate_land_share_massive"  , estateLandShareEffect (MsgEstateLandShareEffect 5))
-        ,("give_estate_land_share_gigantic" , estateLandShareEffect (MsgEstateLandShareEffect 10))
-        ,("take_estate_land_share_small"    , estateLandShareEffect (MsgEstateLandShareEffect (-1)))
-        ,("take_estate_land_share_medium"   , estateLandShareEffect (MsgEstateLandShareEffect (-2)))
-        ,("take_estate_land_share_large"    , estateLandShareEffect (MsgEstateLandShareEffect (-3)))
-        ,("take_estate_land_share_massive"  , estateLandShareEffect (MsgEstateLandShareEffect (-5)))
-        ,("take_estate_land_share_gigantic" , estateLandShareEffect (MsgEstateLandShareEffect (-10)))
+        ,("give_estate_land_share_small"    , estateLandShareEffect 1)
+        ,("give_estate_land_share_medium"   , estateLandShareEffect 2)
+        ,("give_estate_land_share_large"    , estateLandShareEffect 3)
+        ,("give_estate_land_share_massive"  , estateLandShareEffect 5)
+        ,("give_estate_land_share_gigantic" , estateLandShareEffect 10)
+        ,("take_estate_land_share_small"    , estateLandShareEffect (-1))
+        ,("take_estate_land_share_medium"   , estateLandShareEffect (-2))
+        ,("take_estate_land_share_large"    , estateLandShareEffect (-3))
+        ,("take_estate_land_share_massive"  , estateLandShareEffect (-5))
+        ,("take_estate_land_share_gigantic" , estateLandShareEffect (-10))
         ]
 
 -- | Handlers for ignored statements

@@ -110,6 +110,7 @@ module EU4.Handlers (
     ,   exportVariable
     ,   aiAttitude
     ,   estateLandShareEffect
+    ,   changeEstateLandShare
     ,   scopeProvince
     -- testing
     ,   isPronoun
@@ -3239,14 +3240,32 @@ aiAttitude stmt = preStatement stmt
 ------------------------------------------------------
 -- Handler for {give,take}_estate_land_share_<size> --
 ------------------------------------------------------
-estateLandShareEffect :: forall g m. (EU4Info g, Monad m) => (Text -> Text -> ScriptMessage) -> StatementHandler g m
-estateLandShareEffect msg stmt@[pdx| %_ = @scr |] | [pdx| estate = ?estate |] : [] <- scr =
+estateLandShareEffect :: forall g m. (EU4Info g, Monad m) => Double -> StatementHandler g m
+estateLandShareEffect amt stmt@[pdx| %_ = @scr |] | [pdx| estate = ?estate |] : [] <- scr =
     case T.toLower estate of
-        "all" -> (trace "TODO: Handle \"estate = all\" in estateLandShareEffect") $ preStatement stmt
+        "all" -> msgToPP $ MsgEstateLandShareEffectAll amt
         _ -> do
                 eLoc <- getGameL10n estate
-                msgToPP $ msg (iconText estate) eLoc
+                msgToPP $ MsgEstateLandShareEffect amt (iconText estate) eLoc
 estateLandShareEffect _ stmt = preStatement stmt
+
+------------------------------------------
+-- Handler for change_estate_land_share --
+------------------------------------------
+changeEstateLandShare :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+changeEstateLandShare stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_cels (parseTV "estate" "share" scr)
+    where
+        pp_cels :: TextValue -> PPT g m ScriptMessage
+        pp_cels tv = case (tv_what tv, tv_value tv) of
+            (Just estate, Just share) ->
+                case T.toLower estate of
+                    "all" -> return $ MsgEstateLandShareEffectAll share
+                    _ -> do
+                        eLoc <- getGameL10n estate
+                        return $ MsgEstateLandShareEffect share (iconText estate) eLoc
+            _ -> return $ preMessage stmt
+changeEstateLandShare stmt = preStatement stmt
 
 --------------------------------------------------
 -- Handler for {area,region}_for_scope_province --
