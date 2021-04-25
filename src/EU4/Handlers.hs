@@ -2145,25 +2145,30 @@ foldCompound "buildToForcelimit" "BuildToForcelimit" "btf"
            has_transport = _transport > 0
            has_land = has_infantry || has_cavalry || has_artillery
            has_navy = has_heavy_ship || has_light_ship || has_galley || has_transport
-       in if has_land == has_navy then
-                -- Neither or both. Unlikely, not provided for
-                preMessage stmt
+           infIcon = iconText "infantry"
+           cavIcon = iconText "cavalry"
+           artIcon = iconText "artillery"
+           heavyIcon = iconText "heavy ship"
+           lightIcon = iconText "light ship"
+           gallIcon = iconText "galley"
+           transpIcon = iconText "transport"
+       in if has_land == has_navy then do
+                MsgBuildToForcelimit infIcon _infantry
+                                     cavIcon _cavalry
+                                     artIcon _artillery
+                                     heavyIcon _heavy_ship
+                                     lightIcon _light_ship
+                                     gallIcon _galley
+                                     transpIcon _transport
             else if has_land then
-                let infIcon = iconText "infantry"
-                    cavIcon = iconText "cavalry"
-                    artIcon = iconText "artillery"
-                in MsgBuildToForcelimitLand infIcon _infantry
-                                            cavIcon _cavalry
-                                            artIcon _artillery
+                MsgBuildToForcelimitLand infIcon _infantry
+                                         cavIcon _cavalry
+                                         artIcon _artillery
             else -- has_navy == True
-                let heavyIcon = iconText "heavy ship"
-                    lightIcon = iconText "light ship"
-                    gallIcon = iconText "galley"
-                    transpIcon = iconText "transport"
-                in MsgBuildToForcelimitNavy heavyIcon _heavy_ship
-                                            lightIcon _light_ship
-                                            gallIcon _galley
-                                            transpIcon _transport
+                MsgBuildToForcelimitNavy heavyIcon _heavy_ship
+                                         lightIcon _light_ship
+                                         gallIcon _galley
+                                         transpIcon _transport
     |]
 
 --addUnitConstruction :: (IsGameState (GameState g), Monad m) => Text -> StatementHandler g m

@@ -465,6 +465,7 @@ data ScriptMessage
     | MsgNewConsortAttribs
     | MsgBuildToForcelimitLand {scriptMessageInficon :: Text, scriptMessageInfantry :: Double, scriptMessageCavicon :: Text, scriptMessageCavalry :: Double, scriptMessageArticon :: Text, scriptMessageArtillery :: Double}
     | MsgBuildToForcelimitNavy {scriptMessageHeavyicon :: Text, scriptMessageHeavy :: Double, scriptMessageLighticon :: Text, scriptMessageLight :: Double, scriptMessageGallicon :: Text, scriptMessageGalley :: Double, scriptMessageTranspicon :: Text, scriptMessageTransport :: Double}
+    | MsgBuildToForcelimit {scriptMessageInficon :: Text, scriptMessageInfantry :: Double, scriptMessageCavicon :: Text, scriptMessageCavalry :: Double, scriptMessageArticon :: Text, scriptMessageArtillery :: Double, scriptMessageHeavyicon :: Text, scriptMessageHeavy :: Double, scriptMessageLighticon :: Text, scriptMessageLight :: Double, scriptMessageGallicon :: Text, scriptMessageGalley :: Double, scriptMessageTranspicon :: Text, scriptMessageTransport :: Double}
     | MsgProvinceEvent
     | MsgCountryEvent
     | MsgTriggerEvent {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text}
@@ -3527,6 +3528,38 @@ instance RenderMessage Script ScriptMessage where
         MsgBuildToForcelimitNavy {scriptMessageHeavyicon = _heavyicon, scriptMessageHeavy = _heavy, scriptMessageLighticon = _lighticon, scriptMessageLight = _light, scriptMessageGallicon = _gallicon, scriptMessageGalley = _galley, scriptMessageTranspicon = _transpicon, scriptMessageTransport = _transport}
             -> mconcat
                 [ "Build naval units to forcelimit: "
+                , _heavyicon
+                , " "
+                , toMessage (reducedNum plainPc _heavy)
+                , " heavy ships, "
+                , _lighticon
+                , " "
+                , toMessage (reducedNum plainPc _light)
+                , " light ships, "
+                , _gallicon
+                , " "
+                , toMessage (reducedNum plainPc _galley)
+                , " galleys, "
+                , _transpicon
+                , " "
+                , toMessage (reducedNum plainPc _transport)
+                , " transports"
+                ]
+        MsgBuildToForcelimit {scriptMessageInficon = _inficon, scriptMessageInfantry = _infantry, scriptMessageCavicon = _cavicon, scriptMessageCavalry = _cavalry, scriptMessageArticon = _articon, scriptMessageArtillery = _artillery, scriptMessageHeavyicon = _heavyicon, scriptMessageHeavy = _heavy, scriptMessageLighticon = _lighticon, scriptMessageLight = _light, scriptMessageGallicon = _gallicon, scriptMessageGalley = _galley, scriptMessageTranspicon = _transpicon, scriptMessageTransport = _transport}
+            -> mconcat
+                [ "Build units to forcelimit: "
+                , _inficon
+                , " "
+                , toMessage (reducedNum plainPc _infantry)
+                , " infantry, "
+                , _cavicon
+                , " "
+                , toMessage (reducedNum plainPc _cavalry)
+                , " cavalry, "
+                , _articon
+                , " "
+                , toMessage (reducedNum plainPc _artillery)
+                , " artillery, "
                 , _heavyicon
                 , " "
                 , toMessage (reducedNum plainPc _heavy)
