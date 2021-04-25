@@ -827,6 +827,7 @@ handlersLocRhs = Tr.fromList
         ,("kill_advisor"          , withLocAtom MsgAdvisorDies)
         ,("region"                , withLocAtom MsgRegionIs)
         ,("remove_advisor"        , withLocAtom MsgLoseAdvisor)
+        ,("remove_advisor_by_category" , withLocAtom MsgRemoveAdvisor)
         ,("rename_capital"        , withLocAtom MsgRenameCapital) -- will usually fail localization
         ,("superregion"           , withLocAtom MsgSuperRegionIs)
         ]

@@ -1289,6 +1289,7 @@ data ScriptMessage
     | MsgAllRivalCountries
     | MsgAllTradeNodeProvince
     | MsgHomeTradeNode
+    | MsgRemoveAdvisor {scriptMessageType :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8666,6 +8667,11 @@ instance RenderMessage Script ScriptMessage where
             -> "All provinces in this trade node:"
         MsgHomeTradeNode
             -> "Home [[trade node]]:"
+        MsgRemoveAdvisor {scriptMessageType = _type}
+            -> mconcat
+                [ _type
+                , " advisor leaves the court"
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
