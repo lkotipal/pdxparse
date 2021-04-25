@@ -1276,6 +1276,7 @@ data ScriptMessage
     | MsgRemoveBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHigherDevelopmentThan {scriptMessageWhat :: Text}
     | MsgCrownlandShare {scriptMessageAmt :: Double}
+    | MsgNumEstatePrivileges {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8582,6 +8583,16 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has at least "
                 , toMessage $ (plainPc _amt)
                 , " [[crown land]] ownership"
+                ]
+        MsgNumEstatePrivileges {scriptMessageIcon = _icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The "
+                , _icon
+                , " "
+                , _whom
+                , " estate has at least "
+                , toMessage (plainNum _amt)
+                , " privileges"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
