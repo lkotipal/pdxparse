@@ -70,6 +70,7 @@ data EU4State = EU4State {
         eu4scopeStack :: [EU4Scope]
     ,   eu4currentFile :: Maybe FilePath
     ,   eu4currentIndent :: Maybe Int
+    ,   eu4IsInEffect :: Bool
     } deriving (Show)
 
 -- | Interface for EU4 feature handlers. Most of the methods just get data

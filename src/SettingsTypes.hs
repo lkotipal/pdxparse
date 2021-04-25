@@ -146,7 +146,12 @@ class IsGame g where
     -- | Get the entire scope stack. Wanted only for debugging purposes.
     getScopeStack :: Monad m => PPT g m [Scope g]
     getScopeStack = undefined
-
+    -- | Set that an effect is currently being processed
+    setIsInEffect :: Monad m => Bool -> PPT g m a -> PPT g m a
+    setIsInEffect _ = undefined
+    -- | Get wheter in effect or trigger scope
+    getIsInEffect :: Monad m => PPT g m Bool
+    getIsInEffect = undefined
 -- Example game. Define your game and its 'IsGame' instance in your game's
 -- 'Settings' module. Do NOT define it in Types. Instead, have game-specific
 -- code be polymorphic over Game.

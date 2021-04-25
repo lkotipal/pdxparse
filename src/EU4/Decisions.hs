@@ -143,7 +143,7 @@ pp_decision dec = do
     version <- gets (gameVersion . getSettings)
     pot_pp'd    <- scope EU4Country (pp_script (dec_potential dec))
     allow_pp'd  <- scope EU4Country (pp_script (dec_allow dec))
-    effect_pp'd <- scope EU4Country (pp_script (dec_effect dec))
+    effect_pp'd <- setIsInEffect True (scope EU4Country (pp_script (dec_effect dec)))
     mawd_pp'd   <- mapM ((imsg2doc =<<) . ppAiWillDo) (dec_ai_will_do dec)
     let name = dec_name dec
         nameD = Doc.strictText name

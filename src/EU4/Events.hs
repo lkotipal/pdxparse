@@ -55,7 +55,7 @@ newEU4Option = EU4Option Nothing Nothing Nothing Nothing
 
 -- | Take the event scripts from game data and parse them into event data
 -- structures.
-parseEU4Events :: (IsGameState (GameState g), Monad m) =>
+parseEU4Events :: (EU4Info g, Monad m) =>
     HashMap String GenericScript -> PPT g m (HashMap Text EU4Event)
 parseEU4Events scripts = HM.unions . HM.elems <$> do
     tryParse <- hoistExceptions $
@@ -96,7 +96,7 @@ writeEU4Events = do
 
 -- | Parse a statement in an events file. Some statements aren't events; for
 -- those, and for any obvious errors, return Right Nothing.
-parseEU4Event :: (IsGameState (GameState g), MonadError Text m) =>
+parseEU4Event :: (EU4Info g, MonadError Text m) =>
     GenericStatement -> PPT g m (Either Text (Maybe EU4Event))
 parseEU4Event (StatementBare lhs) = withCurrentFile $ \f ->
         throwError $ T.pack (f ++ ": bare statement at top level: " ++ (show lhs))
@@ -162,7 +162,7 @@ evtDesc meid scr = case foldl' evtDesc' (EvtDescI Nothing Nothing) scr of
 
 -- | Interpret one section of an event. If understood, add it to the event
 -- data. If not understood, throw an exception.
-eventAddSection :: (IsGameState (GameState g), MonadError Text m) =>
+eventAddSection :: (EU4Info g, MonadError Text m) =>
     Maybe EU4Event -> GenericStatement -> PPT g m (Maybe EU4Event)
 eventAddSection Nothing _ = return Nothing
 eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) where
@@ -229,14 +229,14 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
             throwError $ "unrecognized event section in " <> T.pack file <> ": " <> T.pack (show stmt)
 
 -- | Interpret an option block and append it to the list of options.
-addEU4Option :: Monad m => Maybe [EU4Option] -> GenericScript -> PPT g m (Maybe [EU4Option])
+addEU4Option :: (IsGame g, Monad m) => Maybe [EU4Option] -> GenericScript -> PPT g m (Maybe [EU4Option])
 addEU4Option Nothing opt = addEU4Option (Just []) opt
 addEU4Option (Just opts) opt = do
     optn <- foldM optionAddStatement newEU4Option opt
     return $ Just (opts ++ [optn])
 
 -- | Interpret one section of an option block and add it to the option data.
-optionAddStatement :: Monad m => EU4Option -> GenericStatement -> PPT g m EU4Option
+optionAddStatement :: (IsGame g, Monad m) => EU4Option -> GenericStatement -> PPT g m EU4Option
 optionAddStatement opt stmt@[pdx| name = ?name |]
     = return $ opt { eu4opt_name = Just name }
 optionAddStatement opt stmt@[pdx| ai_chance = @ai_chance |]
@@ -245,7 +245,7 @@ optionAddStatement opt stmt@[pdx| trigger = @trigger_script |]
     = return $ opt { eu4opt_trigger = Just trigger_script }
 optionAddStatement opt stmt = do
     -- Not a GenericLhs - presumably an effect.
-    effects_pp'd <- optionAddEffect (eu4opt_effects opt) stmt
+    effects_pp'd <- setIsInEffect True (optionAddEffect (eu4opt_effects opt) stmt)
     return $ opt { eu4opt_effects = effects_pp'd }
 
 -- | Append an effect to the effects of an option.
@@ -362,7 +362,7 @@ pp_event evt = case (eu4evt_id evt
         (conditional, options_pp'd) <- pp_options (eu4evt_hide_window evt) eid options
         titleLoc <- getGameL10n title
         descLoc <- ppDescs (eu4evt_hide_window evt) (eu4evt_desc evt)
-        after_pp'd <- sequence ((imsg2doc <=< ppMany) <$> eu4evt_after evt)
+        after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> eu4evt_after evt))
         let evtArg :: Text -> (EU4Event -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
             evtArg fieldname field fmt
                 = maybe (return [])
@@ -378,7 +378,7 @@ pp_event evt = case (eu4evt_id evt
             evtId = Doc.strictText eid
         trigger_pp'd <- evtArg "trigger" eu4evt_trigger pp_script
         mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (eu4evt_mean_time_to_happen evt)
-        immediate_pp'd <- evtArg "immediate" eu4evt_immediate pp_script
+        immediate_pp'd <- setIsInEffect True (evtArg "immediate" eu4evt_immediate pp_script)
         triggered_pp <- ppTriggeredBy eid
         -- Keep track of incomplete events
         when (not isTriggeredOnly && isNothing mmtth_pp'd) $
@@ -448,7 +448,7 @@ pp_option evtid hidden triggered opt = do
             else throwError $ "some required option sections missing in " <> evtid <> " - dumping: " <> T.pack (show opt)
     where
         ok name_loc = let mtrigger = eu4opt_trigger opt in do
-            effects_pp'd <- pp_script (fromMaybe [] (eu4opt_effects opt))
+            effects_pp'd <- setIsInEffect True (pp_script (fromMaybe [] (eu4opt_effects opt)))
             mtrigger_pp'd <- sequence (pp_script <$> mtrigger)
             return . mconcat $
                 ["{{Option\n"

@@ -180,7 +180,7 @@ writeEU4Missions = do
             title <- getGameL10n $ (eu4m_id m) <> "_title"
             desc <- getGameL10n $ (eu4m_id m) <> "_desc"
             trigger <- scope EU4Country (pp_script (eu4m_trigger m))
-            effect <- scope EU4Country (pp_script (eu4m_effect m))
+            effect <- setIsInEffect True (scope EU4Country (pp_script (eu4m_effect m)))
             prereqs <- mapM pp_prereq (eu4m_prerequisites m)
             return $ mconcat  $ [
                 "|-",

@@ -81,6 +81,7 @@ instance IsGame EU4 where
                     eu4currentFile = Nothing
                 ,   eu4currentIndent = Nothing
                 ,   eu4scopeStack = []
+                ,   eu4IsInEffect = False
                 }))
     type Scope EU4 = EU4Scope
     scope s = local $ \(EU4S st) -> EU4S $
@@ -89,6 +90,8 @@ instance IsGame EU4 where
     getPrevScope = asks $ safeIndex 1 . eu4scopeStack . eu4s
     getRootScope = asks $ safeLast . eu4scopeStack . eu4s
     getScopeStack = asks $ eu4scopeStack . eu4s
+    getIsInEffect = asks $ eu4IsInEffect . eu4s
+    setIsInEffect b = local $ \(EU4S st) -> EU4S $ st { eu4IsInEffect = b }
 
 instance EU4Info EU4 where
     getEventTitle eid = do

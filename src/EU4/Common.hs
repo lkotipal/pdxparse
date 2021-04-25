@@ -767,7 +767,7 @@ handlersCompound = Tr.fromList
         ,("home_trade_node"         , scope EU4TradeNode . compoundMessage MsgHomeTradeNode)
         ,("hidden_effect"           ,                      compoundMessage MsgHiddenEffect)
         ,("if"                      ,                      compoundMessage MsgIf) -- always needs editing
-        ,("limit"                   ,                      compoundMessage MsgLimit) -- always needs editing
+        ,("limit"                   , setIsInEffect False . compoundMessage MsgLimit) -- always needs editing
         ,("most_province_trade_power", scope EU4Country  . compoundMessage MsgMostProvinceTradePower)
         ,("overlord"                , scope EU4Country   . compoundMessage MsgOverlord)
         ,("owner"                   , scope EU4Country   . compoundMessage MsgOwner)
@@ -1437,7 +1437,8 @@ ppMaybeGeo label loc scr = do
     let (mtypeStmt, rest) = extractStmt (matchExactText "type" "all") scr
     case HM.lookup label geoData of
         Just geoType -> do
-            [header] <- plainMsg $ (if isJust mtypeStmt then "All provinces" else "Provinces")
+            inEffect <- getIsInEffect
+            [header] <- plainMsg $ (if isJust mtypeStmt || inEffect then "All provinces" else "Any province")
                 <> " in the " <> loc <> " " <> (describe geoType) <> ":"
             scriptMsgs <- scope EU4Province $ ppMany rest
             return (header : scriptMsgs)
