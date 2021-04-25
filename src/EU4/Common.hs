@@ -188,7 +188,6 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
-        ,("type" , rhsAlways "all" MsgTypeAll) -- FIXME: This is a hack to handle region_for_scope_province/area_for_scope_province = { type = all }
         ,("auto_explore_adjacent_to_colony", rhsAlwaysYes MsgAutoExploreAdjacentToColony)
         ,("can_fabricate_for_vassals", rhsAlwaysYes MsgCanFabricateForVassals)
         ,("idea_claim_colonies"    , rhsAlwaysYes MsgIdeaClaimColonies)
@@ -743,7 +742,7 @@ handlersCompound = Tr.fromList
         ,("any_trade_node"          , scope EU4TradeNode . compoundMessage MsgAnyTradeNode)
         ,("any_trade_node_member_country" , scope EU4Country . compoundMessage MsgAnyTradeNodeCountry)
         ,("any_trade_node_member_province" , scope EU4Province . compoundMessage MsgAnyTradeNodeProvince)
-        ,("area_for_scope_province" , scope EU4Province  . compoundMessage MsgAreaOfProvince)
+        ,("area_for_scope_province" , scope EU4Province  . scopeProvince MsgAreaOfProvince MsgAreaOfProvinceAll)
         ,("capital_scope"           , scope EU4Province  . compoundMessage MsgCapital)
         ,("colonial_parent"         , scope EU4Country   . compoundMessage MsgColonialParent)
         ,("controller"              , scope EU4Country   . compoundMessage MsgController)
@@ -792,7 +791,7 @@ handlersCompound = Tr.fromList
         ,("random_subject_country"  , scope EU4Country   . compoundMessage MsgRandomSubjectCountry)
         ,("random_trade_node"       , scope EU4TradeNode . compoundMessage MsgRandomTradeNode)
         ,("random_trade_node_member_province" , scope EU4Province . compoundMessage MsgRandomTradeNodeMemberProvince)
-        ,("region_for_scope_province" , scope EU4Province . compoundMessage MsgRegionProvinceScope)
+        ,("region_for_scope_province" , scope EU4Province . scopeProvince MsgRegionProvinceScope MsgRegionProvinceScopeAll)
         ,("strongest_trade_power"   , scope EU4Country   . compoundMessage MsgStrongestTradePower) -- always needs editing
         ,("trigger"                 ,                      compoundMessage MsgTrigger) -- observed in random_list (probably something unhandled if seen elsewhere)
         ,("while"                   , scope EU4Country   . compoundMessage MsgWhile) -- always needs editing

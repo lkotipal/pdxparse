@@ -1029,6 +1029,7 @@ data ScriptMessage
     | MsgRevolutionTargetExists { scriptMessageYn :: Bool }
     | MsgIsCenterOfRevolution { scriptMessageYn :: Bool }
     | MsgRegionProvinceScope
+    | MsgRegionProvinceScopeAll
     | MsgSetRevolutionProvince { scriptMessageYn :: Bool }
     | MsgGovernmentHasAttribute { scriptMessageWhat :: Text }
     | MsgReligiousModifier
@@ -1281,6 +1282,7 @@ data ScriptMessage
     | MsgAnyProvinceInState
     | MsgRandomOwnedArea
     | MsgAreaOfProvince
+    | MsgAreaOfProvinceAll
     | MsgAnyArmy
     | MsgAllTradeNodes
     | MsgAllRivalCountries
@@ -7054,6 +7056,8 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgRegionProvinceScope
             -> "At least one province in the region"
+        MsgRegionProvinceScopeAll
+            -> "All provinces in the region"
         MsgSetRevolutionProvince { scriptMessageYn = _yn }
             -> mconcat
                 [ toMessage (ifThenElseT _yn "Add" "Remove")
@@ -8640,7 +8644,9 @@ instance RenderMessage Script ScriptMessage where
         MsgRandomOwnedArea
             -> "Random owned area:"
         MsgAreaOfProvince
-            -> "The area of the currently considered province:"
+            -> "Another province in the area of the currently considered province:"
+        MsgAreaOfProvinceAll
+            -> "All provinces in the area of the currently considered province:"
         MsgAnyArmy
             -> "Any army:"
         MsgAllTradeNodes

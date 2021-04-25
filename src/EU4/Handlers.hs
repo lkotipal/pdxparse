@@ -110,6 +110,7 @@ module EU4.Handlers (
     ,   exportVariable
     ,   aiAttitude
     ,   estateLandShareEffect
+    ,   scopeProvince
     -- testing
     ,   isPronoun
     ,   flag
@@ -3247,3 +3248,21 @@ estateLandShareEffect msg stmt@[pdx| %_ = @scr |] | [pdx| estate = ?estate |] : 
                 msgToPP $ msg (iconText estate) eLoc
 estateLandShareEffect _ stmt = preStatement stmt
 
+--------------------------------------------------
+-- Handler for {area,region}_for_scope_province --
+--------------------------------------------------
+scopeProvince :: forall g m. (EU4Info g, Monad m) => ScriptMessage -> ScriptMessage -> StatementHandler g m
+scopeProvince msgAny msgAll stmt@[pdx| %_ = @scr |] =
+    let
+        (mtype, rest) = extractStmt (matchLhsText "type") scr
+    in
+        case mtype of
+            Just typstm@[pdx| $_ = $typ |] -> withCurrentIndent $ \i -> do
+                scr_pp'd <- ppMany rest
+                let msg = case T.toLower typ of
+                        "all" -> msgAll
+                        "any" -> msgAny
+                        _ -> (trace $ "scopeProvince: Unknown type " ++ (show typstm)) $ msgAll
+                return ((i, msg) : scr_pp'd)
+            _ -> compoundMessage msgAny stmt
+scopeProvince _ _ stmt = preStatement stmt
