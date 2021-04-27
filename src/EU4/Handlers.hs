@@ -42,6 +42,7 @@ module EU4.Handlers (
     ,   tryLoc
     ,   tryLocAndIcon
     ,   tryLocAndIconTC
+    ,   tryLocAndLocMod
     ,   textValue
     ,   textAtom
     ,   ppAiWillDo
@@ -1123,6 +1124,22 @@ tryLocAndIconTC atom = do
                     _ -> (T.replace "_" " " t)
             in
                "[[image:TC " <> icon <> ".png|28px]]"
+
+-- | Same as tryLocAndIcon but for global modifiers
+tryLocAndLocMod :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
+tryLocAndLocMod atom = do
+    loc <- tryLoc (HM.lookupDefault atom atom locTable)
+    when (isNothing loc) (traceM $ "tryLocAndLocMod: Localization failed for modifier: " ++ (T.unpack atom))
+    return (maybe mempty id (Just (iconText atom)),
+            maybe ("<tt>" <> atom <> "</tt>") id loc)
+    where
+        locTable :: HashMap Text Text
+        locTable = HM.fromList
+            [("female_advisor_chance", "MODIFIER_FEMALE_ADVISOR_CHANCE")
+            ,("discipline", "MODIFIER_DISCIPLINE")
+            ,("cavalry_power", "CAVALRY_POWER")
+            ,("ship_durability", "MODIFIER_SHIP_DURABILITY")
+            ]
 
 data TextValue = TextValue
         {   tv_what :: Maybe Text
