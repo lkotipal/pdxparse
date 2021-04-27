@@ -2241,6 +2241,7 @@ hasDlc [pdx| %_ = ?dlc |]
             ,("Golden Century", "goc")
             ,("Dharma", "dhr")
             ,("Emperor", "emp")
+            ,("Leviathan", "lev")
             ]
         dlc_icon = maybe "" iconText mdlc_key
 hasDlc stmt = preStatement stmt
