@@ -852,12 +852,13 @@ data ScriptMessage
     | MsgAddAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddHarmonizedReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddHeirPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddConsortPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddRulerPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgRemoveRulerPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgRulerHasPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHeirHasPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgAddHeirPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgAddConsortPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgAddRulerPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgRemoveRulerPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgRulerHasPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHeirHasPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgConsortHasPersonality { scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgAddCenterOfReformation {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddHistoricalRival {scriptMessageWho :: Text}
     | MsgAddTruceWith {scriptMessageWho :: Text}
@@ -1014,7 +1015,6 @@ data ScriptMessage
     | MsgIsProvinceEmpty { scriptMessageYn :: Bool }
     | MsgIsEmperorOfChina { scriptMessageYn :: Bool }
     | MsgHasStatesGeneralMechanic { scriptMessageYn :: Bool }
-    | MsgConsortHasPersonality { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgIsInWar
     | MsgDurationAtLeast { scriptMessageDays :: Double }
     | MsgIsAttackerWarLeader { scriptMessageWho :: Text }
@@ -6097,47 +6097,61 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " as a harmonized religion"
                 ]
-        MsgAddHeirPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+        MsgAddHeirPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Heir gains the personality trait "
                 , _icon
                 , " "
                 , _what
+                , ancestorText _ancestor
                 ]
-        MsgAddConsortPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+        MsgAddConsortPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Consort gains the personality trait "
                 , _icon
                 , " "
                 , _what
+                , ancestorText _ancestor
                 ]
-        MsgAddRulerPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+        MsgAddRulerPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Ruler gains the personality trait "
                 , _icon
                 , " "
                 , _what
+                , ancestorText _ancestor
                 ]
-        MsgRemoveRulerPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+        MsgRemoveRulerPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Ruler loses the personality trait "
                 , _icon
                 , " "
                 , _what
+                , ancestorText _ancestor
                 ]
-        MsgRulerHasPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+        MsgRulerHasPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Ruler has the personality trait "
                 , _icon
                 , " "
                 , _what
+                , ancestorText _ancestor
                 ]
-        MsgHeirHasPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+        MsgHeirHasPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Heir has the personality trait "
                 , _icon
                 , " "
                 , _what
+                , ancestorText _ancestor
+                ]
+        MsgConsortHasPersonality { scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what }
+            -> mconcat
+                [ "Consort has the personality trait "
+                , _icon
+                , " "
+                , _what
+                , ancestorText _ancestor
                 ]
         MsgAddCenterOfReformation {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
@@ -7027,13 +7041,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Government "
                 , toMessage (ifThenElseT _yn "uses" "does ''not'' use")
                 , " [[States General]] mechanic"
-                ]
-        MsgConsortHasPersonality { scriptMessageIcon = _icon, scriptMessageWhat = _what }
-            -> mconcat
-                [ "Consort has the personality trait "
-                , _icon
-                , " "
-                , _what
                 ]
         MsgIsInWar
             -> "Is in a war where:"
@@ -9007,6 +9014,12 @@ instance RenderMessage Script ScriptMessage where
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
+
+-- FIXME: What's the significance of this?
+ancestorText :: Bool -> Text
+ancestorText False = ""
+ancestorText True  = "<!-- ancestor -->"
+
 
 -- | Message paired with an indentation level.
 type IndentedMessage = (Int, ScriptMessage)

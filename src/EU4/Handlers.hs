@@ -112,6 +112,7 @@ module EU4.Handlers (
     ,   estateLandShareEffect
     ,   changeEstateLandShare
     ,   scopeProvince
+    ,   personalityAncestor
     -- testing
     ,   isPronoun
     ,   flag
@@ -3286,3 +3287,13 @@ scopeProvince msgAny msgAll stmt@[pdx| %_ = @scr |] =
                 return ((i, msg) : scr_pp'd)
             _ -> compoundMessage msgAny stmt
 scopeProvince _ _ stmt = preStatement stmt
+
+
+---------------------------------------
+-- Handler for *personality_ancestor --
+---------------------------------------
+personalityAncestor :: forall g m. (EU4Info g, Monad m) => (Text -> Text -> ScriptMessage) -> StatementHandler g m
+personalityAncestor msg stmt@[pdx| %_ = @scr |] | [pdx| key = $personality |] : [] <- scr = do
+    loc <- getGameL10n personality
+    msgToPP $ msg (iconText personality) loc
+personalityAncestor _ stmt = preStatement stmt
