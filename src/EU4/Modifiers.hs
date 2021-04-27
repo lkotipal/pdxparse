@@ -188,8 +188,7 @@ pp_opinion_modifers modifiers = do
         , "Automatically generated from the file(s): "
         , Doc.strictText $ T.pack $ concat $ intersperse ", " (map (\p -> "{{path|"++p++"}}") ((toList . fromList) (map omodPath modifiers)))
         , PP.line, PP.line
-        , "Based on the [[HoI4:Template:Opinion|HOI4 opinion template]]"
-        , PP.line, PP.line
+        , "{{template doc}}", PP.line
         , "[[Category:Templates]]</noinclude>"
         , PP.line
         ]
