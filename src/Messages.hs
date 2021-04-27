@@ -1333,6 +1333,10 @@ data ScriptMessage
     | MsgWarTaxesCostModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyPatriarchAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasGlobalModifierValue {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgHasAnyGreatProject
+    | MsgHasAnyGreatProjectTier {scriptMessageAmt :: Double }
+    | MsgHasGreatProject {scriptMessageWhat :: Text}
+    | MsgHasGreatProjectTier {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
 
 
 -- | Whether to default to English localization.
@@ -9019,6 +9023,25 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgHasAnyGreatProject
+            -> "Has any great project "
+        MsgHasAnyGreatProjectTier {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Any Great project is at least tier "
+                , toMessage (plainNum _amt)
+                ]
+        MsgHasGreatProject {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has great project "
+                , _what
+                ]
+        MsgHasGreatProjectTier {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Great project "
+                , _what
+                , " is at least tier "
                 , toMessage (plainNum _amt)
                 ]
 

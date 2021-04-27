@@ -114,6 +114,7 @@ module EU4.Handlers (
     ,   changeEstateLandShare
     ,   scopeProvince
     ,   personalityAncestor
+    ,   hasGreatProject
     -- testing
     ,   isPronoun
     ,   flag
@@ -3314,3 +3315,25 @@ personalityAncestor msg stmt@[pdx| %_ = @scr |] | [pdx| key = $personality |] : 
     loc <- getGameL10n personality
     msgToPP $ msg (iconText personality) loc
 personalityAncestor _ stmt = preStatement stmt
+
+-----------------------------------
+-- Handler for has_great_project --
+-----------------------------------
+hasGreatProject :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasGreatProject stmt@[pdx| %_ = @scr |] =
+    let
+        (mtype, rest) = extractStmt (matchLhsText "type") scr
+        (mtier, rest') = extractStmt (matchLhsText "tier") rest
+        isAny = (case mtype of
+            Just [pdx| $_ = $typ |] | T.toLower typ == "any" -> True
+            _ -> False)
+    in
+        case (mtype, mtier, rest') of
+            (Just [pdx| $_ = $typ |], Just [pdx| $_ = !tier |], []) -> do
+                loc <- getGameL10n typ
+                msgToPP $ (if isAny then MsgHasAnyGreatProjectTier else (MsgHasGreatProjectTier loc)) tier
+            (Just [pdx| $_ = $typ |], Nothing, []) -> do
+                loc <- getGameL10n typ
+                msgToPP $ (if isAny then MsgHasAnyGreatProject else (MsgHasGreatProject loc))
+            _ -> (trace $ "hasGreatProject: Not handled: " ++ (show stmt)) $ preStatement stmt
+hasGreatProject stmt = (trace $ "hasGreatProject: Not handled: " ++ show stmt) $ preStatement stmt

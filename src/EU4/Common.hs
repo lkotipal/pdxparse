@@ -857,7 +857,6 @@ handlersLocRhs = Tr.fromList
         ,("has_disaster"          , withLocAtom MsgDisasterOngoing)
         ,("has_estate_privilege"  , withLocAtom MsgHasEstatePrivilege)
         ,("has_faction"           , withLocAtom MsgHasFaction)
-        ,("has_great_project"     , withLocAtom MsgConstructingGreatProject)
         ,("has_idea"              , withLocAtom MsgHasIdea)
         ,("has_leader"            , withLocAtom MsgHasLeader) -- will usually fail localization
         ,("has_reform"            , withLocAtom MsgHasReform)
@@ -1324,6 +1323,7 @@ handlersSpecialComplex = Tr.fromList
         ,("employed_advisor"             , employedAdvisor)
         ,("faction_influence"            , factionInfluence MsgFactionHasInfluence)
         ,("has_casus_belli"              , hasCasusBelli)
+        ,("has_great_project"            , hasGreatProject)
         ,("has_estate_influence_modifier", hasEstateInfluenceModifier)
         ,("has_opinion"                  , hasOpinion MsgHasOpinion)
         ,("has_opinion_modifier"         , opinion MsgHasOpinionMod (\modid what who _years -> MsgHasOpinionMod modid what who))
