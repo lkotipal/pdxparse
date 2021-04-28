@@ -115,6 +115,7 @@ module EU4.Handlers (
     ,   scopeProvince
     ,   personalityAncestor
     ,   hasGreatProject
+    ,   hasEstateLedRegency
     -- testing
     ,   isPronoun
     ,   flag
@@ -3316,6 +3317,12 @@ personalityAncestor msg stmt@[pdx| %_ = @scr |] | [pdx| key = $personality |] : 
     msgToPP $ msg (iconText personality) loc
 personalityAncestor _ stmt = preStatement stmt
 
+
+-- Helper
+getMaybeRhsText :: Maybe GenericStatement -> Maybe Text
+getMaybeRhsText (Just [pdx| %_ = $t |]) = Just t
+getMaybeRhsText _ = Nothing
+
 -----------------------------------
 -- Handler for has_great_project --
 -----------------------------------
@@ -3324,20 +3331,35 @@ hasGreatProject stmt@[pdx| %_ = @scr |] =
     let
         (mtype, rest) = extractStmt (matchLhsText "type") scr
         (mtier, rest') = extractStmt (matchLhsText "tier") rest
-        typ = maybe "" (\s -> case s of
-            [pdx| $_ = $t |] -> T.toLower t
-            _ -> "") mtype
-        (msgNoTier, msgTier) = case typ of
+        typ = fromMaybe "" (getMaybeRhsText mtype)
+        (msgNoTier, msgTier) = case T.toLower typ of
             "any" -> (const MsgHasAnyGreatProject, const MsgHasAnyGreatProjectTier)
             "monument" -> (const MsgHasAnyMonument, const MsgHasAnyMonumentTier)
             _ -> (MsgHasGreatProject, MsgHasGreatProjectTier)
     in
         case (mtype, mtier, rest') of
-            (Just [pdx| $_ = $typ |], Just [pdx| $_ = !tier |], []) -> do
+            (Just s, Just [pdx| $_ = !tier |], []) -> do
                 loc <- getGameL10n typ
                 msgToPP $ msgTier loc tier
-            (Just [pdx| $_ = $typ |], Nothing, []) -> do
+            (Just s, Nothing, []) -> do
                 loc <- getGameL10n typ
                 msgToPP $ msgNoTier loc
             _ -> (trace $ "hasGreatProject: Not handled: " ++ (show stmt)) $ preStatement stmt
 hasGreatProject stmt = (trace $ "hasGreatProject: Not handled: " ++ show stmt) $ preStatement stmt
+
+----------------------------------------
+-- Handler for has_estate_led_regency --
+----------------------------------------
+hasEstateLedRegency stmt@[pdx| %_ = @scr |] = do
+    let (mestate, rest) = extractStmt (matchLhsText "estate") scr
+        estate = fromMaybe "" (getMaybeRhsText mestate)
+        icon = iconText estate
+    loc <- getGameL10n estate
+    case (T.toLower estate, rest) of
+        ("", _) -> (trace $ ("hasEstateLedRegency: Estate missing: " ++ (show stmt))) $ msgToPP $ preMessage stmt
+        ("any", [[pdx| duration = !dur |]]) -> msgToPP $ MsgEstateRegencyDuration dur
+        ("any", [])                         -> msgToPP $ MsgEstateRegency
+        (e, [[pdx| duration = !dur |]])     -> msgToPP $ MsgEstateRegencySpecificDur icon loc dur
+        (e, [])                             -> msgToPP $ MsgEstateRegencySpecific icon loc
+        _ -> (trace $ ("hasEstateLedRegency: Not handled: " ++ (show stmt))) $ msgToPP $ preMessage stmt
+hasEstateLedRegency stmt = preStatement stmt

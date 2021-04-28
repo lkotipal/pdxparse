@@ -1339,7 +1339,10 @@ data ScriptMessage
     | MsgHasAnyMonumentTier {scriptMessageAmt :: Double }
     | MsgHasGreatProject {scriptMessageWhat :: Text}
     | MsgHasGreatProjectTier {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-
+    | MsgEstateRegency
+    | MsgEstateRegencyDuration {scriptMessageAmt :: Double}
+    | MsgEstateRegencySpecific {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgEstateRegencySpecificDur {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9052,6 +9055,34 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " is at least tier "
                 , toMessage (plainNum _amt)
+                ]
+        MsgEstateRegency
+            -> "Is in an estate regency"
+        MsgEstateRegencyDuration {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has been in an estate regency for at least "
+                , toMessage (plainNum _amt)
+                , " "
+                , toMessage (plural _amt "year" "years")
+                ]
+        MsgEstateRegencySpecific {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Is in a regency led by the "
+                , _icon
+                , " "
+                , _what
+                , " estate"
+                ]
+        MsgEstateRegencySpecificDur {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has been in a regency led by the "
+                , _icon
+                , " "
+                , _what
+                , " estate for at least "
+                , toMessage (plainNum _amt)
+                , " "
+                , toMessage (plural _amt "year" "years")
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
