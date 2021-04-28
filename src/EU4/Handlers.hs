@@ -3324,16 +3324,20 @@ hasGreatProject stmt@[pdx| %_ = @scr |] =
     let
         (mtype, rest) = extractStmt (matchLhsText "type") scr
         (mtier, rest') = extractStmt (matchLhsText "tier") rest
-        isAny = (case mtype of
-            Just [pdx| $_ = $typ |] | T.toLower typ == "any" -> True
-            _ -> False)
+        typ = maybe "" (\s -> case s of
+            [pdx| $_ = $t |] -> T.toLower t
+            _ -> "") mtype
+        (msgNoTier, msgTier) = case typ of
+            "any" -> (const MsgHasAnyGreatProject, const MsgHasAnyGreatProjectTier)
+            "monument" -> (const MsgHasAnyMonument, const MsgHasAnyMonumentTier)
+            _ -> (MsgHasGreatProject, MsgHasGreatProjectTier)
     in
         case (mtype, mtier, rest') of
             (Just [pdx| $_ = $typ |], Just [pdx| $_ = !tier |], []) -> do
                 loc <- getGameL10n typ
-                msgToPP $ (if isAny then MsgHasAnyGreatProjectTier else (MsgHasGreatProjectTier loc)) tier
+                msgToPP $ msgTier loc tier
             (Just [pdx| $_ = $typ |], Nothing, []) -> do
                 loc <- getGameL10n typ
-                msgToPP $ (if isAny then MsgHasAnyGreatProject else (MsgHasGreatProject loc))
+                msgToPP $ msgNoTier loc
             _ -> (trace $ "hasGreatProject: Not handled: " ++ (show stmt)) $ preStatement stmt
 hasGreatProject stmt = (trace $ "hasGreatProject: Not handled: " ++ show stmt) $ preStatement stmt

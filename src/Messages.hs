@@ -1335,6 +1335,8 @@ data ScriptMessage
     | MsgHasGlobalModifierValue {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgHasAnyGreatProject
     | MsgHasAnyGreatProjectTier {scriptMessageAmt :: Double }
+    | MsgHasAnyMonument
+    | MsgHasAnyMonumentTier {scriptMessageAmt :: Double }
     | MsgHasGreatProject {scriptMessageWhat :: Text}
     | MsgHasGreatProjectTier {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
 
@@ -9026,10 +9028,17 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 ]
         MsgHasAnyGreatProject
-            -> "Has any great project "
+            -> "Has any [[Great Project|great project]]"
         MsgHasAnyGreatProjectTier {scriptMessageAmt = _amt}
             -> mconcat
-                [ "Any Great project is at least tier "
+                [ "Any [[Great Project|great project]] is at least tier "
+                , toMessage (plainNum _amt)
+                ]
+        MsgHasAnyMonument
+            -> "Has any [[monument]]"
+        MsgHasAnyMonumentTier {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Any [[monument]] is at least tier "
                 , toMessage (plainNum _amt)
                 ]
         MsgHasGreatProject {scriptMessageWhat = _what}
