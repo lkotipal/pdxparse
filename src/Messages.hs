@@ -1343,6 +1343,9 @@ data ScriptMessage
     | MsgEstateRegencyDuration {scriptMessageAmt :: Double}
     | MsgEstateRegencySpecific {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEstateRegencySpecificDur {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgHasAnyManufactory {scriptMessageYn :: Bool}
+    | MsgHighestValueTradeNode
+    | MsgHasNumVassals {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9083,6 +9086,19 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " "
                 , toMessage (plural _amt "year" "years")
+                ]
+        MsgHasAnyManufactory {scriptMessageYn = _yn}
+            -> mconcat
+                [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
+                , " any [[manufactory]]"
+                ]
+        MsgHighestValueTradeNode
+            -> "Is the highest valued [[trade node]] in the world"
+        MsgHasNumVassals {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , toMessage (plural _amt " vassal" " vassals")
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

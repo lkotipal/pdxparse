@@ -146,6 +146,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)
         ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
         ,("has_river_estuary_trigger", rhsAlwaysYes MsgHasRiverEstuary)
+        ,("highest_value_trade_node", rhsAlwaysYes MsgHighestValueTradeNode)
         ,("increase_heir_adm_effect", rhsAlwaysYes MsgIncreaseHeirAdmEffect)
         ,("increase_heir_dip_effect", rhsAlwaysYes MsgIncreaseHeirDipEffect)
         ,("increase_heir_mil_effect", rhsAlwaysYes MsgIncreaseHeirMilEffect)
@@ -264,6 +265,7 @@ handlersNumeric = Tr.fromList
         ,("trade_company_size"               , numeric MsgTradeCompanySize)
         ,("trade_income_percentage"          , numeric MsgTradeIncomePercentage)
         ,("units_in_province"                , numeric MsgUnitsInProvince)
+        ,("vassal"                           , numeric MsgHasNumVassals)
         -- Special cases
         ,("legitimacy_or_horde_unity"        , numeric MsgLegitimacyOrHordeUnity)
         ]
@@ -1097,6 +1099,7 @@ handlersYesNo = Tr.fromList
         ,("has_female_heir"             , withBool MsgHasFemaleHeir)
         ,("has_foreign_heir"            , withBool MsgHasForeignHeir)
         ,("has_heir"                    , withBool MsgHasHeir)
+        ,("has_manufactory_trigger"     , withBool MsgHasAnyManufactory)
         ,("has_missionary"              , withBool MsgHasMissionary)
         ,("has_owner_accepted_culture"  , withBool MsgHasOwnerAcceptedCulture)
         ,("has_owner_culture"           , withBool MsgHasOwnerCulture)
