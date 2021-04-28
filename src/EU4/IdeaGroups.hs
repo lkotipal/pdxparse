@@ -140,32 +140,41 @@ iconForIdea idea = case iconForIdea' idea of
 fixup :: Doc -> Doc
 fixup = Doc.strictText . T.unlines . map (TE.decodeUtf8
             -- . mungIdeaIcons multiIdeaIcons
+            . addBackgroundParameterToGreenTemplate greenTemplate
             . mungIdeaIcons singleIdeaIcons
             . killIcons
         . TE.encodeUtf8) . T.lines . Doc.doc2text where
     badIcons, singleIdeaIcons, multiIdeaIcons{-, multiIdeaStartIcons -} :: Regex
-    badIcons = RE.makeRegex ("((tradition.|bonus) = |\\* )({{icon[^}]*}}) "::ByteString)
-    singleIdeaIcons = RE.makeRegex ("idea(.)effect = {{icon\\|([a-z ]*)\\|28px}} "::ByteString)
+    badIcons = RE.makeRegex ("((tradition.|bonus)=|\\* )({{icon[^}]*}}) "::ByteString)
+    singleIdeaIcons = RE.makeRegex ("idea(.)effect={{icon\\|([a-z ]*)\\|28px}} "::ByteString)
     multiIdeaIcons = RE.makeRegex ("(:)({{icon[^}]*}}) "::ByteString)
+    greenTemplate = RE.makeRegex ("{{green\\|([^}]*)}}"::ByteString)
 --    multiIdeaStartIcons = RE.makeRegex ("idea(.)effect = {{plainlist\\|\\* {{icon\\|([a-z ]*)\\|28px}} "::ByteString)
     killIcons :: ByteString -> ByteString
     killIcons s = case RE.matchOnceText badIcons s of
         Just (pre, matcharr, post) -> mconcat
             [pre, fst (matcharr ! 1)
-            ,"<!-- ", fst (matcharr ! 3), " -->"
+--            ,"<!-- ", fst (matcharr ! 3), " -->"
             ,post]
         Nothing -> case RE.matchOnceText multiIdeaIcons s of
             Just (pre, matcharr, post) -> mconcat
                 [pre, fst (matcharr ! 1)
-                ,"<!-- ", fst (matcharr ! 2), " -->"
+--                ,"<!-- ", fst (matcharr ! 2), " -->"
                 ,post]
             Nothing -> s
+    addBackgroundParameterToGreenTemplate :: Regex -> ByteString -> ByteString
+    addBackgroundParameterToGreenTemplate re s = case RE.matchOnceText re s of
+        Nothing -> s
+        Just (pre, matcharr, post) -> let val = fst (matcharr ! 1) in mconcat
+            [pre, "{{green|", val, "|b}}", post]
     mungIdeaIcons :: Regex -> ByteString -> ByteString
     mungIdeaIcons re s = case RE.matchOnceText re s of
         Nothing -> s
         Just (pre, matcharr, post) -> let nth = fst (matcharr ! 1) in mconcat
-            [pre, "idea", nth, "icon = ", iconFileB (fst (matcharr ! 2))
-            ,"\n| idea", nth, "effect = ", post]
+            [pre, "idea", nth, "icon=", iconFileB (fst (matcharr ! 2))
+            ,"\n|idea", nth, "effect=", post]
+--             [pre, "idea", nth, "effect=", post
+--             ,"\n|idea", nth, "icon=", iconFileB (fst (matcharr ! 2))]
 
 -- | Present the parsed idea groups as wiki text and write them to the
 -- appropriate files.
@@ -224,16 +233,16 @@ ppIdeaGroup ig = fixup <$> do
                 Just trads -> return . Left . Just . length $ trads
                 Nothing -> return (Left Nothing)
             return . mconcat $
-                ["<section begin=", ig_id, "/>", PP.line
-                ,"{{Idea group", PP.line
-                ,"| name = ", name_loc, PP.line
-                ,"| version = ", Doc.strictText version, PP.line
+                ["<section begin=", name_loc, "/>", PP.line
+                ,"{{idea group", PP.line
+                ,"|version=", Doc.strictText version, PP.line
+                ,"|name2=", name_loc, PP.line
+                ,"|name=", name_loc, PP.line
                 ,case ig_category ig of
                     Nothing -> case trads of
                         Right (trad1, trad2) -> mconcat -- assume groups with no category are country ideas
-                            ["| country = yes", PP.line
-                            ,"| tradition1 = ", trad1, PP.line
-                            ,"| tradition2 = ", trad2, PP.line
+                            ["|tradition1=", trad1, PP.line
+                            ,"|tradition2=", trad2, PP.line
                             ]
                         Left (Just ntrads) -> mconcat
                             ["<!-- Looks like a country idea group, but has non-standard number of traditions ("
@@ -244,28 +253,28 @@ ppIdeaGroup ig = fixup <$> do
                     Just cat -> mconcat
                         ["<!-- Category: ", Doc.pp_string (show cat), " -->", PP.line
                         ,"| events = ", name_loc, " idea group events", PP.line]
-                ,"| idea1 = ", Doc.strictText (idea_name_loc (rawideas !! 0)), PP.line
-                ,iconForIdea (rawideas !! 0)
-                ,"| idea1effect = ", ideas !! 0, PP.line
-                ,"| idea2 = ", Doc.strictText (idea_name_loc (rawideas !! 1)), PP.line
-                ,iconForIdea (rawideas !! 1)
-                ,"| idea2effect = ", ideas !! 1, PP.line
-                ,"| idea3 = ", Doc.strictText (idea_name_loc (rawideas !! 2)), PP.line
-                ,iconForIdea (rawideas !! 2)
-                ,"| idea3effect = ", ideas !! 2, PP.line
-                ,"| idea4 = ", Doc.strictText (idea_name_loc (rawideas !! 3)), PP.line
-                ,iconForIdea (rawideas !! 3)
-                ,"| idea4effect = ", ideas !! 3, PP.line
-                ,"| idea5 = ", Doc.strictText (idea_name_loc (rawideas !! 4)), PP.line
-                ,iconForIdea (rawideas !! 4)
-                ,"| idea5effect = ", ideas !! 4, PP.line
-                ,"| idea6 = ", Doc.strictText (idea_name_loc (rawideas !! 5)), PP.line
-                ,iconForIdea (rawideas !! 5)
-                ,"| idea6effect = ", ideas !! 5, PP.line
-                ,"| idea7 = ", Doc.strictText (idea_name_loc (rawideas !! 6)), PP.line
-                ,iconForIdea (rawideas !! 6)
-                ,"| idea7effect = ", ideas !! 6, PP.line
-                ,"| bonus = ", bonus_pp'd, PP.line
+                ,"|idea1=", Doc.strictText (idea_name_loc (rawideas !! 0)), PP.line
+--                 ,iconForIdea (rawideas !! 0)
+                ,"|idea1effect=", ideas !! 0, PP.line
+                ,"|idea2=", Doc.strictText (idea_name_loc (rawideas !! 1)), PP.line
+--                 ,iconForIdea (rawideas !! 1)
+                ,"|idea2effect=", ideas !! 1, PP.line
+                ,"|idea3=", Doc.strictText (idea_name_loc (rawideas !! 2)), PP.line
+--                 ,iconForIdea (rawideas !! 2)
+                ,"|idea3effect=", ideas !! 2, PP.line
+                ,"|idea4=", Doc.strictText (idea_name_loc (rawideas !! 3)), PP.line
+--                 ,iconForIdea (rawideas !! 3)
+                ,"|idea4effect=", ideas !! 3, PP.line
+                ,"|idea5=", Doc.strictText (idea_name_loc (rawideas !! 4)), PP.line
+--                 ,iconForIdea (rawideas !! 4)
+                ,"|idea5effect=", ideas !! 4, PP.line
+                ,"|idea6=", Doc.strictText (idea_name_loc (rawideas !! 5)), PP.line
+--                 ,iconForIdea (rawideas !! 5)
+                ,"|idea6effect=", ideas !! 5, PP.line
+                ,"|idea7=", Doc.strictText (idea_name_loc (rawideas !! 6)), PP.line
+--                 ,iconForIdea (rawideas !! 6)
+                ,"|idea7effect=", ideas !! 6, PP.line
+                ,"|bonus=", bonus_pp'd, PP.line
                 ] ++ (case mtrigger_pp'd of
                     Just trigger_pp'd ->
                         ["| notes = Can be selected only if the following are true:", PP.line
@@ -273,6 +282,6 @@ ppIdeaGroup ig = fixup <$> do
                         ,PP.line]
                     Nothing -> [])
                 ++ ["}}", PP.line
-                ,"<section end=", ig_id, "/>"]
+                ,"<section end=", name_loc, "/>"]
         (Nothing, _) -> throwError $ "Idea group " <> name <> " has no bonus"
         (_, n) -> throwError $ "Idea group " <> name <> " has non-standard number of ideas (" <> T.pack (show n) <> ")"
