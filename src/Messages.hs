@@ -1346,6 +1346,7 @@ data ScriptMessage
     | MsgHasAnyManufactory {scriptMessageYn :: Bool}
     | MsgHighestValueTradeNode
     | MsgHasNumVassals {scriptMessageAmt :: Double}
+    | MsgYearlyKarmaDecay {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9099,6 +9100,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has at least "
                 , toMessage (plainNum _amt)
                 , toMessage (plural _amt " vassal" " vassals")
+                ]
+        MsgYearlyKarmaDecay {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " Yearly karma decay"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

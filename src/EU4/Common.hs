@@ -716,6 +716,7 @@ handlersNumericIcons = Tr.fromList
         ,("tribal_development_growth"         , numericIcon "tribal development growth" MsgTribalDevelopmentGrowth)
         ,("war_taxes_cost_modifier"           , numericIcon "war taxes cost" MsgWarTaxesCostModifier)
         ,("yearly_patriarch_authority"        , numericIcon "yearly patriarch authority" MsgYearlyPatriarchAuthority)
+        ,("yearly_karma_decay"                , numericIcon "yearly karma decay" MsgYearlyKarmaDecay)
         ]
 
 -- | Handlers for statements pertaining to modifiers
