@@ -305,6 +305,7 @@ data ScriptMessage
     | MsgCreateExplorer {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCreateGeneral {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDevelopment {scriptMessageIcon :: Text, scriptMessageDevelopment :: Double}
+    | MsgDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRulerDIP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDIPTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHordeUnity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1289,6 +1290,7 @@ data ScriptMessage
     | MsgAllRivalCountries
     | MsgAllTradeNodeProvince
     | MsgHomeTradeNode
+    | MsgHomeTradeNodeEffectScope
     | MsgRemoveAdvisor {scriptMessageType :: Text}
     | MsgAcceptVassalizationReasons {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAdmAdvisorCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1348,7 +1350,30 @@ data ScriptMessage
     | MsgHasNumVassals {scriptMessageAmt :: Double}
     | MsgYearlyKarmaDecay {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGuaranteedBy {scriptMessageWhom :: Text}
+    | MsgHasGuaranteed {scriptMessageWhom :: Text}
     | MsgVassalize {scriptMessageWhom :: Text}
+    | MsgMissionCompleted {scriptMessageWhat :: Text}
+    | MsgCompleteMission {scriptMessageWhat :: Text}
+    | MsgHasNumberOfBuildingType {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgFederationSize {scriptMessageAmt :: Double}
+    | MsgGrownByDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumAdmirals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumGenerals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgShareOfStartingIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumNonTribSubjects {scriptMessageAmt :: Double}
+    | MsgChangeGovernmentReformProgress {scriptMessageAmt :: Double}
+    | MsgTradeGoodsProduced {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgProvinceSameReligion {scriptMessageWhom :: Text}
+    | MsgProvinceReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgGrantEstatePrivilege {scriptMessageWhat :: Text}
+    | MsgNumTrustedAllies {scriptMessageAmt :: Double}
+    | MsgIsFederationLeader {scriptMessageYn :: Bool}
+    | MsgAverageUnrest {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHasPillagedCapitalAgainst {scriptMessageWhom :: Text}
+    | MsgIsIroquois {scriptMessageYn :: Bool}
+    | MsgMilitaryStrength { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
+    | MsgNumUnitsInProvince {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgNativeSize {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -2599,6 +2624,12 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Development is at least "
                 , toMessage (roundNum _development)
+                ]
+        MsgDevelopmentAs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ _icon
+                , " Development is at least that of "
+                , _what
                 ]
         MsgRulerDIP {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -8733,6 +8764,8 @@ instance RenderMessage Script ScriptMessage where
             -> "All provinces in this trade node:"
         MsgHomeTradeNode
             -> "Home [[trade node]]:"
+        MsgHomeTradeNodeEffectScope
+            -> "Home [[trade node]] of the country:"
         MsgRemoveAdvisor {scriptMessageType = _type}
             -> mconcat
                 [ _type
@@ -9115,12 +9148,164 @@ instance RenderMessage Script ScriptMessage where
                 [ "Guaranteed by "
                 , _whom
                 ]
+        MsgHasGuaranteed {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has guaranteed "
+                , _whom
+                ]
         MsgVassalize {scriptMessageWhom = _whom}
             -> mconcat
                 [ "Make "
                 , _whom
                 , " a vassal"
                 ]
+        MsgMissionCompleted {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has completed the mission "
+                , toMessage (iquotes _what)
+                ]
+        MsgCompleteMission {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Complete the mission "
+                , toMessage (iquotes _what)
+                ]
+        MsgHasNumberOfBuildingType {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , toMessage (plural _amt " province" " provinces")
+                , " with a "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgFederationSize {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The [[federation]] has at least "
+                , toMessage (plainNum _amt)
+                , toMessage (plural _amt " member" " members")
+                ]
+        MsgGrownByDevelopment {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Total develoment has increased by at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgNumAdmirals {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (roundNum _amt)
+                , plural _amt " admiral" " admirals"
+                ]
+        MsgNumGenerals {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (roundNum _amt)
+                , plural _amt " general" " generals"
+                ]
+        MsgShareOfStartingIncome {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Country's "
+                , _icon
+                , " monthly income has increased to "
+                , toMessage (reducedNum plainPc _amt)
+                , " of the starting monthly income"
+                ]
+        MsgNumNonTribSubjects { scriptMessageAmt = _amt }
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " non-tributary "
+                , plural _amt "subject" "subjects"
+                ]
+        MsgChangeGovernmentReformProgress {scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , toMessage (colourNum True _amt)
+                , " government reform progress"
+                ]
+        MsgTradeGoodsProduced {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Produces at least "
+                , toMessage (plainNum _amt)
+                , " "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgProvinceSameReligion {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Province religion is same as "
+                , _whom
+                ]
+        MsgProvinceReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Province religion is "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgGrantEstatePrivilege {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Grant the estate privilege "
+                , toMessage (iquotes _what)
+                ]
+        MsgNumTrustedAllies {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , plural _amt " ally" " allies"
+                , " with 100 [[trust]]"
+                ]
+        MsgIsFederationLeader {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " the leader of a [[federation]]"
+                ]
+        MsgAverageUnrest {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Average "
+                , _icon
+                , " unrest in provinces is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgHasPillagedCapitalAgainst {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has pillaged the capital of "
+                , _whom
+                ]
+        MsgIsIroquois {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " an Iroquois nation" -- TODO: Probably link somewhere on the wiki as this is a scripted trigger
+                ]
+        MsgMilitaryStrength {scriptMessageWho = _who, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The country's military strength is at least "
+                , toMessage (plainNum _amt)
+                , " that of "
+                , _who
+                ]
+        MsgNumUnitsInProvince {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _whom
+                , " has at least "
+                , toMessage (plainNum _amt)
+                , " units in the province"
+                ]
+        MsgNativeSize {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The size of natives in the province is at least "
+                , toMessage (plainNum _amt)
+                ]
+
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

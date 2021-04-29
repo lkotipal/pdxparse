@@ -230,6 +230,7 @@ handlersNumeric = Tr.fromList
         ,("add_nationalism"                  , numeric MsgGainYearsOfSeparatism)
         ,("army_size_percentage"             , numeric MsgArmySizePc) -- Inti?
         ,("authority"                        , numeric MsgAuth) -- Inti?
+        ,("change_government_reform_progress", numeric MsgChangeGovernmentReformProgress)
         ,("change_siege"                     , numeric MsgGainSiegeProgress)
         ,("colonysize"                       , numeric MsgColonySettlers)
         ,("convert_heir_to_general"          , numeric (MsgConvertHeirGeneral False))
@@ -240,17 +241,20 @@ handlersNumeric = Tr.fromList
         ,("curia_treasury_size"              , numeric MsgCuriaTreasurySize)
         ,("drill_gain_modifier"              , numeric MsgDrillGainMod)
         ,("establish_order_cost"             , numeric MsgEstablishOrderCost)
+        ,("federation_size"                  , numeric MsgFederationSize)
         ,("had_recent_war"                   , numeric MsgWasAtWar)
         ,("heir_age"                         , numeric MsgHeirAge)
         ,("hre_size"                         , numeric (\s -> if s == 1 then MsgHREExists else MsgHRESize s))
         ,("is_year"                          , numeric MsgYearIs)
         ,("legitimacy_equivalent"            , numeric MsgLegitimacyEquivalent)
         ,("monarch_lifespan"                 , numeric MsgMonarchLifespan)
+        ,("native_size"                      , numeric MsgNativeSize)
         ,("num_free_building_slots"          , numeric MsgNumFreeBuildingSlots)
         ,("num_of_colonial_subjects"         , numeric MsgNumColonialSubjects)
         ,("num_of_colonies"                  , numeric MsgNumColonies)
         ,("num_of_loans"                     , numeric MsgNumLoans)
         ,("num_of_mercenaries"               , numeric MsgNumMercs)
+        ,("num_of_non_tributary_subjects"    , numeric MsgNumNonTribSubjects)
         ,("num_of_owned_and_controlled_institutions" , numeric MsgNumOwnInstitutionProvinces)
         ,("num_of_ports"                     , numeric MsgNumPorts) -- same as num_of_total_ports?
         ,("num_of_rebel_armies"              , numeric MsgNumRebelArmies)
@@ -258,6 +262,7 @@ handlersNumeric = Tr.fromList
         ,("num_of_subjects"                  , numeric MsgNumSubjects)
         ,("num_of_total_ports"               , numeric MsgNumPorts) -- same as num_of_ports?
         ,("num_of_trade_embargos"            , numeric MsgNumEmbargoes)
+        ,("num_of_trusted_allies"            , numeric MsgNumTrustedAllies)
         ,("percentage_backing_issue"         , numeric MsgPctBackingParliamentIssue)
         ,("revolt_percentage"                , numeric MsgRevoltPercentage)
         ,("ruler_age"                        , numeric MsgRulerAge)
@@ -327,6 +332,7 @@ handlersNumericIcons = Tr.fromList
         ,("army_reformer"            , numericIconLoc "army reformer" "army_reformer" MsgHasAdvisorLevel)
         ,("army_tradition"           , numericIconBonus "army tradition" MsgArmyTradition MsgYearlyArmyTradition)
         ,("artist"                   , numericIconLoc "artist" "artist" MsgHasAdvisorLevel)
+        ,("average_unrest"           , numericIcon "unrest" MsgAverageUnrest)
         ,("base_manpower"            , numericIcon "manpower" MsgBaseManpower)
         ,("base_production"          , numericIcon "base production" MsgBaseProduction)
         ,("base_tax"                 , numericIcon "base tax" MsgBaseTax)
@@ -349,7 +355,6 @@ handlersNumericIcons = Tr.fromList
         ,("corruption"               , numericIcon "corruption" MsgCorruption)
         ,("create_colony"            , numericIcon "global settler increase" MsgCreateColony)
         ,("devastation"              , numericIcon "devastation" MsgDevastation)
-        ,("development"              , numericIcon "development" MsgDevelopment)
         ,("development_cost"         , numericIcon "development cost" MsgDevelCost)
         ,("dip"                      , numericIcon "dip" MsgRulerDIP)
         ,("dip_power"                , numericIcon "adm" MsgHasDIP)
@@ -364,6 +369,7 @@ handlersNumericIcons = Tr.fromList
         ,("global_prov_trade_power_modifier", numericIcon "provincial trade power modifier" MsgProvTradePowerMod)
         ,("global_tax_income"        , numericIcon "tax income" MsgGlobalTaxIncome)
         ,("gold_income_percentage"   , numericIcon "gold" MsgGoldIncomePercentage)
+        ,("grown_by_development"     , numericIcon "development" MsgGrownByDevelopment)
         ,("heavy_ship_cost"          , numericIcon "heavy ship cost" MsgHeavyShipCost)
         ,("heir_chance"              , numericIcon "chance of new heir" MsgHeirChance)
         ,("heir_adm"                 , numericIcon "adm" MsgHeirADM)
@@ -413,9 +419,11 @@ handlersNumericIcons = Tr.fromList
         ,("navy_reformer"            , numericIconLoc "naval reformer"  "naval_reformer"MsgHasAdvisorLevel) -- both are used
         ,("navy_size_percentage"     , numericIcon "naval force limit" MsgNavyPercentage)
         ,("num_accepted_cultures"    , numericIcon "max promoted cultures" MsgMaxPromotedCultures)
+        ,("num_of_admirals"          , numericIcon "admiral" MsgNumAdmirals)
         ,("num_of_allies"            , numericIcon "alliance" MsgNumAllies)
         ,("num_of_cardinals"         , numericIcon "cardinal" MsgNumCardinals)
         ,("num_of_colonists"         , numericIcon "colonists" MsgNumColonists)
+        ,("num_of_generals"          , numericIcon "general" MsgNumGenerals)
         ,("num_of_merchants"         , numericIcon "merchant" MsgNumMerchants)
         ,("num_of_missionaries"      , numericIcon "missionary" MsgNumMissionaries)
         ,("num_of_royal_marriages"   , numericIcon "royal marriage" MsgNumRoyalMarriages)
@@ -429,6 +437,7 @@ handlersNumericIcons = Tr.fromList
         ,("raze_power_gain"          , numericIcon "razing power gain" MsgRazingPowerGain)
         ,("recover_navy_morale_speed", numericIcon "recover navy morale speed" MsgRecoverNavyMoraleSpeed)
         ,("recruitmaster"            , numericIconLoc "recruitmaster" "recruitmaster" MsgHasAdvisorLevel)
+        ,("share_of_starting_income" , numericIcon "income" MsgShareOfStartingIncome)
         ,("province_trade_power"     , numericIcon "trade power" MsgProvinceTradePower)
         -- the number for the following is negated compared to the displayed figure
         ,("reduced_liberty_desire"   , numericIcon "liberty desire in subjects" MsgSubjectLibertyDesire)
@@ -809,6 +818,7 @@ handlersCompound = Tr.fromList
         ,("every_subject_country"   , scope EU4Country   . compoundMessage MsgEverySubject)
         ,("every_trade_node_member_country" , scope EU4Country . compoundMessage MsgEveryTradeNodeMemberCountry)
         ,("home_trade_node"         , scope EU4TradeNode . compoundMessage MsgHomeTradeNode)
+        ,("home_trade_node_effect_scope" , scope EU4TradeNode . compoundMessage MsgHomeTradeNodeEffectScope)
         ,("hidden_effect"           ,                      compoundMessage MsgHiddenEffect)
         ,("if"                      ,                      compoundMessage MsgIf) -- always needs editing
         ,("limit"                   , setIsInEffect False . compoundMessage MsgLimit) -- always needs editing
@@ -841,6 +851,8 @@ handlersCompound = Tr.fromList
         ,("while"                   , scope EU4Country   . compoundMessage MsgWhile) -- always needs editing
         ]
 
+withLocAtomTitle msg = withLocAtom' msg (\t -> t <> "_title")
+
 -- | Handlers for simple statements where RHS is a localizable atom
 handlersLocRhs :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersLocRhs = Tr.fromList
@@ -850,6 +862,7 @@ handlersLocRhs = Tr.fromList
         ,("change_government"     , withLocAtom MsgChangeGovernment)
         ,("change_province_name"  , withLocAtom MsgChangeProvinceName) -- will usually fail localization
         ,("colonial_region"       , withLocAtom MsgColonialRegion)
+        ,("complete_mission"      , withLocAtomTitle MsgCompleteMission)
         ,("council_position"      , withLocAtom MsgCouncilPosition)
         ,("current_debate"        , withLocAtom MsgCurrentDebate)
         ,("end_disaster"          , withLocAtom MsgDisasterEnds)
@@ -866,12 +879,14 @@ handlersLocRhs = Tr.fromList
         ,("has_terrain"           , withLocAtom MsgHasTerrain)
         ,("has_winter"            , withLocAtom MsgHasWinter)
         ,("in_league"             , withLocAtom MsgInLeague)
-        ,("is_subject_of_type"    , withLocAtom' MsgIsSubjectOfType (\t -> t <> "_title"))
+        ,("is_subject_of_type"    , withLocAtomTitle MsgIsSubjectOfType)
         ,("kill_advisor"          , withLocAtom MsgAdvisorDies)
+        ,("mission_completed"     , withLocAtomTitle MsgMissionCompleted)
         ,("region"                , withLocAtom MsgRegionIs)
         ,("remove_advisor"        , withLocAtom MsgLoseAdvisor)
         ,("remove_advisor_by_category" , withLocAtom MsgRemoveAdvisor)
         ,("rename_capital"        , withLocAtom MsgRenameCapital) -- will usually fail localization
+        ,("set_estate_privilege"  , withLocAtom MsgGrantEstatePrivilege)
         ,("superregion"           , withLocAtom MsgSuperRegionIs)
         ]
 
@@ -911,6 +926,7 @@ handlersNumericOrFlag :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericOrFlag = Tr.fromList
         [("adm_tech"             , withTagOrNumber "adm tech" MsgADMTech MsgADMTechAs)
         ,("army_size"            , withTagOrNumber "" MsgArmySize MsgArmySizeMatches) -- FIXME: Don't really need icon
+        ,("development"          , withTagOrNumber "development" MsgDevelopment MsgDevelopmentAs) -- Can't really be a tag, but it can be "CAPITAL"
         ,("navy_size"            , withTagOrNumber "" MsgNavySize MsgNavySizeMatches) -- FIXME: Don't really need icon
         ,("num_of_light_ship"    , withTagOrNumber "light ship" MsgNumLightShips MsgNumLightShipsMatches)
         ,("num_of_heavy_ship"    , withTagOrNumber "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
@@ -1011,9 +1027,11 @@ handlersSimpleFlag = Tr.fromList
         ,("free_vassal"             , withFlag MsgFreeVassal)
         ,("galley"                  , withFlag MsgGalley)
         ,("guaranteed_by"           , withFlag MsgGuaranteedBy)
+        ,("has_guaranteed"          , withFlag MsgHasGuaranteed)
         ,("has_merchant"            , withFlag MsgHasMerchant)
         ,("heavy_ship"              , withFlag MsgHeavyShip)
         ,("inherit"                 , withFlag MsgInherit)
+        ,("has_pillaged_capital_against" , withFlag MsgHasPillagedCapitalAgainst)
         ,("is_enemy"                , scope EU4Country . withFlag MsgIsEnemy)
         ,("is_in_trade_league_with" , withFlag MsgIsInTradeLeagueWith)
         ,("is_league_enemy"         , withFlag MsgIsLeagueEnemy)
@@ -1068,6 +1086,7 @@ handlersIconFlagOrPronoun = Tr.fromList
         ,("is_core"          , tagOrProvince MsgIsCoreOf MsgHasCoreOn (Just EU4Country))
         ,("is_claim"         , tagOrProvince MsgHasClaim MsgHasClaimOn (Just EU4Country))
         ,("primary_culture"  , locAtomTagOrProvince (const MsgPrimaryCultureIs) MsgPrimaryCultureIsAs)
+        ,("province_religion" , locAtomTagOrProvince MsgProvinceReligion MsgProvinceSameReligion)
         ,("religion"         , locAtomTagOrProvince MsgReligion MsgSameReligion)
         ,("religion_group"   , locAtomTagOrProvince MsgReligionGroup MsgSameReligionGroup)
         ,("ruler_religion"   , iconOrFlag MsgRulerReligionIs MsgRulerReligionIsSame Nothing)
@@ -1141,12 +1160,14 @@ handlersYesNo = Tr.fromList
         ,("is_free_or_tributary_trigger", withBool MsgIsFreeOrTributaryTrigger)
         ,("is_elector"                  , withBool MsgIsElector)
         ,("is_emperor"                  , withBool MsgIsEmperor)
+        ,("is_federation_leader"        , withBool MsgIsFederationLeader)
         ,("is_female"                   , withBool MsgIsFemale)
         ,("is_in_deficit"               , withBool MsgIsInDeficit)
         ,("is_great_power"              , withBool MsgIsGreatPower)
         ,("is_heir_leader"              , withBool MsgIsHeirLeader)
         ,("is_in_capital_area"          , withBool MsgIsInCapitalArea)
         ,("is_in_league_war"            , withBool MsgIsInLeagueWar)
+        ,("is_iroquois"                 , withBool MsgIsIroquois)
         ,("is_island"                   , withBool MsgIsIsland)
         ,("is_league_leader"            , withBool MsgIsLeagueLeader)
         ,("is_lesser_in_union"          , withBool MsgIsLesserInUnion)
@@ -1282,10 +1303,13 @@ handlersTextValue = Tr.fromList
         ,("has_spy_network_in"          , textValue "who" "value" MsgHasSpyNetworkIn MsgHasSpyNetworkIn flagTextMaybe)
         ,("incident_variable_value"     , textValue "incident" "value" MsgIncidentVariableValue MsgIncidentVariableValue tryLocAndIconTitle)
         ,("institution_difference"      , textValue "who" "value" MsgInstitutionDifference MsgInstitutionDifference flagTextMaybe)
+        ,("military_strength"           , textValue "who" "value" MsgMilitaryStrength MsgMilitaryStrength flagTextMaybe)
         ,("num_of_estate_privileges"    , textValue "estate" "value" MsgNumEstatePrivileges MsgNumEstatePrivileges tryLocAndIcon)
         ,("num_of_religion"             , textValue "religion" "value" MsgNumOfReligion MsgNumOfReligion tryLocAndIcon)
+        ,("num_of_units_in_province"    , textValue "who" "amount" MsgNumUnitsInProvince MsgNumUnitsInProvince flagTextMaybe) -- TODO: Support type
         ,("num_investments_in_trade_company_region" , textValue "investment" "value" MsgNumInvestmentsInTradeCompanyReigion MsgNumInvestmentsInTradeCompanyReigion tryLocAndIconTC)
         ,("naval_strength"              , textValue "who" "value" MsgNavalStrength MsgNavalStrength flagTextMaybe)
+        ,("trade_goods_produced_amount" , textValue "trade_goods" "amount" MsgTradeGoodsProduced MsgTradeGoodsProduced tryLocAndIcon)
         ,("trade_share"                 , textValue "country" "share" MsgTradeShare MsgTradeShare flagTextMaybe)
         ,("trust"                       , textValue "who" "value" MsgTrust MsgTrust flagTextMaybe)
         ]
@@ -1433,8 +1457,23 @@ handlersMisc = Tr.fromList
         ,("add_ruler_personality_ancestor"   , personalityAncestor (MsgAddRulerPersonality True))
         ,("consort_has_personality_ancestor" , personalityAncestor (MsgConsortHasPersonality True))
         ,("heir_has_personality_ancestor"    , personalityAncestor (MsgHeirHasPersonality True))
-        ,("remove_ruler_personality_ancestor" , personalityAncestor (MsgRemoveRulerPersonality True))
-        ,("ruler_has_personality_ancestor"    , personalityAncestor (MsgRulerHasPersonality True))
+        ,("remove_ruler_personality_ancestor", personalityAncestor (MsgRemoveRulerPersonality True))
+        ,("ruler_has_personality_ancestor"   , personalityAncestor (MsgRulerHasPersonality True))
+        -- Conditions that require a certain number of buildings
+        ,("cathedral"                        , buildingCount)
+        ,("farm_estate"                      , buildingCount)
+        ,("fort_15th"                        , buildingCount)
+        ,("furnace"                          , buildingCount)
+        ,("marketplace"                      , buildingCount)
+        ,("native_ceremonial_fire_pit"       , buildingCount)
+        ,("native_longhouse"                 , buildingCount)
+        ,("native_sweat_lodge"               , buildingCount)
+        ,("shipyard"                         , buildingCount)
+        ,("stock_exchange"                   , buildingCount)
+        ,("temple"                           , buildingCount)
+        ,("trade_depot"                      , buildingCount)
+        ,("university"                       , buildingCount)
+        ,("workshop"                         , buildingCount)
         ]
 
 -- | Handlers for ignored statements

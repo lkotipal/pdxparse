@@ -31,6 +31,7 @@ module EU4.Handlers (
     ,   numericOrTag
     ,   numericOrTagIcon
     ,   numericIconChange 
+    ,   buildingCount
     ,   withFlag 
     ,   withBool
     ,   withFlagOrBool
@@ -1247,6 +1248,14 @@ numericIconChange negicon posicon negmsg posmsg [pdx| %_ = !amt |]
         then msgToPP $ negmsg (iconText negicon) amt
         else msgToPP $ posmsg (iconText posicon) amt
 numericIconChange _ _ _ _ stmt = plainMsg $ pre_statement' stmt
+
+
+-- | Handler for e.g. temple = X
+buildingCount :: (EU4Info g, Monad m) => StatementHandler g m
+buildingCount [pdx| $building = !count |] = do
+    what <- getGameL10n ("building_" <> building)
+    msgToPP $ MsgHasNumberOfBuildingType (iconText building) what count
+buildingCount stmt = preStatement stmt
 
 ----------------------
 -- Text/value pairs --
