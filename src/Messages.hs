@@ -1347,6 +1347,8 @@ data ScriptMessage
     | MsgHighestValueTradeNode
     | MsgHasNumVassals {scriptMessageAmt :: Double}
     | MsgYearlyKarmaDecay {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGuaranteedBy {scriptMessageWhom :: Text}
+    | MsgVassalize {scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9107,6 +9109,17 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Yearly karma decay"
+                ]
+        MsgGuaranteedBy {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Guaranteed by "
+                , _whom
+                ]
+        MsgVassalize {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Make "
+                , _whom
+                , " a vassal"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
