@@ -693,6 +693,8 @@ scriptIconTable = HM.fromList
     ,("spy_ideas", "espionage")
     ,("tengri_pagan_reformed", "tengri")
     ,("trade_ideas", "trade")
+    -- religion
+    ,("dreamtime", "alcheringa")
     -- cults
     ,("buddhism_cult", "buddhadharma")
     ,("central_african_ancestor_cult", "mlira")

@@ -1066,6 +1066,7 @@ data ScriptMessage
     | MsgNavalLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCountryOrNonSovereignSubjectHolds {scriptMessageWhom :: Text}
+    | MsgCountryOrSubjectHolds {scriptMessageWhom :: Text}
     | MsgAdmiralCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAllowedMarineFraction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAllowedNumOfBuildings {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -7383,6 +7384,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "Province is owned by "
                 , _whom
                 , " or its non-tributary subjects"
+                ]
+        MsgCountryOrSubjectHolds {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Province is owned by "
+                , _whom
+                , " or its subjects"
                 ]
         MsgAdmiralCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

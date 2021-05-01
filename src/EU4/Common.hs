@@ -1021,6 +1021,7 @@ handlersSimpleFlag = Tr.fromList
         ,("change_tag"              , withFlag MsgChangeTag)
         ,("controlled_by"           , withFlag MsgControlledBy)
         ,("country_or_non_sovereign_subject_holds" , withFlag MsgCountryOrNonSovereignSubjectHolds)
+        ,("country_or_subject_holds" , withFlag MsgCountryOrSubjectHolds)
         ,("create_alliance"         , withFlag MsgCreateAlliance)
         ,("defensive_war_with"      , withFlag MsgDefensiveWarAgainst)
         ,("discover_country"        , withFlag MsgDiscoverCountry)
