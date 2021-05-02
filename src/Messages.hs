@@ -1381,6 +1381,8 @@ data ScriptMessage
     | MsgNativeSize {scriptMessageAmt :: Double}
     | MsgNumTributaryStates {scriptMessageAmt :: Double}
     | MsgIsThreat {scriptMessageWhom :: Text}
+    | MsgGrantIndependence
+    | MsgIsVassal {scriptMessageYn :: Bool}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9355,6 +9357,14 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is threatened by "
                 , _whom
+                ]
+        MsgGrantIndependence
+            -> "The country becomes independent"
+        MsgIsVassal {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " a vassal"
                 ]
 
 
