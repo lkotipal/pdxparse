@@ -39,6 +39,7 @@ module EU4.Handlers (
     ,   numericIcon
     ,   numericIconLoc
     ,   numericIconBonus
+    ,   numericIconBonusAllowTag
     ,   boolIconLoc
     ,   tryLoc
     ,   tryLocAndIcon
@@ -1190,8 +1191,8 @@ withTagOrNumber :: (EU4Info g, Monad m) =>
         -> (Text -> Double -> ScriptMessage)
         -> (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
-withTagOrNumber iconkey numMsg _ scr@[pdx| %_ = %num |]
-    | IntRhs _ <- num = numericIcon iconkey numMsg scr
+withTagOrNumber iconkey numMsg _ [pdx| %_ = !num |]
+    = msgToPP $ numMsg (iconText iconkey) num
 withTagOrNumber iconkey _ tagMsg scr@[pdx| %_ = $_ |]
     = withFlagAndIcon iconkey tagMsg (Just EU4Country) scr
 withTagOrNumber  _ _ _ stmt = plainMsg $ pre_statement' stmt
@@ -1221,8 +1222,8 @@ numericIconLoc _ _ _ stmt = plainMsg $ pre_statement' stmt
 -- differs depending on what scope it's in.
 numericIconBonus :: (EU4Info g, Monad m) =>
     Text
-        -> (Text -> Double -> ScriptMessage) -- ^ Message for bonus scope
         -> (Text -> Double -> ScriptMessage) -- ^ Message for country / other scope
+        -> (Text -> Double -> ScriptMessage) -- ^ Message for bonus scope
         -> StatementHandler g m
 numericIconBonus the_icon plainmsg yearlymsg [pdx| %_ = !amt |]
     = do
@@ -1236,6 +1237,21 @@ numericIconBonus the_icon plainmsg yearlymsg [pdx| %_ = !amt |]
                 _ -> -- act as though it's country for all others
                     msgToPP $ plainmsg icont amt
 numericIconBonus _ _ _ stmt = plainMsg $ pre_statement' stmt
+
+
+-- | Like numericIconBonus but allow rhs to be a tag/scope (used for e.g. "prestige")
+numericIconBonusAllowTag :: (EU4Info g, Monad m) =>
+    Text
+        -> (Text -> Double -> ScriptMessage) -- ^ Message for country / other scope
+        -> (Text -> Text -> ScriptMessage)   -- ^ Message for tag/scope
+        -> (Text -> Double -> ScriptMessage) -- ^ Message for bonus scope
+        -> StatementHandler g m
+numericIconBonusAllowTag the_icon plainmsg plainAsMsg yearlymsg stmt@[pdx| %_ = $what |]
+    = do
+        whatLoc <- flagText (Just EU4Country) what
+        msgToPP $ plainAsMsg (iconText the_icon) whatLoc
+numericIconBonusAllowTag the_icon plainmsg _ yearlymsg stmt
+    = numericIconBonus the_icon plainmsg yearlymsg stmt
 
 -- | Handler for values that use a different message and icon depending on
 -- whether the value is positive or negative.

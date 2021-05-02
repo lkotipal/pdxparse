@@ -269,6 +269,7 @@ handlersNumeric = Tr.fromList
         ,("tech_difference"                  , numeric MsgTechDifference)
         ,("trade_company_size"               , numeric MsgTradeCompanySize)
         ,("trade_income_percentage"          , numeric MsgTradeIncomePercentage)
+        ,("tributary_state"                  , numeric MsgNumTributaryStates)
         ,("units_in_province"                , numeric MsgUnitsInProvince)
         ,("vassal"                           , numeric MsgHasNumVassals)
         -- Special cases
@@ -382,7 +383,7 @@ handlersNumericIcons = Tr.fromList
         ,("inquisitor"               , numericIconLoc "inquisitor" "inquisitor" MsgHasAdvisorLevel)
         ,("is_defender_of_faith_of_tier" , numericIcon "dotf" MsgIsDotfTier)
         ,("karma"                    , numericIcon "high karma" MsgKarma)
-        ,("legitimacy"               , numericIconBonus "legitimacy" MsgLegitimacy MsgYearlyLegitimacy)
+        ,("legitimacy"               , numericIconBonusAllowTag "legitimacy" MsgLegitimacy MsgLegitimacyAs MsgYearlyLegitimacy)
         ,("liberty_desire"           , numericIcon "liberty desire" MsgLibertyDesire)
         ,("local_autonomy"           , numericIconBonus "local autonomy" MsgLocalAutonomy MsgMonthlylAutonomyChange)
         ,("local_build_cost"         , numericIcon "local construction cost" MsgLocalConstructionCost)
@@ -424,6 +425,7 @@ handlersNumericIcons = Tr.fromList
         ,("num_of_cardinals"         , numericIcon "cardinal" MsgNumCardinals)
         ,("num_of_colonists"         , numericIcon "colonists" MsgNumColonists)
         ,("num_of_generals"          , numericIcon "general" MsgNumGenerals)
+        ,("num_of_generals_with_traits" , numericIcon "general" MsgNumGeneralsWithTrait)
         ,("num_of_merchants"         , numericIcon "merchant" MsgNumMerchants)
         ,("num_of_missionaries"      , numericIcon "missionary" MsgNumMissionaries)
         ,("num_of_royal_marriages"   , numericIcon "royal marriage" MsgNumRoyalMarriages)
@@ -532,7 +534,6 @@ handlersNumericIcons = Tr.fromList
         ,("inflation_reduction"               , numericIcon "inflation reduction" MsgYearlyInflationReduction)
         ,("interest"                          , numericIcon "interest" MsgInterestPerAnnum)
         ,("land_maintenance_modifier"         , numericIcon "land maintenance" MsgLandMaintenanceMod)
-        ,("land_morale"                       , numericIcon "morale of armies" MsgMoraleOfArmies)
         ,("land_attrition"                    , numericIcon "land attrition" MsgLandAttrition)
         ,("land_forcelimit_modifier"          , numericIcon "land forcelimit modifier" MsgLandForcelimitMod)
         ,("leader_land_fire"                  , numericIcon "land leader fire" MsgGainLandLeaderFire)
@@ -560,7 +561,7 @@ handlersNumericIcons = Tr.fromList
         ,("navy_tradition_decay"              , numericIcon "navy tradition decay" MsgNavyTraditionDecay)
         ,("papal_influence"                   , numericIconBonus "papal influence" MsgPapalInfluence MsgYearlyPapalInfluence)
         ,("possible_mercenaries"              , numericIcon "available mercenaries" MsgAvailableMercs)
-        ,("prestige"                          , numericIconBonus "prestige" MsgPrestige MsgYearlyPrestige)
+        ,("prestige"                          , numericIconBonusAllowTag "prestige" MsgPrestige MsgPrestigeAs MsgYearlyPrestige)
         ,("prestige_decay"                    , numericIcon "prestige decay" MsgPrestigeDecay)
         ,("prestige_from_land"                , numericIcon "prestige from land" MsgPrestigeFromLand)
         ,("prestige_from_naval"               , numericIcon "prestige from naval" MsgPrestigeFromNaval)
@@ -927,6 +928,7 @@ handlersNumericOrFlag = Tr.fromList
         [("adm_tech"             , withTagOrNumber "adm tech" MsgADMTech MsgADMTechAs)
         ,("army_size"            , withTagOrNumber "" MsgArmySize MsgArmySizeMatches) -- FIXME: Don't really need icon
         ,("development"          , withTagOrNumber "development" MsgDevelopment MsgDevelopmentAs) -- Can't really be a tag, but it can be "CAPITAL"
+        ,("land_morale"          , withTagOrNumber "morale of armies" MsgMoraleOfArmies MsgMoraleOfArmiesAs)
         ,("navy_size"            , withTagOrNumber "" MsgNavySize MsgNavySizeMatches) -- FIXME: Don't really need icon
         ,("num_of_light_ship"    , withTagOrNumber "light ship" MsgNumLightShips MsgNumLightShipsMatches)
         ,("num_of_heavy_ship"    , withTagOrNumber "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
@@ -1042,6 +1044,7 @@ handlersSimpleFlag = Tr.fromList
         ,("is_rival"                , withFlag MsgIsRival)
         ,("is_strongest_trade_power", withFlag MsgIsStrongestTradePower)
         ,("is_subject_of"           , withFlag MsgIsSubjectOf)
+        ,("is_threat"               , withFlag MsgIsThreat)
         ,("junior_union_with"       , withFlag MsgJuniorUnionWith)
         ,("light_ship"              , withFlag MsgLightShip)
         ,("marriage_with"           , withFlag MsgRoyalMarriageWith)

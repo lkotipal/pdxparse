@@ -312,6 +312,7 @@ data ScriptMessage
     | MsgYearlyHordeUnity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgKarma {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLegitimacy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLegitimacyAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgLegitimacyEquivalent {scriptMessageAmt :: Double}
     | MsgYearlyLegitimacy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRulerMIL {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -614,6 +615,7 @@ data ScriptMessage
     | MsgMonthlyFervor {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgChurchPowerModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgPrestigeAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgYearlyPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMissionaryStrengthVsHeretics {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCultureConvCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -741,6 +743,7 @@ data ScriptMessage
     | MsgArtilleryCombatAbility {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgShipDurability {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMoraleOfArmies {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgMoraleOfArmiesAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgMoraleOfNavies {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavalAttrition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDiscipline {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1360,6 +1363,7 @@ data ScriptMessage
     | MsgGrownByDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumAdmirals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumGenerals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumGeneralsWithTrait {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgShareOfStartingIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumNonTribSubjects {scriptMessageAmt :: Double}
     | MsgChangeGovernmentReformProgress {scriptMessageAmt :: Double}
@@ -1375,6 +1379,8 @@ data ScriptMessage
     | MsgMilitaryStrength { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgNumUnitsInProvince {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgNativeSize {scriptMessageAmt :: Double}
+    | MsgNumTributaryStates {scriptMessageAmt :: Double}
+    | MsgIsThreat {scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -2669,6 +2675,12 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Legitimacy is at least "
                 , toMessage (roundNum _amt)
+                ]
+        MsgLegitimacyAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _icon
+                , " Legitimacy is at least that of "
+                , _whom
                 ]
         MsgLegitimacyEquivalent {scriptMessageAmt = _amt}
             -> mconcat
@@ -4663,6 +4675,12 @@ instance RenderMessage Script ScriptMessage where
                 , " Prestige is at least "
                 , toMessage (colourNumSign True _amt)
                 ]
+        MsgPrestigeAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _icon
+                , " Prestige is at least that of "
+                , _whom
+                ]
         MsgYearlyPrestige {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -5429,6 +5447,12 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Morale of armies"
+                ]
+        MsgMoraleOfArmiesAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _icon
+                , " Morale of armies is at least that of "
+                , _whom
                 ]
         MsgMoraleOfNavies {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -9214,6 +9238,15 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (roundNum _amt)
                 , plural _amt " general" " generals"
                 ]
+        MsgNumGeneralsWithTrait {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (roundNum _amt)
+                , plural _amt " general" " generals"
+                , " with one or more trait"
+                ]
         MsgShareOfStartingIncome {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Country's "
@@ -9311,6 +9344,17 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "The size of natives in the province is at least "
                 , toMessage (plainNum _amt)
+                ]
+        MsgNumTributaryStates {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " tributary states"
+                ]
+        MsgIsThreat {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is threatened by "
+                , _whom
                 ]
 
 
