@@ -225,7 +225,7 @@ pp_opinion_modifer mod = do
 
         yearlyDecay :: Maybe Double -> Maybe Double -> [Doc]
         yearlyDecay (Just op) (Just decay) = [mconcat [
-                colourNumSign True (if (op > 0 && decay > 0) || (op < 0 && decay < 0) then -decay else decay)
+                colourNumSign True (if op < 0 then decay else -decay)
                 , Doc.strictText " Yearly decay"
             ]]
         yearlyDecay _ _ = []

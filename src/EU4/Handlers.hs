@@ -3548,6 +3548,9 @@ hasGreatProject stmt@[pdx| %_ = @scr |] =
                 loc <- getGameL10n typ
                 msgToPP $ msgNoTier loc
             _ -> (trace $ "hasGreatProject: Not handled: " ++ (show stmt)) $ preStatement stmt
+hasGreatProject [pdx| %_ = $what |] = do -- Pre 1.31 great project
+    whatLoc <- getGameL10n what
+    msgToPP $ MsgConstructingGreatProject whatLoc
 hasGreatProject stmt = (trace $ "hasGreatProject: Not handled: " ++ show stmt) $ preStatement stmt
 
 ----------------------------------------
