@@ -709,7 +709,7 @@ handlersNumericIcons = Tr.fromList
         ,("local_build_time"                  , numericIcon "local construction time" MsgLocalBuildTime)
         ,("local_core_creation"               , numericIcon "local core-creation cost" MsgLocalCoreCreation)
         ,("local_sailors"                     , numericIcon "sailor increase" MsgLocalSailors)
-        ,("mercantilism_cost"                 , numericIcon "cost to promote mercantilism" MsgMercantilismCost)
+        ,("mercantilism_cost"                 , numericIcon "mercantilism" MsgMercantilismCost)
         ,("migration_cost"                    , numericIcon "migration cost" MsgMigrationCost)
         ,("monarch_admin_power"               , numericIcon "monarch administrative skill" MsgMonarchAdminPower)
         ,("monthly_federation_favor_growth"   , numericIcon "monthly federation favor growth" MsgMonthlyFederationFavorGrowth)
