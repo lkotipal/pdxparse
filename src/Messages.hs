@@ -1396,6 +1396,8 @@ data ScriptMessage
     | MsgAddHistoricalRival {scriptMessageWhom :: Text}
     | MsgRemoveHistoricalFriend {scriptMessageWhom :: Text}
     | MsgRemoveHistoricalRival {scriptMessageWhom :: Text}
+    | MsgHasAnyEstates {scriptMessageYn :: Bool}
+    | MsgGovernmentReformProgress {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6921,11 +6923,10 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddCOTLevel { scriptMessageIcon = _icon, scriptMessageAmt = _amt }
             -> mconcat
-                ["Gain a "
+                ["Increase "
                 ,_icon
-                ," level "
+                ," Center of Trade level by "
                 ,toMessage (plainNum _amt)
-                ," Center of Trade"
                 ]
         MsgRulerAge {scriptMessageAmt = _amt}
             -> mconcat
@@ -9445,6 +9446,19 @@ instance RenderMessage Script ScriptMessage where
                 [ "Remove "
                 , _whom
                 , " as a [[historical rival]]"
+                ]
+        MsgHasAnyEstates {scriptMessageYn = _yn}
+            -> mconcat
+                [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
+                , " any estates"
+                ]
+        MsgGovernmentReformProgress {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " Government reform progress saved up"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

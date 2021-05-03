@@ -698,6 +698,9 @@ scriptIconTable = HM.fromList
     ,("trade_ideas", "trade")
     -- religion
     ,("dreamtime", "alcheringa")
+    -- technology
+    ,("aboriginal_tech", "aboriginal")
+    ,("polynesian_tech", "polynesian")
     -- cults
     ,("buddhism_cult", "buddhadharma")
     ,("central_african_ancestor_cult", "mlira")
