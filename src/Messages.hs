@@ -600,6 +600,7 @@ data ScriptMessage
     | MsgLandMaintenanceMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavalMaintenanceMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProdEff {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgProdEffAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgProdEffBonus {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainReligiousCB
     | MsgMissionaries {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -864,7 +865,6 @@ data ScriptMessage
     | MsgHeirHasPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgConsortHasPersonality { scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgAddCenterOfReformation {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddHistoricalRival {scriptMessageWho :: Text}
     | MsgAddTruceWith {scriptMessageWho :: Text}
     | MsgGainSailors {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainSailorsFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -982,6 +982,7 @@ data ScriptMessage
     | MsgDivorceConsortEffect
     | MsgADMTechAs {scriptMessageIcon :: Text, scriptMessageWho :: Text}
     | MsgAddGovernmentReform {scriptMessageWhat :: Text}
+    | MsgRemoveGovernmentReform {scriptMessageWhat :: Text}
     | MsgAddCOTLevel {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRulerAge {scriptMessageAmt :: Double}
     | MsgEmployedAdvisor
@@ -1358,6 +1359,7 @@ data ScriptMessage
     | MsgVassalize {scriptMessageWhom :: Text}
     | MsgMissionCompleted {scriptMessageWhat :: Text}
     | MsgCompleteMission {scriptMessageWhat :: Text}
+    | MsgHasMission {scriptMessageWhat :: Text}
     | MsgHasNumberOfBuildingType {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgFederationSize {scriptMessageAmt :: Double}
     | MsgGrownByDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1383,6 +1385,17 @@ data ScriptMessage
     | MsgIsThreat {scriptMessageWhom :: Text}
     | MsgGrantIndependence
     | MsgIsVassal {scriptMessageYn :: Bool}
+    | MsgIsPapalController {scriptMessageYn :: Bool}
+    | MsgIsFederationNation {scriptMessageYn :: Bool}
+    | MsgNumFederationAdvancements {scriptMessageAmt :: Double}
+    | MsgEveryFederationMember
+    | MsgAllFederationMembers
+    | MsgHistoricalFriendWith {scriptMessageWhom :: Text}
+    | MsgHistoricalRivalWith {scriptMessageWhom :: Text}
+    | MsgAddHistoricalFriend {scriptMessageWhom :: Text}
+    | MsgAddHistoricalRival {scriptMessageWhom :: Text}
+    | MsgRemoveHistoricalFriend {scriptMessageWhom :: Text}
+    | MsgRemoveHistoricalRival {scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -4565,6 +4578,12 @@ instance RenderMessage Script ScriptMessage where
                 , " Production efficiency is at least "
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 ]
+        MsgProdEffAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _icon
+                , " Production efficiency is at least that of "
+                , _whom
+                ]
         MsgProdEffBonus {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -6235,12 +6254,6 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " Center of Reformation"
                 ]
-        MsgAddHistoricalRival {scriptMessageWho = _who}
-            -> mconcat
-                [ "Add "
-                , _who
-                , " as a historical rival"
-                ]
         MsgAddTruceWith {scriptMessageWho = _who}
             -> mconcat
                 [ "Create a truce with "
@@ -6897,6 +6910,11 @@ instance RenderMessage Script ScriptMessage where
         MsgAddGovernmentReform { scriptMessageWhat = _what }
             -> mconcat
                 ["Enact government reform "
+                ,_what
+                ]
+        MsgRemoveGovernmentReform { scriptMessageWhat = _what }
+            -> mconcat
+                ["Remove government reform "
                 ,_what
                 ]
         MsgAddCOTLevel { scriptMessageIcon = _icon, scriptMessageAmt = _amt }
@@ -9202,6 +9220,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Complete the mission "
                 , toMessage (iquotes _what)
                 ]
+        MsgHasMission {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has the mission "
+                , toMessage (iquotes _what)
+                ]
         MsgHasNumberOfBuildingType {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -9366,7 +9389,61 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " a vassal"
                 ]
-
+        MsgIsPapalController {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " the [[papal controller]]"
+                ]
+        MsgIsFederationNation {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " a member of a [[federation]]"
+                ]
+        MsgNumFederationAdvancements {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Number of [[federation]] advancements is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgEveryFederationMember
+            -> "Every federation member:"
+        MsgAllFederationMembers
+            -> "All federation members:"
+        MsgHistoricalFriendWith {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is [[historical friend]] with "
+                , _whom
+                ]
+        MsgHistoricalRivalWith {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is [[historical rival]] of "
+                , _whom
+                ]
+        MsgAddHistoricalFriend {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Add "
+                , _whom
+                , " as a [[historical friend]]"
+                ]
+        MsgAddHistoricalRival {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Add "
+                , _whom
+                , " as a [[historical rival]]"
+                ]
+        MsgRemoveHistoricalFriend {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Remove "
+                , _whom
+                , " as a [[historical friend]]"
+                ]
+        MsgRemoveHistoricalRival {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Remove "
+                , _whom
+                , " as a [[historical rival]]"
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

@@ -130,14 +130,14 @@ writeEU4Missions = do
                                         , featureId = Just (eu4mtb_id mtb)
                                         , theFeature = Right mtb })
                        (HM.elems missions)
-    writeFeatures "missions" features  pp_mtb
+    writeFeatures "missions" features pp_mtb
     where
         pp_mtb :: (EU4Info g, Monad m) => EU4MissionTreeBranch -> PPT g m Doc
-        pp_mtb mtb = do
+        pp_mtb mtb = setCurrentFile (eu4mtb_path mtb) $ do
             version <- gets (gameVersion . getSettings)
             potential <- mapM (scope EU4Country . pp_script) (eu4mtb_potential mtb)
             missionText <- mapM (pp_m (eu4mtb_slot mtb)) (eu4mtb_missions mtb)
-            return $ mconcat  $ [
+            return $ mconcat $ [
                         Doc.strictText $ "===" <> eu4mtb_id mtb <> "===", PP.line, -- apparently there's no localization of the headline
                         "{{SVersion|", Doc.strictText version, "}}", PP.line
                     ] ++ (case potential of

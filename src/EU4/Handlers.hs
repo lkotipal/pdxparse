@@ -508,11 +508,13 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
         _ -> trace (f ++ ": compoundMessagePronoun: don't know how to handle head " ++ T.unpack head)
              $ return (Nothing, undefined)
     case params of
-        (Nothing, _) -> preStatement stmt
-        (_, Nothing) -> preStatement stmt
         (Just newscope, Just scopemsg) -> do
             script_pp'd <- scope newscope $ ppMany scr
             return $ (i, scopemsg) : script_pp'd
+        _ -> do
+            withCurrentFile $ \f -> do
+                traceM $ "compoundMessagePronoun: " ++ f ++ ": potentially invalid use of " ++ (T.unpack head) ++ " in " ++ (show stmt)
+            preStatement stmt
 compoundMessagePronoun stmt = preStatement stmt
 
 -- | Generic handler for a simple compound statement with a tagged header.
