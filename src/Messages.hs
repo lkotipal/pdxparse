@@ -68,7 +68,7 @@ data ScriptMessage
     | MsgGainADM {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainAT {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainAuth {scriptMessageAmt :: Double}
-    | MsgDrillGainMod {scriptMessageAmt :: Double}
+    | MsgDrillGainMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainBT {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainBP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainBM {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1454,9 +1454,11 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNum True _amt)
                 , " authority"
                 ]
-        MsgDrillGainMod {scriptMessageAmt = _amt}
+        MsgDrillGainMod {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
-                [ toMessage (reducedNum (colourPcSign True) _amt)
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Army drill gain modifier"
                 ]
         MsgGainBT {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
