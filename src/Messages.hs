@@ -9020,7 +9020,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (plainNumSign _amt)
+                , toMessage (bold (plainNumSign _amt))
                 , " Monthly karma"
                 ]
         MsgMonthlyMilitarizedSociety {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
