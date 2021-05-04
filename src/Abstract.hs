@@ -65,6 +65,7 @@ import Data.Monoid (Monoid (..), (<>))
 
 import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
 import Data.List (intersperse)
+import Data.Maybe (fromMaybe)
 
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -304,10 +305,16 @@ statement customLhs customRhs
         l <- lhs customLhs
         skipSpace
         mnext <- Ap.peekChar
-        if maybe False (\c -> c `elem` ['=', '<', '>']) mnext then
-            Statement l <$> operator <* skipSpace <*> rhs customLhs customRhs
-        else do
-            return $ StatementBare l
+        case fromMaybe ' ' mnext of
+            next | next `elem` ['=', '<', '>'] ->
+                Statement l <$> operator <* skipSpace <*> rhs customLhs customRhs
+            '{' -> do
+                -- In 1.31.2 missions/Malacca_Missions.txt has "if {" which appears to be
+                -- interpreted by the game as "if = {".
+                skipSpace
+                Statement l OpEq <$> rhs customLhs customRhs
+            _ ->
+                return $ StatementBare l
     <?> "statement"
 
 -- | A script (i.e. list of statements separated by whitespace), possibly with

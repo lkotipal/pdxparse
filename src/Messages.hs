@@ -1398,6 +1398,9 @@ data ScriptMessage
     | MsgRemoveHistoricalRival {scriptMessageWhom :: Text}
     | MsgHasAnyEstates {scriptMessageYn :: Bool}
     | MsgGovernmentReformProgress {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHumiliatedBy {scriptMessageWhom :: Text}
+    | MsgCreateGuarantee {scriptMessageWhom :: Text}
+    | MsgCreateSubject {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9459,6 +9462,23 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (plainNum _amt)
                 , " Government reform progress saved up"
+                ]
+        MsgHumiliatedBy {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has been humiliated by "
+                , _whom
+                ]
+        MsgCreateGuarantee {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Start guaranteeing "
+                , _whom
+                ]
+        MsgCreateSubject {scriptMessageWhat = _what, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Make "
+                , _whom
+                , " a "
+                , _what
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

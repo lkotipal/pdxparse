@@ -118,6 +118,7 @@ module EU4.Handlers (
     ,   personalityAncestor
     ,   hasGreatProject
     ,   hasEstateLedRegency
+    ,   createSubject
     -- testing
     ,   isPronoun
     ,   flag
@@ -3590,3 +3591,21 @@ hasEstateLedRegency stmt@[pdx| %_ = @scr |] = do
         (e, [])                             -> msgToPP $ MsgEstateRegencySpecific icon loc
         _ -> (trace $ ("hasEstateLedRegency: Not handled: " ++ (show stmt))) $ msgToPP $ preMessage stmt
 hasEstateLedRegency stmt = preStatement stmt
+
+-----------------------------
+-- Handler for create_subject --
+-----------------------------
+createSubject :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+createSubject stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_cs (parseTA "subject_type" "subject" scr)
+    where
+        pp_cs :: TextAtom -> PPT g m ScriptMessage
+        pp_cs ta = case (ta_what ta, ta_atom ta) of
+            (Just typ, Just subject) -> do
+                typeLoc <- getGameL10n typ
+                subjectLoc <- flagText (Just EU4Country) subject
+                return $ MsgCreateSubject typeLoc subjectLoc
+            _ -> return $ preMessage stmt
+createSubject stmt = preStatement stmt
+
+
