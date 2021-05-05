@@ -730,6 +730,7 @@ handlersNumericIcons = Tr.fromList
         ,("war_taxes_cost_modifier"           , numericIcon "war taxes cost" MsgWarTaxesCostModifier)
         ,("yearly_patriarch_authority"        , numericIcon "yearly patriarch authority" MsgYearlyPatriarchAuthority)
         ,("yearly_karma_decay"                , numericIcon "yearly karma decay" MsgYearlyKarmaDecay)
+        ,("heir_claim"                        , numericIcon "legitimacy" MsgHeirClaim)
         ]
 
 -- | Handlers for statements pertaining to modifiers

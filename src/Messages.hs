@@ -1401,6 +1401,7 @@ data ScriptMessage
     | MsgHumiliatedBy {scriptMessageWhom :: Text}
     | MsgCreateGuarantee {scriptMessageWhom :: Text}
     | MsgCreateSubject {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgHeirClaim { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9479,6 +9480,13 @@ instance RenderMessage Script ScriptMessage where
                 , _whom
                 , " a "
                 , _what
+                ]
+        MsgHeirClaim {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Heir's "
+                , _icon
+                , " [[Heir claim|claim strength]] is at least "
+                , toMessage (roundNum _amt)
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
