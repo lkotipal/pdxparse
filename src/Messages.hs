@@ -7905,7 +7905,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage (reducedNum plainPcSign _amt)
+                , toMessage (bold (reducedNum plainPcSign _amt))
                 , " Monthly piety"
                 ]
         MsgMrGuildsInfluence {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
