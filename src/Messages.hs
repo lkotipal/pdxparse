@@ -1403,6 +1403,7 @@ data ScriptMessage
     | MsgCreateGuarantee {scriptMessageWhom :: Text}
     | MsgCreateSubject {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgHeirClaim { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
+    | MsgExtendRegency { scriptMessageAmt :: Double }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9494,6 +9495,12 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " [[Heir claim|claim strength]] is at least "
                 , toMessage (roundNum _amt)
+                ]
+        MsgExtendRegency {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Extend the regency by "
+                , toMessage (roundNum _amt)
+                , " years"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

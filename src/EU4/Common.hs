@@ -241,6 +241,7 @@ handlersNumeric = Tr.fromList
         ,("curia_treasury_income"            , numeric MsgCuriaTreasuryIncome)
         ,("curia_treasury_size"              , numeric MsgCuriaTreasurySize)
         ,("establish_order_cost"             , numeric MsgEstablishOrderCost)
+        ,("extend_regency"                   , numeric MsgExtendRegency)
         ,("federation_size"                  , numeric MsgFederationSize)
         ,("had_recent_war"                   , numeric MsgWasAtWar)
         ,("heir_age"                         , numeric MsgHeirAge)
