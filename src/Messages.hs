@@ -1404,6 +1404,7 @@ data ScriptMessage
     | MsgCreateSubject {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgHeirClaim { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
     | MsgExtendRegency { scriptMessageAmt :: Double }
+    | MsgAddPowerProjection {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9501,6 +9502,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "Extend the regency by "
                 , toMessage (roundNum _amt)
                 , " years"
+        MsgAddPowerProjection {scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " {{icon|power projection}} "
+                , toMessage (colourNumSign True _amt)
+                , " power projection"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
