@@ -158,6 +158,8 @@ data EU4Event = EU4Event {
     ,   eu4evt_immediate :: Maybe GenericScript
     -- | Whether this is a hidden event (it will have no options).
     ,   eu4evt_hide_window :: Bool
+    -- | Whether this event can only happen once per campaign
+    ,   eu4evt_fire_only_once :: Bool
     -- | List of options for the player/AI to choose from.
     ,   eu4evt_options :: Maybe [EU4Option]
     -- | Effects that take place after any option is selected.

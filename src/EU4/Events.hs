@@ -48,7 +48,7 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
 newEU4Event :: EU4Scope -> FilePath -> EU4Event
-newEU4Event escope path = EU4Event Nothing Nothing [] escope Nothing Nothing Nothing Nothing False Nothing Nothing path
+newEU4Event escope path = EU4Event Nothing Nothing [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing path
 -- | Empty event option vaule. Starts off Nothing everywhere.
 newEU4Option :: EU4Option
 newEU4Option = EU4Option Nothing Nothing Nothing Nothing
@@ -213,7 +213,9 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
             newEU4Options <- addEU4Option (eu4evt_options evt) option
             return evt { eu4evt_options = newEU4Options }
         _ -> throwError "bad option"
-    eventAddSection' evt stmt@[pdx| fire_only_once = %_ |] = return evt -- do nothing
+    eventAddSection' evt stmt@[pdx| fire_only_once = %rhs |]
+        | GenericRhs "yes" [] <- rhs = return evt { eu4evt_fire_only_once = True }
+        | GenericRhs "no"  [] <- rhs = return evt { eu4evt_fire_only_once = False }
     eventAddSection' evt stmt@[pdx| major = %_ |] = return evt -- do nothing
     eventAddSection' evt stmt@[pdx| major_trigger = %_ |] = return evt -- do nothing
     eventAddSection' evt stmt@[pdx| hidden = %rhs |]
@@ -375,6 +377,7 @@ pp_event evt = case (eu4evt_id evt
                             ,PP.line])
                     (field evt)
             isTriggeredOnly = fromMaybe False $ eu4evt_is_triggered_only evt
+            isFireOnlyOnce = eu4evt_fire_only_once evt
             evtId = Doc.strictText eid
         trigger_pp'd <- evtArg "trigger" eu4evt_trigger pp_script
         mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (eu4evt_mean_time_to_happen evt)
@@ -392,6 +395,9 @@ pp_event evt = case (eu4evt_id evt
             ,"| event_name = ", Doc.strictText titleLoc, PP.line
             ,descLoc, PP.line
             ] ++
+            ( if isFireOnlyOnce then
+                ["| fire_only_once = yes", PP.line]
+            else []) ++
             -- For triggered only events, mean_time_to_happen is not
             -- really mtth but instead describes weight modifiers, for
             -- scripts that trigger them with a probability based on a
