@@ -5079,7 +5079,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgIsMonth {scriptMessageWhat = _what}
             -> mconcat
-                [ "Month is "
+                [ "Month is at least "
                 , _what
                 ]
         MsgIsSea {scriptMessageYn = _yn}

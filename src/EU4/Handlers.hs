@@ -2783,7 +2783,7 @@ tradeMod stmt = preStatement stmt
 isMonth :: (IsGameData (GameData g),
             IsGameState (GameState g),
             Monad m) => StatementHandler g m
-isMonth [pdx| %_ = !(num :: Int) |] | num >= 1, num <= 12
+isMonth [pdx| %_ = !(num :: Int) |] | num >= 0, num <= 11
     = do
         month_loc <- getGameL10n $ case num of
             0 -> "January" -- programmer counting -_-
