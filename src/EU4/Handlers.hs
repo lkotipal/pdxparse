@@ -1912,9 +1912,9 @@ gainMen [pdx| $head = !amt |]
         gainMen' theicon msgFrac msgWhole mult = msgToPP =<<
             if abs (amt::Double) < 1
             --  interpret amt as a fraction of max
-            then return $ msgFrac theicon amt
+            then return $ msgFrac (iconText theicon) amt
             --  interpret amt as exact number, multiplied by mult
-            else return $ msgWhole theicon (amt*mult)
+            else return $ msgWhole (iconText theicon) (amt*mult)
 gainMen stmt = preStatement stmt
 
 -- Casus belli
