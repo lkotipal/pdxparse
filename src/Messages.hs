@@ -408,6 +408,7 @@ data ScriptMessage
     | MsgHasPort {scriptMessageYn :: Bool}
     | MsgHasSeatInParliament {scriptMessageYn :: Bool}
     | MsgIsInRegency {scriptMessageYn :: Bool}
+    | MsgIsInExtendedRegency {scriptMessageYn :: Bool}
     | MsgUnderSiege {scriptMessageYn :: Bool}
     | MsgAtWar {scriptMessageYn :: Bool}
     | MsgIsCapital {scriptMessageYn :: Bool}
@@ -3276,6 +3277,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " in a regency"
+                ]
+        MsgIsInExtendedRegency {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " in an extended regency"
                 ]
         MsgUnderSiege {scriptMessageYn = _yn}
             -> mconcat

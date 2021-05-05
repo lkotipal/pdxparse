@@ -1154,6 +1154,7 @@ handlersYesNo = Tr.fromList
         ,("has_seat_in_parliament"      , withBool MsgHasSeatInParliament)
         ,("has_states_general_mechanic" , withBool MsgHasStatesGeneralMechanic)
         ,("has_regency"                 , withBool MsgIsInRegency)
+        ,("is_in_extended_regency"      , withBool MsgIsInExtendedRegency)
         ,("has_religious_school"        , withBool MsgHasReligiousSchool)
         ,("has_siege"                   , withBool MsgUnderSiege)
         ,("has_secondary_religion"      , withBool MsgHasSecondaryReligion)
