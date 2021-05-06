@@ -1055,7 +1055,7 @@ data ScriptMessage
     | MsgIsPermanentClaim { scriptMessageWhom :: Text }
     | MsgIsSubjectOfType { scriptMessageType :: Text }
     | MsgHasRuler { scriptMessageWho :: Text }
-    | MsgHasCasusBelli { scriptMessageWho :: Text, scriptMessageCb :: Text }
+    | MsgHasCasusBelli { scriptMessageWhat :: Text, scriptMessageWho :: Text }
     | MsgHeirADM { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
     | MsgHeirDIP { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
     | MsgHeirMIL { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
@@ -1405,6 +1405,7 @@ data ScriptMessage
     | MsgHeirClaim { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
     | MsgExtendRegency { scriptMessageAmt :: Double }
     | MsgAddPowerProjection {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgRemoveCasusBelli {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -7334,10 +7335,10 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (quotes _who)
                 ," as ruler"
                 ]
-        MsgHasCasusBelli { scriptMessageWho = _who, scriptMessageCb = _cb }
+        MsgHasCasusBelli { scriptMessageWhat = _what, scriptMessageWho = _who }
             -> mconcat
                 [ "The country has the "
-                , _cb
+                , _what
                 , " [[casus belli]] against "
                 , _who
                 ]
@@ -9502,12 +9503,20 @@ instance RenderMessage Script ScriptMessage where
                 [ "Extend the regency by "
                 , toMessage (roundNum _amt)
                 , " years"
+                ]
         MsgAddPowerProjection {scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
                 , " {{icon|power projection}} "
                 , toMessage (colourNumSign True _amt)
                 , " power projection"
+                ]
+        MsgRemoveCasusBelli {scriptMessageWhat = _what, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Remove casus belli "
+                , _what
+                , " against "
+                , _whom
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

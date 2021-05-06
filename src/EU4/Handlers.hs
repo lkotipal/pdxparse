@@ -47,6 +47,7 @@ module EU4.Handlers (
     ,   tryLocAndLocMod
     ,   textValue
     ,   textAtom
+    ,   taTypeFlag
     ,   ppAiWillDo
     ,   ppAiMod
     ,   factionInfluence
@@ -100,7 +101,6 @@ module EU4.Handlers (
     ,   defineMilitaryLeader
     ,   createMilitaryLeader
     ,   setSavedName
-    ,   hasCasusBelli
     ,   rhsAlways
     ,   rhsAlwaysYes
     ,   privateerPower
@@ -118,7 +118,6 @@ module EU4.Handlers (
     ,   personalityAncestor
     ,   hasGreatProject
     ,   hasEstateLedRegency
-    ,   createSubject
     -- testing
     ,   isPronoun
     ,   flag
@@ -1469,6 +1468,20 @@ textAtom whatlabel atomlabel msg loc stmt@[pdx| %_ = @scr |]
                 return $ msg what_icon what_loc atom_loc
             _ -> return $ preMessage stmt
 textAtom _ _ _ _ stmt = preStatement stmt
+
+taTypeFlag :: forall g m. (EU4Info g, Monad m) => Text -> Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
+taTypeFlag tType tFlag msg stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_tf (parseTA tType tFlag scr)
+    where
+        pp_tf :: TextAtom -> PPT g m ScriptMessage
+        pp_tf ta = case (ta_what ta, ta_atom ta) of
+            (Just typ, Just flag) -> do
+                typeLoc <- getGameL10n typ
+                flagLoc <- flagText (Just EU4Country) flag
+                return $ msg typeLoc flagLoc
+            _ -> return $ preMessage stmt
+taTypeFlag _ _ _ stmt = preStatement stmt
+
 
 -- AI decision factors
 
@@ -3245,23 +3258,6 @@ setSavedName stmt@[pdx| %_ = @scr |]
 setSavedName stmt = (trace (show stmt)) $ preStatement stmt
 
 ---------------------------------
--- Handler for has_casus_belli --
----------------------------------
-
-hasCasusBelli :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
-hasCasusBelli stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_hcb (parseTA "target" "type" scr)
-    where
-        pp_hcb :: TextAtom -> PPT g m ScriptMessage
-        pp_hcb ta = case (ta_what ta, ta_atom ta) of
-            (Just what, Just atom) -> do
-                what_loc <- flag (Just EU4Country) what
-                atom_loc <- getGameL10n atom
-                return $ MsgHasCasusBelli (Doc.doc2text what_loc) atom_loc
-            _ -> return $ preMessage stmt
-hasCasusBelli stmt = preStatement stmt
-
----------------------------------
 -- Handler for privateer_power --
 ---------------------------------
 
@@ -3611,21 +3607,3 @@ hasEstateLedRegency stmt@[pdx| %_ = @scr |] = do
         (e, [])                             -> msgToPP $ MsgEstateRegencySpecific icon loc
         _ -> (trace $ ("hasEstateLedRegency: Not handled: " ++ (show stmt))) $ msgToPP $ preMessage stmt
 hasEstateLedRegency stmt = preStatement stmt
-
------------------------------
--- Handler for create_subject --
------------------------------
-createSubject :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
-createSubject stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_cs (parseTA "subject_type" "subject" scr)
-    where
-        pp_cs :: TextAtom -> PPT g m ScriptMessage
-        pp_cs ta = case (ta_what ta, ta_atom ta) of
-            (Just typ, Just subject) -> do
-                typeLoc <- getGameL10n typ
-                subjectLoc <- flagText (Just EU4Country) subject
-                return $ MsgCreateSubject typeLoc subjectLoc
-            _ -> return $ preMessage stmt
-createSubject stmt = preStatement stmt
-
-
