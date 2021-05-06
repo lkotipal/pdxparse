@@ -133,11 +133,14 @@ endspace = Ap.option mempty startspace *> Ap.option mempty hspace *> nothing
 -- consuming it.
 --
 -- Bug report: https://forum.paradoxplaza.com/forum/index.php?threads/1-17-0-f236-localisation-files-containing-unescaped-quotation-marks.934107/
+--
+-- 2021-05-06: Comments also need to be removed at end of line. An example from 1.31.2 is:
+--     horde_gov_ideas:0 "Horde Government Ideas" #name is a placeholder
 
 -- | Content of a localization entry. This has its origin in YAML strings, but
 -- its syntax is actually rather different; see "Yaml#strangesyn" for details.
 stringLit :: Parser Text
-stringLit = T.init . T.pack <$> (Ap.char '"' *> many stringChar)
+stringLit = T.init . T.dropWhileEnd (/='"') . T.pack <$> (Ap.char '"' *> many stringChar)
     <?> "string literal"
 
 -- | Characters within a string. Process backslash escapes (apostrophes,
