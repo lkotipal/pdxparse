@@ -118,6 +118,7 @@ module EU4.Handlers (
     ,   personalityAncestor
     ,   hasGreatProject
     ,   hasEstateLedRegency
+    ,   changePrice
     -- testing
     ,   isPronoun
     ,   flag
@@ -3607,3 +3608,34 @@ hasEstateLedRegency stmt@[pdx| %_ = @scr |] = do
         (e, [])                             -> msgToPP $ MsgEstateRegencySpecific icon loc
         _ -> (trace $ ("hasEstateLedRegency: Not handled: " ++ (show stmt))) $ msgToPP $ preMessage stmt
 hasEstateLedRegency stmt = preStatement stmt
+
+------------------------------
+-- Handler for change_price --
+------------------------------
+
+data ChangePrice = ChangePrice
+        { cp_tradegood  :: Maybe Text
+        , cp_key :: Maybe Text
+        , cp_value :: Maybe Double
+        , cp_duration :: Maybe Double
+        } deriving Show
+
+newCP :: ChangePrice
+newCP = ChangePrice Nothing Nothing Nothing Nothing
+
+changePrice :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+changePrice stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_cp (foldl' addLine newCP scr)
+    where
+        addLine :: ChangePrice -> GenericStatement -> ChangePrice
+        addLine cp [pdx| trade_goods = $what |] = cp { cp_tradegood = Just what }
+        addLine cp [pdx| key = $what |] = cp { cp_key = Just what }
+        addLine cp [pdx| value = !val |] = cp { cp_value = Just val }
+        addLine cp [pdx| duration = !val |] = cp { cp_duration = Just val }
+        addLine ev stmt = (trace $ "Unknown in change_price " ++ show stmt) $ ev
+        pp_cp :: ChangePrice -> PPT g m ScriptMessage
+        pp_cp ChangePrice { cp_tradegood = Just tradegood, cp_key = Just key, cp_value = Just value, cp_duration = Just duration } = do
+            tgLoc <- getGameL10n tradegood
+            keyLoc <- getGameL10n key
+            return $ MsgChangePrice (iconText tradegood) tgLoc keyLoc value duration
+        pp_cp cp = return $ (trace $ "Missing info for change_price " ++ show cp ++ " " ++ (show stmt)) $ preMessage stmt
+changePrice stmt = (trace $ "changePrice: Not handled: " ++ (show stmt)) $ preStatement stmt

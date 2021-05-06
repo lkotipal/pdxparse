@@ -1406,6 +1406,8 @@ data ScriptMessage
     | MsgExtendRegency { scriptMessageAmt :: Double }
     | MsgAddPowerProjection {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgRemoveCasusBelli {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgHasWonWarAgainst {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgChangePrice {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double, scriptMessageDays :: Double }
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9518,6 +9520,28 @@ instance RenderMessage Script ScriptMessage where
                 , " against "
                 , _whom
                 ]
+        MsgHasWonWarAgainst {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has won a war against "
+                , _whom
+                , " during the last "
+                , toMessage (plainNum _amt)
+                , " years"
+                ]
+        MsgChangePrice {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageName = _name, scriptMessageAmt = _amt, scriptMessageDays = _days }
+            -> mconcat
+                [ "The price of "
+                , _icon
+                , " "
+                , _what
+                , " changes "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " due to "
+                , toMessage (iquotes _name)
+                , " for "
+                , toMessage (formatDays _days)
+                ]
+
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
