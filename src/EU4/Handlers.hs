@@ -676,6 +676,8 @@ scriptIconTable = HM.fromList
     ,("estate_rajput", "rajputs")
     ,("estate_vaisyas", "vaishyas")
     ,("grand_captain", "grand captain")
+    ,("horde_gov_ideas", "horde government")
+    ,("indigenous_ideas", "indigenous")
     ,("influence_ideas", "influence")
     ,("innovativeness_ideas", "innovative")
     ,("is_monarch_leader", "ruler general")
@@ -696,6 +698,7 @@ scriptIconTable = HM.fromList
     ,("local_state_maintenance_modifier", "state maintenance")
     ,("spy_ideas", "espionage")
     ,("tengri_pagan_reformed", "tengri")
+    ,("theocracy_gov_ideas", "divine")
     ,("trade_ideas", "trade")
     -- religion
     ,("dreamtime", "alcheringa")
