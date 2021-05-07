@@ -1098,7 +1098,7 @@ data ScriptMessage
     | MsgDisengagementChance {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDrillDecayModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgEnforceReligionCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgEstablishOrderCost {scriptMessageAmt :: Double}
+    | MsgEstablishOrderCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgExpelMinoritiesCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgFemaleAdvisorChance {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgFireDamageReceived {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -7630,9 +7630,11 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Cost of enforcing religion through war"
                 ]
-        MsgEstablishOrderCost {scriptMessageAmt = _amt}
+        MsgEstablishOrderCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
-                [ toMessage (reducedNum (colourPcSign False) _amt)
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Establish holy order cost"
                 ]
         MsgExpelMinoritiesCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}

@@ -43,7 +43,6 @@ module EU4.Handlers (
     ,   boolIconLoc
     ,   tryLoc
     ,   tryLocAndIcon
-    ,   tryLocAndIconTC
     ,   tryLocAndLocMod
     ,   textValue
     ,   textAtom
@@ -204,7 +203,10 @@ msgToPP msg = (:[]) <$> alsoIndent' msg
 
 -- Emit icon template.
 icon :: Text -> Doc
-icon what = template "icon" [HM.lookupDefault what what scriptIconTable, "28px"]
+icon what = case HM.lookup what scriptIconFileTable of
+    Just "" -> Doc.strictText $ "[[image:" <> what <> ".png|28px]]" -- shorthand notation
+    Just file -> Doc.strictText $ "[[image:" <> file <> ".png|28px]]"
+    _ -> template "icon" [HM.lookupDefault what what scriptIconTable, "28px"]
 iconText :: Text -> Text
 iconText = Doc.doc2text . icon
 
@@ -804,6 +806,30 @@ scriptIconTable = HM.fromList
     ,("attitude_threatened"  , "threatened attitude")
     ]
 
+-- | Table of script atom -> file. For things that don't have icons and should instead just
+-- show an image. An empty string can be used as a short hand for just appending ".png".
+scriptIconFileTable :: HashMap Text Text
+scriptIconFileTable = HM.fromList
+    [("cost to promote mercantilism", "")
+    ,("establish holy order cost", "")
+    -- Trade company investments
+    ,("local_quarter", "TC local quarters")
+    ,("permanent_quarters", "TC permanent quarters")
+    ,("officers_mess", "TC officers mess")
+    ,("company_warehouse", "TC warehouse")
+    ,("company_depot", "TC depot")
+    ,("admiralty", "TC admiralty")
+    ,("brokers_office", "TC brokers office")
+    ,("brokers_exchange", "TC brokers exchange")
+    ,("property_appraiser", "TC property appraiser")
+    ,("settlements", "TC settlement")
+    ,("district", "TC district")
+    ,("townships", "TC township")
+    ,("company_administration", "TC company administration")
+    ,("military_administration", "TC military administration")
+    ,("governor_general_mansion", "TC governor generals mansion")
+    ]
+
 -- Given a script atom, return the corresponding icon key, if any.
 iconKey :: Text -> Maybe Text
 iconKey atom = HM.lookup atom scriptIconTable
@@ -1325,39 +1351,6 @@ tryLocAndIcon atom = do
     loc <- tryLoc atom
     return (maybe mempty id (Just (iconText atom)),
             maybe ("<tt>" <> atom <> "</tt>") id loc)
-
--- | Same as tryLocAndIcon, but TC investments don't currenly have proper icons
-tryLocAndIconTC :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
-tryLocAndIconTC atom = do
-    loc <- tryLoc atom
-    return (maybe mempty id (Just (tcIconText atom)),
-            maybe ("<tt>" <> atom <> "</tt>") id loc)
-    where
-        iconTable :: HashMap Text Text
-        iconTable = HM.fromList
-            [("local_quarter", "local quarters")
-            ,("permanent_quarters", "permanent quarters")
-            ,("officers_mess", "officers mess")
-            ,("company_warehouse", "warehouse")
-            ,("company_depot", "depot")
-            ,("admiralty", "admiralty")
-            ,("brokers_office", "brokers office")
-            ,("brokers_exchange", "brokers exchange")
-            ,("property_appraiser", "property appraiser")
-            ,("settlements", "settlement")
-            ,("district", "district")
-            ,("townships", "township")
-            ,("company_administration", "company administration")
-            ,("military_administration", "military administration")
-            ,("governor_general_mansion", "governor generals mansion")
-            ]
-        tcIconText :: Text -> Text
-        tcIconText t =
-            let icon = case HM.lookup t iconTable of
-                    Just val -> val
-                    _ -> (T.replace "_" " " t)
-            in
-               "[[image:TC " <> icon <> ".png|28px]]"
 
 -- | Same as tryLocAndIcon but for global modifiers
 tryLocAndLocMod :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
@@ -3303,7 +3296,7 @@ hasTradeCompanyInvestment stmt@[pdx| %_ = @scr |]
         pp_tci ta = case (ta_what ta, ta_atom ta) of
             (Just investor, Just investment) -> do
                 investorLoc <- flag (Just EU4Country) investor
-                (icon, desc) <- tryLocAndIconTC investment
+                (icon, desc) <- tryLocAndIcon investment
                 return $ MsgHasTradeCompanyInvestmentInArea icon desc (Doc.doc2text investorLoc)
             _ -> return $ preMessage stmt
 hasTradeCompanyInvestment stmt = preStatement stmt
