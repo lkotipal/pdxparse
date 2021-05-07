@@ -1412,6 +1412,8 @@ data ScriptMessage
     | MsgRandomHiredMercenaryCompany
     | MsgLocation
     | MsgHomeProvince
+    | MsgCreateNamedShip {scriptMessageText :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgCreateFlagShip {scriptMessageText :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9555,7 +9557,24 @@ instance RenderMessage Script ScriptMessage where
             -> "Location:"
         MsgHomeProvince
             -> "Home province:"
-
+        MsgCreateNamedShip {scriptMessageText = _name, scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Create "
+                , _icon
+                , " "
+                , _what
+                , " named "
+                , toMessage (iquotes _name)
+                ]
+        MsgCreateFlagShip {scriptMessageText = _name, scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Create a flagship of type "
+                , _icon
+                , " "
+                , _what
+                , " named "
+                , toMessage (iquotes _name)
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

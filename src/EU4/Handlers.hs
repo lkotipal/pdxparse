@@ -46,6 +46,7 @@ module EU4.Handlers (
     ,   tryLocAndLocMod
     ,   textValue
     ,   textAtom
+    ,   taDescAtomIcon
     ,   taTypeFlag
     ,   ppAiWillDo
     ,   ppAiMod
@@ -1450,6 +1451,22 @@ textAtom whatlabel atomlabel msg loc stmt@[pdx| %_ = @scr |]
             _ -> return $ preMessage stmt
 textAtom _ _ _ _ stmt = preStatement stmt
 
+taDescAtomIcon :: forall g m. (EU4Info g, Monad m) =>
+    Text -> Text ->
+    (Text -> Text -> Text -> ScriptMessage) -> StatementHandler g m
+taDescAtomIcon tDesc tAtom msg stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_lai (parseTA tDesc tAtom scr)
+    where
+        pp_lai :: TextAtom -> PPT g m ScriptMessage
+        pp_lai ta = case (ta_what ta, ta_atom ta) of
+            (Just desc, Just atom) -> do
+                descLoc <- getGameL10n desc
+                atomLoc <- getGameL10n (T.toUpper atom) -- XXX: why does it seem to necessary to use toUpper here?
+                return $ msg descLoc (iconText atom) atomLoc
+            _ -> return $ preMessage stmt
+taDescAtomIcon _ _ _ stmt = preStatement stmt
+
+
 taTypeFlag :: forall g m. (EU4Info g, Monad m) => Text -> Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
 taTypeFlag tType tFlag msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_tf (parseTA tType tFlag scr)
@@ -1462,7 +1479,6 @@ taTypeFlag tType tFlag msg stmt@[pdx| %_ = @scr |]
                 return $ msg typeLoc flagLoc
             _ -> return $ preMessage stmt
 taTypeFlag _ _ _ stmt = preStatement stmt
-
 
 -- AI decision factors
 

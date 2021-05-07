@@ -1349,8 +1349,10 @@ handlersTextValue = Tr.fromList
 -- | Handlers for text/atom pairs
 handlersTextAtom :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextAtom = Tr.fromList
-        [("religious_school", textAtom "school" "group" MsgReligiousSchool tryLoc)
-        ,("set_religious_school", textAtom "school" "group" MsgSetReligiousSchool tryLoc)
+        [("create_flagship"      , taDescAtomIcon "name" "type" MsgCreateNamedShip)
+        ,("create_named_ship"    , taDescAtomIcon "name" "type" MsgCreateFlagShip)
+        ,("religious_school"     , textAtom "school" "group" MsgReligiousSchool tryLoc)
+        ,("set_religious_school" , textAtom "school" "group" MsgSetReligiousSchool tryLoc)
         ]
 
 -- | Handlers for special complex statements
