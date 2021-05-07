@@ -482,15 +482,7 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
                     Just EU4Province -> Just MsgROOTProvince
                     Just EU4TradeNode -> Just MsgROOTTradeNode
                     Just EU4Geographic -> Just MsgROOTGeographic
-                    Just EU4Bonus ->
-                        trace (f ++ ": compoundMessagePronoun called in bonus scope")
-                        $ Nothing
-                    Just EU4From ->
-                        trace (f ++ ": compoundMessagePronoun for ROOT somehow had FROM scope")
-                        $ Nothing
-                    Nothing -> 
-                        trace (f ++ ": compoundMessagePronoun for ROOT somehow had no scope")
-                        $ Nothing)
+                    _ -> Nothing) -- warning printed below
         "prev" -> do
                 newscope <- getPrevScope
                 return (newscope, case newscope of
@@ -498,13 +490,8 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
                     Just EU4Province -> Just MsgPREVProvince
                     Just EU4TradeNode -> Just MsgPREVTradeNode
                     Just EU4Geographic -> Just MsgPREVGeographic
-                    Just EU4Bonus ->
-                        trace (f ++ ": compoundMessagePronoun called in bonus scope")
-                        $ Nothing
                     Just EU4From -> Just MsgPREV -- Roll with it
-                    Nothing -> 
-                        trace (f ++ ": compoundMessagePronoun for PREV somehow had no scope")
-                        $ Nothing)
+                    _ -> Nothing) -- warning printed below
         "from" -> return (Just EU4From, Just MsgFROM) -- don't know what type this is in general
         _ -> trace (f ++ ": compoundMessagePronoun: don't know how to handle head " ++ T.unpack head)
              $ return (Nothing, undefined)

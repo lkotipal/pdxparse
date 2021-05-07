@@ -790,6 +790,7 @@ handlersCompound = Tr.fromList
         ,("any_empty_neighbor_province", scope EU4Province  . compoundMessage MsgAnyEmptyNeighborProvince)
         ,("any_enemy_country"       , scope EU4Country   . compoundMessage MsgAnyEnemyCountry)
         ,("any_heretic_province"    , scope EU4Province  . compoundMessage MsgAnyHereticProvince)
+        ,("any_hired_mercenary_company" ,                  compoundMessage MsgAnyHiredMercenaryCompany) -- TOOD: Need unit scope?
         ,("any_known_country"       , scope EU4Country   . compoundMessage MsgAnyKnownCountry)
         ,("any_neighbor_country"    , scope EU4Country   . compoundMessage MsgAnyNeighborCountry)
         ,("any_neighbor_province"   , scope EU4Province  . compoundMessage MsgAnyNeighborProvince)
@@ -825,11 +826,13 @@ handlersCompound = Tr.fromList
         ,("every_rival_country"     , scope EU4Country   . compoundMessage MsgEveryRival)
         ,("every_subject_country"   , scope EU4Country   . compoundMessage MsgEverySubject)
         ,("every_trade_node_member_country" , scope EU4Country . compoundMessage MsgEveryTradeNodeMemberCountry)
+        ,("home_province"           ,                      compoundMessage MsgHomeProvince) -- For mercs
         ,("home_trade_node"         , scope EU4TradeNode . compoundMessage MsgHomeTradeNode)
         ,("home_trade_node_effect_scope" , scope EU4TradeNode . compoundMessage MsgHomeTradeNodeEffectScope)
         ,("hidden_effect"           ,                      compoundMessage MsgHiddenEffect)
         ,("if"                      ,                      compoundMessage MsgIf) -- always needs editing
         ,("limit"                   , setIsInEffect False . compoundMessage MsgLimit) -- always needs editing
+        ,("location"                , scope EU4Province  . compoundMessage MsgLocation) -- For mercs
         ,("most_province_trade_power", scope EU4Country  . compoundMessage MsgMostProvinceTradePower)
         ,("overlord"                , scope EU4Country   . compoundMessage MsgOverlord)
         ,("owner"                   , scope EU4Country   . compoundMessage MsgOwner)
@@ -842,6 +845,7 @@ handlersCompound = Tr.fromList
         ,("random_enemy_country"    , scope EU4Country   . compoundMessage MsgRandomEnemyCountry)
         ,("random_empty_neighbor_province", scope EU4Province . compoundMessage MsgRandomEmptyNeighborProvince)
         ,("random_heretic_province"    , scope EU4Province  . compoundMessage MsgRandomHereticProvince)
+        ,("random_hired_mercenary_company" ,                compoundMessage MsgRandomHiredMercenaryCompany) -- TODO: Need unit scope?
         ,("random_known_country"    , scope EU4Country   . compoundMessage MsgRandomKnownCountry)
         ,("random_neighbor_country" , scope EU4Country   . compoundMessage MsgRandomNeighborCountry)
         ,("random_neighbor_province", scope EU4Province  . compoundMessage MsgRandomNeighborProvince)

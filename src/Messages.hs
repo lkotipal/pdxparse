@@ -1408,6 +1408,10 @@ data ScriptMessage
     | MsgRemoveCasusBelli {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgHasWonWarAgainst {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgChangePrice {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double, scriptMessageDays :: Double }
+    | MsgAnyHiredMercenaryCompany
+    | MsgRandomHiredMercenaryCompany
+    | MsgLocation
+    | MsgHomeProvince
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9541,6 +9545,14 @@ instance RenderMessage Script ScriptMessage where
                 , " for "
                 , toMessage (formatDays _days)
                 ]
+        MsgAnyHiredMercenaryCompany
+            -> "Any hired mercenary company:"
+        MsgRandomHiredMercenaryCompany
+            -> "Random hired mercenary company:"
+        MsgLocation
+            -> "Location:"
+        MsgHomeProvince
+            -> "Home province:"
 
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
