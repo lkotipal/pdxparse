@@ -48,6 +48,8 @@ module EU4.Handlers (
     ,   textAtom
     ,   taDescAtomIcon
     ,   taTypeFlag
+    ,   simpleEffectNum
+    ,   simpleEffectAtom
     ,   ppAiWillDo
     ,   ppAiMod
     ,   factionInfluence
@@ -551,7 +553,12 @@ withLocAtomAndIcon :: (EU4Info g, Monad m) =>
          -- <https://www.eu4wiki.com/Template:Icon Template:Icon> on the wiki
         -> (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
-withLocAtomAndIcon iconkey msg [pdx| %_ = $key |]
+withLocAtomAndIcon iconkey msg stmt@[pdx| %_ = $vartag:$var |] = do 
+    mtagloc <- tagged vartag var
+    case mtagloc of
+        Just tagloc -> msgToPP $ msg (iconText iconkey) tagloc
+        Nothing -> preStatement stmt
+withLocAtomAndIcon iconkey msg [pdx| %_ = ?key |]
     = do what <- Doc.doc2text <$> allowPronoun Nothing (fmap Doc.strictText . getGameL10n) key
          msgToPP $ msg (iconText iconkey) what
 withLocAtomAndIcon _ _ stmt = preStatement stmt
@@ -561,7 +568,7 @@ withLocAtomAndIcon _ _ stmt = preStatement stmt
 withLocAtomIcon :: (EU4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
-withLocAtomIcon msg stmt@[pdx| %_ = $key |]
+withLocAtomIcon msg stmt@[pdx| %_ = ?key |]
     = withLocAtomAndIcon key msg stmt
 withLocAtomIcon _ stmt = preStatement stmt
 
@@ -582,7 +589,7 @@ withLocAtomIconEU4Scope countrymsg provincemsg stmt = do
 withLocAtomIconBuilding :: (EU4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
-withLocAtomIconBuilding msg stmt@[pdx| %_ = $key |]
+withLocAtomIconBuilding msg stmt@[pdx| %_ = ?key |]
     = do what <- Doc.doc2text <$> allowPronoun Nothing (fmap Doc.strictText . getGameL10n) ("building_" <> key)
          msgToPP $ msg (iconText key) what
 withLocAtomIconBuilding _ stmt = preStatement stmt
@@ -813,6 +820,7 @@ scriptIconFileTable :: HashMap Text Text
 scriptIconFileTable = HM.fromList
     [("cost to promote mercantilism", "")
     ,("establish holy order cost", "")
+    ,("local state maintenance modifier", "")
     -- Trade company investments
     ,("local_quarter", "TC local quarters")
     ,("permanent_quarters", "TC permanent quarters")
@@ -1479,6 +1487,30 @@ taTypeFlag tType tFlag msg stmt@[pdx| %_ = @scr |]
                 return $ msg typeLoc flagLoc
             _ -> return $ preMessage stmt
 taTypeFlag _ _ _ stmt = preStatement stmt
+
+-- | Helper for effects, where the argument is a single statement in a clause
+-- E.g. generate_traitor_advisor_effect
+
+getEffectArg :: Text -> GenericStatement -> Maybe (Rhs () ())
+getEffectArg tArg stmt@[pdx| %_ = @scr |] = case scr of
+        [[pdx| $arg = %val |]] | T.toLower arg == tArg -> Just val
+        _ -> Nothing
+getEffectArg _ _ = Nothing
+
+simpleEffectNum :: forall g m. (EU4Info g, Monad m) => Text ->  (Double -> ScriptMessage) -> StatementHandler g m
+simpleEffectNum tArg msg stmt =
+    case getEffectArg tArg stmt of
+        Just (FloatRhs num) -> msgToPP (msg num)
+        Just (IntRhs num) -> msgToPP (msg (fromIntegral num))
+        _ -> (trace $ "warning: Not handled by simpleEffectNum: " ++ (show stmt)) $ preStatement stmt
+
+simpleEffectAtom :: forall g m. (EU4Info g, Monad m) => Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
+simpleEffectAtom tArg msg stmt =
+    case getEffectArg tArg stmt of
+        Just (GenericRhs atom _) -> do
+            loc <- getGameL10n atom
+            msgToPP $ msg (iconText atom) loc
+        _ -> (trace $ "warning: Not handled by simpleEffectAtom: " ++ (show stmt)) $ preStatement stmt
 
 -- AI decision factors
 

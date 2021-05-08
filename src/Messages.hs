@@ -1414,6 +1414,20 @@ data ScriptMessage
     | MsgHomeProvince
     | MsgCreateNamedShip {scriptMessageText :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgCreateFlagShip {scriptMessageText :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgTradingPart {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgGenerateTraitorAdvisor {scriptMessageSkill :: Double}
+    | MsgGenerateExileAdvisor {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgOurScholarMatchesTheirSchool {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHasScholar
+    | MsgRulerHasIslamModifier {scriptMessageWhat :: Text, scriptMessageYn :: Bool}
+    | MsgSchoolOpinion {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgSetSchoolOpinion {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgHasReligiousSchoolOf {scriptMessageWhom :: Text}
+    | MsgUsesPiety { scriptMessageYn :: Bool }
+    | MsgUsesDevotion { scriptMessageYn :: Bool }
+    | MsgHasBorderWithReligiousEnemy
+    | MsgHasSunniSchool
+    | MsgHasShiaSchool
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -6735,7 +6749,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign False) _amt)
-                , " State maintenance"
+                , " Local state maintenance"
                 ]
         MsgLocalTaxMod {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -9575,6 +9589,84 @@ instance RenderMessage Script ScriptMessage where
                 , " named "
                 , toMessage (iquotes _name)
                 ]
+        MsgTradingPart {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has access to at least "
+                , toMessage (reducedNum plainPc _amt)
+                , " of the global "
+                , _icon
+                , " "
+                , _what
+                , " market"
+                ]
+        MsgGenerateTraitorAdvisor {scriptMessageSkill = _skill}
+            -> mconcat
+                [ "Get a random level "
+                , toMessage (plainNum _skill)
+                , " ''traitor'' advisor"
+                ]
+        MsgGenerateExileAdvisor {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Get a discounted ''exiled'' advisor of type "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgOurScholarMatchesTheirSchool {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                ["Has a [[Muslim_denominations#Invite_a_Scholar|scholar]] from the "
+                , _icon
+                , " "
+                , _what
+                , " school"
+                ]
+        MsgHasScholar
+            -> "Has any [[Muslim_denominations#Invite_a_Scholar|scholar]]"
+        MsgRulerHasIslamModifier {scriptMessageWhat = _what, scriptMessageYn = _yn}
+            -> mconcat
+                [ "Ruler "
+                , ifThenElseT _yn "has" "does ''not'' have"
+                , " one of the "
+                , toMessage (iquotes _what)
+                , " islam modifiers"
+                ]
+        MsgSchoolOpinion {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The school opinion of "
+                , _whom
+                , " is "
+                , schoolOpinion _amt
+                ]
+        MsgSetSchoolOpinion {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Set school opinion of "
+                , _whom
+                , " to "
+                , schoolOpinion _amt
+                ]
+        MsgHasReligiousSchoolOf {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has the same religious school as "
+                , _whom
+                ]
+        MsgUsesPiety { scriptMessageYn = _yn }
+            -> mconcat
+                [ "The country "
+                , ifThenElseT _yn "uses" "does ''not'' use"
+                , " [[piety]]"
+                ]
+        MsgUsesDevotion { scriptMessageYn = _yn }
+            -> mconcat
+                [ "The country "
+                , ifThenElseT _yn "uses" "does ''not'' use"
+                , " [[devotion]]"
+                ]
+        MsgHasBorderWithReligiousEnemy
+            -> "The country borders any country of a different religion"
+        MsgHasSunniSchool
+            -> "Uses one of the Sunni schools"
+        MsgHasShiaSchool
+            -> "Uses one of the Shia schools"
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
@@ -9583,6 +9675,11 @@ ancestorText :: Bool -> Text
 ancestorText False = ""
 ancestorText True  = "<!-- ancestor -->"
 
+schoolOpinion :: Double -> Text
+schoolOpinion (-1) = "negative"
+schoolOpinion  0   = "neutral"
+schoolOpinion  1   = "postive"
+schoolOpinion val  = "(Unknown <> " <> T.pack (show val) <> ")"
 
 -- | Message paired with an indentation level.
 type IndentedMessage = (Int, ScriptMessage)

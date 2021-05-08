@@ -624,7 +624,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_siege_lost_province", "")
             ,("on_siege_won_country", "<!-- on_siege_won_country -->Our country winning a siege in ''From''") -- root = winning country, from = location
             --,("on_siege_won_province", "")
-            --,("on_startup", "")
+            ,("on_startup", "<!-- on_startup -->Starting the game")
             --,("on_successive_emperor", "")
             ,("on_thri_yearly_pulse", "The [[list_of_event_lists#3_year_pulse|three year pulse I]]")
             ,("on_thri_yearly_pulse_2", "The [[list_of_event_lists#3_year_pulse|three year pulse II]]")

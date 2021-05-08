@@ -146,7 +146,11 @@ handlersRhsIrrelevant = Tr.fromList
         ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)
         ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
         ,("grant_independence"      , rhsAlwaysYes MsgGrantIndependence)
+        ,("has_border_with_religious_enemy" , rhsAlwaysYes MsgHasBorderWithReligiousEnemy)
         ,("has_river_estuary_trigger", rhsAlwaysYes MsgHasRiverEstuary)
+        ,("has_religious_scholars_trigger", rhsAlwaysYes MsgHasScholar)
+        ,("has_shia_school_trigger", rhsAlwaysYes MsgHasShiaSchool)
+        ,("has_sunni_school_trigger", rhsAlwaysYes MsgHasSunniSchool)
         ,("highest_value_trade_node", rhsAlwaysYes MsgHighestValueTradeNode)
         ,("increase_heir_adm_effect", rhsAlwaysYes MsgIncreaseHeirAdmEffect)
         ,("increase_heir_dip_effect", rhsAlwaysYes MsgIncreaseHeirDipEffect)
@@ -1048,6 +1052,7 @@ handlersSimpleFlag = Tr.fromList
         ,("guaranteed_by"           , withFlag MsgGuaranteedBy)
         ,("has_guaranteed"          , withFlag MsgHasGuaranteed)
         ,("has_merchant"            , withFlag MsgHasMerchant)
+        ,("has_religious_school_of" , withFlag MsgHasReligiousSchoolOf)
         ,("heavy_ship"              , withFlag MsgHeavyShip)
         ,("historical_friend_with"  , withFlag MsgHistoricalFriendWith)
         ,("historical_rival_with"   , withFlag MsgHistoricalRivalWith)
@@ -1234,6 +1239,8 @@ handlersYesNo = Tr.fromList
         ,("set_seat_in_parliament"      , withBool MsgSetSeatInParliament)
         ,("set_revolution_in_province"  , withBool MsgSetRevolutionProvince)
         ,("unit_in_siege"               , withBool MsgUnderSiege) -- duplicate?
+        ,("uses_devotion"               , withBool MsgUsesDevotion)
+        ,("uses_piety"                  , withBool MsgUsesPiety)
         ,("valid_for_personal_unions_trigger" , withBool MsgValidForPU)
         ,("was_player"                  , withBool MsgHasBeenPlayer)
         ,("was_never_end_game_tag_trigger" , withBool MsgWasNeverEndGameTag)
@@ -1248,6 +1255,13 @@ handlersYesNo = Tr.fromList
         ,("has_adm_advisor_3"           , boolIconLoc "adm" "ADM" (MsgHasAdvisorCategoryLevel 3))
         ,("has_dip_advisor_3"           , boolIconLoc "dip" "DIP" (MsgHasAdvisorCategoryLevel 3))
         ,("has_mil_advisor_3"           , boolIconLoc "mil" "MIL" (MsgHasAdvisorCategoryLevel 3))
+
+        -- From common/scripted_effects/01_scripted_triggers_muslim_schools.txt
+        -- A bit lazy, but they're not commonly used
+        --
+        ,("has_sufi_sheikh_ul_islam_trigger"       , withBool (MsgRulerHasIslamModifier "Sufi"))
+        ,("has_pious_sheikh_ul_islam_trigger"      , withBool (MsgRulerHasIslamModifier "Righteous"))
+        ,("has_loyal_sheikh_ul_islam_trigger"      , withBool (MsgRulerHasIslamModifier "Loyal"))
         ]
 
 -- | Handlers for statements that may be numeric or a tag
@@ -1341,7 +1355,10 @@ handlersTextValue = Tr.fromList
         ,("num_of_units_in_province"    , textValue "who" "amount" MsgNumUnitsInProvince MsgNumUnitsInProvince flagTextMaybe) -- TODO: Support type
         ,("num_investments_in_trade_company_region" , textValue "investment" "value" MsgNumInvestmentsInTradeCompanyReigion MsgNumInvestmentsInTradeCompanyReigion tryLocAndIcon)
         ,("naval_strength"              , textValue "who" "value" MsgNavalStrength MsgNavalStrength flagTextMaybe)
+        ,("school_opinion"              , textValue "who" "opinion" MsgSchoolOpinion MsgSchoolOpinion flagTextMaybe)
+        ,("set_school_opinion"          , textValue "who" "opinion" MsgSetSchoolOpinion MsgSetSchoolOpinion flagTextMaybe)
         ,("trade_goods_produced_amount" , textValue "trade_goods" "amount" MsgTradeGoodsProduced MsgTradeGoodsProduced tryLocAndIcon)
+        ,("trading_part"                , textValue "trade_goods" "value" MsgTradingPart MsgTradingPart tryLocAndIcon)
         ,("trade_share"                 , textValue "country" "share" MsgTradeShare MsgTradeShare flagTextMaybe)
         ,("trust"                       , textValue "who" "value" MsgTrust MsgTrust flagTextMaybe)
         ]
@@ -1404,6 +1421,11 @@ handlersSpecialComplex = Tr.fromList
         ,("trading_bonus"                , tradingBonus)
         ,("trading_policy_in_node"       , tradingPolicyInNode)
         ,("trigger_switch"               , triggerSwitch)
+
+        -- Effects
+        ,("generate_traitor_advisor_effect" , simpleEffectNum "skill_level" MsgGenerateTraitorAdvisor)
+        ,("generate_exile_advisor_effect"   , simpleEffectAtom "advisor_type" MsgGenerateExileAdvisor)
+        ,("our_scholar_matches_their_school_trigger" , simpleEffectAtom "school" MsgOurScholarMatchesTheirSchool)
 
         -- Variables
         ,("set_variable"                 , setVariable MsgSetVariable MsgSetVariableVal)
