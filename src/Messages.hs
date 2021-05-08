@@ -1428,6 +1428,15 @@ data ScriptMessage
     | MsgHasBorderWithReligiousEnemy
     | MsgHasSunniSchool
     | MsgHasShiaSchool
+    | MsgNewExiledRuler
+    | MsgNewExiledRulerAttribs
+    | MsgExiledAs {scriptMessageWhat :: Text}
+    | MsgSetHeir {scriptMessageWhat :: Text}
+    | MsgSetRuler {scriptMessageWhat :: Text}
+    | MsgExileHeir {scriptMessageWhat :: Text}
+    | MsgExileRuler {scriptMessageWhat :: Text}
+    | MsgClearExiledRuler {scriptMessageWhat :: Text}
+    | MsgExiledRulerSameDynastyAsCurrent {scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -4010,21 +4019,21 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ toMessage (ifThenElseT _fixed "Fixed " "")
                 , "{{icon|adm}} "
-                , toMessage (roundNum _amt)
+                , toMessage ((if _fixed then roundNum else plainNumSign) _amt)
                 , " administrative skill"
                 ]
         MsgNewDynMemberDip {scriptMessageFixed = _fixed, scriptMessageAmt = _amt}
             -> mconcat
                 [ toMessage (ifThenElseT _fixed "Fixed " "")
                 , "{{icon|dip}} "
-                , toMessage (roundNum _amt)
+                , toMessage ((if _fixed then roundNum else plainNumSign) _amt)
                 , " diplomatic skill"
                 ]
         MsgNewDynMemberMil {scriptMessageFixed = _fixed, scriptMessageAmt = _amt}
             -> mconcat
                 [ toMessage (ifThenElseT _fixed "Fixed " "")
                 , "{{icon|mil}} "
-                , toMessage (roundNum _amt)
+                , toMessage ((if _fixed then roundNum else plainNumSign) _amt)
                 , " military skill"
                 ]
         MsgNewDynMemberMaxAdm {scriptMessageAmt = _amt}
@@ -9667,6 +9676,52 @@ instance RenderMessage Script ScriptMessage where
             -> "Uses one of the Sunni schools"
         MsgHasShiaSchool
             -> "Uses one of the Shia schools"
+        MsgNewExiledRuler
+            -> "Create an exiled ruler"
+        MsgNewExiledRulerAttribs
+            -> "Create an exiled ruler with the following attributes:"
+        MsgExiledAs {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Exiled as <tt>"
+                , _what
+                , "</tt>"
+                ]
+        MsgSetHeir {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Make exiled heir <tt>"
+                , _what
+                , "</tt> the current heir"
+                ]
+        MsgSetRuler {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Make exiled ruler <tt>"
+                , _what
+                , "</tt> the current ruler"
+                ]
+        MsgExileHeir {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Exile current heir as <tt>"
+                , _what
+                , "</tt>"
+                ]
+        MsgExileRuler {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Exile current ruler as <tt>"
+                , _what
+                , "</tt>"
+                ]
+        MsgClearExiledRuler {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Remove exiled ruler <tt>"
+                , _what
+                , "</tt>"
+                ]
+        MsgExiledRulerSameDynastyAsCurrent {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Exiled ruler <tt>"
+                , _what
+                , "</tt> has the same dynasty as the current ruler"
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

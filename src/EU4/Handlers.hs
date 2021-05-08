@@ -68,6 +68,7 @@ module EU4.Handlers (
     ,   randomList
     ,   defineAdvisor
     ,   defineRuler
+    ,   defineExiledRuler
     ,   defineHeir
     ,   defineConsort
     ,   buildToForcelimit
@@ -2193,9 +2194,10 @@ data DefineDynMember = DefineDynMember
     ,   ddm_birth_date :: Maybe Text
     ,   ddm_bastard :: Bool
     ,   ddm_country :: Maybe Text
+    ,   ddm_exiled_as :: Maybe Text
     }
 newDefineDynMember :: DefineDynMember
-newDefineDynMember = DefineDynMember False Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing False Nothing
+newDefineDynMember = DefineDynMember False Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing False Nothing Nothing
 
 defineDynMember :: forall g m. (EU4Info g, Monad m) =>
     (Bool -> ScriptMessage) ->
@@ -2275,6 +2277,8 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
                 Just "yes" -> ddm { ddm_bastard = True }
                 _ -> ddm
             "country_of_origin" -> ddm { ddm_country = textRhs rhs }
+            "exiled_as" -> ddm { ddm_exiled_as = textRhs rhs }
+            "option" -> ddm -- Ignore for now (used for exiled rulers in elections)
             param -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show param) $ ddm
         addLine ddm _ = ddm
 
@@ -2393,6 +2397,10 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
             countryText <- flagText (Just EU4Country) country
             [msg] <- msgToPP $ MsgNewDynMemberCountry countryText
             return (Just (msg, ddm { ddm_country = Nothing }))
+        -- Exile name
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_exiled_as = Just exiled_as } = do
+            [msg] <- msgToPP (MsgExiledAs exiled_as)
+            return (Just (msg, ddm { ddm_exiled_as = Nothing }))
         -- Nothing left
         pp_define_dyn_member_attrib _ = return Nothing
     pp_define_dyn_member $ foldl' addLine newDefineDynMember scr
@@ -2402,6 +2410,9 @@ defineDynMember _ _ _ _ stmt = preStatement stmt
 
 defineRuler :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
 defineRuler = defineDynMember MsgNewRuler MsgNewRulerLeader MsgNewRulerAttribs MsgNewRulerLeaderAttribs
+
+defineExiledRuler :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+defineExiledRuler = defineDynMember (\_ -> MsgNewExiledRuler) (\_ -> \_ -> MsgNewExiledRuler) (\_ -> MsgNewExiledRulerAttribs) (\_ -> \_ -> MsgNewExiledRulerAttribs)
 
 -- Heirs
 

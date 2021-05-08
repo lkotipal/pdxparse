@@ -968,7 +968,11 @@ handlersTypewriter = Tr.fromList
         ,("clr_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgClearFlag)
         ,("clr_province_flag", withNonlocAtom2 MsgProvinceFlag MsgClearFlag)
         ,("clr_ruler_flag"   , withNonlocAtom2 MsgRulerFlag MsgClearFlag)
+        ,("clear_exiled_ruler" , withNonlocAtom MsgClearExiledRuler)
         ,("clear_saved_name" , withNonlocAtom MsgClearSavedName)
+        ,("exile_heir_as"    , withNonlocAtom MsgExileHeir)
+        ,("exile_ruler_as"   , withNonlocAtom MsgExileRuler)
+        ,("exiled_same_dynasty_as_current" , withNonlocAtom MsgExiledRulerSameDynastyAsCurrent)
         ,("has_consort_flag" , withNonlocAtom2 MsgConsortFlag MsgHasFlag)
         ,("has_country_flag" , withNonlocAtom2 MsgCountryFlag MsgHasFlag)
         ,("has_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgHasFlag)
@@ -981,6 +985,8 @@ handlersTypewriter = Tr.fromList
         ,("set_country_flag" , withNonlocAtom2 MsgCountryFlag MsgSetFlag)
         ,("set_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgSetFlag)
         ,("set_province_flag", withNonlocAtom2 MsgProvinceFlag MsgSetFlag)
+        ,("set_heir"         , withNonlocAtom MsgSetHeir)
+        ,("set_ruler"        , withNonlocAtom MsgSetRuler)
         ,("set_ruler_flag"   , withNonlocAtom2 MsgRulerFlag MsgSetFlag)
         ]
 
@@ -1396,6 +1402,7 @@ handlersSpecialComplex = Tr.fromList
         ,("declare_war_with_cb"          , declareWarWithCB)
         ,("define_advisor"               , defineAdvisor)
         ,("define_consort"               , defineConsort)
+        ,("define_exiled_ruler"          , defineExiledRuler)
         ,("define_heir"                  , defineHeir)
         ,("define_ruler"                 , defineRuler)
         ,("define_admiral"               , defineMilitaryLeader "admiral" True MsgDefineAdmiral)
