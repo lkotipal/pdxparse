@@ -834,6 +834,7 @@ handlersCompound = Tr.fromList
         ,("home_trade_node"         , scope EU4TradeNode . compoundMessage MsgHomeTradeNode)
         ,("home_trade_node_effect_scope" , scope EU4TradeNode . compoundMessage MsgHomeTradeNodeEffectScope)
         ,("hidden_effect"           ,                      compoundMessage MsgHiddenEffect)
+        ,("hidden_trigger"          ,                      compoundMessage MsgHiddenTrigger)
         ,("if"                      ,                      compoundMessage MsgIf) -- always needs editing
         ,("limit"                   , setIsInEffect False . compoundMessage MsgLimit) -- always needs editing
         ,("location"                , scope EU4Province  . compoundMessage MsgLocation) -- For mercs
@@ -864,6 +865,7 @@ handlersCompound = Tr.fromList
         ,("region_for_scope_province" , scope EU4Province . scopeProvince MsgRegionProvinceScope MsgRegionProvinceScopeAll)
         ,("strongest_trade_power"   , scope EU4Country   . compoundMessage MsgStrongestTradePower) -- always needs editing
         ,("trigger"                 ,                      compoundMessage MsgTrigger) -- observed in random_list (probably something unhandled if seen elsewhere)
+        ,("variable_arithmetic_trigger" ,                  compoundMessage MsgVariableArithmeticTrigger)
         ,("while"                   , scope EU4Country   . compoundMessage MsgWhile) -- always needs editing
         ]
 
@@ -1335,13 +1337,16 @@ tryLocAndIconTitle t = tryLocAndIcon (t <> "_title")
 -- $textvalue
 handlersTextValue :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextValue = Tr.fromList
-        [("add_incident_variable_value" , textValue "incident" "value" MsgAddIncidentVariableValue MsgAddIncidentVariableValue tryLocAndIconTitle)
+        [("add_great_project_tier"      , textValue "type" "tier" MsgAddGreatProjectTier MsgAddGreatProjectTier tryLocAndIcon)
+        ,("add_incident_variable_value" , textValue "incident" "value" MsgAddIncidentVariableValue MsgAddIncidentVariableValue tryLocAndIconTitle)
         ,("add_institution_embracement" , textValue "which" "value" MsgAddInstitutionEmbracement MsgAddInstitutionEmbracement tryLocAndIcon)
         ,("add_estate_loyalty"          , textValue "estate" "loyalty" MsgAddEstateLoyalty MsgAddEstateLoyalty tryLocAndIcon)
+        ,("add_named_unrest"            , textValue "name" "value" MsgAddNamedUnrest MsgAddNamedUnrest tryLocAndIcon)
         ,("add_power_projection"        , textValue "type" "amount" MsgAddPowerProjection MsgAddPowerProjection tryLocAndIcon)
         ,("add_spy_network_from"        , textValue "who" "value" MsgAddSpyNetworkFrom MsgAddSpyNetworkFrom flagTextMaybe)
         ,("add_spy_network_in"          , textValue "who" "value" MsgAddSpyNetworkIn MsgAddSpyNetworkIn flagTextMaybe)
         ,("army_strength"               , textValue "who" "value" MsgArmyStrength MsgArmyStrength flagTextMaybe)
+        ,("border_distance"             , textValue "who" "distance" MsgBorderDistance MsgBorderDistance flagTextMaybe)
         ,("estate_influence"            , textValue "estate" "influence" MsgEstateInfluence MsgEstateInfluence tryLocAndIcon)
         ,("estate_loyalty"              , textValue "estate" "loyalty" MsgEstateLoyalty MsgEstateLoyalty tryLocAndIcon)
         ,("estate_territory"            , textValue "estate" "territory" MsgEstateTerritory MsgEstateTerritory tryLocAndIcon)
@@ -1367,6 +1372,7 @@ handlersTextValue = Tr.fromList
         ,("trading_part"                , textValue "trade_goods" "value" MsgTradingPart MsgTradingPart tryLocAndIcon)
         ,("trade_share"                 , textValue "country" "share" MsgTradeShare MsgTradeShare flagTextMaybe)
         ,("trust"                       , textValue "who" "value" MsgTrust MsgTrust flagTextMaybe)
+        ,("war_score_against"           , textValue "who" "value" MsgWarscoreAgainst MsgWarscoreAgainst flagTextMaybe)
         ]
 
 -- | Handlers for text/atom pairs
@@ -1423,6 +1429,7 @@ handlersSpecialComplex = Tr.fromList
         ,("remove_opinion"               , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
         ,("reverse_has_opinion"          , hasOpinion MsgReverseHasOpinion)
         ,("reverse_has_opinion_modifier" , opinion MsgReverseHasOpinionMod (\modid what who _years -> MsgReverseHasOpinionMod modid what who))
+        ,("reverse_remove_opinion"       , opinion MsgReverseRemoveOpinionMod (\modid what who _years -> MsgReverseRemoveOpinionMod modid what who))
         ,("religion_years"               , religionYears)
         ,("reverse_add_casus_belli"      , addCB False)
         ,("trading_bonus"                , tradingBonus)
@@ -1430,6 +1437,7 @@ handlersSpecialComplex = Tr.fromList
         ,("trigger_switch"               , triggerSwitch)
 
         -- Effects
+        ,("check_reducing_estate_revolt_size_trigger" , simpleEffectAtom "flag" MsgCheckEstateRevoltSize)
         ,("generate_traitor_advisor_effect" , simpleEffectNum "skill_level" MsgGenerateTraitorAdvisor)
         ,("generate_exile_advisor_effect"   , simpleEffectAtom "advisor_type" MsgGenerateExileAdvisor)
         ,("our_scholar_matches_their_school_trigger" , simpleEffectAtom "school" MsgOurScholarMatchesTheirSchool)
@@ -1441,6 +1449,7 @@ handlersSpecialComplex = Tr.fromList
         ,("multiply_variable"            , setVariable MsgMulVariable MsgMulVariableVal)
         ,("divide_variable"              , setVariable MsgDivVariable MsgDivVariableVal)
         ,("check_variable"               , setVariable MsgChkVariable MsgChkVariableVal)
+        ,("is_variable_equal"            , setVariable MsgEquVariable MsgEquVariableVal)
         ,("export_to_variable"           , exportVariable)
         ]
 

@@ -458,6 +458,7 @@ data ScriptMessage
     | MsgHasOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgReverseHasOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgRemoveOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgReverseRemoveOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgAddTreasury {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddYearsOfIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDevelCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1007,6 +1008,8 @@ data ScriptMessage
     | MsgDivVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgChkVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgChkVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgEquVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgEquVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgIsColonialNationOf { scriptMessageWho :: Text }
     | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
@@ -1437,6 +1440,13 @@ data ScriptMessage
     | MsgExileRuler {scriptMessageWhat :: Text}
     | MsgClearExiledRuler {scriptMessageWhat :: Text}
     | MsgExiledRulerSameDynastyAsCurrent {scriptMessageWhat :: Text}
+    | MsgAddGreatProjectTier {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgWarscoreAgainst {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgVariableArithmeticTrigger
+    | MsgHiddenTrigger
+    | MsgBorderDistance {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgAddNamedUnrest {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgCheckEstateRevoltSize {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -3659,6 +3669,13 @@ instance RenderMessage Script ScriptMessage where
                 , _modid
                 , "}} towards "
                 , _whom
+                ]
+        MsgReverseRemoveOpinionMod {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _whom
+                , " loses opinion modifier {{opinion_modifier|"
+                , _modid
+                , "}} towards this country"
                 ]
         MsgAddTreasury {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7098,6 +7115,20 @@ instance RenderMessage Script ScriptMessage where
                 , " is at least "
                 , toMessage (plainNum _amt)
                 ]
+        MsgEquVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Value of variable "
+                , _var1
+                , " is equal to that of "
+                , _var2
+                ]
+        MsgEquVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Value of variable "
+                , _var
+                , " equal to "
+                , toMessage (plainNum _amt)
+                ]
         MsgIsColonialNationOf { scriptMessageWho = _who }
             -> mconcat
                 [ "Is colonial nation of "
@@ -9721,6 +9752,44 @@ instance RenderMessage Script ScriptMessage where
                 [ "Exiled ruler <tt>"
                 , _what
                 , "</tt> has the same dynasty as the current ruler"
+                ]
+        MsgAddGreatProjectTier {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Add great project "
+                , _what
+                , " of tier "
+                , toMessage (roundNum _amt)
+                ]
+        MsgWarscoreAgainst {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The country has at least "
+                , toMessage (colourNumSign True _amt)
+                , " warscore against "
+                , _whom
+                ]
+        MsgVariableArithmeticTrigger
+            -> "Perform the following variable arithmetic/checks:" -- Meh, perhaps shouldn't even be indented?
+        MsgHiddenTrigger
+            -> "Hidden trigger:"
+        MsgBorderDistance {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Border distance to "
+                , _whom
+                , " is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgAddNamedUnrest {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Add {{icon|local unrest}} "
+                , toMessage (colourNumSign False _amt)
+                , " unrest due to "
+                , toMessage (iquotes _what)
+                ]
+        MsgCheckEstateRevoltSize {scriptMessageWhat = _what}
+            -> mconcat
+                [ "A number of provinces proportional to the country size has the <tt>"
+                , _what
+                , "</tt> modifier"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
