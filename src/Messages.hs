@@ -277,6 +277,7 @@ data ScriptMessage
     | MsgHadCountryFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgHadProvinceFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgHadRulerFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
+    | MsgHadHeirFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgHadGlobalFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgColonySettlers {scriptMessageAmt :: Double}
     | MsgWasAtWar {scriptMessageAmt :: Double}
@@ -996,6 +997,7 @@ data ScriptMessage
     | MsgEmployedAdvisorMale {scriptMessageMale :: Bool}
     | MsgNumOwnedProvincesWith {scriptMessageAmt :: Double}
     | MsgNumOwnedProvincesOrNonSovereignSubjectsWith {scriptMessageAmt :: Double}
+    | MsgNumOwnedStatesOrNonSovereignSubjectsWith {scriptMessageAmt :: Double}
     | MsgSetVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgSetVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgAddVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
@@ -1046,6 +1048,7 @@ data ScriptMessage
     | MsgHasSpyNetworkFrom { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgHasSpyNetworkIn { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgDefineGeneral { scriptMessageIcon :: Text }
+    | MsgDefineRulerToGeneral { scriptMessageIcon :: Text }
     | MsgDefineConquistador { scriptMessageIcon :: Text }
     | MsgDefineAdmiral { scriptMessageIcon :: Text }
     | MsgDefineExplorer { scriptMessageIcon :: Text }
@@ -1273,7 +1276,7 @@ data ScriptMessage
     | MsgCanBeOverlord {scriptMessageType :: Text}
     | MsgTrust {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgTechDifference {scriptMessageAmt :: Double}
-    | MsgAiAttitude {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgAiAttitude {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
     | MsgAllAllies
     | MsgAllElectors
     | MsgAllKnownCountries
@@ -1452,6 +1455,11 @@ data ScriptMessage
     | MsgHasGeneralWith {scriptMessageIcon :: Text}
     | MsgHasAdmiralWith {scriptMessageIcon :: Text}
     | MsgTotalPips {scriptMessageAmt :: Double}
+    | MsgAddLootFromRichProvince {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgSetAiAttitude {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
+    | MsgRegion
+    | MsgAddDisasterProgress {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgYearsInUnionUnder {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -2487,30 +2495,37 @@ instance RenderMessage Script ScriptMessage where
             -> "consort"
         MsgHadCountryFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
-                [ "Has had country flag <tt>"
+                [ "Has had country flag "
                 , _name
-                , "</tt> for at least "
+                , " for at least "
                 , toMessage (formatDays _days)
                 ]
         MsgHadProvinceFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
-                [ "Has had province flag <tt>"
+                [ "Has had province flag "
                 , _name
-                , "</tt> for at least "
+                , " for at least "
                 , toMessage (formatDays _days)
                 ]
         MsgHadRulerFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
-                [ "Has had ruler flag <tt>"
+                [ "Has had ruler flag "
                 , _name
-                , "</tt> for at least "
+                , " for at least "
+                , toMessage (formatDays _days)
+                ]
+        MsgHadHeirFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
+            -> mconcat
+                [ "Has had heir flag "
+                , _name
+                , " for at least "
                 , toMessage (formatDays _days)
                 ]
         MsgHadGlobalFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
-                [ "Global flag <tt>"
+                [ "Global flag "
                 , _name
-                , "</tt> has been set for at least "
+                , " has been set for at least "
                 , toMessage (formatDays _days)
                 ]
         MsgColonySettlers {scriptMessageAmt = _amt}
@@ -6585,11 +6600,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Build "
                 , _icon
                 , " "
-                , toMessage (reducedNum plainNum _amt)
+                , toMessage (plainNum _amt)
                 , " heavy ships at "
-                , toMessage (plainPc _cost)
+                , toMessage (reducedNum plainPc _cost)
                 , " of normal cost, taking "
-                , toMessage (plainPc _speed)
+                , toMessage (reducedNum plainPc _speed)
                 , " of normal time"
                 ]
         MsgBuildLightShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
@@ -6597,11 +6612,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Build "
                 , _icon
                 , " "
-                , toMessage (reducedNum plainNum _amt)
+                , toMessage (plainNum _amt)
                 , " light ships at "
-                , toMessage (plainPc _cost)
+                , toMessage (reducedNum plainPc _cost)
                 , " of normal cost, taking "
-                , toMessage (plainPc _speed)
+                , toMessage (reducedNum plainPc _speed)
                 , " of normal time"
                 ]
         MsgBuildGalleys {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
@@ -6609,11 +6624,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Build "
                 , _icon
                 , " "
-                , toMessage (reducedNum plainNum _amt)
+                , toMessage (plainNum _amt)
                 , " galleys at "
-                , toMessage (plainPc _cost)
+                , toMessage (reducedNum plainPc _cost)
                 , " of normal cost, taking "
-                , toMessage (plainPc _speed)
+                , toMessage (reducedNum plainPc _speed)
                 , " of normal time"
                 ]
         MsgBuildTransports {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
@@ -6621,11 +6636,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Build "
                 , _icon
                 , " "
-                , toMessage (reducedNum plainNum _amt)
+                , toMessage (plainNum _amt)
                 , " transports at "
-                , toMessage (plainPc _cost)
+                , toMessage (reducedNum plainPc _cost)
                 , " of normal cost, taking "
-                , toMessage (plainPc _speed)
+                , toMessage (reducedNum plainPc _speed)
                 , " of normal time"
                 ]
         MsgAristocratsInfluence {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -7035,6 +7050,12 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " provinces owned by the country or non-tributary subjects with:"
                 ]
+        MsgNumOwnedStatesOrNonSovereignSubjectsWith {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "At least "
+                , toMessage (plainNum _amt)
+                , " states owned by the country or non-tributary subjects with:"
+                ]
         MsgSetVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
                 [ "Set variable "
@@ -7324,6 +7345,12 @@ instance RenderMessage Script ScriptMessage where
         MsgDefineGeneral { scriptMessageIcon = _icon }
             -> mconcat
                 [ "Gain a new "
+                , _icon
+                , " general with:"
+                ]
+        MsgDefineRulerToGeneral { scriptMessageIcon = _icon }
+            -> mconcat
+                [ "Make ruler a "
                 , _icon
                 , " general with:"
                 ]
@@ -9817,6 +9844,38 @@ instance RenderMessage Script ScriptMessage where
                 [ "At least "
                 , toMessage (roundNum _amt)
                 , " [[pips]]"
+                ]
+        MsgAddLootFromRichProvince {}
+            -> "Province gains {{icon|devastation|24px}}{{red|80}} devastation. Looter gets money and {{icon|mil|24px}} military power proportional to city size"
+        MsgSetAiAttitude {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageYn = _yn}
+            -> mconcat
+                [ ifThenElseT _yn "Lock" "Set"
+                , " the AI's attitude towards "
+                , _whom
+                , " to "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgRegion
+            -> "All provinces in this region:"
+        MsgAddDisasterProgress {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Add "
+                , toMessage (colourPcSign False _amt)
+                , " progress to the "
+                , _icon
+                , " "
+                , _what
+                , " disaster"
+                ]
+        MsgYearsInUnionUnder {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The country has been in a [[personal union]] under "
+                , _whom
+                , " for at least "
+                , toMessage (plainNum _amt)
+                , " years"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

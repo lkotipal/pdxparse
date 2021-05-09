@@ -72,6 +72,7 @@ module EU4.Handlers (
     ,   defineHeir
     ,   defineConsort
     ,   buildToForcelimit
+    ,   addUnitConstruction
     ,   declareWarWithCB
     ,   hasDlc
     ,   hasEstateInfluenceModifier
@@ -123,6 +124,8 @@ module EU4.Handlers (
     ,   hasEstateLedRegency
     ,   changePrice
     ,   hasLeaderWith
+    ,   killAdvisorByCategory
+    ,   region
     -- testing
     ,   isPronoun
     ,   flag
@@ -839,6 +842,8 @@ scriptIconFileTable = HM.fromList
     ,("company_administration", "TC company administration")
     ,("military_administration", "TC military administration")
     ,("governor_general_mansion", "TC governor generals mansion")
+    -- Disasters
+    ,("coup_attempt_disaster", "Coup Attempt")
     ]
 
 -- Given a script atom, return the corresponding icon key, if any.
@@ -2494,12 +2499,11 @@ foldCompound "buildToForcelimit" "BuildToForcelimit" "btf"
 
 --addUnitConstruction :: (IsGameState (GameState g), Monad m) => Text -> StatementHandler g m
 foldCompound "addUnitConstruction" "UnitConstruction" "uc"
-    [("extraArg", [t|Text|])]
+    []
     [CompField "amount" [t|Double|] Nothing True
     ,CompField "type" [t|UnitType|] Nothing True
     ,CompField "speed" [t|Double|] (Just [|1|]) False
-    ,CompField "cost" [t|Double|] (Just [|1|]) False
-    ,CompField "optionalArg" [t|Double|] Nothing False]
+    ,CompField "cost" [t|Double|] (Just [|1|]) False]
     [| (case _type of
             UnitHeavyShip -> MsgBuildHeavyShips (iconText "heavy ship")
             UnitLightShip -> MsgBuildLightShips (iconText "light ship")
@@ -3531,21 +3535,31 @@ exportVariable stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_ev (foldl' addLine newEV
         pp_ev ev = return $ (trace $ "Missing info for export_to_variable " ++ show ev ++ " " ++ (show stmt)) $ preMessage stmt
 exportVariable stmt = (trace $ "Not handled in export_to_variable: " ++ (show stmt)) $ preStatement stmt
 
------------------------------
--- Handler for ai_attitude --
------------------------------
-aiAttitude :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
-aiAttitude stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_aia (parseTA "who" "attitude" scr)
+-----------------------------------
+-- Handler for (set_)ai_attitude --
+-----------------------------------
+aiAttitude :: forall g m. (EU4Info g, Monad m) => (Text -> Text -> Text -> Bool -> ScriptMessage) -> StatementHandler g m
+aiAttitude msg stmt@[pdx| %_ = @scr |] =
+    let
+        (mlocked, rest) = extractStmt (matchLhsText "locked") scr
+        isLocked = (maybe "" T.toLower (getMaybeRhsText mlocked)) == "yes"
+    in
+        msgToPP =<< pp_aia isLocked (parseTA "who" "attitude" rest)
     where
-        pp_aia :: TextAtom -> PPT g m ScriptMessage
-        pp_aia ta = case (ta_what ta, ta_atom ta) of
+        pp_aia :: Bool -> TextAtom -> PPT g m ScriptMessage
+        pp_aia isLocked ta = case (ta_what ta, ta_atom ta) of
             (Just who, Just attitude) -> do
-                whoLoc <- flagText (Just EU4Country) who
+                let tags = T.splitOn ":" who -- A bit of a hack
+                    icon = (iconText attitude) 
                 attLoc <- getGameL10n attitude
-                return $ MsgAiAttitude (iconText attitude) attLoc whoLoc
+                if length tags == 2 then do
+                    taggedLoc <- tagged (tags !! 0) (tags !! 1)
+                    return $ msg icon attLoc (fromMaybe who taggedLoc) isLocked
+                else do
+                    whoLoc <- flagText (Just EU4Country) who
+                    return $ msg icon attLoc whoLoc isLocked
             _ -> return $ preMessage stmt
-aiAttitude stmt = preStatement stmt
+aiAttitude _ stmt = (trace $ "Not handled in aiAttitude: " ++ show stmt) $ preStatement stmt
 
 ------------------------------------------------------
 -- Handler for {give,take}_estate_land_share_<size> --
@@ -3740,3 +3754,21 @@ hasLeaderWith stmt@[pdx| %_ = @scr |] = pp_hlw (foldl' addLine newHLW scr)
             liftA2 (++) (msgToPP msg) (pure (body1 ++ body2))
 
 hasLeaderWith stmt = (trace $ "Not handled in has_leader_with: " ++ (show stmt)) $ preStatement stmt
+
+-------------------------------------------------
+-- Handler for kill_advisor_by_category_effect --
+-------------------------------------------------
+
+killAdvisorByCategory :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+killAdvisorByCategory stmt@[pdx| %_ = @scr |] | [[pdx| $typ = yes |]] <- scr = do
+    typeLoc <- getGameL10n typ
+    msgToPP $ MsgRemoveAdvisor typeLoc
+killAdvisorByCategory stmt = (trace $ "Not handled in kill_advisor_by_category_effect: " ++ show stmt) $ preStatement stmt
+
+-- Handler for region --
+--
+-- Can either be a compund statement or a normal condition
+region :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+region stmt@[pdx| %_ = $_ |] = withLocAtom MsgRegionIs stmt
+region stmt@[pdx| %_ = @_ |] = (scope EU4Province  . compoundMessage MsgRegion) stmt
+region stmt = preStatement stmt
