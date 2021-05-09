@@ -126,6 +126,7 @@ module EU4.Handlers (
     ,   hasLeaderWith
     ,   killAdvisorByCategory
     ,   region
+    ,   institutionPresence
     -- testing
     ,   isPronoun
     ,   flag
@@ -3776,3 +3777,12 @@ region :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
 region stmt@[pdx| %_ = $_ |] = withLocAtom MsgRegionIs stmt
 region stmt@[pdx| %_ = @_ |] = (scope EU4Province  . compoundMessage MsgRegion) stmt
 region stmt = preStatement stmt
+
+----------------------------------------
+-- Handler for e.g. enlightenment = X --
+----------------------------------------
+institutionPresence :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+institutionPresence [pdx| $inst = !val |] = do
+    instLoc <- getGameL10n inst
+    msgToPP $ MsgInstitutionPresence (iconText inst) instLoc val
+institutionPresence stmt = (trace $ "Warning: institutionPresence doesn't handle: " ++ (show stmt)) $ preStatement stmt

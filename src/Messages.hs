@@ -1469,6 +1469,7 @@ data ScriptMessage
     | MsgSetPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgNumAspects {scriptMessageAmt :: Double}
+    | MsgInstitutionPresence {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9940,6 +9941,15 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , toMessage (plural _amt " Aspect" " Aspects")
                 , " of Faith"
+                ]
+        MsgInstitutionPresence {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , _what
+                , " institution is at least "
+                , toMessage (plainPc _amt)
+                , " present"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

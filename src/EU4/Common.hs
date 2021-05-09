@@ -1569,6 +1569,15 @@ handlersMisc = Tr.fromList
         ,("trade_depot"                      , buildingCount)
         ,("university"                       , buildingCount)
         ,("workshop"                         , buildingCount)
+        -- Institutions
+        ,("feudalism"                        , institutionPresence)
+        ,("renaissance"                      , institutionPresence)
+        ,("new_world_i"                      , institutionPresence)
+        ,("printing_press"                   , institutionPresence)
+        ,("global_trade"                     , institutionPresence)
+        ,("manufactories"                    , institutionPresence)
+        ,("enlightenment"                    , institutionPresence)
+        ,("industrialization"                , institutionPresence)
         ]
 
 -- | Handlers for ignored statements
