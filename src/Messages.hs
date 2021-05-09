@@ -1447,6 +1447,11 @@ data ScriptMessage
     | MsgBorderDistance {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAddNamedUnrest {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgCheckEstateRevoltSize {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHasLeaderWith
+    | MsgHasMonarchLeaderWith
+    | MsgHasGeneralWith {scriptMessageIcon :: Text}
+    | MsgHasAdmiralWith {scriptMessageIcon :: Text}
+    | MsgTotalPips {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9790,6 +9795,28 @@ instance RenderMessage Script ScriptMessage where
                 [ "A number of provinces proportional to the country size has the <tt>"
                 , _what
                 , "</tt> modifier"
+                ]
+        MsgHasLeaderWith
+            -> "Has leader with:"
+        MsgHasMonarchLeaderWith
+            -> "Has monarch leader with:"
+        MsgHasGeneralWith {scriptMessageIcon = _icon}
+            -> mconcat
+                [ "Has "
+                , _icon
+                , " general with:"
+                ]
+        MsgHasAdmiralWith {scriptMessageIcon = _icon}
+            -> mconcat
+                [ "Has "
+                , _icon
+                , " admiral with:"
+                ]
+        MsgTotalPips {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "At least "
+                , toMessage (roundNum _amt)
+                , " [[pips]]"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

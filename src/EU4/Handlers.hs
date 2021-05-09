@@ -122,6 +122,7 @@ module EU4.Handlers (
     ,   hasGreatProject
     ,   hasEstateLedRegency
     ,   changePrice
+    ,   hasLeaderWith
     -- testing
     ,   isPronoun
     ,   flag
@@ -3184,14 +3185,49 @@ data MilitaryLeader = MilitaryLeader
 newML :: MilitaryLeader
 newML = MilitaryLeader Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
-defineMilitaryLeader :: forall g m. (EU4Info g, Monad m) => Text -> Bool -> (Text -> ScriptMessage) -> StatementHandler g m
-defineMilitaryLeader icon naval headline stmt@[pdx| %_ = @scr |] = do
-    currentFile <- withCurrentFile $ \f -> return f
+-- Also used for hasLeaderWith
+pp_mil_leader_attrib :: forall g m. (EU4Info g, Monad m) => Bool -> MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
+pp_mil_leader_attrib naval ml =
     let msgShock     = (if naval then MsgNavalLeaderShock (iconText "naval leader shock") else MsgLandLeaderShock (iconText "land leader shock"))
         msgFire      = (if naval then MsgNavalLeaderFire (iconText "naval leader fire") else MsgLandLeaderFire (iconText "land leader fire"))
         msgManuever  = (if naval then MsgNavalLeaderManeuver (iconText "naval leader maneuver") else MsgLandLeaderManeuver (iconText "land leader maneuver"))
         msgSiege     = (if naval then MsgNavalLeaderSiege (iconText "blockade") else MsgLandLeaderSiege (iconText "land leader siege"))
-        addLine :: MilitaryLeader -> GenericStatement -> MilitaryLeader
+
+        pp_mil_leader_attrib' :: MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_tradition = Just trad } = do
+            [msg] <- msgToPP $ MsgLeaderTradition naval trad
+            return (Just (msg, ml { ml_tradition = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_shock = Just shock } = do
+            [msg] <- msgToPP $ msgShock shock
+            return (Just (msg, ml { ml_shock = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_fire = Just fire } = do
+            [msg] <- msgToPP $ msgFire fire
+            return (Just (msg, ml { ml_fire = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_manuever = Just manuever } = do
+            [msg] <- msgToPP $ msgManuever manuever
+            return (Just (msg, ml { ml_manuever = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_siege = Just siege } = do
+            [msg] <- msgToPP $ msgSiege siege
+            return (Just (msg, ml { ml_siege = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_name = Just name } = do
+            [msg] <- msgToPP $ MsgNamed name
+            return (Just (msg, ml { ml_name = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_female = Just True } = do
+            [msg] <- msgToPP $ MsgWithGender False
+            return (Just (msg, ml { ml_female = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_trait = Just trait } = do
+            text <- getGameL10n trait
+            [msg] <- msgToPP $ MsgMilitaryLeaderTrait text
+            return (Just (msg, ml { ml_trait = Nothing }))
+        pp_mil_leader_attrib' _ = return Nothing
+    in
+        pp_mil_leader_attrib' ml
+
+
+defineMilitaryLeader :: forall g m. (EU4Info g, Monad m) => Text -> Bool -> (Text -> ScriptMessage) -> StatementHandler g m
+defineMilitaryLeader icon naval headline stmt@[pdx| %_ = @scr |] = do
+    currentFile <- withCurrentFile $ \f -> return f
+    let addLine :: MilitaryLeader -> GenericStatement -> MilitaryLeader
         addLine ml [pdx| tradition = %rhs |]
             = ml { ml_tradition = floatRhs rhs }
         addLine ml [pdx| shock = %rhs |]
@@ -3211,39 +3247,11 @@ defineMilitaryLeader icon naval headline stmt@[pdx| %_ = @scr |] = do
         addLine ml line = (trace $ ("Unhandled military leader condition in " ++ currentFile ++ ": " ++ show line)) $ ml
 
         pp_mil_leader :: MilitaryLeader -> PPT g m IndentedMessages
-        pp_mil_leader ea = do
-            body <- indentUp (unfoldM pp_mil_leader_attrib ea)
+        pp_mil_leader ml = do
+            body <- indentUp (unfoldM (pp_mil_leader_attrib naval) ml)
             liftA2 (++)
                 (msgToPP $ headline (iconText icon))
                 (pure body)
-
-        pp_mil_leader_attrib :: MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
-        pp_mil_leader_attrib ml@MilitaryLeader { ml_tradition = Just trad } = do
-            [msg] <- msgToPP $ MsgLeaderTradition naval trad
-            return (Just (msg, ml { ml_tradition = Nothing }))
-        pp_mil_leader_attrib ml@MilitaryLeader { ml_shock = Just shock } = do
-            [msg] <- msgToPP $ msgShock shock
-            return (Just (msg, ml { ml_shock = Nothing }))
-        pp_mil_leader_attrib ml@MilitaryLeader { ml_fire = Just fire } = do
-            [msg] <- msgToPP $ msgFire fire
-            return (Just (msg, ml { ml_fire = Nothing }))
-        pp_mil_leader_attrib ml@MilitaryLeader { ml_manuever = Just manuever } = do
-            [msg] <- msgToPP $ msgManuever manuever
-            return (Just (msg, ml { ml_manuever = Nothing }))
-        pp_mil_leader_attrib ml@MilitaryLeader { ml_siege = Just siege } = do
-            [msg] <- msgToPP $ msgSiege siege
-            return (Just (msg, ml { ml_siege = Nothing }))
-        pp_mil_leader_attrib ml@MilitaryLeader { ml_name = Just name } = do
-            [msg] <- msgToPP $ MsgNamed name
-            return (Just (msg, ml { ml_name = Nothing }))
-        pp_mil_leader_attrib ml@MilitaryLeader { ml_female = Just True } = do
-            [msg] <- msgToPP $ MsgWithGender False
-            return (Just (msg, ml { ml_female = Nothing }))
-        pp_mil_leader_attrib ml@MilitaryLeader { ml_trait = Just trait } = do
-            text <- getGameL10n trait
-            [msg] <- msgToPP $ MsgMilitaryLeaderTrait text
-            return (Just (msg, ml { ml_trait = Nothing }))
-        pp_mil_leader_attrib _ = return Nothing
 
     pp_mil_leader $ foldl' addLine newML scr
 defineMilitaryLeader _ _ _ stmt = preStatement stmt
@@ -3678,3 +3686,57 @@ changePrice stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_cp (foldl' addLine newCP sc
             return $ MsgChangePrice (iconText tradegood) tgLoc keyLoc value duration
         pp_cp cp = return $ (trace $ "Missing info for change_price " ++ show cp ++ " " ++ (show stmt)) $ preMessage stmt
 changePrice stmt = (trace $ "changePrice: Not handled: " ++ (show stmt)) $ preStatement stmt
+
+---------------------------------
+-- Handler for has_leader_with --
+---------------------------------
+data HasLeaderWith = HasLeaderWith
+        { hlw_admiral :: Bool
+        , hlw_general :: Bool
+        , hlw_monarch :: Bool
+        , hlw_total_pips :: Maybe Double
+        , hlw_shock :: Maybe Double
+        , hlw_fire :: Maybe Double
+        , hlw_manuever :: Maybe Double
+        , hlw_siege :: Maybe Double
+        } deriving Show
+
+newHLW :: HasLeaderWith
+newHLW = HasLeaderWith False False False Nothing Nothing Nothing Nothing Nothing
+
+hasLeaderWith :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasLeaderWith stmt@[pdx| %_ = @scr |] = pp_hlw (foldl' addLine newHLW scr)
+    where
+        addLine :: HasLeaderWith -> GenericStatement -> HasLeaderWith
+        addLine hlw [pdx| general = $t |] | T.toLower t == "yes" = hlw { hlw_general = True }
+        addLine hlw [pdx| admiral = $t |] | T.toLower t == "yes" = hlw { hlw_admiral = True }
+        addLine hlw [pdx| is_monarch_leader = $t |] | T.toLower t == "yes" = hlw { hlw_monarch = True }
+        addLine hlw [pdx| total_pips = %rhs |] = hlw { hlw_total_pips = floatRhs rhs }
+        addLine hlw [pdx| shock = %rhs |] = hlw { hlw_shock = floatRhs rhs }
+        addLine hlw [pdx| fire = %rhs |] = hlw { hlw_fire = floatRhs rhs }
+        addLine hlw [pdx| manuever = %rhs |] = hlw { hlw_manuever = floatRhs rhs }
+        addLine hlw [pdx| siege = %rhs |] = hlw { hlw_siege = floatRhs rhs }
+        addLine hlw stmt = (trace $ "Unknown in has_leader_with: " ++ show stmt) $ hlw
+
+        pp_hlw_attrib :: HasLeaderWith -> PPT g m (Maybe (IndentedMessage, HasLeaderWith))
+        pp_hlw_attrib hlw@HasLeaderWith { hlw_total_pips = Just pips } = do
+            [msg] <- msgToPP $ MsgTotalPips pips
+            return (Just (msg, hlw { hlw_total_pips = Nothing }))
+        pp_hlw_attrib _ = return Nothing
+
+        pp_hlw :: HasLeaderWith -> PPT g m IndentedMessages
+        pp_hlw hlw = do
+            let ml = newML { ml_shock    = hlw_shock    hlw
+                           , ml_fire     = hlw_fire     hlw
+                           , ml_manuever = hlw_manuever hlw
+                           , ml_siege    = hlw_siege    hlw }
+                msg = case hlw of
+                    HasLeaderWith { hlw_monarch = True } -> MsgHasMonarchLeaderWith
+                    HasLeaderWith { hlw_admiral = True } -> MsgHasAdmiralWith (iconText "admiral")
+                    HasLeaderWith { hlw_general = True } -> MsgHasGeneralWith (iconText "general")
+                    _ -> MsgHasLeaderWith
+            body1 <- indentUp (unfoldM pp_hlw_attrib hlw)
+            body2 <- indentUp (unfoldM (pp_mil_leader_attrib (hlw_admiral hlw)) ml)
+            liftA2 (++) (msgToPP msg) (pure (body1 ++ body2))
+
+hasLeaderWith stmt = (trace $ "Not handled in has_leader_with: " ++ (show stmt)) $ preStatement stmt

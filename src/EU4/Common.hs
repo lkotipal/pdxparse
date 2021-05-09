@@ -1500,6 +1500,7 @@ handlersMisc = Tr.fromList
         ,("has_casus_belli"     , taTypeFlag "type" "target" MsgHasCasusBelli)
         ,("has_dlc"             , hasDlc)
         ,("has_government_attribute" , hasGovermentAttribute)
+        ,("has_leader_with"     , hasLeaderWith)
         ,("hre_reform_level"    , hreReformLevel)
         ,("is_month"            , isMonth)
         ,("kill_leader"         , killLeader)
