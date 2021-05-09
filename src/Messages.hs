@@ -1460,6 +1460,15 @@ data ScriptMessage
     | MsgRegion
     | MsgAddDisasterProgress {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgYearsInUnionUnder {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgHasAnyHolyOrder
+    | MsgHasHolyOrder {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgNativePolicy {scriptMessageWhat :: Text}
+    | MsgCanEstablishHolyOrder {scriptMessageYn :: Bool}
+    | MsgEndIncident {scriptMessageWhat :: Text}
+    | MsgNumStreltsy {scriptMessageAmt :: Double}
+    | MsgSetPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHasPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgNumAspects {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9876,6 +9885,61 @@ instance RenderMessage Script ScriptMessage where
                 , " for at least "
                 , toMessage (plainNum _amt)
                 , " years"
+                ]
+        MsgHasAnyHolyOrder
+            -> "Has established any holy order"
+        MsgHasHolyOrder {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has established "
+                , _icon
+                , " "
+                , _what
+                , " holy order"
+                ]
+        MsgNativePolicy {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Native policy is set to "
+                , _what
+                ]
+        MsgCanEstablishHolyOrder {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Can"
+                , ifThenElseT _yn "" " ''not''"
+                , " establish holy orders"
+                ]
+        MsgEndIncident {scriptMessageWhat = _what}
+            -> mconcat
+                [ "End the "
+                , toMessage (iquotes _what)
+                , " incident"
+                ]
+        MsgNumStreltsy {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " streltsy regiments"
+                ]
+        MsgSetPersonalDiety {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Choose "
+                , _icon
+                , " "
+                , _what
+                , " as personal deity"
+                ]
+        MsgHasPersonalDiety {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ _icon
+                , " "
+                , _what
+                , " has been chosen as personal deity"
+                ]
+        MsgNumAspects {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has activated at least "
+                , toMessage (plainNum _amt)
+                , toMessage (plural _amt " Aspect" " Aspects")
+                , " of Faith"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

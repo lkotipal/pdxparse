@@ -124,7 +124,7 @@ executable pdxparse
     hs-source-dirs:    os/unix
 
   default-language:    Haskell2010
-  ghc-options:         -fwarn-incomplete-patterns -Werror
+  ghc-options:         -fwarn-incomplete-patterns -fmax-pmcheck-iterations=3000000 -Werror
   
 source-repository head
   type:            git

@@ -844,6 +844,10 @@ scriptIconFileTable = HM.fromList
     ,("governor_general_mansion", "TC governor generals mansion")
     -- Disasters
     ,("coup_attempt_disaster", "Coup Attempt")
+    -- Holy orders
+    ,("dominican_order", "Dominicans")
+    ,("franciscan_order", "Franciscans")
+    ,("jesuit_order", "Jesuits")
     ]
 
 -- Given a script atom, return the corresponding icon key, if any.
