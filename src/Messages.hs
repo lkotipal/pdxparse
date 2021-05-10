@@ -395,6 +395,8 @@ data ScriptMessage
     | MsgChangeRulerReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRulerReligionIs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRulerReligionIsSame {scriptMessageWhom :: Text}
+    | MsgRulerCultureIs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgRulerCultureIsSame {scriptMessageWhom :: Text}
     | MsgIsCoreOf {scriptMessageWhom :: Text}
     | MsgHasCoreOn {scriptMessageWhat :: Text}
     | MsgHasClaim {scriptMessageWho :: Text}
@@ -1388,6 +1390,7 @@ data ScriptMessage
     | MsgMilitaryStrength { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgNumUnitsInProvince {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgNativeSize {scriptMessageAmt :: Double}
+    | MsgChangeNativeSize {scriptMessageAmt :: Double}
     | MsgNumTributaryStates {scriptMessageAmt :: Double}
     | MsgIsThreat {scriptMessageWhom :: Text}
     | MsgGrantIndependence
@@ -1465,11 +1468,41 @@ data ScriptMessage
     | MsgNativePolicy {scriptMessageWhat :: Text}
     | MsgCanEstablishHolyOrder {scriptMessageYn :: Bool}
     | MsgEndIncident {scriptMessageWhat :: Text}
+    | MsgIsIncidentActive {scriptMessageWhat :: Text}
     | MsgNumStreltsy {scriptMessageAmt :: Double}
     | MsgSetPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgNumAspects {scriptMessageAmt :: Double}
     | MsgInstitutionPresence {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgKnowsCountry {scriptMessageWhom :: Text}
+    | MsgIsTerritory {scriptMessageYn :: Bool}
+    | MsgIsStateCore {scriptMessageWhat :: Text}
+    | MsgChurchPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHasChurchAspect {scriptMessageWhat :: Text}
+    | MsgCreateUnion {scriptMessageWhom :: Text}
+    | MsgCreateVassal {scriptMessageWhom :: Text}
+    | MsgCreateMarch {scriptMessageWhom :: Text}
+    | MsgHighestSupplyLimitInArea
+    | MsgStartEstateAgenda {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgPickRandomEstateIfPresent {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
+    | MsgHasAnyActiveEstateAgenda {scriptMessageYn :: Bool}
+    | MsgClearEstateAgendaCache {scriptMessageWhom :: Text}
+    | MsgNativeFerocity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNativeAggressiveness {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgChangeNativeFerocity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgChangeNativeAggressiveness {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgExpulsionTarget {scriptMessageWhat :: Text}
+    | MsgHasSupportLoyalists {scriptMessageYn :: Bool}
+    | MsgHasSubsidizeArmies {scriptMessageYn :: Bool}
+    | MsgHasNewDynasty {scriptMessageYn :: Bool}
+    | MsgHasSendOfficers {scriptMessageYn :: Bool}
+    | MsgHasEmbargoRivals {scriptMessageYn :: Bool}
+    | MsgHasDivertTrade {scriptMessageYn :: Bool}
+    | MsgHasScutage {scriptMessageYn :: Bool}
+    | MsgIsMarch {scriptMessageYn :: Bool}
+    | MsgIsSubjectOtherThanTributary
+    | MsgSpawnScaledRebels {scriptMessageRtype :: Text, scriptMessageLeader :: Text, scriptMessageYn :: Bool}
+    | MsgCreateIndependentEstate {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageDesc :: Text, scriptMessageYn :: Bool}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -3274,6 +3307,18 @@ instance RenderMessage Script ScriptMessage where
         MsgRulerReligionIs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Ruler religion is "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgRulerCultureIsSame {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Ruler culture is the same as that of "
+                , _whom
+                ]
+        MsgRulerCultureIs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Ruler culture is "
                 , _icon
                 , " "
                 , _what
@@ -5338,7 +5383,8 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgGainLibertyDesire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
-                [ "Gain "
+                [ gainOrLose _amt
+                , " "
                 , _icon
                 , " "
                 , toMessage (colourPc False _amt)
@@ -9490,8 +9536,16 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgNativeSize {scriptMessageAmt = _amt}
             -> mconcat
-                [ "The size of natives in the province is at least "
-                , toMessage (plainNum _amt)
+                [ "Native population is at least "
+                , toMessage (reducedNum plainNum _amt)
+                ]
+        MsgChangeNativeSize {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Province "
+                , gainsOrLoses _amt
+                , " "
+                , toMessage (reducedNum plainNum _amt)
+                , " native population"
                 ]
         MsgNumTributaryStates {scriptMessageAmt = _amt}
             -> mconcat
@@ -9914,6 +9968,12 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (iquotes _what)
                 , " incident"
                 ]
+        MsgIsIncidentActive {scriptMessageWhat = _what}
+            -> mconcat
+                [ "The "
+                , toMessage (iquotes _what)
+                , " incident is active"
+                ]
         MsgNumStreltsy {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -9950,6 +10010,182 @@ instance RenderMessage Script ScriptMessage where
                 , " institution is at least "
                 , toMessage (plainPc _amt)
                 , " present"
+                ]
+        MsgKnowsCountry {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Knows about "
+                , _whom
+                ]
+        MsgIsTerritory {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , ifThenElseT _yn "" " ''not''"
+                , " a territory"
+                ]
+        MsgIsStateCore {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Is a state core of "
+                , _what
+                ]
+        MsgChurchPower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " church power"
+                ]
+        MsgHasChurchAspect {scriptMessageWhat = _what}
+            -> mconcat
+                ["Has the "
+                , _what
+                , " Aspect of Church"
+                ]
+        MsgCreateUnion {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Make "
+                , _whom
+                , " a junior partner in a personal union"
+                ]
+        MsgCreateVassal {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Make "
+                , _whom
+                , " a vassal"
+                ]
+        MsgCreateMarch {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Make "
+                , _whom
+                , " a march"
+                ]
+        MsgHighestSupplyLimitInArea
+            -> "Has the highest supply limit in the area"
+        MsgStartEstateAgenda {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Start an agenda for the "
+                , _icon
+                , " "
+                , _what
+                , " estate"
+                ]
+        MsgPickRandomEstateIfPresent {scriptMessageWhom = _whom, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Pick a random estate that's present and doesn't have the flag "
+                , _whom
+                , " and perform the action <tt>"
+                , _what
+                , "</tt>"
+                ]
+        MsgHasAnyActiveEstateAgenda {scriptMessageYn = _yn}
+            -> mconcat
+                [ ifThenElseT _yn "Has" "Does ''not'' have"
+                , " an active estate agenda"
+                ]
+        MsgClearEstateAgendaCache {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Clear estate agenda cache for "
+                , _whom
+                ]
+        MsgNativeFerocity {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Native ferocity is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgNativeAggressiveness {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Native aggressiveness is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgChangeNativeFerocity {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Native population "
+                , gainsOrLoses _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum False _amt)
+                , " ferocity"
+                ]
+        MsgChangeNativeAggressiveness {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Native population "
+                , gainsOrLoses _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum False _amt)
+                , " aggressiveness"
+                ]
+        MsgExpulsionTarget {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Expelling minorities to "
+                , _what
+                ]
+        MsgHasSupportLoyalists {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Support loyalists is "
+                , ifThenElseT _yn "enabled" "disabled"
+                ]
+        MsgHasSubsidizeArmies {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Subsidize armies is "
+                , ifThenElseT _yn "enabled" "disabled"
+                ]
+        MsgHasNewDynasty {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "The country "
+                , ifThenElseT _yn "has" "does ''not'' have"
+                , " a new dynasty"
+                ]
+        MsgHasSendOfficers {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Send officers is "
+                , ifThenElseT _yn "enabled" "disabled"
+                ]
+        MsgHasEmbargoRivals {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Is"
+                , ifThenElseT _yn "" " ''not''"
+                , " embargoing overlord's rivals"
+                ]
+        MsgHasDivertTrade {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Divert trade is "
+                , ifThenElseT _yn "enabled" "disabled"
+                ]
+        MsgHasScutage {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Scutage is "
+                , ifThenElseT _yn "enabled" "disabled"
+                ]
+        MsgIsMarch {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Is"
+                , ifThenElseT _yn "" " ''not''"
+                , " a march"
+                ]
+        MsgIsSubjectOtherThanTributary
+            -> "Is a non-tributary subject"
+        MsgSpawnScaledRebels {scriptMessageRtype = _rtype, scriptMessageLeader = _leader, scriptMessageYn = _large}
+            -> mconcat
+                [ _rtype
+                , " rise in a "
+                , ifThenElseT _large "large" "small"
+                , " revolt scaled by total development"
+                , _leader
+                ]
+        MsgCreateIndependentEstate {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageDesc = _desc, scriptMessageYn = _play_as}
+            -> mconcat
+                [ _icon
+                , " "
+                , _what
+                , " estate declares independence, forming their own nation"
+                , _desc
+                , "."
+                , ifThenElseT _play_as " The human player takes over this new country." ""
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

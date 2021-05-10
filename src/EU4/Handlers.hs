@@ -127,6 +127,9 @@ module EU4.Handlers (
     ,   killAdvisorByCategory
     ,   region
     ,   institutionPresence
+    ,   expulsionTarget
+    ,   spawnScaledRebels
+    ,   createIndependentEstate
     -- testing
     ,   isPronoun
     ,   flag
@@ -616,6 +619,9 @@ locAtomTagOrProvince atomMsg synMsg stmt@[pdx| %_ = $vartag:$var |] = do
     case mtagloc of
         Just tagloc -> msgToPP $ synMsg tagloc
         Nothing -> preStatement stmt
+-- Example: religion = variable:From:new_ruler_religion (TODO: Better handling)
+locAtomTagOrProvince atomMsg synMsg stmt@[pdx| %_ = $a:$b:$c |] =
+    msgToPP $ synMsg ("<tt>" <> a <> ":" <> b <> ":" <> c <> "</tt>")
 locAtomTagOrProvince _ _ stmt = preStatement stmt
 
 withProvince :: (EU4Info g, Monad m) =>
@@ -2628,12 +2634,15 @@ estateInfluenceModifier msg stmt@[pdx| %_ = @scr |]
         addLine aeim _ = aeim
         pp_eim :: AddEstateInfluenceModifier -> PPT g m ScriptMessage
         pp_eim aeim
+            -- It appears that the game can handle missing description and duration, this seems unintended in 1.31.2, but here we go.
             = case (aeim_estate aeim, aeim_desc aeim, aeim_influence aeim, aeim_duration aeim) of
-                (Just estate, Just desc, Just inf, Just duration) -> do
+                (Just estate, mdesc, Just inf, mduration) -> do
                     let estate_icon = iconText estate
                     estate_loc <- getGameL10n estate
-                    desc_loc <- getGameL10n desc
-                    dur <- timeOrIndef duration
+                    desc_loc <- case mdesc of
+                        Just desc -> getGameL10n desc
+                        _ -> return "(Missing)"
+                    dur <- timeOrIndef (fromMaybe (-1) mduration)
                     return (msg estate_icon estate_loc desc_loc inf dur)
                 _ -> return (preMessage stmt)
 estateInfluenceModifier _ stmt = preStatement stmt
@@ -3496,10 +3505,13 @@ addEstateLoyaltyModifier stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_elm (foldl' ad
             = elm { elm_duration = floatRhs val }
         addLine elm stmt = (trace $ "Unknown in add_estate_loyalty_modifier " ++ show stmt) $ elm
         pp_elm :: EstateLoyaltyModifier -> PPT g m ScriptMessage
-        pp_elm EstateLoyaltyModifier { elm_estate = Just estate, elm_desc = Just desc, elm_loyalty = Just loyalty, elm_duration = Just duration } = do
+        -- It appears that the game can handle missing description and duration, this seems unintended in 1.31.2, but here we go.
+        pp_elm EstateLoyaltyModifier { elm_estate = Just estate, elm_desc = mdesc, elm_loyalty = Just loyalty, elm_duration = mduration } = do
             estateLoc <- getGameL10n estate
-            descLoc <- getGameL10n desc
-            return $ MsgAddEstateLoyaltyModifier (iconText estate) estateLoc descLoc duration loyalty
+            descLoc <- case mdesc of
+                Just desc -> getGameL10n desc
+                _ -> return "(Missing)"
+            return $ MsgAddEstateLoyaltyModifier (iconText estate) estateLoc descLoc (fromMaybe (-1) mduration) loyalty
         pp_elm elm = return $ (trace $ "Missing info for add_estate_loyalty_modifier " ++ show elm ++ " " ++ (show stmt)) $ preMessage stmt
 addEstateLoyaltyModifier stmt = (trace $ "Not handled in addEstateLoyaltyModifier: " ++ (show stmt)) $ preStatement stmt
 
@@ -3770,7 +3782,9 @@ killAdvisorByCategory stmt@[pdx| %_ = @scr |] | [[pdx| $typ = yes |]] <- scr = d
     msgToPP $ MsgRemoveAdvisor typeLoc
 killAdvisorByCategory stmt = (trace $ "Not handled in kill_advisor_by_category_effect: " ++ show stmt) $ preStatement stmt
 
+------------------------
 -- Handler for region --
+------------------------
 --
 -- Can either be a compund statement or a normal condition
 region :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
@@ -3786,3 +3800,85 @@ institutionPresence [pdx| $inst = !val |] = do
     instLoc <- getGameL10n inst
     msgToPP $ MsgInstitutionPresence (iconText inst) instLoc val
 institutionPresence stmt = (trace $ "Warning: institutionPresence doesn't handle: " ++ (show stmt)) $ preStatement stmt
+
+-----------------------------------
+-- Handler for expulsion_target  --
+-----------------------------------
+
+expulsionTarget :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+expulsionTarget stmt@[pdx| %_ = @scr |] | [[pdx| province_id = $what |]] <- scr = do -- Not seen used with actual province id yet
+    whatLoc <- Doc.doc2text <$> pronoun (Just EU4Province) what
+    msgToPP $ MsgExpulsionTarget whatLoc
+expulsionTarget stmt = (trace $ "Not handled in expulsion_target : " ++ show stmt) $ preStatement stmt
+
+---------------------------------------------------
+-- Handler for spawn_{small,large}_scaled_rebels --
+---------------------------------------------------
+
+-- Comments from common/scripted_effects/00_scripted_effects.txt
+-- always specify type
+-- specify saved_name = <saved_name> if you want to use one of those
+-- specify leader and leader_dynasty if you want to do it that way <-- Not currently used
+-- otherwise state "no_defined_leader = yes"
+
+data SpawnScaledRebels = SpawnScaledRebels
+    { ssr_type :: Maybe Text
+    , ssr_saved_name :: Maybe Text
+    } deriving Show
+
+spawnScaledRebels :: forall g m. (EU4Info g, Monad m) => Bool -> StatementHandler g m
+spawnScaledRebels large stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_ssr (foldl' addLine (SpawnScaledRebels Nothing Nothing) scr)
+    where
+        addLine :: SpawnScaledRebels -> GenericStatement -> SpawnScaledRebels
+        addLine ssr [pdx| type = $typ |] = ssr { ssr_type = Just typ }
+        addLine ssr [pdx| no_defined_leader = yes |] = ssr -- ignored (should have saved_name instead)
+        addLine ssr [pdx| saved_name = %name |] = ssr { ssr_saved_name = textRhs name }
+        addLine ssr stmt = (trace $ "Not handled in spawnScaledRebels: " ++ show stmt) $ ssr
+        pp_ssr :: SpawnScaledRebels -> PPT g m ScriptMessage
+        pp_ssr ssr = do
+            let rtype_loc_icon = flip HM.lookup rebel_loc =<< ssr_type ssr
+            leaderText <- case ssr_saved_name ssr of
+                Just leader -> do
+                    mtext <- messageText (MsgRebelsLedBy ("saved name <tt>" <> leader <> "</tt>"))
+                    return (" (" <> mtext <> ")")
+                Nothing -> return ""
+            return $ MsgSpawnScaledRebels
+                (maybe "" (\(ty, ty_icon) -> iconText ty_icon <> " " <> ty) rtype_loc_icon)
+                leaderText
+                large
+spawnScaledRebels _ stmt = (trace $ "Not handled in spawnScaledRebels: " ++ show stmt) $ preStatement stmt
+
+data CreateIndependentEstate = CreateIndependentEstate
+    {   cie_estate :: Maybe Text
+    ,   cie_government :: Maybe Text
+    ,   cie_government_reform :: Maybe Text
+    ,   cie_national_ideas :: Maybe Text
+    ,   cie_play_as :: Bool
+    } deriving Show
+
+createIndependentEstate :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+createIndependentEstate stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_cie (foldl' addLine (CreateIndependentEstate Nothing Nothing Nothing Nothing False) scr)
+    where
+        addLine :: CreateIndependentEstate -> GenericStatement -> CreateIndependentEstate
+        addLine cie [pdx| estate = $estate |] = cie { cie_estate = Just estate }
+        addLine cie [pdx| government = $gov |] = cie { cie_government = Just gov }
+        addLine cie [pdx| government_reform = $govreform |] = cie { cie_government_reform = Just govreform }
+        addLine cie [pdx| custom_national_ideas = $ideas |] = cie { cie_national_ideas = Just ideas }
+        addLine cie [pdx| play_as = $yn |] = cie { cie_play_as = T.toLower yn == "yes" }
+        addLine cie stmt = (trace $ "Not handled in createIndependentEstate: " ++ show stmt) $ cie
+
+        pp_cie :: CreateIndependentEstate -> PPT g m ScriptMessage
+        pp_cie cie@CreateIndependentEstate{cie_estate = Just estate, cie_government = Just gov, cie_government_reform = Just reform, cie_national_ideas = Just ideas} = do
+            estateLoc <- getGameL10n estate
+            govLoc <- getGameL10n gov
+            govReformLoc <- getGameL10n reform
+            ideasLoc <- getGameL10n ideas
+            -- FIXME: Should actually be localizable
+            let desc = " with " <> govLoc <> " government, the " <> govReformLoc <> " reform and " <> ideasLoc
+            return $ MsgCreateIndependentEstate (iconText estate) estateLoc desc (cie_play_as cie)
+        pp_cie cie@CreateIndependentEstate{cie_estate = Just estate, cie_government = Nothing, cie_government_reform = Nothing, cie_national_ideas = Nothing} = do
+            estateLoc <- getGameL10n estate
+            return $ MsgCreateIndependentEstate (iconText estate) estateLoc "" (cie_play_as cie)
+        pp_cie cie = return $ (trace $ "Not handled in createIndependentEstate: cie=" ++ show cie ++ " stmt=" ++ show stmt) $ preMessage stmt
+
+createIndependentEstate stmt = (trace $ "Not handled in createIndependentEstate: " ++ show stmt) $ preStatement stmt
