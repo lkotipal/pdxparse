@@ -73,6 +73,7 @@ module EU4.Handlers (
     ,   defineConsort
     ,   buildToForcelimit
     ,   addUnitConstruction
+    ,   hasLeaders
     ,   declareWarWithCB
     ,   hasDlc
     ,   hasEstateInfluenceModifier
@@ -2489,7 +2490,7 @@ foldCompound "buildToForcelimit" "BuildToForcelimit" "btf"
            lightIcon = iconText "light ship"
            gallIcon = iconText "galley"
            transpIcon = iconText "transport"
-       in if has_land == has_navy then do
+       in return $ (if has_land == has_navy then do
                 MsgBuildToForcelimit infIcon _infantry
                                      cavIcon _cavalry
                                      artIcon _artillery
@@ -2505,7 +2506,7 @@ foldCompound "buildToForcelimit" "BuildToForcelimit" "btf"
                 MsgBuildToForcelimitNavy heavyIcon _heavy_ship
                                          lightIcon _light_ship
                                          gallIcon _galley
-                                         transpIcon _transport
+                                         transpIcon _transport)
     |]
 
 --addUnitConstruction :: (IsGameState (GameState g), Monad m) => Text -> StatementHandler g m
@@ -2515,12 +2516,29 @@ foldCompound "addUnitConstruction" "UnitConstruction" "uc"
     ,CompField "type" [t|UnitType|] Nothing True
     ,CompField "speed" [t|Double|] (Just [|1|]) False
     ,CompField "cost" [t|Double|] (Just [|1|]) False]
-    [| (case _type of
+    [| return $ (case _type of
             UnitHeavyShip -> MsgBuildHeavyShips (iconText "heavy ship")
             UnitLightShip -> MsgBuildLightShips (iconText "light ship")
             UnitGalley    -> MsgBuildGalleys    (iconText "galley")
             UnitTransport -> MsgBuildTransports (iconText "transport")
        ) _amount _speed _cost
+    |]
+
+foldCompound "hasLeaders" "HasLeaders" "hl"
+    []
+    [CompField "value" [t|Double|] Nothing True
+    ,CompField "type" [t|Text|] Nothing True
+    ,CompField "include_monarch" [t|Text|] Nothing True
+    ,CompField "include_heir" [t|Text|] Nothing True]
+    [| do
+        -- XXX: Should allow localization of description
+        typeLoc <- getGameL10n _type
+        return $ MsgHasLeaders (iconText _type) typeLoc (case (T.toLower _include_monarch, T.toLower _include_heir) of
+                ("yes", "yes") -> " (rulers and heirs count)"
+                ("yes", _) -> " (rulers count)"
+                (_, "yes") -> " (heirs count)"
+                _ -> "")
+            _value
     |]
 
 -- War

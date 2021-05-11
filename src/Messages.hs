@@ -1503,6 +1503,7 @@ data ScriptMessage
     | MsgIsSubjectOtherThanTributary
     | MsgSpawnScaledRebels {scriptMessageRtype :: Text, scriptMessageLeader :: Text, scriptMessageYn :: Bool}
     | MsgCreateIndependentEstate {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageDesc :: Text, scriptMessageYn :: Bool}
+    | MsgHasLeaders {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageDesc :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -10187,6 +10188,18 @@ instance RenderMessage Script ScriptMessage where
                 , "."
                 , ifThenElseT _play_as " The human player takes over this new country." ""
                 ]
+        MsgHasLeaders {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageDesc = _desc, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (roundNum _amt)
+                , " "
+                , _what
+                , toMessage (plural _amt "" "s")
+                , _desc
+                ]
+
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

@@ -68,10 +68,11 @@ instance Param Text where
  -      [@[required?]@] Boolean value indicating whether the field is required.
  -
  -  [@[processing expression]@] The expression used to bring the value
- -      together. This should have type @ScriptMessage@, and has a number of free
- -      variables: one for each additional argument, and one bound to each
- -      field's value, prefixed with an underscore. The field variables have
- -      their declared types if mandatory, and @Maybe@ those types otherwise.
+ -      together. This should have type PPT g m @ScriptMessage@, and has a
+ -      number of free variables: one for each additional argument, and one
+ -      bound to each field's value, prefixed with an underscore. The field
+ -      variables have their declared types if mandatory, and @Maybe@ those
+ -      types otherwise.
  -
  - The resulting function has only the given additional arguments, and has
  - return type @(IsGameState (GameState g), Monad m) => StatementHandler g m@.
@@ -162,23 +163,24 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
         --          addLine :: <AccType> -> GenericStatement -> <AccType>
         --          addLine [pdx| <tag1> = $(toParam -> Just _<paramName> |] = acc { prefix_<paramName> = {Just} _<paramName> }
         --          ...
-        --          pp :: <AccType> -> ScriptMessage
+        --          pp :: <AccType> -> PPT g m ScriptMessage
         --          pp acc = case (requiredPat1, ..., optionalPat1, ...) of
         --              (Just _<requiredParamName1>, ..., _<optionalParamName1>, ...) -> <eval>
-        --              _ -> preMessage stmt
+        --              _ -> preStatement stmt
         -- <funName> _1 ... stmt = preStatement stmt
         ,   sigD name_fun
-                (forallT [] (sequence [[t|IsGameState (GameState $tvar_g)|], [t|Monad $tvar_m |]]) $
+                (forallT [] (sequence [[t|IsGameState (GameState $tvar_g)|], [t|IsGameData (GameData $tvar_g)|], [t|Monad $tvar_m |]]) $
                     foldr funT [t| StatementHandler $tvar_g $tvar_m |] (map snd extraArgs))
         ,   funD name_fun [
                     clause (map (varP . mkName . fst) extraArgs
                                 ++ [asP name_stmt [p| [pdx| %_ = @scr |] |]])
-                           (normalB [| msgToPP . $var_pp $ foldl' $var_addLine $var_defaults $var_scr |])
+                           (normalB [| msgToPP =<< ($var_pp $ foldl' $var_addLine $var_defaults $var_scr) |])
                            -- where
                            [sigD name_addLine [t| $(conT tyname) -> GenericStatement -> $(conT tyname) |]
                            ,funD name_addLine (lineclauses ++
                                 [clause [varP name_acc, wildP]
-                                        (normalB $ [| $var_acc |])
+                                        -- TODO: Print actual line that doesn't match
+                                        (normalB $ [| (trace $ funname ++ ": Unhandled line found in " ++ show stmt) $ $var_acc |])
                                         []
                                 ])
                            ,funD name_pp
@@ -186,7 +188,7 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
                                     caseE (tupE caseheads)
                                         [match (tupP casebodies) (normalB eval) []
                                         ,match wildP (normalB
-                                            [| trace (funname ++ ": one or more required fields not present") $
+                                            [| return $ trace (funname ++ ": one or more required fields not present") $
                                                 preMessage stmt |]) []
                                         ]
                                 ]
