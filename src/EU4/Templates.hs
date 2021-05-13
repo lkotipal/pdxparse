@@ -1,10 +1,12 @@
-module Templates (
+module EU4.Templates (
         Param (..)
     ,   CompField (..)
     ,   foldCompound
     ) where
 
 import Language.Haskell.TH -- everything
+
+import EU4.Types (EU4Info) -- HACK :/
 
 import Data.Text (Text)
 
@@ -157,7 +159,8 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
         ,   flip (valD (varP defaultsName)) [] . normalB $
                 appsE (conE tyname : defs)
         -- Unpacking code
-        -- <funName> :: (IsGameState (GameState g), Monad m) => <ExtraArg1Type> -> ... -> StatementHandler g m
+        -- HACK: Templates used to be generic, but I'm lazy :(
+        -- <funName> :: (EU4Info g, Monad m) => <ExtraArg1Type> -> ... -> StatementHandler g m
         -- <funName> <extraArg1> ... stmt@[pdx| %_ = @scr |]
         --      = msgToPP . pp $ foldl' addLine new<AccType> scr where
         --          addLine :: <AccType> -> GenericStatement -> <AccType>
@@ -169,7 +172,7 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
         --              _ -> preStatement stmt
         -- <funName> _1 ... stmt = preStatement stmt
         ,   sigD name_fun
-                (forallT [] (sequence [[t|IsGameState (GameState $tvar_g)|], [t|IsGameData (GameData $tvar_g)|], [t|Monad $tvar_m |]]) $
+                (forallT [] (sequence [[t|EU4Info $tvar_g |], [t|Monad $tvar_m |]]) $
                     foldr funT [t| StatementHandler $tvar_g $tvar_m |] (map snd extraArgs))
         ,   funD name_fun [
                     clause (map (varP . mkName . fst) extraArgs

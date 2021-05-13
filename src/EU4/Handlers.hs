@@ -67,6 +67,7 @@ module EU4.Handlers (
     ,   random
     ,   randomList
     ,   defineAdvisor
+    ,   defineDynMember
     ,   defineRuler
     ,   defineExiledRuler
     ,   defineHeir
@@ -76,7 +77,7 @@ module EU4.Handlers (
     ,   hasLeaders
     ,   declareWarWithCB
     ,   hasDlc
-    ,   hasEstateInfluenceModifier
+    ,   hasEstateModifier
     ,   estateInfluenceModifier
     ,   triggerSwitch
     ,   calcTrueIf
@@ -131,6 +132,8 @@ module EU4.Handlers (
     ,   expulsionTarget
     ,   spawnScaledRebels
     ,   createIndependentEstate
+    ,   numOfReligion
+    ,   createSuccessionCrisis
     -- testing
     ,   isPronoun
     ,   flag
@@ -173,7 +176,7 @@ import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), Ga
                      , indentUp, indentDown, withCurrentIndent, withCurrentIndentZero, alsoIndent, alsoIndent'
                      , getGameL10n, getGameL10nIfPresent, getGameL10nDefault, withCurrentFile
                      , unfoldM, unsnoc )
-import Templates
+import EU4.Templates
 import {-# SOURCE #-} EU4.Common (pp_script, ppMany, ppOne, extractStmt, matchLhsText)
 import EU4.Types -- everything
 
@@ -2082,8 +2085,8 @@ newDefineAdvisor = DefineAdvisor Nothing Nothing Nothing Nothing Nothing Nothing
 
 defineAdvisor :: forall g m. (IsGameData (GameData g),
                               IsGameState (GameState g),
-                              Monad m) => StatementHandler g m
-defineAdvisor stmt@[pdx| %_ = @scr |]
+                              Monad m) => Bool -> StatementHandler g m
+defineAdvisor isScaled stmt@[pdx| %_ = @scr |]
     = msgToPP . pp_define_advisor =<< foldM addLine newDefineAdvisor scr where
         addLine :: DefineAdvisor -> GenericStatement -> PPT g m DefineAdvisor
         addLine da [pdx| $lhs = %rhs |] = case T.map toLower lhs of
@@ -2173,8 +2176,10 @@ defineAdvisor stmt@[pdx| %_ = @scr |]
                             -> MsgGainFemaleAdvisorTypeName female advtype name skill discount
                         (Just female, Just advtype, Just name, Just location)
                             -> MsgGainFemaleAdvisorTypeNameLoc female advtype name location skill discount
-                _ -> preMessage stmt
-defineAdvisor stmt = preStatement stmt
+                _ -> case (isScaled, da_type_loc da) of
+                        (True, Just advType) -> MsgGainScaledAdvisor advType (fromMaybe 0.0 (da_discount da))
+                        _ -> preMessage stmt
+defineAdvisor _ stmt = preStatement stmt
 
 -------------
 -- Dynasty --
@@ -2541,6 +2546,35 @@ foldCompound "hasLeaders" "HasLeaders" "hl"
             _value
     |]
 
+foldCompound "numOfReligion" "NumOfReligion" "nr"
+    []
+    [CompField "religion" [t|Text|] Nothing False
+    ,CompField "value" [t|Double|] Nothing True
+    ,CompField "secondary" [t|Text|] Nothing False]
+    [|
+        case (_religion, _secondary) of
+            (Just rel, Nothing) -> do
+                relLoc <- getGameL10n rel
+                return $ MsgNumOfReligion (iconText rel) relLoc _value
+            (Nothing, Just secondary) | T.toLower secondary == "yes" -> do
+                return $ MsgNumOfReligionSecondary _value
+            _ -> return $ (trace $ "Not handled in numOfReligion: " ++ show stmt) $ preMessage stmt
+    |]
+
+
+foldCompound "createSuccessionCrisis" "CreateSuccessionCrisis" "csc"
+    []
+    [CompField "attacker" [t|Text|] Nothing True
+    ,CompField "defender" [t|Text|] Nothing True
+    ,CompField "target"   [t|Text|] Nothing True
+    ]
+    [| do
+        attackerLoc <- flagText (Just EU4Country) _attacker
+        defenderLoc <- flagText (Just EU4Country) _defender
+        targetLoc   <- flagText (Just EU4Country) _target
+        return $ MsgCreateSuccessionCrisis attackerLoc defenderLoc targetLoc
+    |]
+
 -- War
 
 data DeclareWarWithCB = DeclareWarWithCB
@@ -2606,10 +2640,10 @@ data EstateInfluenceModifier = EstateInfluenceModifier {
     }
 newEIM :: EstateInfluenceModifier
 newEIM = EstateInfluenceModifier Nothing Nothing
-hasEstateInfluenceModifier :: (IsGameData (GameData g),
-                               IsGameState (GameState g),
-                               Monad m) => StatementHandler g m
-hasEstateInfluenceModifier stmt@[pdx| %_ = @scr |]
+hasEstateModifier :: (IsGameData (GameData g),
+                      IsGameState (GameState g),
+                      Monad m) => (Text -> Text -> Text -> ScriptMessage) -> StatementHandler g m
+hasEstateModifier msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_eim (foldl' addField newEIM scr)
     where
         addField :: EstateInfluenceModifier -> GenericStatement -> EstateInfluenceModifier
@@ -2620,9 +2654,9 @@ hasEstateInfluenceModifier stmt@[pdx| %_ = @scr |]
             (Just est, Just modifier) -> do
                 loc_est <- getGameL10n est
                 loc_mod <- getGameL10n modifier
-                return $ MsgEstateHasInfluenceModifier (iconText est) loc_est loc_mod
+                return $ msg (iconText est) loc_est loc_mod
             _ -> return (preMessage stmt)
-hasEstateInfluenceModifier stmt = preStatement stmt
+hasEstateModifier _ stmt = preStatement stmt
 
 data AddEstateInfluenceModifier = AddEstateInfluenceModifier {
         aeim_estate :: Maybe Text
@@ -3391,18 +3425,22 @@ estatePrivilege _ stmt = preStatement stmt
 ------------------------------------------------------
 -- Handler for has_trade_company_investment_in_area --
 ------------------------------------------------------
-hasTradeCompanyInvestment :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
-hasTradeCompanyInvestment stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_tci (parseTA "investor" "investment" scr)
-    where
-        pp_tci :: TextAtom -> PPT g m ScriptMessage
-        pp_tci ta = case (ta_what ta, ta_atom ta) of
-            (Just investor, Just investment) -> do
-                investorLoc <- flag (Just EU4Country) investor
+foldCompound "hasTradeCompanyInvestment" "HasTradeCompanyInvestment" "htci"
+    []
+    [CompField "investor" [t|Text|] Nothing True
+    ,CompField "investment" [t|Text|] Nothing False
+    ,CompField "count_one_per_area" [t|Text|] Nothing False
+    ]
+    [| do
+        investorLoc <- flagText (Just EU4Country) _investor
+        case (_investment, _count_one_per_area) of
+            (Just investment, Nothing) -> do
                 (icon, desc) <- tryLocAndIcon investment
-                return $ MsgHasTradeCompanyInvestmentInArea icon desc (Doc.doc2text investorLoc)
-            _ -> return $ preMessage stmt
-hasTradeCompanyInvestment stmt = preStatement stmt
+                return $ MsgHasTradeCompanyInvestmentInArea icon desc investorLoc
+            (Nothing, Just yn) | T.toLower yn == "yes" ->
+                return $ MsgHasTradeCompanyInvestmentInState investorLoc
+            _ -> return $ (trace $ ("Unsupported has_trade_company_investment_in_area: " ++ show stmt)) $ preMessage stmt
+    |]
 
 ----------------------------------------
 -- Handler for trading_policy_in_node --
@@ -3898,5 +3936,4 @@ createIndependentEstate stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_cie (foldl' add
             estateLoc <- getGameL10n estate
             return $ MsgCreateIndependentEstate (iconText estate) estateLoc "" (cie_play_as cie)
         pp_cie cie = return $ (trace $ "Not handled in createIndependentEstate: cie=" ++ show cie ++ " stmt=" ++ show stmt) $ preMessage stmt
-
 createIndependentEstate stmt = (trace $ "Not handled in createIndependentEstate: " ++ show stmt) $ preStatement stmt

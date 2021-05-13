@@ -494,6 +494,7 @@ data ScriptMessage
     | MsgGainFemaleAdvisorTypeLoc {scriptMessageFemale :: Bool, scriptMessageAdvtype :: Text, scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
     | MsgGainFemaleAdvisorTypeName {scriptMessageFemale :: Bool, scriptMessageAdvtype :: Text, scriptMessageName :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
     | MsgGainFemaleAdvisorTypeNameLoc {scriptMessageFemale :: Bool, scriptMessageAdvtype :: Text, scriptMessageName :: Text, scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
+    | MsgGainScaledAdvisor {scriptMessageAdvtype :: Text, scriptMessageDiscount :: Double}
     | MsgRebelLeaderRuler
     | MsgNewRuler {scriptMessageRegent :: Bool}
     | MsgNewRulerLeader {scriptMessageRegent :: Bool, scriptMessageName :: Text}
@@ -527,6 +528,7 @@ data ScriptMessage
     | MsgNewDynMemberBastard
     | MsgNewDynMemberCountry {scriptMessageWhere :: Text}
     | MsgEstateHasInfluenceModifier {scriptMessageIcon :: Text, scriptMessageEstate :: Text, scriptMessageModifier :: Text}
+    | MsgEstateHasLoyaltyModifier {scriptMessageIcon :: Text, scriptMessageEstate :: Text, scriptMessageModifier :: Text}
     | MsgTriggerSwitch
     | MsgTriggerSwitchClause {scriptMessageCond :: Text}
     | MsgProvinceHasRebels {scriptMessageIcon :: Text, scriptMessageRtype :: Text}
@@ -1452,7 +1454,7 @@ data ScriptMessage
     | MsgHiddenTrigger
     | MsgBorderDistance {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAddNamedUnrest {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgCheckEstateRevoltSize {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgCheckEstateRevoltSize {scriptMessageYn :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasLeaderWith
     | MsgHasMonarchLeaderWith
     | MsgHasGeneralWith {scriptMessageIcon :: Text}
@@ -1504,6 +1506,14 @@ data ScriptMessage
     | MsgSpawnScaledRebels {scriptMessageRtype :: Text, scriptMessageLeader :: Text, scriptMessageYn :: Bool}
     | MsgCreateIndependentEstate {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageDesc :: Text, scriptMessageYn :: Bool}
     | MsgHasLeaders {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageDesc :: Text, scriptMessageAmt :: Double}
+    | MsgScaledEstateLandShareEffect {scriptMessageYn :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgProvinceDistance {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgNumOfReligionSecondary {scriptMessageAmt :: Double}
+    | MsgCreateSuccessionCrisis {scriptMessageAttacker :: Text, scriptMessageDefender :: Text, scriptMessageWhom :: Text}
+    | MsgDefinerLeaderToRuler
+    | MsgChangeSubjectType {scriptMessageIcon :: Text, scriptMessageType :: Text}
+    | MsgRemoveTradeModifier {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgHasTradeCompanyInvestmentInState {scriptMessageWhom :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -4046,6 +4056,13 @@ instance RenderMessage Script ScriptMessage where
                 , _where
                 , toMessage (advisorDiscountText _discount)
                 ]
+        MsgGainScaledAdvisor {scriptMessageAdvtype = _advtype, scriptMessageDiscount = _discount}
+            -> mconcat
+                [ "Gain a "
+                , _advtype
+                , " with skill level scaled to monthly income"
+                , toMessage (advisorDiscountText _discount)
+                ]
         MsgRebelLeaderRuler
             -> "The leader of the rebels becomes the country's new ruler"
         MsgNewRuler {scriptMessageRegent = _regent}
@@ -4217,6 +4234,14 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _estate
                 , " estate has influence modifier "
+                , toMessage (iquotes _modifier)
+                ]
+        MsgEstateHasLoyaltyModifier {scriptMessageIcon = _icon, scriptMessageEstate = _estate, scriptMessageModifier = _modifier}
+            -> mconcat
+                [ _icon
+                , " "
+                , _estate
+                , " estate has loyalty modifier "
                 , toMessage (iquotes _modifier)
                 ]
         MsgTriggerSwitch
@@ -9882,9 +9907,11 @@ instance RenderMessage Script ScriptMessage where
                 , " unrest due to "
                 , toMessage (iquotes _what)
                 ]
-        MsgCheckEstateRevoltSize {scriptMessageWhat = _what}
+        MsgCheckEstateRevoltSize {scriptMessageYn = _yn, scriptMessageWhat = _what}
             -> mconcat
-                [ "A number of provinces proportional to the country size has the <tt>"
+                [ "A "
+                , ifThenElseT _yn "large" "small" -- TODO: The difference isn't actually that large
+                , " number of provinces proportional to the country size has the <tt>"
                 , _what
                 , "</tt> modifier"
                 ]
@@ -10199,7 +10226,57 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plural _amt "" "s")
                 , _desc
                 ]
-
+        MsgScaledEstateLandShareEffect {scriptMessageYn = _gain, scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "The "
+                , _icon
+                , " "
+                , _what
+                , " estate "
+                , ifThenElseT _gain "gain" "lose"
+                , " a share of land proportional to the country's total development"
+                ]
+        MsgProvinceDistance {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Province distance to "
+                , _whom
+                , " is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgNumOfReligionSecondary {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Syncretic faith is above "
+                , toMessage (reducedNum plainPc _amt)
+                ]
+        MsgCreateSuccessionCrisis {scriptMessageAttacker = _attacker, scriptMessageDefender = _defender, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Create succession crisis for "
+                , _whom
+                , " with "
+                , _attacker
+                , " as attacker and "
+                , _defender
+                , " as defender"
+                ]
+        MsgDefinerLeaderToRuler
+            -> "Make leader into a ruler with the following attributes:"
+        MsgChangeSubjectType {scriptMessageType = _type}
+            -> mconcat
+                [ "Change subject type to "
+                , _type
+                ]
+        MsgRemoveTradeModifier {scriptMessageWhat = _what, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Remove trade modifier "
+                , toMessage (quotes _what)
+                , " for "
+                , _whom
+                ]
+        MsgHasTradeCompanyInvestmentInState {scriptMessageWhom = _whom}
+            -> mconcat
+                [ _whom
+                , " has a trade company investment in a state (only one per state counts)"
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

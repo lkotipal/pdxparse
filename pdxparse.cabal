@@ -35,6 +35,7 @@ executable pdxparse
                        EU4.Modifiers,
                        EU4.Policies,
                        EU4.Settings,
+                       EU4.Templates,
                        EU4.Types,
                        FileIO,
                        HOI4.Common,
@@ -53,7 +54,6 @@ executable pdxparse
                        Stellaris.Events,
                        Stellaris.Settings,
                        Stellaris.Types,
-                       Templates,
                        Vic2.Settings,
                        Vic2.Types,
                        Yaml
