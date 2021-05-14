@@ -327,9 +327,12 @@ data ScriptMessage
     | MsgNumLightShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgNumGalleyShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumGalleyShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgNumTransportShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumTransportShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgNumMerchants {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgStability {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTotalDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgTotalDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgTotalCardinals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgUnrest {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMonthlyIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -973,6 +976,7 @@ data ScriptMessage
     | MsgIncreaseLegitimacyMediumEffect
     | MsgIncreaseLegitimacySmallEffect
     | MsgMoveCapitalEffect
+    | MsgPrevMoveCapitalEffect
     | MsgReduceBureaucratsEffect
     | MsgReduceTemplesEffect
     | MsgReduceEunuchsEffect
@@ -1020,6 +1024,7 @@ data ScriptMessage
     | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
     | MsgHasCompletedAllReforms { scriptMessageYn :: Bool }
+    | MsgHasFinalTierReform { scriptMessageYn :: Bool }
     | MsgPctBackingParliamentIssue { scriptMessageAmt :: Double }
     | MsgIsBackingCurrentIssue { scriptMessageYn :: Bool }
     | MsgHasActiveDebate { scriptMessageYn :: Bool }
@@ -1062,6 +1067,7 @@ data ScriptMessage
     | MsgSetSavedNameScope { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageScope :: Text, scriptMessageFemale :: Bool }
     | MsgClearSavedName { scriptMessageVar :: Text }
     | MsgProvinceTradePower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHasPermanentClaim { scriptMessageWhat :: Text }
     | MsgIsPermanentClaim { scriptMessageWhom :: Text }
     | MsgIsSubjectOfType { scriptMessageType :: Text }
     | MsgHasRuler { scriptMessageWho :: Text }
@@ -1373,6 +1379,7 @@ data ScriptMessage
     | MsgHasNumberOfBuildingType {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgFederationSize {scriptMessageAmt :: Double}
     | MsgGrownByDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGrownByStates {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumAdmirals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumGenerals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumGeneralsWithTrait {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1470,6 +1477,7 @@ data ScriptMessage
     | MsgCanEstablishHolyOrder {scriptMessageYn :: Bool}
     | MsgEndIncident {scriptMessageWhat :: Text}
     | MsgIsIncidentActive {scriptMessageWhat :: Text}
+    | MsgHasIncidentHappened {scriptMessageWhat :: Text}
     | MsgNumStreltsy {scriptMessageAmt :: Double}
     | MsgSetPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -1515,6 +1523,32 @@ data ScriptMessage
     | MsgHasTradeCompanyInvestmentInState {scriptMessageWhom :: Text}
     | MsgRandomListTrigger
     | MsgRandomListModifier {scriptMessageAmt :: Double}
+    | MsgOwnOrNonTribSubjectDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgOwnOrNonTribSubjectDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgHasOneOfBuildings {scriptMessageYn :: Bool, scriptMessageWhat :: Text}
+    | MsgNumBuildings {scriptMessageAmt :: Double}
+    | MsgTradeCompanyRegion {scriptMessageWhat :: Text}
+    | MsgPreferredEmperor {scriptMessageWhom :: Text}
+    | MsgCurrentIcon {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgUsesIcons {scriptMessageYn :: Bool}
+    | MsgPatriarchAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgIsRevolutionTarget {scriptMessageYn :: Bool}
+    | MsgRevolutionaryZeal {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgSameGovtAsRoot
+    | MsgOverrideCountryName {scriptMessageWhat :: Text}
+    | MsgFervor {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHasFlagship {scriptMessageYn :: Bool}
+    | MsgIsCapitalOf {scriptMessageWhom :: Text}
+    | MsgIsProductionLeader {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgInnovativeness {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgStartHREIncident {scriptMessageWhat :: Text}
+    | MsgIsForeignCompany {scriptMessageYn :: Bool}
+    | MsgHasStatePatriach {scriptMessageYn :: Bool}
+    | MsgHasForeignConsort {scriptMessageYn :: Bool}
+    | MsgSwapFreeIdeaGroup
+    | MsgUsesDoom {scriptMessageYn :: Bool}
+    | MsgAverageAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgPowerProjection {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -2925,6 +2959,22 @@ instance RenderMessage Script ScriptMessage where
                 , " galley "
                 , plural _amt "ship" "ships"
                 ]
+        MsgNumTransportShipsMatches {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has at least as many "
+                , _icon
+                , " transport ships as "
+                , _whom
+                ]
+        MsgNumTransportShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (roundNum _amt)
+                , " transport "
+                , plural _amt "ship" "ships"
+                ]
         MsgNumMerchants {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -2946,6 +2996,13 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " development is at least "
                 , toMessage (roundNum _amt)
+                ]
+        MsgTotalDevelopmentAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Country's total "
+                , _icon
+                , " development is at least that of "
+                , _whom
                 ]
         MsgTotalCardinals {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7048,6 +7105,8 @@ instance RenderMessage Script ScriptMessage where
             -> "Gain {{icon|legitimacy}} {{green|5}} legitimacy, {{icon|horde unity}} {{green|5}} horde unity, {{icon|devotion}} {{green|5}} devotion, or {{icon|republican tradition}} {{green|2.5}} republican tradition as appropriate"
         MsgMoveCapitalEffect
             -> "Province becomes the new {{icon|capital}} capital. If it was in the empire and the country isn't, it is removed from the empire."
+        MsgPrevMoveCapitalEffect
+            -> "Province becomes the new {{icon|capital}} capital of the previously mentioned country. If it was in the empire and the country isn't, it is removed from the empire."
         MsgReduceBureaucratsEffect
             -> "If DLC Mandate of Heaven is ''not'' active, the Grand Secretariat faction loses 10 influence"
         MsgReduceEunuchsEffect
@@ -7258,6 +7317,13 @@ instance RenderMessage Script ScriptMessage where
                 , " an [[end-game tag]]"
                 ]
         MsgHasCompletedAllReforms { scriptMessageYn = _yn }
+            -> mconcat -- This is usually used in the context of limit = { not = { ... } } to limit giving reforming progress to
+                       -- cases where the Emperor DLC is active AND the highest tier gov. reform hasn't been enacted
+                [ "The country has"
+                , toMessage (ifThenElseT _yn "" " not")
+                , " enacted one of the highest tier [[government reform]]s and DLC {{icon|emp|28px}} Emperor is not active"
+                ]
+        MsgHasFinalTierReform { scriptMessageYn = _yn }
             -> mconcat
                 [ "The country has"
                 , toMessage (ifThenElseT _yn "" " not")
@@ -7495,6 +7561,11 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _icon
                 , " province trade power"
+                ]
+        MsgHasPermanentClaim { scriptMessageWhat = _what }
+            -> mconcat
+                [ "Has a [[permanent claim]] on "
+                , _what
                 ]
         MsgIsPermanentClaim { scriptMessageWhom = _whom }
             -> mconcat
@@ -9441,6 +9512,12 @@ instance RenderMessage Script ScriptMessage where
                 , " Total develoment has increased by at least "
                 , toMessage (plainNum _amt)
                 ]
+        MsgGrownByStates {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Number of states has increased by at least "
+                , toMessage (plainNum _amt)
+                ]
         MsgNumAdmirals {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -10001,6 +10078,12 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (iquotes _what)
                 , " incident is active"
                 ]
+        MsgHasIncidentHappened {scriptMessageWhat = _what}
+            -> mconcat
+                [ "The "
+                , toMessage (iquotes _what)
+                , " incident has ended"
+                ]
         MsgNumStreltsy {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -10283,6 +10366,154 @@ instance RenderMessage Script ScriptMessage where
                 [ "Chance increases '''x "
                 , toMessage (plainNum _amt)
                 , "''' if:"
+                ]
+        MsgOwnOrNonTribSubjectDevelopment {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Own or non-tributary subject "
+                , _icon
+                , " development is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgOwnOrNonTribSubjectDevelopmentAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Own or non-tributary subject "
+                , _icon
+                , " development is at least that of "
+                , _whom
+                ]
+        MsgHasOneOfBuildings {scriptMessageYn = _yn, scriptMessageWhat = _what}
+            -> mconcat
+                [ ifThenElseT _yn "Has" "Does ''not'' have"
+                , " one of the following buildings: "
+                , _what
+                ]
+        MsgNumBuildings {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , plural _amt " building" " buildings"
+                ]
+        MsgTradeCompanyRegion {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Is in the "
+                , _what
+                , " trade company region"
+                ]
+        MsgPreferredEmperor {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is voting for "
+                , _whom
+                , " to become Emperor of the HRE"
+                ]
+        MsgCurrentIcon {scriptMessageIcon = _icon, scriptMessageWhom = _what}
+            -> mconcat
+                [ "Has commissioned "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgUsesIcons {scriptMessageYn = _yn}
+            -> mconcat
+                [ ifThenElseT _yn "Uses" "Does ''not'' use"
+                , " [[icons]]"
+                ]
+        MsgPatriarchAuthority {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Patriarch authority is at least "
+                , toMessage (reducedNum plainPc _amt)
+                ]
+        MsgIsRevolutionTarget {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , ifThenElseT _yn "" " ''not''"
+                , " the [[revolution target]]"
+                ]
+        MsgRevolutionaryZeal {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Revolutionary zeal is at least "
+                , toMessage (plainNum _amt)
+                ]
+        MsgSameGovtAsRoot
+            -> "Has the same government type as our country"
+        MsgOverrideCountryName {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Country's name changes to "
+                , toMessage (quotes _what)
+                ]
+        MsgFervor {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " fervor"
+                ]
+        MsgHasFlagship {scriptMessageYn = _yn}
+            -> mconcat
+                [ ifThenElseT _yn "Has" "Does ''not'' have"
+                , " a flagship"
+                ]
+        MsgIsCapitalOf {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is the capital of "
+                , _whom
+                ]
+        MsgIsProductionLeader {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Is the leading producer of "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgInnovativeness {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " innovativeness"
+                ]
+        MsgStartHREIncident {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Start the Imperial Incident "
+                , toMessage (iquotes _what)
+                ]
+        MsgIsForeignCompany {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , toMessage (ifThenElseT _yn "" " ''not''")
+                , " a foreign mercenary company"
+                ]
+        MsgHasStatePatriach {scriptMessageYn = _yn}
+            -> mconcat
+                [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
+                , " a state patriach"
+                ]
+        MsgHasForeignConsort {scriptMessageYn = _yn}
+            -> mconcat
+                [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
+                , " a foreign consort"
+                ]
+        MsgSwapFreeIdeaGroup
+            -> "Swap to the new [[national ideas]]"
+        MsgUsesDoom {scriptMessageYn = _yn}
+            -> mconcat
+                [ ifThenElseT _yn "Uses" "Does ''not'' use"
+                , " [[doom]]"
+                ]
+        MsgAverageAutonomy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Average autonomy is at least "
+                , toMessage (plainPc _amt)
+                ]
+        MsgPowerProjection {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Power projection is at least "
+                , toMessage (plainPc _amt)
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

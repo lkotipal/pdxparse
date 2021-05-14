@@ -140,7 +140,9 @@ handlersRhsIrrelevant = Tr.fromList
         ,("cb_on_overseas"         , rhsAlwaysYes MsgGainOverseasCB) -- Full Expansion
         ,("cb_on_primitives"       , rhsAlwaysYes MsgGainPrimitivesCB) -- Full Exploration
         ,("cb_on_religious_enemies", rhsAlwaysYes MsgGainReligiousCB) -- Deus Vult
-        ,("change_government_to_monarchy", rhsAlwaysYes $ MsgChangeGovernment "monarchy")
+        ,("change_government_to_monarchy"  , rhsAlwaysYes $ MsgChangeGovernment "monarchy")
+        ,("change_government_to_republic"  , rhsAlwaysYes $ MsgChangeGovernment "republic")
+        ,("change_government_to_theocracy" , rhsAlwaysYes $ MsgChangeGovernment "theocracy")
         ,("check_if_non_state_advisor_effect", const $ msgToPP MsgCheckIfNonStateAdvisorEffect) -- Ignore actual percentages
         ,("divorce_consort_effect", rhsAlwaysYes MsgDivorceConsortEffect)
         ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)
@@ -170,6 +172,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("may_sow_discontent"     , rhsAlwaysYes MsgMaySowDiscontent) -- Espionage: Destabilizing Efforts
         ,("may_study_technology"   , rhsAlwaysYes MsgMayStudyTech) -- Espionage: Shady Recruitment
         ,("move_capital_effect"    , rhsAlwaysYes MsgMoveCapitalEffect)
+        ,("prev_move_capital_effect" , rhsAlwaysYes MsgPrevMoveCapitalEffect)
         ,("set_hre_religion_treaty", rhsAlwaysYes MsgSignWestphalia)
         ,("reduced_stab_impacts"   , rhsAlwaysYes MsgReducedStabImpacts) -- Full Diplomacy
         ,("reduce_estate_burghers_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_burghers_loyalty_effect"))
@@ -195,7 +198,9 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_cardinal"          , rhsAlwaysYes MsgLoseCardinal)
         ,("remove_heir"              , rhsAlwaysYes MsgHeirRemoved)
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
+        ,("same_govt_as_root_trigger" , rhsAlwaysYes MsgSameGovtAsRoot)
         ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
+        ,("swap_free_idea_group"     , rhsAlwaysYes MsgSwapFreeIdeaGroup)
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
         ,("auto_explore_adjacent_to_colony", rhsAlwaysYes MsgAutoExploreAdjacentToColony)
         ,("can_fabricate_for_vassals", rhsAlwaysYes MsgCanFabricateForVassals)
@@ -260,6 +265,7 @@ handlersNumeric = Tr.fromList
         ,("num_federation_advancements"      , numeric MsgNumFederationAdvancements)
         ,("num_free_building_slots"          , numeric MsgNumFreeBuildingSlots)
         ,("num_of_aspects"                   , numeric MsgNumAspects)
+        ,("num_of_buildings_in_province"     , numeric MsgNumBuildings)
         ,("num_of_colonial_subjects"         , numeric MsgNumColonialSubjects)
         ,("num_of_colonies"                  , numeric MsgNumColonies)
         ,("num_of_loans"                     , numeric MsgNumLoans)
@@ -344,6 +350,7 @@ handlersNumericIcons = Tr.fromList
         ,("army_reformer"            , numericIconLoc "army reformer" "army_reformer" MsgHasAdvisorLevel)
         ,("army_tradition"           , numericIconBonus "army tradition" MsgArmyTradition MsgYearlyArmyTradition)
         ,("artist"                   , numericIconLoc "artist" "artist" MsgHasAdvisorLevel)
+        ,("average_autonomy"         , numericIcon "autonomy" MsgAverageAutonomy)
         ,("average_unrest"           , numericIcon "unrest" MsgAverageUnrest)
         ,("base_manpower"            , numericIcon "manpower" MsgBaseManpower)
         ,("base_production"          , numericIcon "base production" MsgBaseProduction)
@@ -377,6 +384,7 @@ handlersNumericIcons = Tr.fromList
         ,("diplomat"                 , numericIconLoc "diplomat" "diplomat" MsgHasAdvisorLevel)
         ,("embracement_cost"         , numericIcon "embracement cost" MsgEmbracementCost)
         ,("establish_order_cost"     , numericIcon "establish holy order cost" MsgEstablishOrderCost)
+        ,("fervor"                   , numericIcon "fervor" MsgFervor)
         ,("fire_damage"              , numericIcon "land fire damage" MsgLandFireDamage)
         ,("fort_level"               , numericIcon "fort level" MsgFortLevel)
         ,("global_foreign_trade_power", numericIcon "trade power abroad" MsgTradePowerAbroad)
@@ -387,6 +395,7 @@ handlersNumericIcons = Tr.fromList
         ,("gold_income_percentage"   , numericIcon "gold" MsgGoldIncomePercentage)
         ,("government_reform_progress" , numericIcon "reform progress" MsgGovernmentReformProgress)
         ,("grown_by_development"     , numericIcon "development" MsgGrownByDevelopment)
+        ,("grown_by_states"          , numericIcon "states" MsgGrownByStates)
         ,("heavy_ship_cost"          , numericIcon "heavy ship cost" MsgHeavyShipCost)
         ,("heir_chance"              , numericIcon "chance of new heir" MsgHeirChance)
         ,("heir_adm"                 , numericIcon "adm" MsgHeirADM)
@@ -396,6 +405,7 @@ handlersNumericIcons = Tr.fromList
         ,("imperial_influence"       , numericIcon "imperial authority" MsgImperialAuthority)
         ,("imperial_mandate"         , numericIconBonus "mandate growth modifier" MsgImperialMandate MsgImperialMandateGrowth)
         ,("inflation"                , numericIcon "inflation" MsgInflation)
+        ,("innovativeness"           , numericIcon "innovativeness" MsgInnovativeness)
         ,("inquisitor"               , numericIconLoc "inquisitor" "inquisitor" MsgHasAdvisorLevel)
         ,("is_defender_of_faith_of_tier" , numericIcon "dotf" MsgIsDotfTier)
         ,("karma"                    , numericIcon "high karma" MsgKarma)
@@ -450,12 +460,14 @@ handlersNumericIcons = Tr.fromList
         ,("num_of_unions"            , numericIcon "personal union" MsgNumUnions)
         ,("num_of_vassals"           , numericIcon "vassal" MsgNumVassals) -- includes other subjects?
         ,("overextension_percentage" , numericIcon "overextension" MsgOverextension)
+        ,("power_projection"         , numericIcon "power projection" MsgPowerProjection)
         ,("philosopher"              , numericIconLoc "philosopher" "philosopher" MsgHasAdvisorLevel)
         ,("province_trade_power_modifier", numericIcon "local trade power modifier" MsgLocalTradePowerMod)
         ,("province_trade_power_value", numericIcon "local trade power" MsgLocalTradePower)
         ,("quartermaster"            , numericIconLoc "quartermaster" "quartermaster" MsgHasAdvisorLevel)
         ,("raze_power_gain"          , numericIcon "razing power gain" MsgRazingPowerGain)
         ,("recover_navy_morale_speed", numericIcon "recover navy morale speed" MsgRecoverNavyMoraleSpeed)
+        ,("revolutionary_zeal"       , numericIcon "revolutionary zeal" MsgRevolutionaryZeal)
         ,("recruitmaster"            , numericIconLoc "recruitmaster" "recruitmaster" MsgHasAdvisorLevel)
         ,("share_of_starting_income" , numericIcon "income" MsgShareOfStartingIncome)
         ,("province_trade_power"     , numericIcon "trade power" MsgProvinceTradePower)
@@ -473,7 +485,6 @@ handlersNumericIcons = Tr.fromList
         ,("state_maintenance_modifier", numericIcon "state maintenance" MsgStateMaintMod)
         ,("tax_income"               , numericIcon "tax income" MsgTaxIncome)
         ,("theologian"               , numericIconLoc "theologian" "theologian" MsgHasAdvisorLevel)
-        ,("total_development"        , numericIcon "development" MsgTotalDevelopment)
         ,("total_number_of_cardinals", numericIcon "cardinal" MsgTotalCardinals) -- in the world
         ,("trade_efficiency"         , numericIconBonus "trade efficiency" MsgTradeEfficiency MsgTradeEfficiencyBonus)
         ,("trade_goods_size"         , numericIcon "local goods produced" MsgLocalGoodsProduced)
@@ -735,6 +746,7 @@ handlersNumericIcons = Tr.fromList
         ,("monthly_militarized_society"       , numericIcon "militarization of state" MsgMonthlyMilitarizedSociety)
         ,("monthly_reform_progress_modifier"  , numericIcon "monthly reform progress modifier" MsgMonthlyReformProgressModifier)
         ,("monthly_splendor"                  , numericIcon "monthly splendor" MsgMonthlySplendor)
+        ,("patriarch_authority"               , numericIcon "patriarch authority" MsgPatriarchAuthority)
         ,("promote_culture_cost"              , numericIcon "promote culture cost" MsgPromoteCultureCost)
         ,("reduced_liberty_desire_on_same_continent", numericIcon "liberty desire in same continent subjects" MsgReducedLibertyDesireOnSameContinent)
         ,("rival_change_cost"                 , numericIcon "change rival cost" MsgRivalChangeCost)
@@ -909,18 +921,23 @@ handlersLocRhs = Tr.fromList
         ,("has_reform"            , withLocAtom MsgHasReform)
         ,("has_terrain"           , withLocAtom MsgHasTerrain)
         ,("has_winter"            , withLocAtom MsgHasWinter)
+        ,("hre_reform_passed"     , withLocAtomTitle MsgHREPassedReform)
         ,("in_league"             , withLocAtom MsgInLeague)
         ,("is_incident_active"    , withLocAtomTitle MsgIsIncidentActive)
+        ,("is_incident_happened"  , withLocAtomTitle MsgHasIncidentHappened)
         ,("is_subject_of_type"    , withLocAtomTitle MsgIsSubjectOfType)
         ,("kill_advisor"          , withLocAtom MsgAdvisorDies)
         ,("mission_completed"     , withLocAtomTitle MsgMissionCompleted)
         ,("native_policy"         , withLocAtom MsgNativePolicy)
+        ,("override_country_name" , withLocAtom MsgOverrideCountryName)
         ,("remove_advisor"        , withLocAtom MsgLoseAdvisor)
         ,("remove_advisor_by_category" , withLocAtom MsgRemoveAdvisor)
         ,("remove_government_reform" , withLocAtom MsgRemoveGovernmentReform)
         ,("rename_capital"        , withLocAtom MsgRenameCapital) -- will usually fail localization
         ,("set_estate_privilege"  , withLocAtom MsgGrantEstatePrivilege)
+        ,("set_imperial_incident" , withLocAtom MsgStartHREIncident)
         ,("superregion"           , withLocAtom MsgSuperRegionIs)
+        ,("trade_company_region"  , withLocAtom MsgTradeCompanyRegion)
         ]
 
 -- | Handlers for statements whose RHS is a province ID
@@ -965,6 +982,7 @@ handlersNumericOrFlag = Tr.fromList
         ,("num_of_light_ship"    , withTagOrNumber "light ship" MsgNumLightShips MsgNumLightShipsMatches)
         ,("num_of_heavy_ship"    , withTagOrNumber "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
         ,("num_of_galley"        , withTagOrNumber "galley" MsgNumGalleyShips MsgNumGalleyShipsMatches)
+        ,("num_of_transport"     , withTagOrNumber "transport" MsgNumTransportShips MsgNumTransportShipsMatches)
         ]
 
 -- TODO: parse advisor files
@@ -1026,6 +1044,7 @@ handlersSimpleIcon = Tr.fromList
         ,("consort_has_personality" , withLocAtomIcon (MsgConsortHasPersonality False))
         ,("create_advisor"          , withLocAtomIcon MsgCreateAdvisor)
         ,("current_age"             , withLocAtomIcon MsgCurrentAge)
+        ,("current_icon"            , withLocAtomIcon MsgCurrentIcon)
         ,("enable_religion"         , withLocAtomIcon MsgEnableReligion)
         ,("has_adopted_cult"        , withLocAtomIcon MsgHasAdoptedCult)
         ,("has_climate"             , withLocAtomIcon MsgHasClimate)
@@ -1088,12 +1107,12 @@ handlersSimpleFlag = Tr.fromList
         ,("inherit"                 , withFlag MsgInherit)
         ,("has_pillaged_capital_against" , withFlag MsgHasPillagedCapitalAgainst)
         ,("humiliated_by"           , withFlag MsgHumiliatedBy)
+        ,("is_capital_of"           , withFlag MsgIsCapitalOf)
         ,("is_enemy"                , scope EU4Country . withFlag MsgIsEnemy)
         ,("is_in_trade_league_with" , withFlag MsgIsInTradeLeagueWith)
         ,("is_league_enemy"         , withFlag MsgIsLeagueEnemy)
         ,("is_league_friend"        , withFlag MsgIsLeagueFriend)
         ,("is_neighbor_of"          , withFlag MsgNeighbors)
-        ,("is_permanent_claim"      , withFlag MsgIsPermanentClaim)
         ,("is_rival"                , withFlag MsgIsRival)
         ,("is_state_core"           , withFlag MsgIsStateCore)
         ,("is_strongest_trade_power", withFlag MsgIsStrongestTradePower)
@@ -1106,6 +1125,7 @@ handlersSimpleFlag = Tr.fromList
         ,("offensive_war_with"      , withFlag MsgOffensiveWarAgainst)
         ,("overlord_of"             , withFlag MsgOverlordOf)
         ,("owned_by"                , withFlag MsgOwnedBy)
+        ,("preferred_emperor"       , withFlag MsgPreferredEmperor)
         ,("release"                 , withFlag MsgReleaseVassal)
         ,("remove_claim"            , withFlag MsgRemoveClaim)
         ,("remove_historical_friend" , withFlag MsgRemoveHistoricalFriend)
@@ -1146,6 +1166,7 @@ handlersIconFlagOrPronoun = Tr.fromList
         ,("heir_religion"    , locAtomTagOrProvince MsgHeirReligion MsgHeirReligionAs)
         ,("is_core"          , tagOrProvince MsgIsCoreOf MsgHasCoreOn (Just EU4Country))
         ,("is_claim"         , tagOrProvince MsgHasClaim MsgHasClaimOn (Just EU4Country))
+        ,("is_permanent_claim" , tagOrProvince MsgIsPermanentClaim MsgHasPermanentClaim (Just EU4Country))
         ,("primary_culture"  , locAtomTagOrProvince (const MsgPrimaryCultureIs) MsgPrimaryCultureIsAs)
         ,("province_religion" , locAtomTagOrProvince MsgProvinceReligion MsgProvinceSameReligion)
         ,("religion"         , locAtomTagOrProvince MsgReligion MsgSameReligion)
@@ -1178,6 +1199,7 @@ handlersYesNo = Tr.fromList
         ,("has_any_estates"             , withBool MsgHasAnyEstates)
         ,("has_cardinal"                , withBool MsgHasCardinal)
         ,("has_completed_all_reforms_trigger" , withBool MsgHasCompletedAllReforms)
+        ,("has_final_tier_reforms_trigger" , withBool MsgHasFinalTierReform)
         ,("has_consort"                 , withBool MsgHasConsort)
         ,("has_consort_regency"         , withBool MsgHasConsortRegency)
         ,("has_custom_ideas"            , withBool MsgHasCustomIdeas)
@@ -1186,6 +1208,8 @@ handlersYesNo = Tr.fromList
         ,("has_empty_adjacent_province" , withBool MsgHasEmptyAdjProvince)
         ,("has_factions"                , withBool MsgHasFactions)
         ,("has_female_heir"             , withBool MsgHasFemaleHeir)
+        ,("has_flagship"                , withBool MsgHasFlagship)
+        ,("has_foreign_consort"         , withBool MsgHasForeignConsort)
         ,("has_foreign_heir"            , withBool MsgHasForeignHeir)
         ,("has_heir"                    , withBool MsgHasHeir)
         ,("has_manufactory_trigger"     , withBool MsgHasAnyManufactory)
@@ -1205,6 +1229,7 @@ handlersYesNo = Tr.fromList
         ,("has_secondary_religion"      , withBool MsgHasSecondaryReligion)
         ,("has_send_officers"           , withBool MsgHasSendOfficers)
         ,("has_siege"                   , withBool MsgUnderSiege)
+        ,("has_state_patriach"          , withBool MsgHasStatePatriach)
         ,("has_states_general_mechanic" , withBool MsgHasStatesGeneralMechanic)
         ,("has_subsidize_armies"        , withBool MsgHasSubsidizeArmies)
         ,("has_support_loyalists"       , withBool MsgHasSupportLoyalists)
@@ -1232,6 +1257,7 @@ handlersYesNo = Tr.fromList
         ,("is_federation_leader"        , withBool MsgIsFederationLeader)
         ,("is_federation_nation"        , withBool MsgIsFederationNation)
         ,("is_female"                   , withBool MsgIsFemale)
+        ,("is_foreign_company"          , withBool MsgIsForeignCompany)
         ,("is_force_converted"          , withBool MsgWasForceConverted)
         ,("is_former_colonial_nation"   , withBool MsgIsFormerColonialNation)
         ,("is_free_or_tributary_trigger", withBool MsgIsFreeOrTributaryTrigger)
@@ -1259,6 +1285,7 @@ handlersYesNo = Tr.fromList
         ,("is_reformation_center"       , withBool MsgIsCenterOfReformation)
         ,("is_religion_reformed"        , withBool MsgReligionReformed)
         ,("is_religious_center_province" , withBool MsgIsReligiousCenterProvince)
+        ,("is_revolution_target"        , withBool MsgIsRevolutionTarget)
         ,("is_revolutionary"            , withBool MsgIsRevolutionary)
         ,("is_revolutionary_republic_trigger" , withBool MsgIsRevolutionaryRepublic)
         ,("is_sea"                      , withBool MsgIsSea) -- province or trade node
@@ -1281,8 +1308,10 @@ handlersYesNo = Tr.fromList
         ,("set_in_empire"               , withBool MsgSetInEmpire)
         ,("set_seat_in_parliament"      , withBool MsgSetSeatInParliament)
         ,("set_revolution_in_province"  , withBool MsgSetRevolutionProvince)
+        ,("uses_religious_icons"        , withBool MsgUsesIcons)
         ,("unit_in_siege"               , withBool MsgUnderSiege) -- duplicate?
         ,("uses_devotion"               , withBool MsgUsesDevotion)
+        ,("uses_doom"                   , withBool MsgUsesDoom)
         ,("uses_piety"                  , withBool MsgUsesPiety)
         ,("valid_for_personal_unions_trigger" , withBool MsgValidForPU)
         ,("was_player"                  , withBool MsgHasBeenPlayer)
@@ -1312,6 +1341,8 @@ handlersNumericOrTag :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericOrTag = Tr.fromList
         [("num_of_cities"       , numericOrTag MsgNumCities MsgNumCitiesThan)
         ,("army_professionalism", numericOrTagIcon "army professionalism" MsgArmyProfessionalism MsgArmyProfessionalismAs)
+        ,("total_development"   , numericOrTagIcon "development" MsgTotalDevelopment MsgTotalDevelopmentAs)
+        ,("total_own_and_non_tributary_subject_development" , numericOrTagIcon "development" MsgOwnOrNonTribSubjectDevelopment MsgOwnOrNonTribSubjectDevelopmentAs)
         ,("num_of_cavalry"      , numericOrTag MsgNumCavalry MsgNumCavalryThan)
         ]
 
@@ -1511,6 +1542,16 @@ handlersSpecialComplex = Tr.fromList
         ,("check_variable"               , setVariable MsgChkVariable MsgChkVariableVal)
         ,("is_variable_equal"            , setVariable MsgEquVariable MsgEquVariableVal)
         ,("export_to_variable"           , exportVariable)
+
+        -- Has building triggers (from common/scripted_triggers/00_scripted_triggers.txt)
+        ,("has_courthouse_building_trigger" , hasBuildingTrigger ["courthouse", "town_hall"])
+        ,("has_dock_building_trigger"       , hasBuildingTrigger ["dock", "drydock"])
+        ,("has_forcelimit_building_trigger" , hasBuildingTrigger ["regimental_camp", "conscription_center"])
+        ,("has_manpower_building_trigger"   , hasBuildingTrigger ["barracks", "training_fields"])
+        ,("has_production_building_trigger" , hasBuildingTrigger ["workshop", "counting_house"])
+        ,("has_shipyard_building_trigger"   , hasBuildingTrigger ["shipyard", "grand_shipyard"])
+        ,("has_tax_building_trigger"        , hasBuildingTrigger ["temple", "cathedral"])
+        ,("has_trade_building_trigger"      , hasBuildingTrigger ["marketplace", "trade_depot", "stock_exchange"])
         ]
 
 -- | Handlers for statements pertaining to rebels
@@ -1576,6 +1617,7 @@ handlersMisc = Tr.fromList
         ,("num_of_religion"     , numOfReligion)
         ,("num_of_states_owned_or_owned_by_non_sovereign_subjects_with" , numOwnedProvincesWith MsgNumOwnedStatesOrNonSovereignSubjectsWith)
         ,("piety"               , piety)
+        ,("production_leader"   , productionLeader)
         ,("range"               , range)
         ,("remove_casus_belli"  , taTypeFlag "type" "target" MsgRemoveCasusBelli)
         ,("remove_trade_modifier" , taTypeFlag "name" "who" MsgRemoveTradeModifier)

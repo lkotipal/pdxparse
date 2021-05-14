@@ -134,6 +134,8 @@ module EU4.Handlers (
     ,   createIndependentEstate
     ,   numOfReligion
     ,   createSuccessionCrisis
+    ,   hasBuildingTrigger
+    ,   productionLeader
     -- testing
     ,   isPronoun
     ,   flag
@@ -859,6 +861,12 @@ scriptIconFileTable = HM.fromList
     ,("dominican_order", "Dominicans")
     ,("franciscan_order", "Franciscans")
     ,("jesuit_order", "Jesuits")
+    -- Icons
+    ,("icon_climacus"   , "Icon of St. John Climacus")
+    ,("icon_eleusa"     , "Icon of Eleusa")
+    ,("icon_michael"    , "Icon of St. Michael")
+    ,("icon_nicholas"   , "Icon of St. Nicholas")
+    ,("icon_pancreator" , "Icon of Christ Pantocrator")
     ]
 
 -- Given a script atom, return the corresponding icon key, if any.
@@ -3957,3 +3965,40 @@ createIndependentEstate stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_cie (foldl' add
             return $ MsgCreateIndependentEstate (iconText estate) estateLoc "" (cie_play_as cie)
         pp_cie cie = return $ (trace $ "Not handled in createIndependentEstate: cie=" ++ show cie ++ " stmt=" ++ show stmt) $ preMessage stmt
 createIndependentEstate stmt = (trace $ "Not handled in createIndependentEstate: " ++ show stmt) $ preStatement stmt
+
+-----------------------------------------
+-- Helper for has_xxx_building_trigger --
+-----------------------------------------
+hasBuildingTrigger :: forall g m. (EU4Info g, Monad m) => [Text] -> StatementHandler g m
+hasBuildingTrigger buildings stmt@[pdx| %_ = $yn |] = do
+    locAndIcons <- mapM locAndIcon buildings
+    let buildingText = fmtList locAndIcons
+    case T.toLower yn of
+        "yes" -> msgToPP $ MsgHasOneOfBuildings True buildingText
+        "no" -> msgToPP $ MsgHasOneOfBuildings False buildingText
+        _ -> (trace $ "Not handled in hasBuildingTrigger: " ++ show stmt) $ preStatement stmt
+        where
+            locAndIcon b = do
+                loc <- getGameL10n $ "building_" <> b
+                return (iconText b, loc)
+            fmtList [] = ""
+            fmtList ((i,b):bs) = i <> " " <> b <> (case length bs of
+                0 -> ""
+                1 -> " or "
+                _ -> ", ") <> fmtList bs
+hasBuildingTrigger _ stmt = (trace $ "Not handled in hasBuildingTrigger: " ++ show stmt) $ preStatement stmt
+
+-----------------------------------
+-- Handler for production_leader --
+-----------------------------------
+foldCompound "productionLeader" "ProductionLeader" "pl"
+    []
+    [CompField "trade_goods" [t|Text|] Nothing True
+    ,CompField "value" [t|Text|] Nothing False
+    ]
+    [| do
+        -- The "value = yes" part doesn't seem to do anything that appears in Aragon's mission tree doesn't appear
+        -- to do anything. It's probably a copy/paste error from a trading_bonus clause.
+        tgLoc <- getGameL10n _trade_goods
+        return $ MsgIsProductionLeader (iconText _trade_goods) tgLoc
+    |]
