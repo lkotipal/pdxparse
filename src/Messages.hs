@@ -1196,7 +1196,6 @@ data ScriptMessage
     | MsgProviceHasCenterOfTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrivateerPower {scriptMessageAmt :: Double}
     | MsgPrivateerPowerCountry {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
-    | MsgTrigger
     | MsgDevastation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasEstatePrivilege {scriptMessageWhat :: Text}
     | MsgOwnsOrNonTribSubject {scriptMessageWhat :: Text}
@@ -1514,6 +1513,8 @@ data ScriptMessage
     | MsgChangeSubjectType {scriptMessageIcon :: Text, scriptMessageType :: Text}
     | MsgRemoveTradeModifier {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgHasTradeCompanyInvestmentInState {scriptMessageWhom :: Text}
+    | MsgRandomListTrigger
+    | MsgRandomListModifier {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -8378,8 +8379,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage $ bold (plainPc _amt)
                 , " trade power from [[privateering]]"
                 ]
-        MsgTrigger
-            -> "Triggered by:"
         MsgDevastation {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -10276,6 +10275,14 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _whom
                 , " has a trade company investment in a state (only one per state counts)"
+                ]
+        MsgRandomListTrigger
+            -> "Only considered if:"
+        MsgRandomListModifier {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Chance increases '''x "
+                , toMessage (plainNum _amt)
+                , "''' if:"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

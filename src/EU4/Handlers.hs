@@ -2062,9 +2062,29 @@ randomList stmt@[pdx| %_ = @scr |] = fmtRandomList $ map entry scr
             let total = sum (map fst entries)
             in (:) <$> pure (i, MsgRandom)
                    <*> (concat <$> indentUp (mapM (fmtRandomList' total) entries))
-        fmtRandomList' total (wt, what) = withCurrentIndent $ \i ->
-            (:) <$> pure (i, MsgRandomChance $ toPct (wt / total))
-                <*> ppMany what -- has integral indentUp
+        fmtRandomList' total (wt, what) = do
+            -- TODO: Could probably be simplified.
+            let (mtrigger, rest) = extractStmt (matchLhsText "trigger") what
+                (mmodifier, rest') = extractStmt (matchLhsText "modifier") rest
+            trig <- (case mtrigger of
+                Just s -> indentUp (compoundMessage MsgRandomListTrigger s)
+                _ -> return [])
+            mod <- indentUp (case mmodifier of
+                Just s@[pdx| %_ = @scr |] ->
+                    let
+                        (mfactor, s') = extractStmt (matchLhsText "factor") scr
+                    in
+                        case mfactor of
+                            Just [pdx| %_ = !factor |] -> do
+                                cond <- ppMany s'
+                                liftA2 (++) (msgToPP $ MsgRandomListModifier factor) (pure cond)
+                            _ -> preStatement s
+                Just s -> preStatement s
+                _ -> return [])
+            body <- ppMany rest' -- has integral indentUp
+            liftA2 (++)
+                (msgToPP $ MsgRandomChance $ toPct (wt / total))
+                (pure (trig ++ mod ++ body))
 randomList _ = withCurrentFile $ \file ->
     error ("randomList sent strange statement in " ++ file)
 
@@ -2720,8 +2740,8 @@ triggerSwitch stmt@(Statement _ OpEq (CompoundRhs
                     let cond = [pdx| $condlhs = $condrhs |]
                     ((_, guardMsg):_) <- ppOne cond -- XXX: match may fail (but shouldn't)
                     guardText <- messageText guardMsg
-                    -- pp the rest of the block, at the next level
-                    statementMsgs <- indentUp (ppMany action)
+                    -- pp the rest of the block, at the next level (done automatically by ppMany)
+                    statementMsgs <- ppMany action
                     withCurrentIndent $ \i -> return $ (i, MsgTriggerSwitchClause guardText) : statementMsgs
                 _ -> preStatement stmt
             withCurrentIndent $ \i -> return $ (i, MsgTriggerSwitch) : concat statementsMsgs
