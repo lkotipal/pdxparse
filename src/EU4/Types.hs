@@ -13,6 +13,7 @@ module EU4.Types (
     ,   IdeaGroup (..), Idea (..), IdeaTable
     ,   EU4Modifier (..), EU4OpinionModifier (..)
     ,   EU4MissionTreeBranch (..), EU4Mission (..)
+    ,   EU4ProvinceTriggeredModifier (..)
         -- * Low level types
     ,   MonarchPower (..)
     ,   EU4Scope (..)
@@ -54,6 +55,7 @@ data EU4Data = EU4Data {
     ,   eu4missions :: HashMap Text EU4MissionTreeBranch
     ,   eu4eventTriggers :: EU4EventTriggers
     ,   eu4geoData :: HashMap Text EU4GeoType
+    ,   eu4provtrigmodifiers :: HashMap Text EU4ProvinceTriggeredModifier
     ,   eu4eventScripts :: HashMap FilePath GenericScript
     ,   eu4decisionScripts :: HashMap FilePath GenericScript
     ,   eu4ideaGroupScripts :: HashMap FilePath GenericScript
@@ -62,6 +64,7 @@ data EU4Data = EU4Data {
     ,   eu4missionScripts :: HashMap FilePath GenericScript
     ,   eu4onactionsScripts :: HashMap FilePath GenericScript
     ,   eu4disasterScripts :: HashMap FilePath GenericScript
+    ,   eu4provtrigmodifierScripts :: HashMap FilePath GenericScript
     -- etc.
     }
 
@@ -118,6 +121,10 @@ class (IsGame g,
     getDisasterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed geographic data
     getGeoData :: Monad m => PPT g m (HashMap Text EU4GeoType)
+    -- | Get the contents of all province triggered modifier script files.
+    getProvinceTriggeredModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed province triggered modifiers table (keyed on modifier ID).
+    getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text EU4ProvinceTriggeredModifier)
 
 -------------------
 -- Feature types --
@@ -233,6 +240,18 @@ data EU4Modifier = EU4Modifier
     ,   modReligious :: Bool
     ,   modEffects :: GenericScript
     } deriving (Show)
+
+data EU4ProvinceTriggeredModifier = EU4ProvinceTriggeredModifier
+    {   ptmodName :: Text
+    ,   ptmodLocName :: Maybe Text
+    ,   ptmodPath :: FilePath
+    ,   ptmodEffects :: GenericScript        -- The modifier to apply when the triggered modifier is active
+    ,   ptmodPotential :: GenericScript      -- Whether the triggered modifier is visible in the Province view window
+    ,   ptmodTrigger :: GenericScript        -- Whether the triggered modifier is active
+    ,   ptmodOnActivation :: GenericScript   -- Effects to execute when the triggered modifiers switches to active (province scope)
+    ,   ptmodOnDeactivation :: GenericScript -- Effects to execute when the triggered modifiers switches to inactive
+    } deriving (Show)
+
 data EU4OpinionModifier = EU4OpinionModifier
     {   omodName :: Text
     ,   omodLocName :: Maybe Text

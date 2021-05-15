@@ -5,6 +5,7 @@ Description : Country, ruler, province and opinion modifiers
 module EU4.Modifiers (
         parseEU4Modifiers, writeEU4Modifiers
     ,   parseEU4OpinionModifiers, writeEU4OpinionModifiers
+    ,   parseEU4ProvTrigModifiers
     ) where
 
 import Control.Arrow ((&&&))
@@ -238,3 +239,55 @@ pp_opinion_modifer mod = do
 
         fmt :: Text -> Double -> Doc
         fmt t v = mconcat [ plainNum v, " ", Doc.strictText $ t <> (if v == 1.0 then "" else "s") ]
+
+parseEU4ProvTrigModifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text EU4ProvinceTriggeredModifier)
+parseEU4ProvTrigModifiers scripts = HM.unions . HM.elems <$> do
+    tryParse <- hoistExceptions $
+        HM.traverseWithKey
+            (\sourceFile scr ->
+                setCurrentFile sourceFile $ mapM parseEU4ProvTrigModifier scr)
+            scripts
+    case tryParse of
+        Left err -> do
+            traceM $ "Completely failed parsing province triggered modifiers: " ++ T.unpack err
+            return HM.empty
+        Right modifiersFilesOrErrors ->
+            flip HM.traverseWithKey modifiersFilesOrErrors $ \sourceFile emods ->
+                fmap (mkModMap . catMaybes) . forM emods $ \case
+                    Left err -> do
+                        traceM $ "Error parsing province triggered modifiers in " ++ sourceFile
+                                 ++ ": " ++ T.unpack err
+                        return Nothing
+                    Right mmod -> return mmod
+                where mkModMap :: [EU4ProvinceTriggeredModifier] -> HashMap Text EU4ProvinceTriggeredModifier
+                      mkModMap = HM.fromList . map (ptmodName &&& id)
+
+parseEU4ProvTrigModifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe EU4ProvinceTriggeredModifier))
+parseEU4ProvTrigModifier [pdx| $modid = @effects |]
+    = withCurrentFile $ \file -> do
+        mlocid <- getGameL10nIfPresent modid
+        let ptm = foldl' addSection (EU4ProvinceTriggeredModifier {
+                ptmodName = modid
+            ,   ptmodLocName = mlocid
+            ,   ptmodPath = file
+            ,   ptmodEffects = []
+            ,   ptmodPotential = []
+            ,   ptmodTrigger = []
+            ,   ptmodOnActivation = []
+            ,   ptmodOnDeactivation = []
+            }) effects
+        return $ Right (Just ptm)
+    where
+        addSection :: EU4ProvinceTriggeredModifier -> GenericStatement -> EU4ProvinceTriggeredModifier
+        addSection ptm stmt@[pdx| $lhs = @scr |] = case lhs of
+            "potential"       -> ptm { ptmodPotential = scr }
+            "trigger"         -> ptm { ptmodTrigger = scr }
+            "on_activation"   -> ptm { ptmodOnActivation = scr }
+            "on_deactivation" -> ptm { ptmodOnDeactivation = scr }
+            _ -> (trace $ "Urecognized statement in province triggered modifier: " ++ show stmt) $ ptm
+         -- Must be an effect
+        addSection ptm stmt = ptm { ptmodEffects = (ptmodEffects ptm) ++ [stmt] }
+parseEU4ProvTrigModifier stmt = (trace $ show stmt) $ withCurrentFile $ \file ->
+    throwError ("unrecognised form for province triggered modifier in " <> T.pack file)

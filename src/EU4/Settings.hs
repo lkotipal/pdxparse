@@ -41,7 +41,8 @@ import Yaml (LocEntry (..))
 import EU4.Decisions (parseEU4Decisions, writeEU4Decisions)
 import EU4.IdeaGroups (parseEU4IdeaGroups, writeEU4IdeaGroups)
 import EU4.Modifiers ( parseEU4Modifiers, writeEU4Modifiers
-                     , parseEU4OpinionModifiers, writeEU4OpinionModifiers)
+                     , parseEU4OpinionModifiers, writeEU4OpinionModifiers
+                     , parseEU4ProvTrigModifiers)
 import EU4.Missions (parseEU4Missions , writeEU4Missions)
 import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
@@ -96,6 +97,8 @@ instance IsGame EU4 where
                 ,   eu4onactionsScripts = HM.empty
                 ,   eu4disasterScripts = HM.empty
                 ,   eu4geoData = HM.empty
+                ,   eu4provtrigmodifiers = HM.empty
+                ,   eu4provtrigmodifierScripts = HM.empty
                 }))
                 (EU4S $ EU4State {
                     eu4currentFile = Nothing
@@ -174,6 +177,12 @@ instance EU4Info EU4 where
     getGeoData = do
         EU4D ed <- get
         return (eu4geoData ed)
+    getProvinceTriggeredModifierScripts = do
+        EU4D ed <- get
+        return (eu4provtrigmodifierScripts ed)
+    getProvinceTriggeredModifiers = do
+        EU4D ed <- get
+        return (eu4provtrigmodifiers ed)
 
 instance IsGameData (GameData EU4) where
     getSettings (EU4D ed) = eu4settings ed
@@ -217,6 +226,7 @@ readEU4Scripts = do
                     "tradenodes" -> "common" </> "tradenodes"
                     "trade_companies" -> "common" </> "trade_companies"
                     "colonial_regions" -> "common" </> "colonial_regions"
+                    "province_triggered_modifiers" -> "common" </> "province_triggered_modifiers"
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
@@ -254,6 +264,7 @@ readEU4Scripts = do
     missions <- readEU4Script "missions"
     on_actions <- readEU4Script "on_actions"
     disasters <- readEU4Script "disasters"
+    provTrigModifiers <- readEU4Script "province_triggered_modifiers"
 
     ---------------------
     -- Geographic data --
@@ -277,6 +288,7 @@ readEU4Scripts = do
         ,   eu4onactionsScripts = on_actions
         ,   eu4disasterScripts = disasters
         ,   eu4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
+        ,   eu4provtrigmodifierScripts = provTrigModifiers
         }
 
 -- | Interpret the script ASTs as usable data.
@@ -286,6 +298,7 @@ parseEU4Scripts = do
     ideaGroups <- parseEU4IdeaGroups =<< getIdeaGroupScripts
     modifiers <- parseEU4Modifiers =<< getModifierScripts
     opinionModifiers <- parseEU4OpinionModifiers =<< getOpinionModifierScripts
+    provTrigModifiers <- parseEU4ProvTrigModifiers =<< getProvinceTriggeredModifierScripts
     decisions <- parseEU4Decisions =<< getDecisionScripts
     events <- parseEU4Events =<< getEventScripts
     missions <- parseEU4Missions =<< getMissionScripts
@@ -305,6 +318,7 @@ parseEU4Scripts = do
             ,   eu4opmods = opinionModifiers
             ,   eu4missions = missions
             ,   eu4eventTriggers = te5
+            ,   eu4provtrigmodifiers = provTrigModifiers
             }
 
 -- | Output the game data as wiki text.

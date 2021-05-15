@@ -803,6 +803,7 @@ handlersModifiers = Tr.fromList
         ,("add_province_modifier"          , addModifier MsgProvMod)
         ,("add_ruler_modifier"             , addModifier MsgRulerMod)
         ,("add_trade_modifier"             , addModifier MsgTradeMod)
+        ,("add_province_triggered_modifier", addProvinceTriggeredModifier)
         ,("has_country_modifier"           , withLocAtom2 MsgCountryMod MsgHasModifier)
         ,("has_province_modifier"          , withLocAtom2 MsgProvMod MsgHasModifier)
         ,("has_ruler_modifier"             , withLocAtom2 MsgRulerMod MsgHasModifier)

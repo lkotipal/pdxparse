@@ -136,6 +136,7 @@ module EU4.Handlers (
     ,   createSuccessionCrisis
     ,   hasBuildingTrigger
     ,   productionLeader
+    ,   addProvinceTriggeredModifier
     -- testing
     ,   isPronoun
     ,   flag
@@ -172,7 +173,7 @@ import Abstract -- everything
 import Doc (Doc)
 import qualified Doc -- everything
 import Messages -- everything
-import MessageTools (plural)
+import MessageTools (plural, iquotes)
 import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, indentDown, withCurrentIndent, withCurrentIndentZero, alsoIndent, alsoIndent'
@@ -4002,3 +4003,19 @@ foldCompound "productionLeader" "ProductionLeader" "pl"
         tgLoc <- getGameL10n _trade_goods
         return $ MsgIsProductionLeader (iconText _trade_goods) tgLoc
     |]
+
+-------------------------------------------------
+-- Handler for add_province_triggered_modifier --
+-------------------------------------------------
+addProvinceTriggeredModifier :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+addProvinceTriggeredModifier stmt@[pdx| %_ = $id |] = do
+    mmod <- HM.lookup id <$> getProvinceTriggeredModifiers
+    case mmod of
+        Just mod -> withCurrentIndent $ \i -> do
+            effect <- scope EU4Bonus $ ppMany (ptmodEffects mod)
+            trigger <- indentUp $ scope EU4Province $ ppMany (ptmodTrigger mod)
+            let name = ptmodLocName mod
+                locName = maybe ("<tt>" <> id <> "</tt>") (Doc.doc2text . iquotes) name
+            return $ ((i, MsgAddProvinceTriggeredModifier locName) : effect) ++ (if null trigger then [] else ((i+1, MsgLimit) : trigger))
+        _ -> (trace $ "add_province_triggered_modifier: Modifier " ++ T.unpack id ++ " not found") $ preStatement stmt
+addProvinceTriggeredModifier stmt = (trace $ "Not handled in addProvinceTriggeredModifier: " ++ show stmt) $ preStatement stmt

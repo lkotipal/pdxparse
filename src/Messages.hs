@@ -1597,6 +1597,7 @@ data ScriptMessage
     | MsgNumTimesUsedTransferDevelopment {scriptMessageAmt :: Double}
     | MsgProvinceHasCurrentTechFort {scriptMessageYn :: Bool}
     | MsgHasMostProvinceTradePower {scriptMessageWhom :: Text}
+    | MsgAddProvinceTriggeredModifier {scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -10857,6 +10858,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _whom
                 , " has the most amount of trade power in the node"
+                ]
+        MsgAddProvinceTriggeredModifier {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Gain province modifier "
+                , _what
+                , " until the end of the campaign, providing the following effects:"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
