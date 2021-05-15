@@ -5,7 +5,7 @@ Description : Country, ruler, province and opinion modifiers
 module EU4.Modifiers (
         parseEU4Modifiers, writeEU4Modifiers
     ,   parseEU4OpinionModifiers, writeEU4OpinionModifiers
-    ,   parseEU4ProvTrigModifiers
+    ,   parseEU4ProvTrigModifiers, writeEU4ProvTrigModifiers
     ) where
 
 import Control.Arrow ((&&&))
@@ -14,7 +14,7 @@ import Control.Monad.Except (MonadError (..))
 import Control.Monad.Trans (MonadIO (..))
 import Control.Monad.State (gets)
 
-import Data.Maybe (isJust, fromJust, catMaybes)
+import Data.Maybe (isJust, fromJust, fromMaybe, catMaybes)
 import Data.Monoid ((<>))
 import Data.List (sortOn, intersperse, foldl')
 import Data.Set (toList, fromList)
@@ -33,11 +33,12 @@ import SettingsTypes ( PPT, Settings (..){-, Game (..)-}
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions)
 import EU4.Types -- everything
-import EU4.Common (extractStmt, matchExactText)
+import EU4.Common (extractStmt, matchExactText, ppMany)
 import FileIO (Feature (..), writeFeatures)
 import Text.PrettyPrint.Leijen.Text (Doc)
 import qualified Text.PrettyPrint.Leijen.Text as PP
 import qualified Doc
+import Messages
 import MessageTools
 
 import Debug.Trace (trace, traceM)
@@ -291,3 +292,60 @@ parseEU4ProvTrigModifier [pdx| $modid = @effects |]
         addSection ptm stmt = ptm { ptmodEffects = (ptmodEffects ptm) ++ [stmt] }
 parseEU4ProvTrigModifier stmt = (trace $ show stmt) $ withCurrentFile $ \file ->
     throwError ("unrecognised form for province triggered modifier in " <> T.pack file)
+
+writeEU4ProvTrigModifiers :: (EU4Info g, MonadIO m) => PPT g m ()
+writeEU4ProvTrigModifiers = do
+    provTrigModifiers <- getProvinceTriggeredModifiers
+    writeFeatures "province_triggered_modifiers"
+                  [Feature { featurePath = Just "tables"
+                           , featureId = Just "province_triggered_modifiers.txt"
+                           , theFeature = Right (HM.elems provTrigModifiers)
+                           }]
+                  pp_prov_trig_modifiers
+    where
+        pp_prov_trig_modifiers :: (EU4Info g, Monad m) => [EU4ProvinceTriggeredModifier] -> PPT g m Doc
+        pp_prov_trig_modifiers mods = do
+            modDoc <- mapM pp_prov_trig_modifier (sortOn (sortName . ptmodLocName) mods)
+            return $ mconcat $
+                [ "{| class=\"mildtable\"", PP.line
+                , "! style=\"min-width:260px; text-align:center\" | Name", PP.line
+                , "! style=\"text-align:center\" | Requirements", PP.line
+                , "! style=\"min-width:260px; text-align:center\" | Effects", PP.line
+                , "! | Additional effects", PP.line
+                ] ++ modDoc ++
+                [ "|}", PP.line
+                ]
+
+        sortName (Just n) =
+            let ln = T.toLower n
+                nn = T.stripPrefix "the " ln
+            in fromMaybe ln nn
+        sortName _ = ""
+
+        pp_prov_trig_modifier :: (EU4Info g, Monad m) => EU4ProvinceTriggeredModifier -> PPT g m Doc
+        pp_prov_trig_modifier mod = do
+            req <- imsg2doc =<< ppMany ((ptmodPotential mod) ++ (ptmodTrigger mod))
+            eff <- imsg2doc =<< ppMany (ptmodEffects mod)
+            act <- withHeader "When activated:" (ptmodOnActivation mod)
+            dea <- withHeader "When deactivated:" (ptmodOnDeactivation mod)
+            return $ mconcat
+                [ "|- style=\"vertical-align:top;\"", PP.line
+                , "|", PP.line
+                , "==== ", Doc.strictText $ fromMaybe (ptmodName mod) (ptmodLocName mod) , " ====", PP.line
+                , "|" , PP.line
+                , req , PP.line
+                , "|", PP.line
+                , eff, PP.line
+                , "|", PP.line
+                , act, dea, PP.line
+                ]
+
+        withHeader :: (EU4Info g, Monad m) => Text -> GenericScript -> PPT g m Doc
+        withHeader _ [] = return $ mconcat []
+        withHeader hdr stmts = do
+            stpp'd <- imsg2doc =<< ppMany stmts
+            return $ mconcat
+                [ Doc.strictText hdr, PP.line
+                , stpp'd, PP.line
+                ]
+

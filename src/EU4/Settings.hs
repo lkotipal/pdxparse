@@ -42,7 +42,7 @@ import EU4.Decisions (parseEU4Decisions, writeEU4Decisions)
 import EU4.IdeaGroups (parseEU4IdeaGroups, writeEU4IdeaGroups)
 import EU4.Modifiers ( parseEU4Modifiers, writeEU4Modifiers
                      , parseEU4OpinionModifiers, writeEU4OpinionModifiers
-                     , parseEU4ProvTrigModifiers)
+                     , parseEU4ProvTrigModifiers, writeEU4ProvTrigModifiers)
 import EU4.Missions (parseEU4Missions , writeEU4Missions)
 import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
@@ -329,3 +329,4 @@ writeEU4Scripts = do
     writeEU4Decisions
     writeEU4Missions
     writeEU4OpinionModifiers
+    writeEU4ProvTrigModifiers

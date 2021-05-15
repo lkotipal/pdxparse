@@ -164,6 +164,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("increase_legitimacy_huge_effect"  , rhsAlwaysYes MsgIncreaseLegitimacyHugeEffect)
         ,("increase_legitimacy_medium_effect", rhsAlwaysYes MsgIncreaseLegitimacyMediumEffect)
         ,("increase_legitimacy_small_effect" , rhsAlwaysYes MsgIncreaseLegitimacySmallEffect)
+        ,("is_imperial_modifier"   , rhsAlwaysYes MsgIsImperialMod)
         ,("is_janissary_modifier"  , rhsAlwaysYes MsgIsJanissaryMod)
         ,("is_rajput_modifier"     , rhsAlwaysYes MsgIsRajputMod)
         ,("is_subject_other_than_tributary_trigger" , rhsAlwaysYes MsgIsSubjectOtherThanTributary)

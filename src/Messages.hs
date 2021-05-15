@@ -66,6 +66,7 @@ data ScriptMessage
     | MsgLeaveHRE
     | MsgIsJanissaryMod
     | MsgIsRajputMod
+    | MsgIsImperialMod
     | MsgGainADM {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainAT {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainAuth {scriptMessageAmt :: Double}
@@ -1630,9 +1631,11 @@ instance RenderMessage Script ScriptMessage where
         MsgLeaveHRE
             -> "Remove all provinces from the Holy Roman Empire, unless an elector or the Emperor"
         MsgIsJanissaryMod
-            -> "(This is a Janissary modifier.)"
+            -> "This modifier only applies to janissary regiments"
         MsgIsRajputMod
-            -> "(This is a Rajput modifier.)"
+            -> "This modifier only applies to rajput regiments"
+        MsgIsImperialMod
+            -> "This modifier only applies to members of the HRE"
         MsgGainADM {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
