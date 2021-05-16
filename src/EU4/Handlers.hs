@@ -1138,6 +1138,11 @@ tagOrProvince :: (EU4Info g, Monad m) =>
         -> (Text -> ScriptMessage)
         -> Maybe EU4Scope
         -> StatementHandler g m
+tagOrProvince tagmsg _ expectScope stmt@[pdx| %_ = $vartag:$var |] = do
+    mwhoflag <- eflag expectScope (Right (vartag, var))
+    case mwhoflag of
+        Just whoflag -> msgToPP $ tagmsg whoflag
+        Nothing -> preStatement stmt
 tagOrProvince tagmsg provmsg expectScope stmt@[pdx| %_ = ?!eobject |]
     = msgToPP =<< case eobject of
             Just (Right tag) -> do
