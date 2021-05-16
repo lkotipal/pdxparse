@@ -4,6 +4,7 @@ module EU4.Handlers (
     ,   msgToPP
     ,   flagText
     ,   isTag
+    ,   getProvLoc
     ,   pp_mtth
     ,   compound
     ,   compoundMessage
@@ -368,9 +369,12 @@ isPronoun s = T.map toLower s `S.member` pronouns where
 -- Get the localization for a province ID, if available.
 getProvLoc :: (IsGameData (GameData g), Monad m) =>
     Int -> PPT g m Text
-getProvLoc n =
+getProvLoc n = do
     let provid_t = T.pack (show n)
-    in getGameL10nDefault provid_t ("PROV" <> provid_t)
+    mprovloc <- getGameL10nIfPresent ("PROV" <> provid_t)
+    return $ case mprovloc of
+        Just loc -> loc <> " (" <> provid_t <> ")"
+        _ -> "Province " <> provid_t
 
 -----------------------------------------------------------------
 -- Script handlers that should be used directly, not via ppOne --
@@ -642,7 +646,7 @@ withProvince msg stmt@[pdx| %lhs = $vartag:$var |] = do
 withProvince msg stmt@[pdx| %lhs = $var |]
     = msgToPP =<< msg . Doc.doc2text <$> pronoun (Just EU4Province) var
 withProvince msg [pdx| %lhs = !provid |]
-    = withLocAtom msg [pdx| %lhs = $(T.pack ("PROV" <> show (provid::Int))) |]
+    = msgToPP =<< msg <$> getProvLoc provid
 withProvince _ stmt = preStatement stmt
 
 -- As withLocAtom but no l10n.

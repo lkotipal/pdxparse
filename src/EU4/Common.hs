@@ -1767,8 +1767,7 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
                     Nothing -> preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
     IntLhs n -> do -- Treat as a province tag
-        let provN = T.pack (show n)
-        prov_loc <- getGameL10nDefault ("Province " <> provN) ("PROV" <> provN)
+        prov_loc <- getProvLoc n
         case rhs of
             CompoundRhs scr -> do
                 header <- msgToPP (MsgProvince prov_loc)
