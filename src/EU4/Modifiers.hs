@@ -305,9 +305,11 @@ writeEU4ProvTrigModifiers = do
     where
         pp_prov_trig_modifiers :: (EU4Info g, Monad m) => [EU4ProvinceTriggeredModifier] -> PPT g m Doc
         pp_prov_trig_modifiers mods = do
+            version <- gets (gameVersion . getSettings)
             modDoc <- mapM pp_prov_trig_modifier (sortOn (sortName . ptmodLocName) mods)
             return $ mconcat $
-                [ "{| class=\"mildtable\"", PP.line
+                [ "{{Version|", Doc.strictText version, "}}", PP.line
+                , "{| class=\"mildtable\"", PP.line
                 , "! style=\"min-width:260px; text-align:center\" | Name", PP.line
                 , "! style=\"text-align:center\" | Requirements", PP.line
                 , "! style=\"min-width:260px; text-align:center\" | Effects", PP.line
@@ -330,9 +332,9 @@ writeEU4ProvTrigModifiers = do
             dea <- withHeader "When deactivated:" (ptmodOnDeactivation mod)
             return $ mconcat
                 [ "|- style=\"vertical-align:top;\"", PP.line
-                , "|", PP.line
-                , "==== ", Doc.strictText $ fromMaybe (ptmodName mod) (ptmodLocName mod) , " ====", PP.line
                 , "|" , PP.line
+                , "==== ", Doc.strictText $ fromMaybe (ptmodName mod) (ptmodLocName mod) , " ====", PP.line
+                , "| <!-- ", Doc.strictText (ptmodName mod), " -->", PP.line
                 , req , PP.line
                 , "|", PP.line
                 , eff, PP.line
