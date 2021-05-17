@@ -28,8 +28,9 @@ module MessageTools (
     ,   gainOrLose, gainsOrLoses
     -- * Advisor text helpers
     ,   advisorDiscountText
-    -- * Day formatting
+    -- * Time formatting
     , formatDays
+    , formatMonths
     -- * Wiki markup
     ,   template, templateDoc
     -- * If-then-else
@@ -227,14 +228,15 @@ advisorDiscountText :: Double -> Doc
 advisorDiscountText 0 = ""
 advisorDiscountText discount = " (" <> (plainPc (100*(1-discount))) <> " cheaper to employ)"
 
+-- | Format years
+formatYears :: Int -> Text
+formatYears 1 = "1 year"
+formatYears ys = T.pack $ show ys <> " years"
 
 -- | Format days
 formatDays :: Double -> Text
 formatDays days = formatDays' (round days :: Int)
     where
-    formatYears :: Int -> Text
-    formatYears 1 = "1 year"
-    formatYears ys = T.pack $ show ys <> " years"
     formatDays' :: Int -> Text
     formatDays' days | days < 0   = "the rest of the game"
     formatDays' 1                 = "1 day"
@@ -244,6 +246,18 @@ formatDays days = formatDays' (round days :: Int)
                                             ""
                                          else
                                             " and " <> formatDays' (days `mod` 365))
+-- | Format months
+formatMonths :: Double -> Text
+formatMonths months = formatMonths' (round months :: Int)
+    where
+    formatMonths' :: Int -> Text
+    formatMonths' 1 = "1 month"
+    formatMonths' months | months < 12 = T.pack $ show months <> " months"
+    formatMonths' months = formatYears (months `div` 12) <>
+                            (if months `mod` 12 == 0 then
+                                ""
+                            else
+                                " and " <> formatMonths' (months `mod` 12))
 
 -----------------
 ---- Wiki text --

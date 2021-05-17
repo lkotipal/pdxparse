@@ -276,6 +276,7 @@ data ScriptMessage
     | MsgRulerFlag
     | MsgGlobalFlag
     | MsgConsortFlag
+    | MsgHeirFlag
     | MsgHadCountryFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgHadProvinceFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgHadRulerFlag {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
@@ -413,6 +414,7 @@ data ScriptMessage
     | MsgHasCardinal {scriptMessageYn :: Bool}
     | MsgHasConsort {scriptMessageYn :: Bool}
     | MsgHasHeir {scriptMessageYn :: Bool}
+    | MsgHasHeirNamed {scriptMessageWhom :: Text}
     | MsgHasOwnerCulture {scriptMessageYn :: Bool}
     | MsgHasOwnerAcceptedCulture {scriptMessageYn :: Bool}
     | MsgHasOwnerReligion {scriptMessageYn :: Bool}
@@ -913,6 +915,7 @@ data ScriptMessage
     | MsgAddTrust {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAddTrustMutual {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgSaveEventTargetAs {scriptMessageName :: Text}
+    | MsgSaveGlobalEventTargetAs {scriptMessageName :: Text}
     | MsgHasSavedEventTarget {scriptMessageName :: Text}
     | MsgRemoveClaim {scriptMessageWho :: Text}
     | MsgTribalAllegianceBonus {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1399,6 +1402,7 @@ data ScriptMessage
     | MsgProvinceSameReligion {scriptMessageWhom :: Text}
     | MsgProvinceReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgGrantEstatePrivilege {scriptMessageWhat :: Text}
+    | MsgRemoveEstatePrivilege {scriptMessageWhat :: Text}
     | MsgNumTrustedAllies {scriptMessageAmt :: Double}
     | MsgIsFederationLeader {scriptMessageYn :: Bool}
     | MsgAverageUnrest {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1565,6 +1569,7 @@ data ScriptMessage
     | MsgNumOfForeignHREProvinces {scriptMessageAmt :: Double}
     | MsgNumOfStates {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumOfExplorers {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumOfConquistadors {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumOfBanners {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMonthlyADM {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMonthlyDIP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1599,6 +1604,41 @@ data ScriptMessage
     | MsgProvinceHasCurrentTechFort {scriptMessageYn :: Bool}
     | MsgHasMostProvinceTradePower {scriptMessageWhom :: Text}
     | MsgAddProvinceTriggeredModifier {scriptMessageWhat :: Text}
+    | MsgHasInfluencingFort {scriptMessageYn :: Bool}
+    | MsgIsInCoalition {scriptMessageYn :: Bool}
+    | MsgChangeController {scriptMessageWhom :: Text}
+    | MsgIsExcommunicated {scriptMessageYn :: Bool}
+    | MsgExcommunicate {scriptMessageWhom :: Text}
+    | MsgChangeConsortSameCulture {scriptMessageWhom :: Text}
+    | MsgChangeConsortCulture {scriptMessageWhat :: Text}
+    | MsgChangeHeirSameCulture {scriptMessageWhom :: Text}
+    | MsgChangeHeirCulture {scriptMessageWhat :: Text}
+    | MsgChangeRulerSameCulture {scriptMessageWhom :: Text}
+    | MsgChangeRulerCulture {scriptMessageWhat :: Text}
+    | MsgConsortCultureIs {scriptMessageWhat :: Text}
+    | MsgConsortCultureIsSame {scriptMessageWhom :: Text}
+    | MsgHeirCultureIs {scriptMessageWhat :: Text}
+    | MsgHeirCultureIsSame {scriptMessageWhom :: Text}
+    | MsgHasFemaleConsort {scriptMessageYn :: Bool}
+    | MsgConsortAge {scriptMessageAmt :: Double}
+    | MsgIsOriginOfConsort {scriptMessageWhat :: Text}
+    | MsgRemoveConsort
+    | MsgClearRebels
+    | MsgMonthsSinceDefection {scriptMessageAmt :: Double}
+    | MsgNumJanissaries {scriptMessageAmt :: Double}
+    | MsgJanissaryPercentage {scriptMessageAmt :: Double}
+    | MsgBreakUnion {scriptMessageWhom :: Text}
+    | MsgCreateMarriage {scriptMessageWhom :: Text}
+    | MsgAddTradeNodeIcome {scriptMessageAmt :: Double}
+    | MsgYearlyCorruptionIncrease {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgWasNeverGermanReigionalTag
+    | MsgReformLevel {scriptMessageAmt :: Double}
+    | MsgIsSupportingIndependenceOf {scriptMessageWhom :: Text}
+    | MsgFormCoalitionAgainst {scriptMessageWhom :: Text}
+    | MsgProvincesOnCapitalContinentOf {scriptMessageWhom :: Text}
+    | MsgExpellingMinorities {scriptMessageYn :: Bool}
+    | MsgHasOrBuildingFlagship {scriptMessageYn :: Bool}
+    | MsgRecentTreasureShipPassage {scriptMessageYn :: Bool}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -2636,6 +2676,8 @@ instance RenderMessage Script ScriptMessage where
             -> "global"
         MsgConsortFlag
             -> "consort"
+        MsgHeirFlag
+            -> "heir"
         MsgHadCountryFlag {scriptMessageIcon = __icon, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
                 [ "Has had country flag "
@@ -2681,9 +2723,7 @@ instance RenderMessage Script ScriptMessage where
         MsgWasAtWar {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Was at war within the last "
-                , toMessage (roundNum _amt)
-                , " "
-                , plural _amt "month" "months"
+                , toMessage (formatMonths _amt)
                 ]
         MsgHeirAge {scriptMessageAmt = _amt}
             -> mconcat
@@ -3505,6 +3545,12 @@ instance RenderMessage Script ScriptMessage where
                 [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
                 , " an heir"
                 ]
+        MsgHasHeirNamed {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has "
+                , toMessage (quotes _whom)
+                , " as heir"
+                ]
         MsgHasOwnerCulture {scriptMessageYn = _yn}
             -> mconcat
                 [ "Has "
@@ -3671,8 +3717,7 @@ instance RenderMessage Script ScriptMessage where
                 , " casus belli against "
                 , _whom
                 , " for "
-                , toMessage (roundNum _months)
-                , " months"
+                , toMessage (formatMonths _months)
                 ]
         MsgReverseGainCB {scriptMessageCbtype = _cbtype, scriptMessageWho = _who}
             -> mconcat
@@ -3687,8 +3732,7 @@ instance RenderMessage Script ScriptMessage where
                 , " gains "
                 , _cbtype
                 , " casus belli against this country for "
-                , toMessage (roundNum _months)
-                , " months"
+                , toMessage (formatMonths _months)
                 ]
         MsgFactionGainInfluence {scriptMessageIcon = _icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
             -> mconcat
@@ -6775,6 +6819,12 @@ instance RenderMessage Script ScriptMessage where
                 , _name
                 , "</tt>"
                 ]
+        MsgSaveGlobalEventTargetAs {scriptMessageName = _name}
+            -> mconcat
+                [ "Save as global event target named <tt>"
+                , _name
+                , "</tt>"
+                ]
         MsgHasSavedEventTarget {scriptMessageName = _name}
             -> mconcat
                 [ "An event target named <tt>"
@@ -9684,6 +9734,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Grant the estate privilege "
                 , toMessage (iquotes _what)
                 ]
+        MsgRemoveEstatePrivilege {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Remove the estate privilege "
+                , toMessage (iquotes _what)
+                ]
         MsgNumTrustedAllies {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -10657,6 +10712,14 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , plural _amt " explorer" " explorers"
                 ]
+        MsgNumOfConquistadors {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , plural _amt " conquistador" " conquistadors"
+                ]
         MsgNumOfBanners {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -10867,6 +10930,184 @@ instance RenderMessage Script ScriptMessage where
                 [ "Gain province modifier "
                 , _what
                 , " until the end of the campaign, providing the following effects:"
+                ]
+        MsgHasInfluencingFort {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Is"
+                , ifThenElseT _yn "" " ''not''"
+                , " in Zone of Control of a fort"
+                ]
+        MsgIsInCoalition {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Is"
+                , ifThenElseT _yn "" " ''not''"
+                , " in a coalition"
+                ]
+        MsgChangeController {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Change province controller to "
+                , _whom
+                ]
+        MsgIsExcommunicated {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Is"
+                , ifThenElseT _yn "" " ''not''"
+                , " excommunicated"
+                ]
+        MsgExcommunicate {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Excommunicate "
+                , _whom
+                ]
+        MsgChangeConsortSameCulture {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Change consort culture to that of "
+                , _whom
+                ]
+        MsgChangeConsortCulture {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Change consort culture to "
+                , _what
+                ]
+        MsgChangeHeirSameCulture {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Change heir culture to that of "
+                , _whom
+                ]
+        MsgChangeHeirCulture {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Change heir culture to "
+                , _what
+                ]
+        MsgChangeRulerSameCulture {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Change ruler culture to that of "
+                , _whom
+                ]
+        MsgChangeRulerCulture {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Change ruler culture to "
+                , _what
+                ]
+        MsgConsortCultureIs {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Consort's culture is "
+                , _what
+                ]
+        MsgConsortCultureIsSame {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Consort's culture is the same as "
+                , _whom
+                ]
+        MsgHeirCultureIs {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Heir's culture is "
+                , _what
+                ]
+        MsgHeirCultureIsSame {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Heir's culture is the same as "
+                , _whom
+                ]
+        MsgHasFemaleConsort {scriptMessageYn = _yn}
+            -> mconcat
+                [ ifThenElseT _yn "Has" "Does ''not'' have"
+                , " a female consort"
+                ]
+        MsgConsortAge {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Consort is at least "
+                , toMessage (plainNum _amt)
+                , " years old"
+                ]
+        MsgIsOriginOfConsort {scriptMessageWhat = _what}
+            -> mconcat
+                [ "The country's consort is from "
+                , _what
+                ]
+        MsgRemoveConsort
+            -> "Contry's consort is removed"
+        MsgClearRebels
+            -> "All rebels are removed from the province"
+        MsgMonthsSinceDefection {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "It has been at least "
+                , toMessage (formatMonths _amt)
+                , " since the province defected"
+                ]
+        MsgNumJanissaries {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " janissary regiments"
+                ]
+        MsgJanissaryPercentage {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The ratio of janissary regiments to total army size is at least "
+                , toMessage (reducedNum plainPc _amt)
+                ]
+        MsgBreakUnion {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Break personal union with "
+                , _whom
+                ]
+        MsgCreateMarriage {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Gain royal marriage with "
+                , _whom
+                ]
+        MsgAddTradeNodeIcome {scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , toMessage (plainNum _amt)
+                , " months worth of income from the trade node"
+                ]
+        MsgYearlyCorruptionIncrease {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Yearly corruption increase is at least "
+                , toMessage (reducedNum plainPc _amt)
+                ]
+        MsgWasNeverGermanReigionalTag
+            -> "Was never a [[Formable_countries#German_regional_tags|german regional tag]]"
+        MsgReformLevel {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " government reforms"
+                ]
+        MsgIsSupportingIndependenceOf {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is supporting the independence of "
+                , _whom
+                ]
+        MsgFormCoalitionAgainst {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Form a coalition against "
+                , _whom
+                ]
+        MsgProvincesOnCapitalContinentOf {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has a province on the continent with the capital of "
+                , _whom
+                ]
+        MsgExpellingMinorities {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "Is"
+                , ifThenElseT _yn "" " ''not''"
+                , " expelling minorities"
+                ]
+        MsgHasOrBuildingFlagship {scriptMessageYn  = _yn}
+            -> mconcat
+                [ ifThenElseT _yn "Has or is building" "Doesn't have and is not building"
+                , " a flagship"
+                ]
+        MsgRecentTreasureShipPassage {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "A [[treasure fleet]] has"
+                , ifThenElseT _yn "" " ''not''"
+                , " recently passed by"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

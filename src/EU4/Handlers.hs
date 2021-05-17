@@ -60,6 +60,7 @@ module EU4.Handlers (
     ,   opinion
     ,   hasOpinion
     ,   spawnRebels
+    ,   spawnRebelsSimple
     ,   hasSpawnedRebels
     ,   canSpawnRebels
     ,   triggerEvent
@@ -138,6 +139,7 @@ module EU4.Handlers (
     ,   hasBuildingTrigger
     ,   productionLeader
     ,   addProvinceTriggeredModifier
+    ,   hasHeir
     -- testing
     ,   isPronoun
     ,   flag
@@ -1900,7 +1902,7 @@ spawnRebels mtype stmt = msgToPP =<< spawnRebels' mtype stmt where
         = pp_spawnRebels $ foldl' addLine newSpawnRebels scr
     spawnRebels' rtype [pdx| %_ = !size |]
         = pp_spawnRebels $ newSpawnRebels { rebelType = rtype, rebelSize = Just size }
-    spawnRebels' _ stmt' = return (preMessage stmt')
+    spawnRebels' _ stmt' = (trace $ "Not handled in spawnRebels: " ++ show stmt) $ return (preMessage stmt')
 
     addLine :: SpawnRebels -> GenericStatement -> SpawnRebels
     addLine op [pdx| type   = $tag  |] = op { rebelType = Just tag }
@@ -1940,6 +1942,10 @@ spawnRebels mtype stmt = msgToPP =<< spawnRebels' mtype stmt where
                             (win reb)
                             progressText
             _ -> return $ preMessage stmt
+
+spawnRebelsSimple :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+spawnRebelsSimple stmt@[pdx| $typ = %_ |] = spawnRebels (Just typ) stmt
+spawnRebelsSimple stmt = spawnRebels Nothing stmt -- Will probably fail
 
 hasSpawnedRebels :: (IsGameState (GameState g), Monad m) => StatementHandler g m
 hasSpawnedRebels [pdx| %_ = $rtype |]
@@ -4028,3 +4034,15 @@ addProvinceTriggeredModifier stmt@[pdx| %_ = $id |] = do
             return $ ((i, MsgAddProvinceTriggeredModifier locName) : effect) ++ (if null trigger then [] else ((i+1, MsgLimit) : trigger))
         _ -> (trace $ "add_province_triggered_modifier: Modifier " ++ T.unpack id ++ " not found") $ preStatement stmt
 addProvinceTriggeredModifier stmt = (trace $ "Not handled in addProvinceTriggeredModifier: " ++ show stmt) $ preStatement stmt
+
+--------------------------
+-- Handler for has_heir --
+--------------------------
+-- ,("has_heir"                    , withBool MsgHasHeir)
+hasHeir :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasHeir stmt@[pdx| %_ = ?rhs |] = msgToPP $
+    case T.toLower rhs of
+        "yes" -> MsgHasHeir True
+        "no" -> MsgHasHeir False
+        _ -> MsgHasHeirNamed rhs
+hasHeir stmt = (trace $ "Not handled in hasHeir " ++ show stmt) $ preStatement stmt
