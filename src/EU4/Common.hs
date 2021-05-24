@@ -207,6 +207,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("same_govt_as_root_trigger" , rhsAlwaysYes MsgSameGovtAsRoot)
         ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
+        ,("set_estate_led_regency_privilege" , rhsAlways "random" MsgSetEstateLedRegencyPrivilegeRandom) -- Only random used in 1.31.3
         ,("swap_free_idea_group"     , rhsAlwaysYes MsgSwapFreeIdeaGroup)
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
         ,("auto_explore_adjacent_to_colony", rhsAlwaysYes MsgAutoExploreAdjacentToColony)
@@ -264,6 +265,8 @@ handlersNumeric = Tr.fromList
         ,("curia_treasury_income"            , numeric MsgCuriaTreasuryIncome)
         ,("curia_treasury_size"              , numeric MsgCuriaTreasurySize)
         ,("extend_regency"                   , numeric MsgExtendRegency)
+        ,("estate_led_regency_influence"     , numeric MsgEstateLedRegencyInfluence)
+        ,("estate_led_regency_loyalty"       , numeric MsgEstateLedRegencyLoyalty)
         ,("federation_size"                  , numeric MsgFederationSize)
         ,("had_recent_war"                   , numeric MsgWasAtWar)
         ,("hegemon_strength"                 , numeric MsgHegemonStrength)

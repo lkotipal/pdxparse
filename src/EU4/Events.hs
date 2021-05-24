@@ -582,7 +582,11 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_dependency_gained", "")
             --,("on_diplomatic_annex", "")
             --,("on_dismantle_revolution", "")
+
+            -- Note: Should probably be "An estate *becoming* more influential", but that doesn't seem to be the behavior in 1.31.3
+            ,("on_estate_led_regency_surpassed", "<!-- on_estate_led_regency_surpassed -->An estate being more influential than the one leading the regency")
             --,("on_explore_coast", "")
+            ,("on_extended_regency", "<!-- on_extended_regency -->Extending a regency")
             --,("on_fetishist_cult_change", "")
             ,("on_five_year_pulse", "The [[list_of_event_lists#5_year_pulse|five year pulse I]]")
             ,("on_five_year_pulse_2", "The [[list_of_event_lists#5_year_pulse|five year pulse II]]")

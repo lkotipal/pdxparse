@@ -1639,6 +1639,10 @@ data ScriptMessage
     | MsgExpellingMinorities {scriptMessageYn :: Bool}
     | MsgHasOrBuildingFlagship {scriptMessageYn :: Bool}
     | MsgRecentTreasureShipPassage {scriptMessageYn :: Bool}
+    | MsgNewEstateRegency {scriptMessageIcon :: Text, scriptMessageWho :: Text}
+    | MsgEstateLedRegencyInfluence {scriptMessageAmt :: Double}
+    | MsgEstateLedRegencyLoyalty {scriptMessageAmt :: Double}
+    | MsgSetEstateLedRegencyPrivilegeRandom
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11109,6 +11113,28 @@ instance RenderMessage Script ScriptMessage where
                 , ifThenElseT _yn "" " ''not''"
                 , " recently passed by"
                 ]
+        MsgNewEstateRegency {scriptMessageIcon = _icon, scriptMessageWho = _who}
+            -> mconcat
+                [ "A new regent from the "
+                , _icon
+                , " "
+                , _who
+                , " estate comes to power"
+                ]
+        MsgEstateLedRegencyInfluence {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The estate leading the regency has at least "
+                , toMessage (plainNum _amt)
+                , " influence"
+                ]
+        MsgEstateLedRegencyLoyalty {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The estate leading the regency has at least "
+                , toMessage (plainNum _amt)
+                , " loyalty"
+                ]
+        MsgSetEstateLedRegencyPrivilegeRandom
+            -> "Grant the estate leading the regency a random privilege"
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

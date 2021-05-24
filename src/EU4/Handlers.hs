@@ -2292,30 +2292,31 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
         testPronoun _ = Nothing
 
         addLine :: DefineDynMember -> GenericStatement -> DefineDynMember
-        addLine ddm [pdx| $lhs = %rhs |] = case T.map toLower lhs of
+        addLine ddm stmt@[pdx| $lhs = %rhs |] = case T.map toLower lhs of
             "rebel" -> case textRhs rhs of
                 Just "yes" -> ddm { ddm_rebel = True }
-                _ -> ddm
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "name" -> ddm { ddm_name = textRhs rhs }
             "dynasty" -> ddm { ddm_dynasty = case testPronoun $ textRhs rhs of
                 Just (Right pronoun) -> Just (DynPron pronoun)
                 Just (Left "original_dynasty") -> Just DynOriginal
                 Just (Left "historic_dynasty") -> Just DynHistoric
                 Just (Left other) -> Just (DynText other)
-                _ -> Nothing }
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ Nothing }
             "age" -> ddm { ddm_age = floatRhs rhs }
             "male" -> case textRhs rhs of
                 Just "yes" -> ddm { ddm_female = Just False }
                 Just "no"  -> ddm { ddm_female = Just True }
-                _ -> ddm
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "female" -> case textRhs rhs of
                 Just "yes" -> ddm { ddm_female = Just True }
                 Just "no"  -> ddm { ddm_female = Just False }
-                _ -> ddm
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "claim" -> ddm { ddm_claim = floatRhs rhs }
             "regency" -> case textRhs rhs of
                 Just "yes" -> ddm { ddm_regency = True }
-                _ -> ddm
+                Just "no" -> ddm { ddm_regency = False }
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "adm" -> ddm { ddm_adm = floatRhs rhs }
             "dip" -> ddm { ddm_dip = floatRhs rhs }
             "mil" -> ddm { ddm_mil = floatRhs rhs }
@@ -2324,29 +2325,29 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
             "max_random_mil" -> ddm { ddm_max_mil = floatRhs rhs }
             "fixed" -> case textRhs rhs of
                 Just "yes" -> ddm { ddm_fixed = True }
-                _ -> ddm
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "culture" -> ddm { ddm_culture = testPronoun $ textRhs rhs }
             "religion" -> ddm { ddm_religion = testPronoun $ textRhs rhs }
             "attach_leader" -> ddm { ddm_attach_leader = textRhs rhs }
             x | x `elem` ["hide_skills", "hidden"] -> case textRhs rhs of
                 Just "yes" -> ddm { ddm_hidden_skills = True }
-                _ -> ddm
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "min_age" -> ddm { ddm_min_age = floatRhs rhs }
             "max_age" -> ddm { ddm_max_age = floatRhs rhs }
             "random_gender" -> case textRhs rhs of
                 Just "yes" -> ddm { ddm_random_gender = Just True }
-                _ -> ddm
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "block_disinherit" -> case textRhs rhs of
                 Just "yes" -> ddm { ddm_block_disinherit = True }
-                _ -> ddm
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "birth_date" -> ddm { ddm_birth_date = textRhs rhs }
             "no_consort_with_heir" -> case textRhs rhs of
                 Just "yes" -> ddm { ddm_bastard = True }
-                _ -> ddm
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "country_of_origin" -> ddm { ddm_country = textRhs rhs }
             "exiled_as" -> ddm { ddm_exiled_as = textRhs rhs }
             "option" -> ddm -- Ignore for now (used for exiled rulers in elections)
-            param -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show param) $ ddm
+            _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
         addLine ddm _ = ddm
 
         pp_define_dyn_member :: DefineDynMember -> PPT g m IndentedMessages
@@ -2476,7 +2477,11 @@ defineDynMember _ _ _ _ stmt = preStatement stmt
 -- Rulers
 
 defineRuler :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
-defineRuler = defineDynMember MsgNewRuler MsgNewRulerLeader MsgNewRulerAttribs MsgNewRulerLeaderAttribs
+-- Estate led regency (for now, handled here since there aren't other parameters supported)
+defineRuler stmt@(Statement (GenericLhs _ []) OpEq (CompoundRhs [Statement (GenericLhs "regency" []) OpEq (CompoundRhs [Statement (GenericLhs "estate" []) OpEq (GenericRhs estate [])])])) = do
+    estateLoc <- getGameL10n estate
+    msgToPP $ MsgNewEstateRegency (iconText estate) estateLoc
+defineRuler stmt = defineDynMember MsgNewRuler MsgNewRulerLeader MsgNewRulerAttribs MsgNewRulerLeaderAttribs stmt
 
 defineExiledRuler :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
 defineExiledRuler = defineDynMember (\_ -> MsgNewExiledRuler) (\_ -> \_ -> MsgNewExiledRuler) (\_ -> MsgNewExiledRulerAttribs) (\_ -> \_ -> MsgNewExiledRulerAttribs)
