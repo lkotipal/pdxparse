@@ -6,7 +6,7 @@ module EU4.Missions (
         parseEU4Missions, writeEU4Missions
     ) where
 
-import Debug.Trace (traceM)
+import Debug.Trace (trace, traceM)
 
 import Control.Arrow ((&&&))
 import Control.Monad (liftM, forM, forM_, foldM, when, (<=<))
@@ -45,8 +45,8 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 --   False -> Format as generic missions
 useIconBox = True
 
-newMission :: Text -> EU4Mission
-newMission id = EU4Mission id "(unknown)" 0 [] undefined undefined
+newMission :: Text -> Int -> EU4Mission
+newMission id slot = EU4Mission id "(unknown)" slot 0 [] undefined undefined
 
 newMissionBranch :: FilePath -> Text -> EU4MissionTreeBranch
 newMissionBranch path id = EU4MissionTreeBranch path id 0 Nothing []
@@ -72,7 +72,11 @@ parseEU4Missions scripts = HM.unions . HM.elems <$> do
                         return Nothing
                     Right mevt -> return mevt
                 where mkMisMap :: [EU4MissionTreeBranch] -> HashMap Text EU4MissionTreeBranch
-                      mkMisMap = HM.fromList . map (eu4mtb_id &&& id)
+                      mkMisMap = HM.fromListWith combineBranches . map (eu4mtb_id &&& id)
+                      -- In 1.31.3 mnd_plb_1 appears twice in MND_Palembang_Missions.txt
+                      -- Assume it just adds new missions and doesn't change requirements
+                      combineBranches :: EU4MissionTreeBranch -> EU4MissionTreeBranch -> EU4MissionTreeBranch
+                      combineBranches new old = old {eu4mtb_missions = (eu4mtb_missions old) ++ (eu4mtb_missions new)}
 
 parseEU4MissionTree :: (IsGameState (GameState g), MonadError Text m) =>
     GenericStatement -> PPT g m (Either Text (Maybe EU4MissionTreeBranch))
@@ -90,7 +94,7 @@ parseEU4MissionTree [pdx| $serid = @scr |] = withCurrentFile $ \file -> do
         handleBranch (Just mtb) [pdx| potential = @scr |] = do -- <compound> Determines when a series appears for a country. Country scope.
             return $ Just $ mtb {eu4mtb_potential = Just scr }
         handleBranch (Just mtb) [pdx| $id = @scr |] = do
-            mission <- foldM handleMission (newMission id) scr
+            mission <- foldM handleMission (newMission id (eu4mtb_slot mtb)) scr
             -- TODO: Ensure trigger and effect are present
             return $ Just $ mtb {eu4mtb_missions = (eu4mtb_missions mtb) ++ [mission] }
         handleBranch mtb stmt = throwError "Unhandled mission branch statement"
@@ -136,7 +140,7 @@ writeEU4Missions = do
         pp_mtb mtb = setCurrentFile (eu4mtb_path mtb) $ do
             version <- gets (gameVersion . getSettings)
             potential <- mapM (scope EU4Country . pp_script) (eu4mtb_potential mtb)
-            missionText <- mapM (pp_m (eu4mtb_slot mtb)) (eu4mtb_missions mtb)
+            missionText <- mapM pp_m (eu4mtb_missions mtb)
             return $ mconcat $ [
                         Doc.strictText $ "===" <> eu4mtb_id mtb <> "===", PP.line, -- apparently there's no localization of the headline
                         "{{SVersion|", Doc.strictText version, "}}", PP.line
@@ -175,8 +179,8 @@ writeEU4Missions = do
             let icon = findIcon (HM.elems missions) req
             return $ mconcat [Doc.strictText $ "[[File:" <> icon <> ".png|24px]]" <> " [[#" <> (linkSyntax title) <> "|" <> title <> "]]", PP.line]
 
-        pp_m :: (EU4Info g, Monad m) => Int -> EU4Mission -> PPT g m Doc
-        pp_m slot m = do
+        pp_m :: (EU4Info g, Monad m) => EU4Mission -> PPT g m Doc
+        pp_m m = do
             title <- getGameL10n $ (eu4m_id m) <> "_title"
             desc <- getGameL10n $ (eu4m_id m) <> "_desc"
             trigger <- scope EU4Country (pp_script (eu4m_trigger m))
@@ -184,7 +188,7 @@ writeEU4Missions = do
             prereqs <- mapM pp_prereq (eu4m_prerequisites m)
             return $ mconcat  $ [
                 "|-",
-                " <!-- {{mpos|x=", Doc.strictText $ T.pack (show slot), "|y=", Doc.strictText $ T.pack (show $ eu4m_position m), "|name=", Doc.strictText $ linkSyntax title ,"}} -->"] ++
+                " <!-- {{mpos|x=", Doc.strictText $ T.pack (show $ eu4m_slot m), "|y=", Doc.strictText $ T.pack (show $ eu4m_position m), "|name=", Doc.strictText $ linkSyntax title ,"}} -->"] ++
                 (if useIconBox then
                     [PP.line, "| {{iconbox|", Doc.strictText title, "|", Doc.strictText desc, "|image=", Doc.strictText (eu4m_icon m), ".png}}", PP.line]
                 else
