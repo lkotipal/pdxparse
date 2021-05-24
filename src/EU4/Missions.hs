@@ -45,8 +45,8 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 --   False -> Format as generic missions
 useIconBox = True
 
-newMission :: Text -> Int -> EU4Mission
-newMission id slot = EU4Mission id "(unknown)" slot 0 [] undefined undefined
+newMission :: Text -> Int -> Int -> EU4Mission
+newMission id slot pos = EU4Mission id "(unknown)" slot pos [] undefined undefined
 
 newMissionBranch :: FilePath -> Text -> EU4MissionTreeBranch
 newMissionBranch path id = EU4MissionTreeBranch path id 0 Nothing []
@@ -94,9 +94,13 @@ parseEU4MissionTree [pdx| $serid = @scr |] = withCurrentFile $ \file -> do
         handleBranch (Just mtb) [pdx| potential = @scr |] = do -- <compound> Determines when a series appears for a country. Country scope.
             return $ Just $ mtb {eu4mtb_potential = Just scr }
         handleBranch (Just mtb) [pdx| $id = @scr |] = do
-            mission <- foldM handleMission (newMission id (eu4mtb_slot mtb)) scr
+            let ms = eu4mtb_missions mtb
+            -- Guess initial position (can also be expliticly set by the mission)
+            let pos = 1 + (if null ms then 0
+                       else eu4m_position (last ms))
+            mission <- foldM handleMission (newMission id (eu4mtb_slot mtb) pos) scr
             -- TODO: Ensure trigger and effect are present
-            return $ Just $ mtb {eu4mtb_missions = (eu4mtb_missions mtb) ++ [mission] }
+            return $ Just $ mtb {eu4mtb_missions = ms ++ [mission] }
         handleBranch mtb stmt = throwError "Unhandled mission branch statement"
 
         handleMission :: (IsGameState (GameState g), MonadError Text m) =>
