@@ -65,6 +65,7 @@ data EU4Data = EU4Data {
     ,   eu4onactionsScripts :: HashMap FilePath GenericScript
     ,   eu4disasterScripts :: HashMap FilePath GenericScript
     ,   eu4provtrigmodifierScripts :: HashMap FilePath GenericScript
+    ,   eu4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
     -- etc.
     }
 
@@ -125,6 +126,8 @@ class (IsGame g,
     getProvinceTriggeredModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed province triggered modifiers table (keyed on modifier ID).
     getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text EU4ProvinceTriggeredModifier)
+    -- | Get the trade nodes
+    getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
 
 -------------------
 -- Feature types --

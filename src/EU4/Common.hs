@@ -1813,15 +1813,65 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
                     Nothing -> preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
     IntLhs n -> do -- Treat as a province tag
-        prov_loc <- getProvLoc n
+        tradeNodes <- getTradeNodes
         case rhs of
-            CompoundRhs scr -> do
-                header <- msgToPP (MsgProvince prov_loc)
-                scriptMsgs <- scope EU4Province $ ppMany scr
-                return (header ++ scriptMsgs)
+            CompoundRhs scr ->
+                -- Check if this is the main province of a trade node in which case we need
+                -- to see if that needs to be displayed instead
+                case HM.lookup n tradeNodes of
+                    Just node | isTradeNodeQuery scr -> do
+                        nodeLoc <- getGameL10n node
+                        header <- msgToPP (MsgTradeNode nodeLoc)
+                        scriptMsgs <- scope EU4TradeNode $ ppMany scr
+                        return (header ++ scriptMsgs)
+                    _ -> do
+                        prov_loc <- getProvLoc n
+                        header <- msgToPP (MsgProvince prov_loc)
+                        scriptMsgs <- scope EU4Province $ ppMany scr
+                        return (header ++ scriptMsgs)
             _ -> preStatement stmt
     CustomLhs _ -> preStatement stmt
 ppOne stmt = preStatement stmt
+
+isTradeNodeQuery :: GenericScript -> Bool
+isTradeNodeQuery scr = any isTradeNodeQuery' scr
+    where
+        isTradeNodeQuery' :: GenericStatement -> Bool
+        isTradeNodeQuery' stmt@[pdx| $lhs = @scr |] = case Tr.lookup (TE.encodeUtf8 (T.toLower lhs)) isTradeNodeScrTrie of
+            Just True -> True
+            Just False -> isTradeNodeQuery scr
+            _ -> False
+        isTradeNodeQuery' stmt@[pdx| $lhs = %_ |] = isJust $ Tr.lookup (TE.encodeUtf8 (T.toLower lhs)) isTradeNodeQueryTrie
+        isTradeNodeQuery' _ = False
+        -- Conditions/commands that are listed as Province (Trade node) on the wiki
+        isTradeNodeQueryTrie :: Trie ()
+        isTradeNodeQueryTrie = Tr.fromList
+            [("add_trade_node_income",())
+            ,("has_merchant",())
+            ,("has_most_province_trade_power",())
+            ,("has_trader",())
+            ,("highest_value_trade_node",())
+            ,("is_strongest_trade_power",())
+            ,("recall_merchant",())
+            ,("trade_range",())
+            ]
+        isTradeNodeScrTrie :: Trie Bool
+        isTradeNodeScrTrie = Tr.fromList
+            [("add_trade_modifier"                , True)
+            ,("has_privateer_share_in_trade_node" , True)
+            ,("has_trade_modifier"                , True)
+            ,("most_province_trade_power"         , True)
+            ,("privateer_power"                   , True)
+            ,("strongest_trade_power"             , True)
+            ,("remove_trade_modifier"             , True)
+            ,("trade_share"                       , True)
+
+            ,("and"                               , False)
+            ,("else"                              , False)
+            ,("if"                                , False)
+            ,("not"                               , False)
+            ,("or"                                , False)
+            ]
 
 ppMaybeGeo :: (EU4Info g, Monad m) => Text -> Text -> GenericScript -> PPT g m IndentedMessages
 ppMaybeGeo label loc scr = do

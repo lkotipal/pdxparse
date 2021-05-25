@@ -27,6 +27,7 @@ import System.FilePath ((</>))
 import System.IO (hPutStrLn, stderr)
 
 import Abstract -- everything
+import QQ (pdx)
 import FileIO (buildPath, readScript)
 import SettingsTypes ( PPT, Settings (..), Game (..), L10nScheme (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
@@ -99,6 +100,7 @@ instance IsGame EU4 where
                 ,   eu4geoData = HM.empty
                 ,   eu4provtrigmodifiers = HM.empty
                 ,   eu4provtrigmodifierScripts = HM.empty
+                ,   eu4tradeNodes = HM.empty
                 }))
                 (EU4S $ EU4State {
                     eu4currentFile = Nothing
@@ -183,6 +185,9 @@ instance EU4Info EU4 where
     getProvinceTriggeredModifiers = do
         EU4D ed <- get
         return (eu4provtrigmodifiers ed)
+    getTradeNodes = do
+        EU4D ed <- get
+        return (eu4tradeNodes ed)
 
 instance IsGameData (GameData EU4) where
     getSettings (EU4D ed) = eu4settings ed
@@ -243,7 +248,7 @@ readEU4Scripts = do
 
         geoDirs = [ (EU4GeoTradeCompany, "trade_companies")
                   , (EU4GeoColonialRegion, "colonial_regions")
-                  -- TODO: Do we need "tradenodes" ?
+                  -- Tradenodes handled below
                   ]
 
         mapGeoFiles = [ (EU4GeoArea, "area.txt")
@@ -255,6 +260,17 @@ readEU4Scripts = do
         readGeoData (gt, dir) = do
             hm <- readEU4Script dir
             return $ toHashMap gt (catMaybes $ map getOnlyLhs (concat (HM.elems hm)))
+
+
+        processTradeNode [pdx| $name = @scr |] = case findPrimary scr of
+            Just id -> Just (id, name)
+            _ -> (trace $ "Warning: Could not determine main province id for " ++ show name) $ Nothing
+            where
+                findPrimary :: GenericScript -> Maybe Int
+                findPrimary ([pdx| location = !id |]:_) = Just id
+                findPrimary (s:ss) = findPrimary ss
+                findPrimary _ = Nothing
+        processTradeNode stmt = (trace $ "Not handled in processTradeNode: " ++ show stmt) $ Nothing
 
     ideaGroups <- readEU4Script "ideagroups"
     decisions <- readEU4Script "decisions"
@@ -278,6 +294,8 @@ readEU4Scripts = do
         (_, d) <- readOneScript "map" (buildPath settings "map" </> filename)
         return $ toHashMap geoType (catMaybes $ map getOnlyLhs d)
 
+    tradeNodeScripts <- readEU4Script "tradenodes"
+
     modify $ \(EU4D s) -> EU4D $ s {
             eu4ideaGroupScripts = ideaGroups
         ,   eu4decisionScripts = decisions
@@ -289,6 +307,7 @@ readEU4Scripts = do
         ,   eu4disasterScripts = disasters
         ,   eu4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
         ,   eu4provtrigmodifierScripts = provTrigModifiers
+        ,   eu4tradeNodes = HM.fromList (catMaybes (map processTradeNode (concatMap snd (HM.toList tradeNodeScripts))))
         }
 
 -- | Interpret the script ASTs as usable data.

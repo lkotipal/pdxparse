@@ -1643,6 +1643,7 @@ data ScriptMessage
     | MsgEstateLedRegencyInfluence {scriptMessageAmt :: Double}
     | MsgEstateLedRegencyLoyalty {scriptMessageAmt :: Double}
     | MsgSetEstateLedRegencyPrivilegeRandom
+    | MsgTradeNode {scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11135,6 +11136,11 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgSetEstateLedRegencyPrivilegeRandom
             -> "Grant the estate leading the regency a random privilege"
+        MsgTradeNode {scriptMessageWhat = _what}
+            -> mconcat
+                [ _what
+                , " trade node:"
+                ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
