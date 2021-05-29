@@ -75,8 +75,10 @@ parseEU4Missions scripts = HM.unions . HM.elems <$> do
                       mkMisMap = HM.fromListWith combineBranches . map (eu4mtb_id &&& id)
                       -- In 1.31.3 mnd_plb_1 appears twice in MND_Palembang_Missions.txt
                       -- Assume it just adds new missions and doesn't change requirements
+                      -- Note: Parts of the mission tree will disappear after re-loading a saved game, so issue a warning.
                       combineBranches :: EU4MissionTreeBranch -> EU4MissionTreeBranch -> EU4MissionTreeBranch
-                      combineBranches new old = old {eu4mtb_missions = (eu4mtb_missions old) ++ (eu4mtb_missions new)}
+                      combineBranches new old = (trace $ "Warning: Merging mission tree branches for " ++ T.unpack (eu4mtb_id old) ++ ". Some missions will disappear after re-loading a save.") $
+                        old {eu4mtb_missions = (eu4mtb_missions old) ++ (eu4mtb_missions new)}
 
 parseEU4MissionTree :: (IsGameState (GameState g), MonadError Text m) =>
     GenericStatement -> PPT g m (Either Text (Maybe EU4MissionTreeBranch))
