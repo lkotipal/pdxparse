@@ -47,6 +47,7 @@ module Abstract (
     ,   textRhs, floatRhs, floatOrTextRhs
     -- Presentation
     ,   genericStatement2doc
+    ,   lhs2doc
 --    ,   genericScript2doc
 --    ,   displayGenericScript
     -- Parsing

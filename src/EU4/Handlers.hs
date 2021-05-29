@@ -192,8 +192,15 @@ import Debug.Trace
 -- generic message for it at the current indentation level. This is the
 -- fallback in case we haven't implemented that particular statement or we
 -- failed to understand it.
-preStatement :: (IsGameState (GameState g), Monad m) =>
+--
+-- Will now try to recurse into nested clauses as they break the wiki layout, and
+-- it might be possible to "recover".
+preStatement :: (EU4Info g, Monad m) =>
     GenericStatement -> PPT g m IndentedMessages
+preStatement [pdx| %lhs = @scr |] = do
+    [headerMsg] <- plainMsg $ "<pre>" <> Doc.doc2text (lhs2doc (const "") lhs) <> "</pre>"
+    msgs <- ppMany scr
+    return (headerMsg : msgs)
 preStatement stmt = (:[]) <$> alsoIndent' (preMessage stmt)
 
 -- | Pretty-print a statement and wrap it in a @<pre>@ element.
@@ -545,9 +552,7 @@ compoundMessageTagged _ _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom.
 -- with the ability to transform the localization key
-withLocAtom' :: (IsGameData (GameData g),
-                IsGameState (GameState g),
-                Monad m) =>
+withLocAtom' :: (EU4Info g, Monad m) =>
     (Text -> ScriptMessage) -> (Text -> Text) -> StatementHandler g m
 withLocAtom' msg xform [pdx| %_ = ?key |]
     = msgToPP =<< msg <$> getGameL10n (xform key)
@@ -558,9 +563,7 @@ withLocAtom msg stmt = withLocAtom' msg id stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom and we
 -- need a second one (passed to message as first arg).
-withLocAtom2 :: (IsGameData (GameData g),
-                 IsGameState (GameState g),
-                 Monad m) =>
+withLocAtom2 :: (EU4Info g, Monad m) =>
     ScriptMessage
         -> (Text -> Text -> Text -> ScriptMessage)
         -> StatementHandler g m
@@ -652,14 +655,12 @@ withProvince msg [pdx| %lhs = !provid |]
 withProvince _ stmt = preStatement stmt
 
 -- As withLocAtom but no l10n.
-withNonlocAtom :: (IsGameState (GameState g), Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
+withNonlocAtom :: (EU4Info g, Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
 withNonlocAtom msg [pdx| %_ = ?text |] = msgToPP $ msg text
 withNonlocAtom _ stmt = preStatement stmt
 
 -- | As withlocAtom but wth no l10n and an additional bit of text.
-withNonlocAtom2 :: (IsGameData (GameData g),
-                    IsGameState (GameState g),
-                    Monad m) =>
+withNonlocAtom2 :: (EU4Info g, Monad m) =>
     ScriptMessage
         -> (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
@@ -1230,7 +1231,7 @@ withFlag msg [pdx| %_ = $who |] = do
 withFlag _ stmt = preStatement stmt
 
 -- | Handler for yes-or-no statements.
-withBool :: (IsGameState (GameState g), Monad m) =>
+withBool :: (EU4Info g, Monad m) =>
     (Bool -> ScriptMessage)
         -> StatementHandler g m
 withBool msg stmt = do
@@ -1240,7 +1241,7 @@ withBool msg stmt = do
           fullmsg
 
 -- | Helper for 'withBool'.
-withBool' :: (IsGameState (GameState g), Monad m) =>
+withBool' :: (EU4Info g, Monad m) =>
     (Bool -> ScriptMessage)
         -> GenericStatement
         -> PPT g m (Maybe IndentedMessages)
@@ -1253,7 +1254,7 @@ withBool' msg [pdx| %_ = ?yn |] | T.map toLower yn `elem` ["yes","no","false"]
 withBool' _ _ = return Nothing
 
 -- | Like numericIconLoc, but for booleans
-boolIconLoc :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
+boolIconLoc :: (EU4Info g, Monad m) =>
     Text
         -> Text
         -> (Text -> Text -> Bool -> ScriptMessage)
@@ -1435,7 +1436,7 @@ parseTV whatlabel vallabel scr = foldl' addLine newTV scr
             = tv { tv_value = Just val }
         addLine nor _ = nor
 
-textValue :: forall g m. (IsGameState (GameState g), Monad m) =>
+textValue :: forall g m. (EU4Info g, Monad m) =>
     Text                                             -- ^ Label for "what"
         -> Text                                      -- ^ Label for "how much"
         -> (Text -> Text -> Double -> ScriptMessage) -- ^ Message constructor, if abs value < 1
@@ -1479,9 +1480,7 @@ parseTA whatlabel atomlabel scr = (foldl' addLine newTA scr)
         addLine ta scr = (trace ("parseTA: Ignoring " ++ show scr)) $ ta
 
 
-textAtom :: forall g m. (IsGameData (GameData g),
-                         IsGameState (GameState g),
-                         Monad m) =>
+textAtom :: forall g m. (EU4Info g, Monad m) =>
     Text -- ^ Label for "what" (e.g. "who")
         -> Text -- ^ Label for atom (e.g. "name")
         -> (Text -> Text -> Text -> ScriptMessage) -- ^ Message constructor
@@ -1641,9 +1640,7 @@ data FactionInfluence = FactionInfluence {
 newInfluence :: FactionInfluence
 newInfluence = FactionInfluence Nothing Nothing
 -- | Handler for faction influence.
-factionInfluence :: (IsGameData (GameData g),
-                     IsGameState (GameState g),
-                     Monad m) =>
+factionInfluence :: (EU4Info g, Monad m) =>
                      (Text -> Text -> Double -> ScriptMessage) -> StatementHandler g m
 factionInfluence msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_influence (foldl' addField newInfluence scr)
@@ -1662,9 +1659,7 @@ factionInfluence msg stmt@[pdx| %_ = @scr |]
 factionInfluence _ stmt = preStatement stmt
 
 -- | Handler for trigger checking which faction is in power.
-factionInPower :: (IsGameData (GameData g),
-                   IsGameState (GameState g),
-                   Monad m) => StatementHandler g m
+factionInPower :: (EU4Info g, Monad m) => StatementHandler g m
 factionInPower [pdx| %_ = ?fac |] | Just facKey <- fac_iconkey fac
     = do fac_loc <- getGameL10n fac
          msgToPP $ MsgFactionInPower (iconText facKey) fac_loc
@@ -1947,13 +1942,13 @@ spawnRebelsSimple :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
 spawnRebelsSimple stmt@[pdx| $typ = %_ |] = spawnRebels (Just typ) stmt
 spawnRebelsSimple stmt = spawnRebels Nothing stmt -- Will probably fail
 
-hasSpawnedRebels :: (IsGameState (GameState g), Monad m) => StatementHandler g m
+hasSpawnedRebels :: (EU4Info g, Monad m) => StatementHandler g m
 hasSpawnedRebels [pdx| %_ = $rtype |]
     | Just (rtype_loc, rtype_iconkey) <- HM.lookup rtype rebel_loc
       = msgToPP $ MsgRebelsHaveRisen (iconText rtype_iconkey) rtype_loc
 hasSpawnedRebels stmt = preStatement stmt
 
-canSpawnRebels :: (IsGameState (GameState g), Monad m) => StatementHandler g m
+canSpawnRebels :: (EU4Info g, Monad m) => StatementHandler g m
 canSpawnRebels [pdx| %_ = $rtype |]
     | Just (rtype_loc, rtype_iconkey) <- HM.lookup rtype rebel_loc
       = msgToPP (MsgProvinceHasRebels (iconText rtype_iconkey) rtype_loc)
@@ -1995,7 +1990,7 @@ triggerEvent _ stmt = preStatement stmt
 
 -- Specific values
 
-gainMen :: forall g m. (IsGameState (GameState g), Monad m) => StatementHandler g m
+gainMen :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
 gainMen [pdx| $head = !amt |]
     | "add_manpower" <- head = gainMen' ("manpower"::Text) MsgGainMPFrac MsgGainMP 1000
     | "add_sailors" <- head = gainMen' ("sailors"::Text) MsgGainSailorsFrac MsgGainSailors 1
@@ -2127,9 +2122,7 @@ data DefineAdvisor = DefineAdvisor
 newDefineAdvisor :: DefineAdvisor
 newDefineAdvisor = DefineAdvisor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
-defineAdvisor :: forall g m. (IsGameData (GameData g),
-                              IsGameState (GameState g),
-                              Monad m) => Bool -> StatementHandler g m
+defineAdvisor :: forall g m. (EU4Info g, Monad m) => Bool -> StatementHandler g m
 defineAdvisor isScaled stmt@[pdx| %_ = @scr |]
     = msgToPP . pp_define_advisor =<< foldM addLine newDefineAdvisor scr where
         addLine :: DefineAdvisor -> GenericStatement -> PPT g m DefineAdvisor
@@ -2655,7 +2648,7 @@ declareWarWithCB stmt = preStatement stmt
 
 -- DLC
 
-hasDlc :: (IsGameState (GameState g), Monad m) => StatementHandler g m
+hasDlc :: (EU4Info g, Monad m) => StatementHandler g m
 hasDlc [pdx| %_ = ?dlc |]
     = msgToPP $ MsgHasDLC dlc_icon dlc
     where
@@ -2689,9 +2682,7 @@ data EstateInfluenceModifier = EstateInfluenceModifier {
     }
 newEIM :: EstateInfluenceModifier
 newEIM = EstateInfluenceModifier Nothing Nothing
-hasEstateModifier :: (IsGameData (GameData g),
-                      IsGameState (GameState g),
-                      Monad m) => (Text -> Text -> Text -> ScriptMessage) -> StatementHandler g m
+hasEstateModifier :: (EU4Info g, Monad m) => (Text -> Text -> Text -> ScriptMessage) -> StatementHandler g m
 hasEstateModifier msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_eim (foldl' addField newEIM scr)
     where
@@ -2716,12 +2707,10 @@ data AddEstateInfluenceModifier = AddEstateInfluenceModifier {
 newAddEstateInfluenceModifier :: AddEstateInfluenceModifier
 newAddEstateInfluenceModifier = AddEstateInfluenceModifier Nothing Nothing Nothing Nothing
 
-timeOrIndef :: (IsGameData (GameData g), Monad m) => Double -> PPT g m Text
+timeOrIndef :: (EU4Info g, Monad m) => Double -> PPT g m Text
 timeOrIndef n = if n < 0 then messageText MsgIndefinitely else messageText (MsgForDays n)
 
-estateInfluenceModifier :: forall g m. (IsGameData (GameData g),
-                                        IsGameState (GameState g),
-                                        Monad m) =>
+estateInfluenceModifier :: forall g m. (EU4Info g, Monad m) =>
     (Text -> Text -> Text -> Double -> Text -> ScriptMessage)
         -> StatementHandler g m
 estateInfluenceModifier msg stmt@[pdx| %_ = @scr |]
@@ -2749,7 +2738,6 @@ estateInfluenceModifier msg stmt@[pdx| %_ = @scr |]
 estateInfluenceModifier _ stmt = preStatement stmt
 
 -- Trigger switch
-
 triggerSwitch :: (EU4Info g, Monad m) => StatementHandler g m
 -- A trigger switch must be of the form
 -- trigger_switch = {
@@ -2857,9 +2845,7 @@ hreReformLoc n = getGameL10n $ case n of
     8 -> "renovatio_title"
     _ -> error "called hreReformLoc with n < 1 or n > 8"
 
-hreReformLevel :: (IsGameData (GameData g),
-                   IsGameState (GameState g),
-                   Monad m) => StatementHandler g m
+hreReformLevel :: (EU4Info g, Monad m) => StatementHandler g m
 hreReformLevel [pdx| %_ = !level |] | level >= 0, level <= 8
     = if level == 0
         then msgToPP MsgNoHREReforms
@@ -2868,9 +2854,7 @@ hreReformLevel stmt = preStatement stmt
 
 -- Religion
 
-religionYears :: (IsGameData (GameData g),
-                  IsGameState (GameState g),
-                  Monad m) => StatementHandler g m
+religionYears :: (EU4Info g, Monad m) => StatementHandler g m
 religionYears [pdx| %_ = { $rel = !years } |]
     = do
         let rel_icon = iconText rel
@@ -2880,7 +2864,7 @@ religionYears stmt = preStatement stmt
 
 -- Government
 
-govtRank :: (IsGameState (GameState g), Monad m) => StatementHandler g m
+govtRank :: (EU4Info g, Monad m) => StatementHandler g m
 govtRank [pdx| %_ = !level |]
     = case level :: Int of
         1 -> msgToPP MsgRankDuchy -- unlikely, but account for it anyway
@@ -2889,7 +2873,7 @@ govtRank [pdx| %_ = !level |]
         _ -> error "impossible: govtRank matched an invalid rank number"
 govtRank stmt = preStatement stmt
 
-setGovtRank :: (IsGameState (GameState g), Monad m) => StatementHandler g m
+setGovtRank :: (EU4Info g, Monad m) => StatementHandler g m
 setGovtRank [pdx| %_ = !level |] | level `elem` [1..3]
     = case level :: Int of
         1 -> msgToPP MsgSetRankDuchy
@@ -2898,9 +2882,7 @@ setGovtRank [pdx| %_ = !level |] | level `elem` [1..3]
         _ -> error "impossible: setGovtRank matched an invalid rank number"
 setGovtRank stmt = preStatement stmt
 
-numProvinces :: (IsGameData (GameData g),
-                 IsGameState (GameState g),
-                 Monad m) =>
+numProvinces :: (EU4Info g, Monad m) =>
     Text
         -> (Text -> Text -> Double -> ScriptMessage)
         -> StatementHandler g m
@@ -2956,9 +2938,7 @@ tradeMod stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_tm (foldl' addLine newTA scr)
             _ -> return $ preMessage stmt
 tradeMod stmt = preStatement stmt
 
-isMonth :: (IsGameData (GameData g),
-            IsGameState (GameState g),
-            Monad m) => StatementHandler g m
+isMonth :: (EU4Info g, Monad m) => StatementHandler g m
 isMonth [pdx| %_ = !(num :: Int) |] | num >= 0, num <= 11
     = do
         month_loc <- getGameL10n $ case num of
@@ -2989,7 +2969,7 @@ area stmt                  = locAtomTagOrProvince (const MsgAreaIs) MsgAreaIsAs 
 
 -- Currently dominant_culture only appears in decisions/Cultural.txt
 -- (dominant_culture = capital).
-dominantCulture :: (IsGameState (GameState g), Monad m) => StatementHandler g m
+dominantCulture :: (EU4Info g, Monad m) => StatementHandler g m
 dominantCulture [pdx| %_ = capital |] = msgToPP MsgCapitalCultureDominant
 dominantCulture stmt = preStatement stmt
 
@@ -3002,7 +2982,7 @@ customTriggerTooltip [pdx| %_ = @scr |]
       in indentDown $ ppMany rest
 customTriggerTooltip stmt = preStatement stmt
 
-piety :: (IsGameState (GameState g), Monad m) => StatementHandler g m
+piety :: (EU4Info g, Monad m) => StatementHandler g m
 piety stmt@[pdx| %_ = !amt |]
     = numericIcon (case amt `compare` (0::Double) of
         LT -> "lack of piety"
@@ -3089,9 +3069,7 @@ data GovernmentPower = GovernmentPower
         }
 newGP :: GovernmentPower
 newGP = GovernmentPower Nothing Nothing Nothing
-governmentPower :: (IsGameData (GameData g),
-                    IsGameState (GameState g),
-                    Monad m) => StatementHandler g m
+governmentPower :: (EU4Info g, Monad m) => StatementHandler g m
 governmentPower stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_gp (foldl' addLine newGP scr)
     where

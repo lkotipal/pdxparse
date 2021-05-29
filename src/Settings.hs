@@ -96,6 +96,7 @@ programOpts :: [OptDescr CLArgs]
 programOpts =
     [ Option ['p'] ["paths"]   (NoArg Paths)   "show location of configuration files"
     , Option ['v'] ["version"] (NoArg Version) "show version information"
+    , Option ['f'] ["file"]    (ReqArg ProcessFile "FILE")  "also process FILE"
     ]
 
 -- | Process command-line arguments, then read the settings and localization
@@ -148,7 +149,7 @@ readSettings = do
                 other -> do
                     putStrLn $ "I don't know how to handle " ++ other ++ "!"
                     exitFailure
-                    
+
             let provisionalSettings = Settings
                             { steamDir = steamDirCanonicalized
                             , steamApps = steamAppsCanonicalized
@@ -171,5 +172,3 @@ readSettings = do
         Left exc -> do
             hPutStrLn stderr $ "Couldn't parse settings: " ++ show exc
             exitFailure
-
-

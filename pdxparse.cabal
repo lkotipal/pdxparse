@@ -28,6 +28,7 @@ executable pdxparse
                        EU4.Common,
                        EU4.Decisions,
                        EU4.Events,
+                       EU4.Extra,
                        EU4.Handlers
                        EU4.IdeaGroups,
                        EU4.IO,

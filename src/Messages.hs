@@ -9779,7 +9779,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "The country's military strength is at least "
                 , toMessage (plainNum _amt)
-                , " that of "
+                , " times that of "
                 , _who
                 ]
         MsgNumUnitsInProvince {scriptMessageWhom = _whom, scriptMessageAmt = _amt}

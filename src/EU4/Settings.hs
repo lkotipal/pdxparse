@@ -32,7 +32,7 @@ import FileIO (buildPath, readScript)
 import SettingsTypes ( PPT, Settings (..), Game (..), L10nScheme (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10nIfPresent
-                     , safeIndex, safeLast)
+                     , safeIndex, safeLast, CLArgs (..))
 import EU4.Types -- everything
 --import Text.PrettyPrint.Leijen.Text (Doc)
 --import qualified Text.PrettyPrint.Leijen.Text as PP
@@ -49,6 +49,7 @@ import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
                    , findTriggeredEventsInOnActions, findTriggeredEventsInDisasters
                    , findTriggeredEventsInMissions)
+import EU4.Extra (writeEU4Extra)
 
 -- | Temporary (?) fix for HAW and UHW both localizing to "Hawai'i'"
 -- Can be extended/removed as necessary
@@ -101,6 +102,7 @@ instance IsGame EU4 where
                 ,   eu4provtrigmodifiers = HM.empty
                 ,   eu4provtrigmodifierScripts = HM.empty
                 ,   eu4tradeNodes = HM.empty
+                ,   eu4extraScripts = HM.empty
                 }))
                 (EU4S $ EU4State {
                     eu4currentFile = Nothing
@@ -188,6 +190,9 @@ instance EU4Info EU4 where
     getTradeNodes = do
         EU4D ed <- get
         return (eu4tradeNodes ed)
+    getExtraScripts = do
+        EU4D ed <- get
+        return (eu4extraScripts ed)
 
 instance IsGameData (GameData EU4) where
     getSettings (EU4D ed) = eu4settings ed
@@ -272,6 +277,9 @@ readEU4Scripts = do
                 findPrimary _ = Nothing
         processTradeNode stmt = (trace $ "Not handled in processTradeNode: " ++ show stmt) $ Nothing
 
+        getFileFromOpts (ProcessFile f) = [f]
+        getFileFromOpts _ = []
+
     ideaGroups <- readEU4Script "ideagroups"
     decisions <- readEU4Script "decisions"
     events <- readEU4Script "events"
@@ -281,6 +289,8 @@ readEU4Scripts = do
     on_actions <- readEU4Script "on_actions"
     disasters <- readEU4Script "disasters"
     provTrigModifiers <- readEU4Script "province_triggered_modifiers"
+
+    extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
 
     ---------------------
     -- Geographic data --
@@ -308,7 +318,9 @@ readEU4Scripts = do
         ,   eu4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
         ,   eu4provtrigmodifierScripts = provTrigModifiers
         ,   eu4tradeNodes = HM.fromList (catMaybes (map processTradeNode (concatMap snd (HM.toList tradeNodeScripts))))
+        ,   eu4extraScripts = foldl (flip (uncurry HM.insert)) HM.empty extra
         }
+
 
 -- | Interpret the script ASTs as usable data.
 parseEU4Scripts :: Monad m => PPT EU4 m ()
@@ -349,3 +361,4 @@ writeEU4Scripts = do
     writeEU4Missions
     writeEU4OpinionModifiers
     writeEU4ProvTrigModifiers
+    writeEU4Extra
