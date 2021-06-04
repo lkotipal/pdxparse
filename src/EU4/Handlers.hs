@@ -3716,8 +3716,9 @@ scopeProvince _ _ stmt = preStatement stmt
 ---------------------------------------
 personalityAncestor :: forall g m. (EU4Info g, Monad m) => (Text -> Text -> ScriptMessage) -> StatementHandler g m
 personalityAncestor msg stmt@[pdx| %_ = @scr |] | [pdx| key = $personality |] : [] <- scr = do
-    loc <- getGameL10n personality
-    msgToPP $ msg (iconText personality) loc
+    let perso = personality <> "_personality"
+    loc <- getGameL10n perso
+    msgToPP $ msg (iconText perso) loc
 personalityAncestor _ stmt = preStatement stmt
 
 
