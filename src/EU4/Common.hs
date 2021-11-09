@@ -318,6 +318,7 @@ handlersNumeric = Tr.fromList
         ,("tributary_state"                  , numeric MsgNumTributaryStates)
         ,("units_in_province"                , numeric MsgUnitsInProvince)
         ,("vassal"                           , numeric MsgHasNumVassals)
+        ,("yearly_doom_reduction"            , numeric MsgYearlyDoomReduction)
         -- Special cases
         ,("legitimacy_or_horde_unity"        , numeric MsgLegitimacyOrHordeUnity)
         ]
@@ -807,6 +808,8 @@ handlersNumericIcons = Tr.fromList
         ,("yearly_patriarch_authority"        , numericIcon "yearly patriarch authority" MsgYearlyPatriarchAuthority)
         ,("yearly_karma_decay"                , numericIcon "yearly karma decay" MsgYearlyKarmaDecay)
         ,("heir_claim"                        , numericIcon "legitimacy" MsgHeirClaim)
+        ,("global_heathen_missionary_strength", numericIcon "missionary strength vs heathens" MsgGlobalHeathenMissionaryStrength)
+        ,("manpower_in_true_faith_provinces"  , numericIcon "manpower in true faith provinces" MsgManpowerInTrueFaithProvinces)
         ]
 
 -- | Handlers for statements pertaining to modifiers

@@ -1644,6 +1644,9 @@ data ScriptMessage
     | MsgEstateLedRegencyLoyalty {scriptMessageAmt :: Double}
     | MsgSetEstateLedRegencyPrivilegeRandom
     | MsgTradeNode {scriptMessageWhat :: Text}
+    | MsgGlobalHeathenMissionaryStrength {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgManpowerInTrueFaithProvinces {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgYearlyDoomReduction {scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11140,6 +11143,25 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _what
                 , " trade node:"
+                ]
+        MsgGlobalHeathenMissionaryStrength {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " Missionary strength vs heathens"
+                ]
+        MsgManpowerInTrueFaithProvinces {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " Manpower in true faith provinces"
+                ]
+        MsgYearlyDoomReduction {scriptMessageAmt = _amt}
+            -> mconcat
+                [ toMessage (colourNumSign True _amt)
+                , " Yearly doom reduction"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
