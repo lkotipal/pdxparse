@@ -810,6 +810,10 @@ handlersNumericIcons = Tr.fromList
         ,("heir_claim"                        , numericIcon "legitimacy" MsgHeirClaim)
         ,("global_heathen_missionary_strength", numericIcon "missionary strength vs heathens" MsgGlobalHeathenMissionaryStrength)
         ,("manpower_in_true_faith_provinces"  , numericIcon "manpower in true faith provinces" MsgManpowerInTrueFaithProvinces)
+        ,("blockade_force_required"           , numericIcon "blockade force required" MsgBlockadeForceRequired)
+        ,("free_city_imperial_authority"      , numericIcon "imperial authority from free cities" MsgFreeCityImperialAuthority)
+        ,("hostile_disembark_speed"           , numericIcon "hostile disembark time" MsgHostileDisembarkSpeed)
+        ,("local_religious_unity_contribution", numericIcon "local religious unity contribution" MsgLocalReligiousUnityContribution)
         ]
 
 -- | Handlers for statements pertaining to modifiers

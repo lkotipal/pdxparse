@@ -1647,6 +1647,10 @@ data ScriptMessage
     | MsgGlobalHeathenMissionaryStrength {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgManpowerInTrueFaithProvinces {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyDoomReduction {scriptMessageAmt :: Double}
+    | MsgBlockadeForceRequired {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgFreeCityImperialAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHostileDisembarkSpeed {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLocalReligiousUnityContribution {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11162,6 +11166,34 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ toMessage (colourNumSign True _amt)
                 , " Yearly doom reduction"
+                ]
+        MsgBlockadeForceRequired {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " Blockade force required"
+                ]
+        MsgFreeCityImperialAuthority {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " Imperial authority from free cities"
+                ]
+        MsgHostileDisembarkSpeed {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " Hostile disembark time"
+                ]
+        MsgLocalReligiousUnityContribution {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign False) _amt)
+                , " Local religious unity contribution"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
