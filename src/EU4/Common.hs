@@ -829,7 +829,7 @@ handlersNumericIcons = Tr.fromList
         ,("monthly_heir_claim_increase"       , numericIcon "monthly heir claim increase" MsgMonthlyHeirClaimIncrease)
         ,("move_capital_cost_modifier"        , numericIcon "move capital cost modifier" MsgMoveCapitalCostModifier)
         ,("prestige_per_development_from_conversion", numericIcon "prestige per development from missionary" MsgPrestigePerDevelopmentFromConversion)
-        ,("state_governing_cost"              , numericIcon "states governing cost" MsgStateGoverningCost)
+        ,("state_governing_cost"              , numericIcon "state governing cost" MsgStateGoverningCost)
         ,("tolerance_of_heathens_capacity"    , numericIcon "maximum tolerance of heathens" MsgToleranceOfHeathensCapacity)
         ,("yearly_authority"                  , numericIcon "yearly authority" MsgYearlyAuthority)
         ]
