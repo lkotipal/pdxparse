@@ -1651,6 +1651,24 @@ data ScriptMessage
     | MsgFreeCityImperialAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHostileDisembarkSpeed {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLocalReligiousUnityContribution {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgAllEstateLoyaltyEquilibrium {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGlobalManpower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGlobalProsperityGrowth {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHostileFleetAttrition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLocalGoldDepletionChanceModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLocalGreatProjectUpgradeCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLocalHostileAttrition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLocalManpower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLocalProsperityGrowth {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLocalYearsOfNationalism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgMinLocalAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgMonthlyGoldInflationModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgMonthlyHeirClaimIncrease {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgMoveCapitalCostModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgPrestigePerDevelopmentFromConversion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgStateGoverningCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgToleranceOfHeathensCapacity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgYearlyAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11194,6 +11212,132 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Local religious unity contribution"
+                ]
+        MsgAllEstateLoyaltyEquilibrium {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign True) _amt)
+                , " All estates' loyalty equilibrium"
+                ]
+        MsgGlobalManpower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Manpower increase"
+                ]
+        MsgGlobalProsperityGrowth {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Global prosperity growth"
+                ]
+        MsgHostileFleetAttrition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Hostile fleet attrition"
+                ]
+        MsgLocalGoldDepletionChanceModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign False) _amt)
+                , " Local gold depletion chance modifier"
+                ]
+        MsgLocalGreatProjectUpgradeCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign False) _amt)
+                , " Local great project upgrade cost"
+                ]
+        MsgLocalHostileAttrition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Attrition for enemies"
+                ]
+        MsgLocalManpower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True (_amt * 1000))
+                , " Local manpower increase"
+                ]
+        MsgLocalProsperityGrowth {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Local prosperity growth"
+                ]
+        MsgLocalYearsOfNationalism {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign False _amt)
+                , " Years of separatism"
+                ]
+        MsgMinLocalAutonomy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign False _amt)
+                , " Minimum local autonomy"
+                ]
+        MsgMonthlyGoldInflationModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign False) _amt)
+                , " Monthly gold inflation modifier"
+                ]
+        MsgMonthlyHeirClaimIncrease {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Monthly heir claim increase"
+                ]
+        MsgMoveCapitalCostModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign False) _amt)
+                , " Move capital cost modifier"
+                ]
+        MsgPrestigePerDevelopmentFromConversion {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Prestige per development from missionary"
+                ]
+        MsgStateGoverningCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (reducedNum (colourPcSign False) _amt)
+                , " States governing cost"
+                ]
+        MsgToleranceOfHeathensCapacity {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Maximum tolerance of heathens"
+                ]
+        MsgYearlyAuthority {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Yearly authority"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
