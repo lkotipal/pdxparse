@@ -203,7 +203,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_advisor_adm_effect", rhsAlwaysYes MsgRemoveAdvisorAdmEffect) -- "The currently employed administrative advisor leaves the country's court."
         ,("remove_cardinal"          , rhsAlwaysYes MsgLoseCardinal)
         ,("remove_consort"           , rhsAlwaysYes MsgRemoveConsort)
-        ,("remove_heir"              , rhsAlwaysYes MsgHeirRemoved)
+        ,("remove_heir"              , rhsAlwaysEmptyCompound MsgHeirRemoved)
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("same_govt_as_root_trigger" , rhsAlwaysYes MsgSameGovtAsRoot)
         ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime

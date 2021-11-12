@@ -111,6 +111,7 @@ module EU4.Handlers (
     ,   setSavedName
     ,   rhsAlways
     ,   rhsAlwaysYes
+    ,   rhsAlwaysEmptyCompound
     ,   privateerPower
     ,   tradingBonus
     ,   hasTradeCompanyInvestment
@@ -1587,6 +1588,10 @@ rhsAlways _ _ stmt = (trace $ "Expectation is wrong in statement " ++ show stmt)
 
 rhsAlwaysYes :: (EU4Info g, Monad m) => ScriptMessage -> StatementHandler g m
 rhsAlwaysYes = rhsAlways "yes"
+
+rhsAlwaysEmptyCompound :: (EU4Info g, Monad m) => ScriptMessage -> StatementHandler g m
+rhsAlwaysEmptyCompound msg stmt@(Statement _ OpEq (CompoundRhs [])) = msgToPP $ msg
+rhsAlwaysEmptyCompound _ stmt = (trace $ "Expectation is wrong in statement " ++ show stmt) $ preStatement stmt
 
 ---------------------------------
 -- Specific statement handlers --
