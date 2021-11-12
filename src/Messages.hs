@@ -60,7 +60,7 @@ data ScriptMessage
     | MsgYes {scriptMessageIcon :: Text}
     | MsgNo {scriptMessageIcon :: Text}
     | MsgAddCardinal
-    | MsgHeirDies
+    | MsgHeirDies {scriptMessageYn :: Bool}
     | MsgRulerDies
     | MsgLoseCardinal
     | MsgLeaveHRE
@@ -1692,8 +1692,11 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddCardinal
             -> "Gain a cardinal"
-        MsgHeirDies
-            -> "Heir dies"
+        MsgHeirDies {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Heir dies"
+                , ifThenElseT _yn "" "<!-- allow_new_heir=no -->"
+                ]
         MsgRulerDies
             -> "Ruler dies"
         MsgLoseCardinal

@@ -169,7 +169,6 @@ handlersRhsIrrelevant = Tr.fromList
         ,("is_janissary_modifier"  , rhsAlwaysYes MsgIsJanissaryMod)
         ,("is_rajput_modifier"     , rhsAlwaysYes MsgIsRajputMod)
         ,("is_subject_other_than_tributary_trigger" , rhsAlwaysYes MsgIsSubjectOtherThanTributary)
-        ,("kill_heir"              , rhsAlwaysYes MsgHeirDies)
         ,("kill_ruler"             , rhsAlwaysYes MsgRulerDies)
         ,("may_agitate_for_liberty", rhsAlwaysYes MsgMayAgitateForLiberty) -- Espionage: Destabilizing Efforts
         ,("may_explore"            , rhsAlwaysYes MsgMayExplore) -- Exploration: Quest for the New World
@@ -1733,6 +1732,7 @@ handlersMisc = Tr.fromList
         ,("hre_reform_level"    , hreReformLevel)
         ,("is_month"            , isMonth)
         ,("kill_leader"         , killLeader)
+        ,("kill_heir"           , killHeir)
         ,("num_of_owned_provinces_with" , numOwnedProvincesWith MsgNumOwnedProvincesWith)
         ,("num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with" , numOwnedProvincesWith MsgNumOwnedProvincesOrNonSovereignSubjectsWith)
         ,("num_of_religion"     , numOfReligion)

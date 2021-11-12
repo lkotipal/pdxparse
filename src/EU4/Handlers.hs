@@ -141,6 +141,7 @@ module EU4.Handlers (
     ,   productionLeader
     ,   addProvinceTriggeredModifier
     ,   hasHeir
+    ,   killHeir
     -- testing
     ,   isPronoun
     ,   flag
@@ -4027,7 +4028,6 @@ addProvinceTriggeredModifier stmt = (trace $ "Not handled in addProvinceTriggere
 --------------------------
 -- Handler for has_heir --
 --------------------------
--- ,("has_heir"                    , withBool MsgHasHeir)
 hasHeir :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
 hasHeir stmt@[pdx| %_ = ?rhs |] = msgToPP $
     case T.toLower rhs of
@@ -4035,3 +4035,11 @@ hasHeir stmt@[pdx| %_ = ?rhs |] = msgToPP $
         "no" -> MsgHasHeir False
         _ -> MsgHasHeirNamed rhs
 hasHeir stmt = (trace $ "Not handled in hasHeir " ++ show stmt) $ preStatement stmt
+
+---------------------------
+-- Handler for kill_heir --
+---------------------------
+killHeir :: (EU4Info g, Monad m) => StatementHandler g m
+killHeir stmt@(Statement _ OpEq (CompoundRhs [])) = msgToPP $ MsgHeirDies True
+killHeir stmt@(Statement _ OpEq (CompoundRhs [Statement (GenericLhs "allow_new_heir" []) OpEq (GenericRhs "no" [])])) = msgToPP $ MsgHeirDies False
+killHeir stmt = (trace $ "Not handled in killHeir: " ++ show stmt) $ preStatement stmt
