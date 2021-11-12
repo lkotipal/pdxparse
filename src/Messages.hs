@@ -1669,6 +1669,7 @@ data ScriptMessage
     | MsgStateGoverningCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgToleranceOfHeathensCapacity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgColonyMissionReward {scriptMessageProv :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11343,6 +11344,12 @@ instance RenderMessage Script ScriptMessage where
                 , " Yearly authority"
                 ]
 
+        MsgColonyMissionReward {scriptMessageProv = _prov}
+            -> mconcat
+                [ _prov
+                -- Not 100% correct
+                , ": If owned (or uncolonized with the appropriate age bonus) gain +1/+1/+1 development, otherwise gain a permanent claim."
+                ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
 -- FIXME: What's the significance of this?

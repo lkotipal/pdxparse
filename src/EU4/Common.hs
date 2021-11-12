@@ -1745,6 +1745,7 @@ handlersMisc = Tr.fromList
         ,("set_government_rank" , setGovtRank)
         ,("set_saved_name"      , setSavedName)
         ,("generate_advisor_of_type_and_semi_random_religion_effect" , randomAdvisor)
+        ,("create_colony_mission_reward" , createColonyMissionReward)
         -- Estate monopoly privileges
         ,("apply_estate_monopoly_modifier"  , estatePrivilege MsgApplyEstateModifer)
         ,("reapply_estate_privilege"        , estatePrivilege MsgReapplyEstatePrivilege)

@@ -142,6 +142,7 @@ module EU4.Handlers (
     ,   addProvinceTriggeredModifier
     ,   hasHeir
     ,   killHeir
+    ,   createColonyMissionReward
     -- testing
     ,   isPronoun
     ,   flag
@@ -4044,3 +4045,16 @@ killHeir :: (EU4Info g, Monad m) => StatementHandler g m
 killHeir stmt@(Statement _ OpEq (CompoundRhs [])) = msgToPP $ MsgHeirDies True
 killHeir stmt@(Statement _ OpEq (CompoundRhs [Statement (GenericLhs "allow_new_heir" []) OpEq (GenericRhs "no" [])])) = msgToPP $ MsgHeirDies False
 killHeir stmt = (trace $ "Not handled in killHeir: " ++ show stmt) $ preStatement stmt
+
+
+----------------------------------------------
+-- Handler for create_colony_mission_reward --
+----------------------------------------------
+createColonyMissionReward :: (EU4Info g, Monad m) => StatementHandler g m
+createColonyMissionReward stmt =
+    case getEffectArg "province" stmt of
+        Just (IntRhs num) -> do
+            prov <- getProvLoc num
+            msgToPP $ MsgColonyMissionReward prov
+        _ -> (trace $ "warning: Not handled by createColonyMissionReward: " ++ (show stmt)) $ preStatement stmt
+
