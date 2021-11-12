@@ -143,6 +143,7 @@ module EU4.Handlers (
     ,   hasHeir
     ,   killHeir
     ,   createColonyMissionReward
+    ,   hasIdeaGroup
     -- testing
     ,   isPronoun
     ,   flag
@@ -4058,3 +4059,18 @@ createColonyMissionReward stmt =
             msgToPP $ MsgColonyMissionReward prov
         _ -> (trace $ "warning: Not handled by createColonyMissionReward: " ++ (show stmt)) $ preStatement stmt
 
+--------------------------------
+-- Handler for has_idea_group --
+--------------------------------
+hasIdeaGroup :: (EU4Info g, Monad m) => StatementHandler g m
+hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
+    -- TODO: Improve
+    -- Dirty check, if of the form XXX_ideas (where XXX are upper caes letters) assume national ideas..
+    if  ((T.length ig) > 4) && ((T.index ig 3) == '_') && (isUpper (T.index ig 0)) && (isUpper (T.index ig 1)) && (isUpper (T.index ig 2)) then do
+        countryLoc <- getGameL10n (T.take 3 ig)
+        textLoc <- getGameL10n ig
+        -- Show flag (again, dirty)
+        msgToPP $ MsgHasIdeaGroup ("[[image:" <> countryLoc <> ".png|20px]]") textLoc
+    else -- normal idea group
+        withLocAtomIcon MsgHasIdeaGroup stmt
+hasIdeaGroup stmt = (trace $ "Not handled in hasIdeaGroup: " ++ show stmt) $ preStatement stmt

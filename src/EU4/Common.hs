@@ -1132,7 +1132,6 @@ handlersSimpleIcon = Tr.fromList
         ,("has_harmonized_with"     , withLocAtomIcon MsgHasHarmonizedWith)
         ,("has_personal_deity"      , withLocAtomIcon MsgHasPersonalDiety)
         ,("holy_order"              , withLocAtomIcon MsgHasHolyOrder)
-        ,("has_idea_group"          , withLocAtomIcon MsgHasIdeaGroup) -- FIXME: icon fails
         ,("has_institution"         , withLocAtomIcon MsgHasInstitution)
         ,("heir_has_personality"    , withLocAtomIcon (MsgHeirHasPersonality False))
         ,("ruler_has_personality"   , withLocAtomIcon (MsgRulerHasPersonality False))
@@ -1746,6 +1745,7 @@ handlersMisc = Tr.fromList
         ,("set_saved_name"      , setSavedName)
         ,("generate_advisor_of_type_and_semi_random_religion_effect" , randomAdvisor)
         ,("create_colony_mission_reward" , createColonyMissionReward)
+        ,("has_idea_group"      , hasIdeaGroup)
         -- Estate monopoly privileges
         ,("apply_estate_monopoly_modifier"  , estatePrivilege MsgApplyEstateModifer)
         ,("reapply_estate_privilege"        , estatePrivilege MsgReapplyEstatePrivilege)
