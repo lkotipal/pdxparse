@@ -1671,6 +1671,12 @@ data ScriptMessage
     | MsgToleranceOfHeathensCapacity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgColonyMissionReward {scriptMessageProv :: Text}
+    | MsgClearPreviousPrimaryCults
+    | MsgNumUnlockedCults {scriptMessageAmt :: Double}
+    | MsgHasPrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgChangeCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgSelectPrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgChangePrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11358,6 +11364,44 @@ instance RenderMessage Script ScriptMessage where
                 [ _prov
                 -- Not 100% correct
                 , ": If owned (or uncolonized with the appropriate age bonus) gain +1/+1/+1 development, otherwise gain a permanent claim."
+                ]
+        MsgClearPreviousPrimaryCults
+            -> "Remove selected primary cult"
+        MsgNumUnlockedCults {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has unlocked at least "
+                , toMessage (plainNum _amt)
+                , plural _amt " cult" " cults"
+                ]
+        MsgHasPrimaryCult {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has "
+                , _icon
+                , " "
+                , _what
+                , " as primary cult"
+                ]
+        MsgChangeCult {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Change cult to "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgSelectPrimaryCult {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Select "
+                , _icon
+                , " "
+                , _what
+                , " as primary cult"
+                ]
+        MsgChangePrimaryCult {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Change primary cult to "
+                , _icon
+                , " "
+                , _what
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
