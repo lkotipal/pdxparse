@@ -2248,6 +2248,7 @@ data DefineDynMember = DefineDynMember
     ,   ddm_dip :: Maybe Int
     ,   ddm_mil :: Maybe Int
     ,   ddm_fixed :: Bool
+    ,   ddm_any_rand :: Bool
     ,   ddm_max_adm :: Maybe Int
     ,   ddm_max_dip :: Maybe Int
     ,   ddm_max_mil :: Maybe Int
@@ -2263,9 +2264,10 @@ data DefineDynMember = DefineDynMember
     ,   ddm_bastard :: Bool
     ,   ddm_country :: Maybe Text
     ,   ddm_exiled_as :: Maybe Text
+    ,   ddm_force_republican_names :: Bool
     }
 newDefineDynMember :: DefineDynMember
-newDefineDynMember = DefineDynMember False Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing False Nothing Nothing
+newDefineDynMember = DefineDynMember False Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False False Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing False Nothing Nothing False
 
 defineDynMember :: forall g m. (EU4Info g, Monad m) =>
     (Bool -> ScriptMessage) ->
@@ -2291,6 +2293,12 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
         testPronoun (Just other) | isJust (T.find (== ':') other) = Just (Right ("<tt>" <> other <> "</tt>")) -- event target (a bit of a hack)
         testPronoun (Just other) = Just (Left other)
         testPronoun _ = Nothing
+
+        -- For now it seems we can get away with this, but be on the lookout
+        checkRandomStats :: DefineDynMember -> DefineDynMember
+        checkRandomStats ddm = case (ddm_fixed ddm, ddm_any_rand ddm) of
+            (True, True) -> trace ("warning: defineDynMember: mixed use of random and fixed stats in " ++ currentFile ++ ": " ++ show scr) $ ddm
+            _ -> ddm
 
         addLine :: DefineDynMember -> GenericStatement -> DefineDynMember
         addLine ddm stmt@[pdx| $lhs = %rhs |] = case T.map toLower lhs of
@@ -2318,14 +2326,21 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
                 Just "yes" -> ddm { ddm_regency = True }
                 Just "no" -> ddm { ddm_regency = False }
                 _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
-            "adm" -> ddm { ddm_adm = floatRhs rhs }
-            "dip" -> ddm { ddm_dip = floatRhs rhs }
-            "mil" -> ddm { ddm_mil = floatRhs rhs }
-            "max_random_adm" -> ddm { ddm_max_adm = floatRhs rhs }
-            "max_random_dip" -> ddm { ddm_max_dip = floatRhs rhs }
-            "max_random_mil" -> ddm { ddm_max_mil = floatRhs rhs }
+            "adm" -> ddm { ddm_adm = floatRhs rhs, ddm_fixed = True }
+            "dip" -> ddm { ddm_dip = floatRhs rhs, ddm_fixed = True }
+            "mil" -> ddm { ddm_mil = floatRhs rhs, ddm_fixed = True }
+            "change_adm" -> ddm { ddm_adm = floatRhs rhs, ddm_any_rand = True }
+            "change_dip" -> ddm { ddm_dip = floatRhs rhs, ddm_any_rand = True }
+            "change_mil" -> ddm { ddm_mil = floatRhs rhs, ddm_any_rand = True }
+            "max_random_adm" -> ddm { ddm_max_adm = floatRhs rhs, ddm_any_rand = True }
+            "max_random_dip" -> ddm { ddm_max_dip = floatRhs rhs, ddm_any_rand = True }
+            "max_random_mil" -> ddm { ddm_max_mil = floatRhs rhs, ddm_any_rand = True }
+            -- Fixed is the default in 1.32
             "fixed" -> case textRhs rhs of
-                Just "yes" -> ddm { ddm_fixed = True }
+                Just "yes" -> trace ("warning: defineDynMember: use of obsolote parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm { ddm_fixed = True }
+                _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
+            "force_republican_names" -> case textRhs rhs of
+                Just "yes" -> ddm { ddm_force_republican_names = True }
                 _ -> trace ("warning: unknown defineDynMember parameter in " ++ currentFile ++ ": " ++ show stmt) $ ddm
             "culture" -> ddm { ddm_culture = testPronoun $ textRhs rhs }
             "religion" -> ddm { ddm_religion = testPronoun $ textRhs rhs }
@@ -2470,9 +2485,13 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_exiled_as = Just exiled_as } = do
             [msg] <- msgToPP (MsgExiledAs exiled_as)
             return (Just (msg, ddm { ddm_exiled_as = Nothing }))
+        -- Force republican names
+        pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_force_republican_names = True } = do
+            [msg] <- msgToPP $ MsgNewDynMemberForceRepublicanNames
+            return (Just (msg, ddm { ddm_force_republican_names = False }))
         -- Nothing left
         pp_define_dyn_member_attrib _ = return Nothing
-    pp_define_dyn_member $ foldl' addLine newDefineDynMember scr
+    pp_define_dyn_member $ checkRandomStats $ foldl' addLine newDefineDynMember scr
 defineDynMember _ _ _ _ stmt = preStatement stmt
 
 -- Rulers

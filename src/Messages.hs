@@ -537,6 +537,7 @@ data ScriptMessage
     | MsgNewDynMemberBlockDisinherit
     | MsgNewDynMemberBastard
     | MsgNewDynMemberCountry {scriptMessageWhere :: Text}
+    | MsgNewDynMemberForceRepublicanNames
     | MsgEstateHasInfluenceModifier {scriptMessageIcon :: Text, scriptMessageEstate :: Text, scriptMessageModifier :: Text}
     | MsgEstateHasLoyaltyModifier {scriptMessageIcon :: Text, scriptMessageEstate :: Text, scriptMessageModifier :: Text}
     | MsgTriggerSwitch
@@ -4436,6 +4437,8 @@ instance RenderMessage Script ScriptMessage where
                 [ "From "
                 , _where
                 ]
+        MsgNewDynMemberForceRepublicanNames
+            -> "Using a republican name"
         MsgEstateHasInfluenceModifier {scriptMessageIcon = _icon, scriptMessageEstate = _estate, scriptMessageModifier = _modifier}
             -> mconcat
                 [ _icon
