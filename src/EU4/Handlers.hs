@@ -2586,7 +2586,7 @@ foldCompound "buildToForcelimit" "BuildToForcelimit" "btf"
 --addUnitConstruction :: (IsGameState (GameState g), Monad m) => Text -> StatementHandler g m
 foldCompound "addUnitConstruction" "UnitConstruction" "uc"
     []
-    [CompField "amount" [t|Double|] Nothing True
+    [CompField "amount" [t|Double|] (Just [|1|]) False
     ,CompField "type" [t|UnitType|] Nothing True
     ,CompField "speed" [t|Double|] (Just [|1|]) False
     ,CompField "cost" [t|Double|] (Just [|1|]) False]

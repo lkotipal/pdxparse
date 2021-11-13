@@ -6907,7 +6907,9 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (plainNum _amt)
-                , " heavy ships at "
+                , " heavy "
+                , plural _amt "ship" "ships"
+                , " at "
                 , toMessage (reducedNum plainPc _cost)
                 , " of normal cost, taking "
                 , toMessage (reducedNum plainPc _speed)
@@ -6919,7 +6921,9 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (plainNum _amt)
-                , " light ships at "
+                , " light "
+                , plural _amt "ship" "ships"
+                , " at "
                 , toMessage (reducedNum plainPc _cost)
                 , " of normal cost, taking "
                 , toMessage (reducedNum plainPc _speed)
@@ -6931,7 +6935,8 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (plainNum _amt)
-                , " galleys at "
+                , plural _amt " galley" " galleys"
+                , " at "
                 , toMessage (reducedNum plainPc _cost)
                 , " of normal cost, taking "
                 , toMessage (reducedNum plainPc _speed)
@@ -6943,7 +6948,8 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (plainNum _amt)
-                , " transports at "
+                , plural _amt " transport" " transports"
+                , " at "
                 , toMessage (reducedNum plainPc _cost)
                 , " of normal cost, taking "
                 , toMessage (reducedNum plainPc _speed)
