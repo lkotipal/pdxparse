@@ -1375,6 +1375,7 @@ data ScriptMessage
     | MsgHasAnyMonumentTier {scriptMessageAmt :: Double }
     | MsgHasGreatProject {scriptMessageWhat :: Text}
     | MsgHasGreatProjectTier {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgSetGreatProjectTier {scriptMessageAmt :: Double, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEstateRegency
     | MsgEstateRegencyDuration {scriptMessageAmt :: Double}
     | MsgEstateRegencySpecific {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -9601,6 +9602,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "Great project "
                 , _what
                 , " is at least tier "
+                , toMessage (plainNum _amt)
+                ]
+        MsgSetGreatProjectTier {scriptMessageAmt = _amt, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Set great project "
+                , _what
+                , " tier to be at least "
                 , toMessage (plainNum _amt)
                 ]
         MsgEstateRegency

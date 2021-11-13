@@ -1648,6 +1648,9 @@ handlersSpecialComplex = Tr.fromList
         ,("our_scholar_matches_their_school_trigger" , simpleEffectAtom "school" MsgOurScholarMatchesTheirSchool)
         ,("kill_advisor_by_category_effect" , killAdvisorByCategory)
         ,("select_primary_cult"             , simpleEffectAtom "cult" MsgSelectPrimaryCult)
+        ,("set_great_project_tier_1"        , simpleEffectAtom "type" (MsgSetGreatProjectTier 1))
+        ,("set_great_project_tier_2"        , simpleEffectAtom "type" (MsgSetGreatProjectTier 2))
+        ,("set_great_project_tier_3"        , simpleEffectAtom "type" (MsgSetGreatProjectTier 3))
         ,("scaled_estate_land_share_reduce_effect" , simpleEffectAtom "estate" (MsgScaledEstateLandShareEffect False))
         ,("scaled_estate_land_share_add_effect" , simpleEffectAtom "estate" (MsgScaledEstateLandShareEffect True))
 
