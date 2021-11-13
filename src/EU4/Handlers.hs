@@ -1422,7 +1422,9 @@ tryLocAndLocMod atom = do
             [("female_advisor_chance", "MODIFIER_FEMALE_ADVISOR_CHANCE")
             ,("discipline", "MODIFIER_DISCIPLINE")
             ,("cavalry_power", "CAVALRY_POWER")
+            ,("missionaries" , "MISSIONARY_CONSTRUCTIONS") -- ?
             ,("ship_durability", "MODIFIER_SHIP_DURABILITY")
+            ,("tolerance_heathen", "MODIFIER_TOLERANCE_HEATHEN")
             ]
 
 data TextValue = TextValue
