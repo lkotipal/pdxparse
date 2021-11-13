@@ -144,6 +144,7 @@ module EU4.Handlers (
     ,   killHeir
     ,   createColonyMissionReward
     ,   hasIdeaGroup
+    ,   killUnits
     -- testing
     ,   isPronoun
     ,   flag
@@ -4093,3 +4094,17 @@ hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
     else -- normal idea group
         withLocAtomIcon MsgHasIdeaGroup stmt
 hasIdeaGroup stmt = (trace $ "Not handled in hasIdeaGroup: " ++ show stmt) $ preStatement stmt
+
+----------------------------
+-- Handler for kill_units --
+----------------------------
+foldCompound "killUnits" "KillUnits" "ku"
+    []
+    [CompField "amount" [t|Double|] Nothing True
+    ,CompField "type" [t|Text|] Nothing True
+    ,CompField "who" [t|Text|] Nothing True]
+    [| do
+        who <- flagText (Just EU4Country) _who
+        what <- getGameL10n _type
+        return $ MsgKillUnits (iconText what) what who _amount
+    |]

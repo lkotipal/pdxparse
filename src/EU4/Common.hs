@@ -1741,6 +1741,7 @@ handlersMisc = Tr.fromList
         ,("is_month"            , isMonth)
         ,("kill_leader"         , killLeader)
         ,("kill_heir"           , killHeir)
+        ,("kill_units"          , killUnits)
         ,("num_of_owned_provinces_with" , numOwnedProvincesWith MsgNumOwnedProvincesWith)
         ,("num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with" , numOwnedProvincesWith MsgNumOwnedProvincesOrNonSovereignSubjectsWith)
         ,("num_of_religion"     , numOfReligion)
