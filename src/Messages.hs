@@ -1678,6 +1678,7 @@ data ScriptMessage
     | MsgChangeCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgSelectPrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgChangePrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11410,6 +11411,14 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , _what
+                ]
+        MsgUnlockEstatePrivilege {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Unlock the "
+                , _icon
+                , " "
+                , toMessage (iquotes _what)
+                , " estate privilege"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
