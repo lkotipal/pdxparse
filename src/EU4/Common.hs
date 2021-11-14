@@ -1581,7 +1581,8 @@ handlersTextAtom = Tr.fromList
 -- | Handlers for special complex statements
 handlersSpecialComplex :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSpecialComplex = Tr.fromList
-        [("add_casus_belli"              , addCB True)
+        [("add_building_construction"    , addBuildingConstruction)
+        ,("add_casus_belli"              , addCB True)
         ,("add_faction_influence"        , factionInfluence MsgFactionGainInfluence)
         ,("add_government_power"         , governmentPower)
         ,("add_estate_influence_modifier", estateInfluenceModifier MsgEstateInfluenceModifier)

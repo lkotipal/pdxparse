@@ -1680,6 +1680,7 @@ data ScriptMessage
     | MsgChangePrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
+    | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11428,6 +11429,18 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , plural _amt " unit" " units"
+                ]
+        MsgConstructBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
+            -> mconcat
+                [ "Start building "
+                , _icon
+                , " "
+                , _what
+                , " at "
+                , toMessage (reducedNum plainPc _cost)
+                , " of normal cost, taking "
+                , toMessage (reducedNum plainPc _speed)
+                , " of normal time"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

@@ -145,6 +145,7 @@ module EU4.Handlers (
     ,   createColonyMissionReward
     ,   hasIdeaGroup
     ,   killUnits
+    ,   addBuildingConstruction
     -- testing
     ,   isPronoun
     ,   flag
@@ -4114,4 +4115,17 @@ foldCompound "killUnits" "KillUnits" "ku"
         who <- flagText (Just EU4Country) _who
         what <- getGameL10n _type
         return $ MsgKillUnits (iconText what) what who _amount
+    |]
+
+-------------------------------------------
+-- Handler for add_building_construction --
+-------------------------------------------
+foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
+    []
+    [CompField "building" [t|Text|] Nothing True
+    ,CompField "speed" [t|Double|] Nothing True
+    ,CompField "cost" [t|Double|] Nothing True]
+    [| do
+        buildingLoc <- getGameL10n ("building_" <> _building)
+        return $ MsgConstructBuilding (iconText _building) buildingLoc _speed _cost
     |]
