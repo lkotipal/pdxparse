@@ -1560,6 +1560,7 @@ handlersTextValue = Tr.fromList
         ,("province_distance"           , textValue "who" "distance" MsgProvinceDistance MsgProvinceDistance flagTextMaybe)
         ,("school_opinion"              , textValue "who" "opinion" MsgSchoolOpinion MsgSchoolOpinion flagTextMaybe)
         ,("set_school_opinion"          , textValue "who" "opinion" MsgSetSchoolOpinion MsgSetSchoolOpinion flagTextMaybe)
+        ,("remove_loot"                 , textValue "who" "amount" MsgRemoveLoot MsgRemoveLoot flagTextMaybe)
         ,("trade_goods_produced_amount" , textValue "trade_goods" "amount" MsgTradeGoodsProduced MsgTradeGoodsProduced tryLocAndIcon)
         ,("trading_part"                , textValue "trade_goods" "value" MsgTradingPart MsgTradingPart tryLocAndIcon)
         ,("trade_share"                 , textValue "country" "share" MsgTradeShare MsgTradeShare flagTextMaybe)

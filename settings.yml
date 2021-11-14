@@ -11,6 +11,9 @@ settings:
     # For other platforms, or if it's non-standard, you'll need to specify it
     # here. If you're on Windows, leave out the drive letter.
     #steam_dir: "/home/pwb/.local/share" # absolute
+    #steam_dir: "/mnt/c/Program Files (x86)"
+    #steam_dir: "/mnt/c/Prog/EU4/FakeRoot"
+    steam_dir: "/mnt/c/Prog/EU4/1.32.0"
 
     # The subdirectory of steam_dir where Steam keeps its apps. You shouldn't need to change this.
     # (For Windows, slashes are automatically changed to backslashes, so this default works.)

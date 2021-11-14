@@ -1682,6 +1682,7 @@ data ScriptMessage
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11450,6 +11451,13 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " school without diplomatic relations"
+                ]
+        MsgRemoveLoot {scriptMessageWho = _who, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _who
+                , " gets "
+                , toMessage (plainNum _amt)
+                , " from the province"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
