@@ -1681,6 +1681,7 @@ data ScriptMessage
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
+    | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11441,6 +11442,14 @@ instance RenderMessage Script ScriptMessage where
                 , " of normal cost, taking "
                 , toMessage (reducedNum plainPc _speed)
                 , " of normal time"
+                ]
+        MsgAllowBaselineInviteScholar {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Allow invite to a scholar of the "
+                , _icon
+                , " "
+                , _what
+                , " school without diplomatic relations"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
