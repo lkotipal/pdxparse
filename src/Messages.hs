@@ -11372,8 +11372,7 @@ instance RenderMessage Script ScriptMessage where
         MsgColonyMissionReward {scriptMessageProv = _prov}
             -> mconcat
                 [ _prov
-                -- Not 100% correct
-                , ": If owned (or uncolonized with the appropriate age bonus) gain +1/+1/+1 development, otherwise gain a permanent claim."
+                , ": If uncolonized, gain a siberian frontier colony with 400 settlers (+1/+1/+1 development if the ''“Higher Developed Colonies”'' age ability is unlocked), if owned gain +1/+1/+1 development, otherwise gain a permanent claim."
                 ]
         MsgClearPreviousPrimaryCults
             -> "Remove selected primary cult"
