@@ -11446,7 +11446,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAllowBaselineInviteScholar {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
-                [ "Allow invite to a scholar of the "
+                [ "Allow to invite a scholar of the "
                 , _icon
                 , " "
                 , _what
