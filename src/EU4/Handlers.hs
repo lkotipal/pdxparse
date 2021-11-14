@@ -4093,8 +4093,13 @@ hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
         textLoc <- getGameL10n ig
         -- Show flag (again, dirty)
         msgToPP $ MsgHasIdeaGroup ("[[image:" <> countryLoc <> ".png|20px]]") textLoc
-    else -- normal idea group
-        withLocAtomIcon MsgHasIdeaGroup stmt
+    else do -- "normal" idea group or group national idea
+        igs <- getIdeaGroups
+        textLoc <- getGameL10n ig
+        if maybe False ig_free (HM.lookup ig igs) then
+            msgToPP $ MsgHasIdeaGroup "" textLoc -- group national idea -> no icon
+        else
+            msgToPP $ MsgHasIdeaGroup (iconText ig) textLoc
 hasIdeaGroup stmt = (trace $ "Not handled in hasIdeaGroup: " ++ show stmt) $ preStatement stmt
 
 ----------------------------
