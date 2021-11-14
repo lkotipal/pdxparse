@@ -11412,11 +11412,9 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgUnlockEstatePrivilege {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+        MsgUnlockEstatePrivilege {scriptMessageWhat = _what}
             -> mconcat
                 [ "Unlock the "
-                , _icon
-                , " "
                 , toMessage (iquotes _what)
                 , " estate privilege"
                 ]
