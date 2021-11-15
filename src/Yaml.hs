@@ -206,6 +206,6 @@ message :: Parser (Text, LocEntry)
 message = (,) <$> (Ap.string " "
                *> liftA2 T.cons (Ap.satisfy (Ap.inClass "a-zA-Z._0-9-"))
                                 (Ap.takeWhile (Ap.inClass "a-zA-Z._0-9-")))
-              <*> (LocEntry <$> (Ap.char ':' *> Ap.decimal) -- version
+              <*> (LocEntry <$> (Ap.char ':' *> (Ap.option 0 Ap.decimal)) -- version (2021-11-15: Note: 1.32.1 contains a file that breaks this...)
                             <*> (hspace *> stringLit))
     <?> "message"
