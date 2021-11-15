@@ -11456,8 +11456,8 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _who
                 , " gets "
-                , toMessage (plainNum _amt)
-                , " from the province"
+                , toMessage (plainPc _amt)
+                , " of the loot from the province"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
