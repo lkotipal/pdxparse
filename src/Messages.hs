@@ -581,6 +581,7 @@ data ScriptMessage
     | MsgReligionYears {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageYears :: Double}
     | MsgHasIdea {scriptMessageWhat :: Text}
     | MsgHasReform {scriptMessageWhat :: Text}
+    | MsgHasReformTier {scriptMessageAmt :: Double}
     | MsgReligionProvinces {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
     | MsgGoodsProvinces {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
     | MsgHasAristocraticIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
@@ -4722,6 +4723,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Has enacted the "
                 , toMessage (iquotes _what)
+                , " government reform"
+                ]
+        MsgHasReformTier {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has enacted a tier "
+                , toMessage (plainNum _amt)
                 , " government reform"
                 ]
         MsgReligionProvinces {scriptMessageIcon = _icon, scriptMessageName = _name, scriptMessageAmt = _amt}

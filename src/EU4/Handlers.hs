@@ -146,6 +146,7 @@ module EU4.Handlers (
     ,   hasIdeaGroup
     ,   killUnits
     ,   addBuildingConstruction
+    ,   hasGovernmentReforTier
     -- testing
     ,   isPronoun
     ,   flag
@@ -4129,3 +4130,11 @@ foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
         buildingLoc <- getGameL10n ("building_" <> _building)
         return $ MsgConstructBuilding (iconText _building) buildingLoc _speed _cost
     |]
+
+----------------------------------------------------
+-- Handler for has_reached_government_reform_tier --
+----------------------------------------------------
+hasGovernmentReforTier :: (EU4Info g, Monad m) => StatementHandler g m
+hasGovernmentReforTier stmt@(Statement _ OpEq (CompoundRhs [Statement (GenericLhs tier []) OpEq (GenericRhs "yes" [])])) | T.isPrefixOf "tier_" tier =
+    msgToPP $ MsgHasReformTier $ (read (T.unpack $ T.drop 5 tier) :: Double)
+hasGovernmentReforTier stmt = (trace $ "Not handled in hasGovernmentReforTier: " ++ show stmt) $ preStatement stmt

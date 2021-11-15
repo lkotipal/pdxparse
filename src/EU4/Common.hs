@@ -1623,6 +1623,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_great_project"            , hasGreatProject)
         ,("has_opinion"                  , hasOpinion MsgHasOpinion)
         ,("has_opinion_modifier"         , opinion MsgHasOpinionMod (\modid what who _years -> MsgHasOpinionMod modid what who))
+        ,("has_reached_government_reform_tier" , hasGovernmentReforTier)
         ,("has_trade_company_investment_in_area", hasTradeCompanyInvestment)
         ,("is_in_war"                    , isInWar)
         ,("privateer_power"              , privateerPower)
