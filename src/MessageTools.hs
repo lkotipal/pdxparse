@@ -96,7 +96,7 @@ instance PPSep Int where
 
 instance PPSep Double where
     ppNumSep n
-        = let absn = abs n
+        = let absn = roundEightDecimals (abs n)
               (digits, expn) = floatToDigits 10 absn
               (_, fracDigits') = splitAt expn digits
               -- fracDigits' is [] if exp is a nonzero whole number
@@ -171,6 +171,11 @@ colourPcSign good = ppNum True True good True
 -- | Format a number using the given function, but multiply it by 100 first.
 reducedNum :: PPSep n => (n -> Doc) -> n -> Doc
 reducedNum p n = p (n * 100)
+
+-- | Round number to eight decimal places to avoid floating point inaccuracies
+-- e.g. 0.55 would be rendered as 0.5500000000000001
+roundEightDecimals :: Double -> Double
+roundEightDecimals num = (fromIntegral $ round (num * 10000)) / 10000
 
 -- | Pretty-print a number.
 ppNum :: (Ord n, PPSep n) => Bool -- ^ Whether to apply a colour template (red
