@@ -1228,6 +1228,7 @@ handlersSimpleFlag = Tr.fromList
         ,("sieged_by"               , withFlag MsgUnderSiegeBy)
         ,("succession_claim"        , withFlag MsgSuccessionClaim)
         ,("support_independence_of" , withFlag MsgSupportIndependenceOf)
+        ,("switch_tag"              , withFlag MsgSwitchTag)
         ,("tag"                     , withFlag MsgCountryIs)
         ,("trade_embargoing"        , withFlag MsgTradeEmbargoing)
         ,("trade_embargo_by"        , withFlag MsgEmbargoedBy)

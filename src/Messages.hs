@@ -1684,6 +1684,7 @@ data ScriptMessage
     | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
+    | MsgSwitchTag {scriptMessageWho :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11465,6 +11466,11 @@ instance RenderMessage Script ScriptMessage where
                 , " gets "
                 , toMessage (plainPc _amt)
                 , " of the loot from the province"
+                ]
+        MsgSwitchTag {scriptMessageWho = _who}
+            -> mconcat
+                [ "The human player plays as "
+                , _who
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
