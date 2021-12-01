@@ -2040,8 +2040,8 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Strengthen "
                 , _icon
-                , " Orangists by '''"
-                , toMessage (colourNum True _amt)
+                , " Monarchists by '''"
+                , toMessage (reducedNum plainPc _amt)
                 , "'''"
                 ]
         MsgGainInflation {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
