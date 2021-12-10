@@ -560,7 +560,7 @@ handlersNumericIcons = Tr.fromList
         ,("artillery_cost"                    , numericIcon "artillery cost" MsgArtilleryCost)
         ,("artillery_power"                   , numericIcon "artillery power" MsgArtilleryCombatAbility)
         ,("blockade_efficiency"               , numericIcon "blockade efficiency" MsgBlockadeEfficiency)
-        ,("build_cost"                        , numericIcon "build cost" MsgBuildCost)
+        ,("build_cost"                        , numericIcon "construction cost" MsgBuildCost)
         ,("caravan_power"                     , numericIcon "caravan power" MsgCaravanPower)
         ,("cavalry_cost"                      , numericIcon "cavalry cost" MsgCavalryCost)
         ,("cavalry_power"                     , numericIcon "cavalry power" MsgCavalryCombatAbility)
