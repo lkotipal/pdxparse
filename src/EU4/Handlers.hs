@@ -853,7 +853,9 @@ scriptIconFileTable :: HashMap Text Text
 scriptIconFileTable = HM.fromList
     [("cost to promote mercantilism", "")
     ,("establish holy order cost", "")
+    ,("fleet movement speed", "")
     ,("local state maintenance modifier", "")
+    ,("monthly piety accelerator", "")
     -- Trade company investments
     ,("local_quarter", "TC local quarters")
     ,("permanent_quarters", "TC permanent quarters")

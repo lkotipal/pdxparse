@@ -833,6 +833,8 @@ handlersNumericIcons = Tr.fromList
         ,("state_governing_cost"              , numericIcon "state governing cost" MsgStateGoverningCost)
         ,("tolerance_of_heathens_capacity"    , numericIcon "maximum tolerance of heathens" MsgToleranceOfHeathensCapacity)
         ,("yearly_authority"                  , numericIcon "yearly authority" MsgYearlyAuthority)
+        ,("monthly_piety_accelerator"         , numericIcon "monthly piety accelerator" MsgMonthlyPietyAccelerator)
+        ,("movement_speed_in_fleet_modifier"  , numericIcon "fleet movement speed" MsgMovementSpeedInFleetModifier)
         ]
 
 -- | Handlers for statements pertaining to modifiers

@@ -1685,6 +1685,8 @@ data ScriptMessage
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSwitchTag {scriptMessageWho :: Text}
+    | MsgMonthlyPietyAccelerator {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgMovementSpeedInFleetModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -11471,6 +11473,20 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "The human player plays as "
                 , _who
+                ]
+        MsgMonthlyPietyAccelerator {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True (_amt * 100))
+                , " Monthly piety accelerator"
+                ]
+        MsgMovementSpeedInFleetModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Fleet movement speed"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
