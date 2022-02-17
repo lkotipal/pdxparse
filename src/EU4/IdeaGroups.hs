@@ -145,9 +145,9 @@ fixup = Doc.strictText . T.unlines . map (TE.decodeUtf8
             . killIcons
         . TE.encodeUtf8) . T.lines . Doc.doc2text where
     badIcons, singleIdeaIcons, multiIdeaIcons{-, multiIdeaStartIcons -} :: Regex
-    badIcons = RE.makeRegex ("((tradition.|bonus)=|\\* )({{icon[^}]*}}) "::ByteString)
-    singleIdeaIcons = RE.makeRegex ("idea(.)effect={{icon\\|([a-z ]*)\\|28px}} "::ByteString)
-    multiIdeaIcons = RE.makeRegex ("(:)({{icon[^}]*}}) "::ByteString)
+    badIcons = RE.makeRegex ("((tradition.|bonus)=|\\* )({{icon[^}]*}}|\\[\\[File:[^]]*\\]\\]) "::ByteString)
+    singleIdeaIcons = RE.makeRegex ("idea(.)effect=({{icon\\||\\[\\[File:)([a-z ]*)(.png)?\\|28px(}}|\\]\\]) "::ByteString)
+    multiIdeaIcons = RE.makeRegex ("(:)({{icon[^}]*}}|\\[\\[File:[^]]*\\]\\]) "::ByteString)
     greenTemplate = RE.makeRegex ("{{green\\|([^}]*)}}"::ByteString)
 --    multiIdeaStartIcons = RE.makeRegex ("idea(.)effect = {{plainlist\\|\\* {{icon\\|([a-z ]*)\\|28px}} "::ByteString)
     killIcons :: ByteString -> ByteString
@@ -171,7 +171,7 @@ fixup = Doc.strictText . T.unlines . map (TE.decodeUtf8
     mungIdeaIcons re s = case RE.matchOnceText re s of
         Nothing -> s
         Just (pre, matcharr, post) -> let nth = fst (matcharr ! 1) in mconcat
-            [pre, "idea", nth, "icon=", iconFileB (fst (matcharr ! 2))
+            [pre, "idea", nth, "icon=", iconFileB (fst (matcharr ! 3))
             ,"\n|idea", nth, "effect=", post]
 --             [pre, "idea", nth, "effect=", post
 --             ,"\n|idea", nth, "icon=", iconFileB (fst (matcharr ! 2))]
