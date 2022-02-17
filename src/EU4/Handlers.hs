@@ -240,8 +240,8 @@ msgToPP msg = (:[]) <$> alsoIndent' msg
 -- Emit icon template.
 icon :: Text -> Doc
 icon what = case HM.lookup what scriptIconFileTable of
-    Just "" -> Doc.strictText $ "[[image:" <> what <> ".png|28px]]" -- shorthand notation
-    Just file -> Doc.strictText $ "[[image:" <> file <> ".png|28px]]"
+    Just "" -> Doc.strictText $ "[[File:" <> what <> ".png|28px]]" -- shorthand notation
+    Just file -> Doc.strictText $ "[[File:" <> file <> ".png|28px]]"
     _ -> template "icon" [HM.lookupDefault what what scriptIconTable, "28px"]
 iconText :: Text -> Text
 iconText = Doc.doc2text . icon
@@ -4096,7 +4096,7 @@ hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
         countryLoc <- getGameL10n (T.take 3 ig)
         textLoc <- getGameL10n ig
         -- Show flag (again, dirty)
-        msgToPP $ MsgHasIdeaGroup ("[[image:" <> countryLoc <> ".png|20px]]") textLoc
+        msgToPP $ MsgHasIdeaGroup ("[[File:" <> countryLoc <> ".png|20px]]") textLoc
     else do -- "normal" idea group or group national idea
         igs <- getIdeaGroups
         textLoc <- getGameL10n ig
