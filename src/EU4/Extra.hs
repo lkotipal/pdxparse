@@ -2,7 +2,7 @@
 Module      : EU4.Extra
 Description : Handles for extra files (specified on the command line)
 -}
-module EU4.Extra (writeEU4Extra) where
+module EU4.Extra (writeEU4Extra, writeEU4ExtraCountryScope, writeEU4ExtraProvinceScope, writeEU4ExtraModifier) where
 
 import Debug.Trace (trace)
 import Control.Monad.Trans (MonadIO (..))
@@ -39,6 +39,42 @@ writeEU4Extra = do
                                            , theFeature = Right s })
                        (HM.toList scripts)
     writeFeatures "extra" features pp_extra
+
+writeEU4ExtraCountryScope :: (EU4Info g, MonadIO m) => PPT g m ()
+writeEU4ExtraCountryScope = do
+    scripts <- getExtraScriptsCountryScope
+    let features :: [Feature GenericScript]
+        features = map (\(f, s) -> Feature { featurePath = Just f
+                                           , featureId = Just $ T.pack (takeFileName f)
+                                           , theFeature = Right s })
+                       (HM.toList scripts)
+    writeFeatures "extraCountryScope" features (\e -> scope (EU4Country) $ pp_extra_without_label e)
+
+writeEU4ExtraProvinceScope :: (EU4Info g, MonadIO m) => PPT g m ()
+writeEU4ExtraProvinceScope = do
+    scripts <- getExtraScriptsProvinceScope
+    let features :: [Feature GenericScript]
+        features = map (\(f, s) -> Feature { featurePath = Just f
+                                           , featureId = Just $ T.pack (takeFileName f)
+                                           , theFeature = Right s })
+                       (HM.toList scripts)
+    writeFeatures "extraProvinceScope" features (\e -> scope (EU4Province) $ pp_extra_without_label e)
+
+writeEU4ExtraModifier :: (EU4Info g, MonadIO m) => PPT g m ()
+writeEU4ExtraModifier = do
+    scripts <- getExtraScriptsModifier
+    let features :: [Feature GenericScript]
+        features = map (\(f, s) -> Feature { featurePath = Just f
+                                           , featureId = Just $ T.pack (takeFileName f)
+                                           , theFeature = Right s })
+                       (HM.toList scripts)
+    writeFeatures "extraModifier" features (\e -> scope (EU4Bonus) $ pp_extra_without_label e)
+
+pp_extra_without_label :: (EU4Info g, Monad m) => GenericScript -> PPT g m Doc
+pp_extra_without_label scr = imsg2doc =<< ppExtraWithoutLabel scr
+
+ppExtraWithoutLabel :: (EU4Info g, Monad m) => GenericScript -> PPT g m IndentedMessages
+ppExtraWithoutLabel scr = indentUp (concat <$> mapM ppOne scr)
 
 pp_extra :: (EU4Info g, Monad m) => GenericScript -> PPT g m Doc
 pp_extra scr = imsg2doc =<< ppExtra scr

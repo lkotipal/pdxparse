@@ -50,7 +50,11 @@ import Yaml (L10n, L10nLang, LocEntry (..))
 data CLArgs
     = Paths
     | Version
+    | Onlyextra
     | ProcessFile String
+    | ProcessCountryScopeFile String
+    | ProcessProvinceScopeFile String
+    | ProcessModifierFile String
     deriving (Show, Eq)
 
 -- | Choice of localization scheme.

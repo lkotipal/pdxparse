@@ -67,6 +67,9 @@ data EU4Data = EU4Data {
     ,   eu4provtrigmodifierScripts :: HashMap FilePath GenericScript
     ,   eu4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
     ,   eu4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
+    ,   eu4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
+    ,   eu4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
+    ,   eu4extraScriptsModifier :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     -- etc.
     }
 
@@ -131,6 +134,9 @@ class (IsGame g,
     getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
     -- | Get extra scripts parsed from command line arguments
     getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    getExtraScriptsCountryScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    getExtraScriptsProvinceScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    getExtraScriptsModifier :: Monad m => PPT g m (HashMap FilePath GenericScript)
 
 -------------------
 -- Feature types --

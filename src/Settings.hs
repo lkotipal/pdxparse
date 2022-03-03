@@ -96,7 +96,11 @@ programOpts :: [OptDescr CLArgs]
 programOpts =
     [ Option ['p'] ["paths"]   (NoArg Paths)   "show location of configuration files"
     , Option ['v'] ["version"] (NoArg Version) "show version information"
+    , Option ['e'] ["onlyextra"] (NoArg Onlyextra) "skip normal game files and only process file, countryscope, provincescope and modifiers arguments"
     , Option ['f'] ["file"]    (ReqArg ProcessFile "FILE")  "also process FILE"
+    , Option ['c'] ["countryscope"]    (ReqArg ProcessCountryScopeFile "FILE")  "also process FILE as containing code in the counrty scope"
+    , Option ['s'] ["provincescope"]    (ReqArg ProcessProvinceScopeFile "FILE")  "also process FILE as containing code in the province scope"
+    , Option ['m'] ["modifiers"]    (ReqArg ProcessModifierFile "FILE")  "also process FILE as containing modifiers"
     ]
 
 -- | Process command-line arguments, then read the settings and localization

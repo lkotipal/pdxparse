@@ -9,7 +9,7 @@ module EU4.Settings (
 
 import Debug.Trace (trace, traceM)
 
-import Control.Monad (join, when, forM, filterM, void)
+import Control.Monad (join, when, forM, filterM, void, unless)
 import Control.Monad.Trans (MonadIO (..), liftIO)
 import Control.Monad.Reader (MonadReader (..), ReaderT (..), asks)
 import Control.Monad.State (MonadState (..), StateT (..), modify, gets)
@@ -49,7 +49,7 @@ import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
                    , findTriggeredEventsInOnActions, findTriggeredEventsInDisasters
                    , findTriggeredEventsInMissions)
-import EU4.Extra (writeEU4Extra)
+import EU4.Extra (writeEU4Extra, writeEU4ExtraCountryScope, writeEU4ExtraProvinceScope, writeEU4ExtraModifier)
 
 -- | Temporary (?) fix for HAW and UHW both localizing to "Hawai'i'"
 -- Can be extended/removed as necessary
@@ -103,6 +103,9 @@ instance IsGame EU4 where
                 ,   eu4provtrigmodifierScripts = HM.empty
                 ,   eu4tradeNodes = HM.empty
                 ,   eu4extraScripts = HM.empty
+                ,   eu4extraScriptsCountryScope = HM.empty
+                ,   eu4extraScriptsProvinceScope = HM.empty
+                ,   eu4extraScriptsModifier = HM.empty
                 }))
                 (EU4S $ EU4State {
                     eu4currentFile = Nothing
@@ -193,6 +196,15 @@ instance EU4Info EU4 where
     getExtraScripts = do
         EU4D ed <- get
         return (eu4extraScripts ed)
+    getExtraScriptsCountryScope = do
+        EU4D ed <- get
+        return (eu4extraScriptsCountryScope ed)
+    getExtraScriptsProvinceScope = do
+        EU4D ed <- get
+        return (eu4extraScriptsProvinceScope ed)
+    getExtraScriptsModifier = do
+        EU4D ed <- get
+        return (eu4extraScriptsModifier ed)
 
 instance IsGameData (GameData EU4) where
     getSettings (EU4D ed) = eu4settings ed
@@ -280,6 +292,13 @@ readEU4Scripts = do
         getFileFromOpts (ProcessFile f) = [f]
         getFileFromOpts _ = []
 
+        getCountryScopeFileFromOpts (ProcessCountryScopeFile c) = [c]
+        getCountryScopeFileFromOpts _ = []
+        getProvinceScopeFileFromOpts (ProcessProvinceScopeFile s) = [s]
+        getProvinceScopeFileFromOpts _ = []
+        getModifierFileFromOpts (ProcessModifierFile m) = [m]
+        getModifierFileFromOpts _ = []
+
     ideaGroups <- readEU4Script "ideagroups"
     decisions <- readEU4Script "decisions"
     events <- readEU4Script "events"
@@ -291,7 +310,9 @@ readEU4Scripts = do
     provTrigModifiers <- readEU4Script "province_triggered_modifiers"
 
     extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
-
+    extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
+    extraProvinceScope <- mapM (readOneScript "extraProvinceScope") (concatMap getProvinceScopeFileFromOpts (clargs settings))
+    extraModifier <- mapM (readOneScript "extraModifier") (concatMap getModifierFileFromOpts (clargs settings))
     ---------------------
     -- Geographic data --
     ---------------------
@@ -319,6 +340,9 @@ readEU4Scripts = do
         ,   eu4provtrigmodifierScripts = provTrigModifiers
         ,   eu4tradeNodes = HM.fromList (catMaybes (map processTradeNode (concatMap snd (HM.toList tradeNodeScripts))))
         ,   eu4extraScripts = foldl (flip (uncurry HM.insert)) HM.empty extra
+        ,   eu4extraScriptsCountryScope = foldl (flip (uncurry HM.insert)) HM.empty extraCountryScope
+        ,   eu4extraScriptsProvinceScope = foldl (flip (uncurry HM.insert)) HM.empty extraProvinceScope
+        ,   eu4extraScriptsModifier = foldl (flip (uncurry HM.insert)) HM.empty extraModifier
         }
 
 
@@ -355,10 +379,15 @@ parseEU4Scripts = do
 -- | Output the game data as wiki text.
 writeEU4Scripts :: (EU4Info g, MonadIO m) => PPT g m ()
 writeEU4Scripts = do
-    writeEU4IdeaGroups
-    writeEU4Events
-    writeEU4Decisions
-    writeEU4Missions
-    writeEU4OpinionModifiers
-    writeEU4ProvTrigModifiers
+    settings <- gets getSettings
+    unless (Onlyextra `elem` (clargs settings)) $ do
+        writeEU4IdeaGroups
+        writeEU4Events
+        writeEU4Decisions
+        writeEU4Missions
+        writeEU4OpinionModifiers
+        writeEU4ProvTrigModifiers
     writeEU4Extra
+    writeEU4ExtraCountryScope
+    writeEU4ExtraProvinceScope
+    writeEU4ExtraModifier
