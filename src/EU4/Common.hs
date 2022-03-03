@@ -1261,6 +1261,7 @@ handlersIconFlagOrPronoun = Tr.fromList
         ,("continent"        , locAtomTagOrProvince (const MsgContinentIs) MsgContinentIsAs)
         ,("culture"          , locAtomTagOrProvince (const MsgCultureIs) MsgCultureIsAs)
         ,("culture_group"    , locAtomTagOrProvince (const MsgCultureIsGroup) MsgCultureGroupAs)
+        ,("dominant_culture" , locAtomTagOrProvince (const MsgDominantCultureIs) MsgDominantCultureIsAs)
         ,("dominant_religion", locAtomTagOrProvince MsgDominantReligion MsgDominantReligionAs)
         ,("heir_culture"     , locAtomTagOrProvince (const MsgHeirCultureIs) MsgHeirCultureIsSame)
         ,("heir_nationality" , locAtomTagOrProvince (const MsgHeirNationality) MsgHeirNationalityAs)

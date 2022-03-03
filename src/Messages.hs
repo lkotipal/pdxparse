@@ -254,6 +254,8 @@ data ScriptMessage
     | MsgInfantrySpawnsCountry {scriptMessageWhom :: Text}
     | MsgInfantrySpawnsProvince {scriptMessageWhere :: Text}
     | MsgAdvisorDies {scriptMessageWho :: Text}
+    | MsgDominantCultureIs {scriptMessageWhat :: Text}
+    | MsgDominantCultureIsAs {scriptMessageWhat :: Text}
     | MsgPrimaryCultureIs {scriptMessageWhat :: Text}
     | MsgPrimaryCultureIsAs {scriptMessageWhat :: Text}
     | MsgRegionIs {scriptMessageWhat :: Text}
@@ -2610,6 +2612,16 @@ instance RenderMessage Script ScriptMessage where
                 [ "Advisor "
                 , _who
                 , " dies"
+                ]
+        MsgDominantCultureIs {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Dominant culture is "
+                , _what
+                ]
+        MsgDominantCultureIsAs {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Dominant culture is the same as "
+                , _what
                 ]
         MsgPrimaryCultureIs {scriptMessageWhat = _what}
             -> mconcat
