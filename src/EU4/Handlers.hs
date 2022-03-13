@@ -2307,6 +2307,12 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
             (True, True) -> trace ("warning: defineDynMember: mixed use of random and fixed stats in " ++ currentFile ++ ": " ++ show scr) $ ddm
             _ -> ddm
 
+        -- native_americans.6 in 1.33.2 has "change_adm = 0", omit such lines but retain ddm_any_rand logic
+        ignoreNoChange :: GenericRhs -> Maybe Int
+        ignoreNoChange rhs = case floatRhs rhs of
+            Just 0 -> Nothing
+            x -> x
+
         addLine :: DefineDynMember -> GenericStatement -> DefineDynMember
         addLine ddm stmt@[pdx| $lhs = %rhs |] = case T.map toLower lhs of
             "rebel" -> case textRhs rhs of
@@ -2336,9 +2342,9 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
             "adm" -> ddm { ddm_adm = floatRhs rhs, ddm_fixed = True }
             "dip" -> ddm { ddm_dip = floatRhs rhs, ddm_fixed = True }
             "mil" -> ddm { ddm_mil = floatRhs rhs, ddm_fixed = True }
-            "change_adm" -> ddm { ddm_adm = floatRhs rhs, ddm_any_rand = True }
-            "change_dip" -> ddm { ddm_dip = floatRhs rhs, ddm_any_rand = True }
-            "change_mil" -> ddm { ddm_mil = floatRhs rhs, ddm_any_rand = True }
+            "change_adm" -> ddm { ddm_adm = ignoreNoChange rhs, ddm_any_rand = True }
+            "change_dip" -> ddm { ddm_dip = ignoreNoChange rhs, ddm_any_rand = True }
+            "change_mil" -> ddm { ddm_mil = ignoreNoChange rhs, ddm_any_rand = True }
             "max_random_adm" -> ddm { ddm_max_adm = floatRhs rhs, ddm_any_rand = True }
             "max_random_dip" -> ddm { ddm_max_dip = floatRhs rhs, ddm_any_rand = True }
             "max_random_mil" -> ddm { ddm_max_mil = floatRhs rhs, ddm_any_rand = True }
