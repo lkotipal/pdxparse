@@ -26,7 +26,7 @@ import Data.Text.Encoding.Error (UnicodeException)
 import qualified Data.Text.Encoding as TE
 
 import System.Directory (createDirectoryIfMissing)
-import System.FilePath ((</>), takeDirectory)
+import System.FilePath ((</>), takeDirectory, dropDrive)
 import System.IO (withFile, IOMode (..), hPutStrLn, stderr)
 
 import qualified Data.Attoparsec.Text as Ap
@@ -102,7 +102,7 @@ data Feature a = Feature {
 -- @./output@. If the filename includes directories, create them first.
 writeFeature :: FilePath -> Doc -> IO ()
 writeFeature path output = do
-    let destinationFile = "output" </> path
+    let destinationFile = "output" </> dropDrive path
         destinationDir  = takeDirectory destinationFile
     createDirectoryIfMissing True destinationDir
     withFile destinationFile WriteMode $ \h -> do
