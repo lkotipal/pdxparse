@@ -730,6 +730,7 @@ data ScriptMessage
     | MsgCancelConstruction
     | MsgYearsOfIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLibertyDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLibertyDesireModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainLibertyDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgColonialParent
     | MsgAlways {scriptMessageYn :: Bool}
@@ -5651,6 +5652,13 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Liberty desire is at least "
                 , toMessage (colourPc False _amt)
+                ]
+        MsgLibertyDesireModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourPcSign False _amt)
+                , " Liberty desire"
                 ]
         MsgGainLibertyDesire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

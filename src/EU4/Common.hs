@@ -446,7 +446,7 @@ handlersNumericIcons = Tr.fromList
         ,("is_defender_of_faith_of_tier" , numericIcon "dotf" MsgIsDotfTier)
         ,("karma"                    , numericIcon "high karma" MsgKarma)
         ,("legitimacy"               , numericIconBonusAllowTag "legitimacy" MsgLegitimacy MsgLegitimacyAs MsgYearlyLegitimacy)
-        ,("liberty_desire"           , numericIcon "liberty desire" MsgLibertyDesire)
+        ,("liberty_desire"           , numericIconBonus "liberty desire" MsgLibertyDesire MsgLibertyDesireModifier)
         ,("light_ship_fraction"      , numericIcon "light ship" MsgLightShipFraction)
         ,("local_autonomy"           , numericIconBonus "local autonomy" MsgLocalAutonomy MsgMonthlylAutonomyChange)
         ,("local_build_cost"         , numericIcon "local construction cost" MsgLocalConstructionCost)
