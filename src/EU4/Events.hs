@@ -8,8 +8,8 @@ module EU4.Events (
     ,   findTriggeredEventsInEvents
     ,   findTriggeredEventsInDecisions
     ,   findTriggeredEventsInOnActions
-    ,   findTriggeredEventsInDisasters
-    ,   findTriggeredEventsInMissions
+--    ,   findTriggeredEventsInDisasters
+--    ,   findTriggeredEventsInMissions
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -108,7 +108,11 @@ parseEU4Event stmt@[pdx| %left = %right |] = case right of
         GenericLhs etype _ ->
             let mescope = case etype of
                     "country_event" -> Just EU4Country
+                    "unit_leader_event" -> Just EU4Country
+                    "operative_leader_event" -> Just EU4Country
                     "province_event" -> Just EU4Province
+                    "news_event" -> Just EU4NoScope -- ?
+                    "event" -> Just EU4NoScope
                     _ -> Nothing
             in case mescope of
                 Nothing -> throwError $ "unrecognized event type " <> etype
@@ -317,6 +321,7 @@ ppEventSource (EU4EvtSrcDecision id loc) = do
         ]
 ppEventSource (EU4EvtSrcOnAction act weight) = do
     return $ Doc.strictText $ act <> formatWeight weight
+{-
 ppEventSource (EU4EvtSrcDisaster id trig weight) = do
     idLoc <- getGameL10n id
     return $ Doc.strictText $ mconcat [trig
@@ -327,6 +332,7 @@ ppEventSource (EU4EvtSrcDisaster id trig weight) = do
         , " disaster"
         , formatWeight weight
         ]
+
 ppEventSource (EU4EvtSrcMission missionId) = do
     title <- getGameL10n (missionId <> "_title")
     return $ Doc.strictText $ mconcat ["Completing the <!-- "
@@ -335,7 +341,7 @@ ppEventSource (EU4EvtSrcMission missionId) = do
         , iquotes't title
         , " mission"
         ]
-
+-}
 ppTriggeredBy :: (EU4Info g, Monad m) => Text -> PPT g m Doc
 ppTriggeredBy eventId = do
     eventTriggers <- getEventTriggers
@@ -638,7 +644,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             ,("on_war_won", "<!-- on_war_won -->Winning a war against ''From''") -- root = winning country, from = loser country
             --,("on_weak_heir_claim", "")
             ]
-
+{-
 findTriggeredEventsInDisasters :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
 findTriggeredEventsInDisasters hm scr = foldl' findInDisaster hm scr
     where
@@ -657,3 +663,4 @@ findTriggeredEventsInMissions hm mtbs = foldl' (\h -> \m -> foldl' findInMission
     where
         findInMission :: EU4EventTriggers -> EU4Mission -> EU4EventTriggers
         findInMission hm m = addEventTriggers hm $ addEventSource (const (EU4EvtSrcMission (eu4m_id m))) (findInStmts (eu4m_effect m))
+-}

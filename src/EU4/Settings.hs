@@ -41,14 +41,15 @@ import Yaml (LocEntry (..))
 -- Handlers
 import EU4.Decisions (parseEU4Decisions, writeEU4Decisions)
 import EU4.IdeaGroups (parseEU4IdeaGroups, writeEU4IdeaGroups)
-import EU4.Modifiers ( parseEU4Modifiers, writeEU4Modifiers
-                     , parseEU4OpinionModifiers, writeEU4OpinionModifiers
-                     , parseEU4ProvTrigModifiers, writeEU4ProvTrigModifiers)
-import EU4.Missions (parseEU4Missions , writeEU4Missions)
+-- import EU4.Modifiers ( parseEU4Modifiers, writeEU4Modifiers
+--                     , parseEU4OpinionModifiers, writeEU4OpinionModifiers
+--                     , parseEU4ProvTrigModifiers, writeEU4ProvTrigModifiers)
+--import EU4.Missions (parseEU4Missions , writeEU4Missions)
 import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
-                   , findTriggeredEventsInOnActions, findTriggeredEventsInDisasters
-                   , findTriggeredEventsInMissions)
+                   , findTriggeredEventsInOnActions
+--                 , findTriggeredEventsInDisasters  , findTriggeredEventsInMissions
+                   )
 import EU4.Extra (writeEU4Extra, writeEU4ExtraCountryScope, writeEU4ExtraProvinceScope, writeEU4ExtraModifier)
 
 -- | Temporary (?) fix for HAW and UHW both localizing to "Hawai'i'"
@@ -89,18 +90,18 @@ instance IsGame EU4 where
                 ,   eu4decisionScripts = HM.empty
                 ,   eu4ideaGroups = HM.empty
                 ,   eu4ideaGroupScripts = HM.empty
-                ,   eu4modifiers = HM.empty
-                ,   eu4modifierScripts = HM.empty
-                ,   eu4opmods = HM.empty
-                ,   eu4opmodScripts = HM.empty
-                ,   eu4missionScripts = HM.empty
-                ,   eu4missions = HM.empty
+--                ,   eu4modifiers = HM.empty
+--                ,   eu4modifierScripts = HM.empty
+--                ,   eu4opmods = HM.empty
+--                ,   eu4opmodScripts = HM.empty
+--                ,   eu4missionScripts = HM.empty
+--                ,   eu4missions = HM.empty
                 ,   eu4eventTriggers = HM.empty
                 ,   eu4onactionsScripts = HM.empty
-                ,   eu4disasterScripts = HM.empty
+--                ,   eu4disasterScripts = HM.empty
                 ,   eu4geoData = HM.empty
-                ,   eu4provtrigmodifiers = HM.empty
-                ,   eu4provtrigmodifierScripts = HM.empty
+--                ,   eu4provtrigmodifiers = HM.empty
+--                ,   eu4provtrigmodifierScripts = HM.empty
                 ,   eu4tradeNodes = HM.empty
                 ,   eu4extraScripts = HM.empty
                 ,   eu4extraScriptsCountryScope = HM.empty
@@ -154,42 +155,42 @@ instance EU4Info EU4 where
     getDecisions = do
         EU4D ed <- get
         return (eu4decisions ed)
-    getModifierScripts = do
-        EU4D ed <- get
-        return (eu4modifierScripts ed)
-    getModifiers = do
-        EU4D ed <- get
-        return (eu4modifiers ed)
-    getOpinionModifierScripts = do
-        EU4D ed <- get
-        return (eu4opmodScripts ed)
-    getOpinionModifiers = do
-        EU4D ed <- get
-        return (eu4opmods ed)
-    getMissionScripts = do
-        EU4D ed <- get
-        return (eu4missionScripts ed)
-    getMissions = do
-        EU4D ed <- get
-        return (eu4missions ed)
+--    getModifierScripts = do
+--        EU4D ed <- get
+--        return (eu4modifierScripts ed)
+--    getModifiers = do
+--        EU4D ed <- get
+--        return (eu4modifiers ed)
+--    getOpinionModifierScripts = do
+--        EU4D ed <- get
+--        return (eu4opmodScripts ed)
+--    getOpinionModifiers = do
+--        EU4D ed <- get
+--        return (eu4opmods ed)
+--    getMissionScripts = do
+--        EU4D ed <- get
+--        return (eu4missionScripts ed)
+--    getMissions = do
+--        EU4D ed <- get
+--        return (eu4missions ed)
     getEventTriggers = do
         EU4D ed <- get
         return (eu4eventTriggers ed)
     getOnActionsScripts = do
         EU4D ed <- get
         return (eu4onactionsScripts ed)
-    getDisasterScripts = do
-        EU4D ed <- get
-        return (eu4disasterScripts ed)
+--    getDisasterScripts = do
+--        EU4D ed <- get
+--        return (eu4disasterScripts ed)
     getGeoData = do
         EU4D ed <- get
         return (eu4geoData ed)
-    getProvinceTriggeredModifierScripts = do
-        EU4D ed <- get
-        return (eu4provtrigmodifierScripts ed)
-    getProvinceTriggeredModifiers = do
-        EU4D ed <- get
-        return (eu4provtrigmodifiers ed)
+--    getProvinceTriggeredModifierScripts = do
+--        EU4D ed <- get
+--        return (eu4provtrigmodifierScripts ed)
+--    getProvinceTriggeredModifiers = do
+--        EU4D ed <- get
+--        return (eu4provtrigmodifiers ed)
     getTradeNodes = do
         EU4D ed <- get
         return (eu4tradeNodes ed)
@@ -241,14 +242,15 @@ readEU4Scripts = do
             let sourceSubdir = case category of
                     "policies" -> "common" </> "policies"
                     "ideagroups" -> "common" </> "ideas"
-                    "modifiers" -> "common" </> "event_modifiers"
-                    "opinion_modifiers" -> "common" </> "opinion_modifiers"
+--                    "modifiers" -> "common" </> "event_modifiers"
+--                    "opinion_modifiers" -> "common" </> "opinion_modifiers"
                     "on_actions" -> "common" </> "on_actions"
-                    "disasters" -> "common" </> "disasters"
-                    "tradenodes" -> "common" </> "tradenodes"
-                    "trade_companies" -> "common" </> "trade_companies"
+--                    "disasters" -> "common" </> "disasters"
+--                    "tradenodes" -> "common" </> "tradenodes"
+--                    "trade_companies" -> "common" </> "trade_companies"
                     "colonial_regions" -> "common" </> "colonial_regions"
-                    "province_triggered_modifiers" -> "common" </> "province_triggered_modifiers"
+--                    "province_triggered_modifiers" -> "common" </> "province_triggered_modifiers"
+                    "decisions" -> "common" </> "decisions"
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
@@ -259,7 +261,7 @@ readEU4Scripts = do
         getOnlyLhs :: GenericStatement -> Maybe Text
         getOnlyLhs (Statement (GenericLhs lhs _) _ _) = Just (toLower lhs)
         getOnlyLhs stmt = (trace $ "Unsupported statement: " ++ (show stmt)) $ Nothing
-
+{-
         toHashMap :: EU4GeoType -> [Text] -> HashMap Text EU4GeoType
         toHashMap gt l = foldr (\t -> HM.insert t gt) HM.empty l
 
@@ -298,21 +300,21 @@ readEU4Scripts = do
         getProvinceScopeFileFromOpts _ = []
         getModifierFileFromOpts (ProcessModifierFile m) = [m]
         getModifierFileFromOpts _ = []
-
+-}
     ideaGroups <- readEU4Script "ideagroups"
     decisions <- readEU4Script "decisions"
     events <- readEU4Script "events"
-    modifiers <- readEU4Script "modifiers"
-    opinion_modifiers <- readEU4Script "opinion_modifiers"
-    missions <- readEU4Script "missions"
+--    modifiers <- readEU4Script "modifiers"
+--    opinion_modifiers <- readEU4Script "opinion_modifiers"
+--    missions <- readEU4Script "missions"
     on_actions <- readEU4Script "on_actions"
-    disasters <- readEU4Script "disasters"
-    provTrigModifiers <- readEU4Script "province_triggered_modifiers"
+--    disasters <- readEU4Script "disasters"
+--    provTrigModifiers <- readEU4Script "province_triggered_modifiers"
 
-    extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
-    extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
-    extraProvinceScope <- mapM (readOneScript "extraProvinceScope") (concatMap getProvinceScopeFileFromOpts (clargs settings))
-    extraModifier <- mapM (readOneScript "extraModifier") (concatMap getModifierFileFromOpts (clargs settings))
+--    extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
+--    extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
+--    extraProvinceScope <- mapM (readOneScript "extraProvinceScope") (concatMap getProvinceScopeFileFromOpts (clargs settings))
+--    extraModifier <- mapM (readOneScript "extraModifier") (concatMap getModifierFileFromOpts (clargs settings))
     ---------------------
     -- Geographic data --
     ---------------------
@@ -320,29 +322,30 @@ readEU4Scripts = do
     -- Arguably this shouldn't be parsed here, but we don't care
     -- about the actual script data.
     --
+    {-}
     geoData <- forM geoDirs readGeoData
     geoMapData <- forM mapGeoFiles  $ \(geoType, filename) -> do
         (_, d) <- readOneScript "map" (buildPath settings "map" </> filename)
         return $ toHashMap geoType (catMaybes $ map getOnlyLhs d)
 
     tradeNodeScripts <- readEU4Script "tradenodes"
-
+-}
     modify $ \(EU4D s) -> EU4D $ s {
             eu4ideaGroupScripts = ideaGroups
         ,   eu4decisionScripts = decisions
         ,   eu4eventScripts = events
-        ,   eu4modifierScripts = modifiers
-        ,   eu4opmodScripts = opinion_modifiers
-        ,   eu4missionScripts = missions
+--        ,   eu4modifierScripts = modifiers
+--        ,   eu4opmodScripts = opinion_modifiers
+--        ,   eu4missionScripts = missions
         ,   eu4onactionsScripts = on_actions
-        ,   eu4disasterScripts = disasters
-        ,   eu4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
-        ,   eu4provtrigmodifierScripts = provTrigModifiers
-        ,   eu4tradeNodes = HM.fromList (catMaybes (map processTradeNode (concatMap snd (HM.toList tradeNodeScripts))))
-        ,   eu4extraScripts = foldl (flip (uncurry HM.insert)) HM.empty extra
-        ,   eu4extraScriptsCountryScope = foldl (flip (uncurry HM.insert)) HM.empty extraCountryScope
-        ,   eu4extraScriptsProvinceScope = foldl (flip (uncurry HM.insert)) HM.empty extraProvinceScope
-        ,   eu4extraScriptsModifier = foldl (flip (uncurry HM.insert)) HM.empty extraModifier
+--        ,   eu4disasterScripts = disasters
+--        ,   eu4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
+--        ,   eu4provtrigmodifierScripts = provTrigModifiers
+--        ,   eu4tradeNodes = HM.fromList (catMaybes (map processTradeNode (concatMap snd (HM.toList tradeNodeScripts))))
+--        ,   eu4extraScripts = foldl (flip (uncurry HM.insert)) HM.empty extra
+--        ,   eu4extraScriptsCountryScope = foldl (flip (uncurry HM.insert)) HM.empty extraCountryScope
+--        ,   eu4extraScriptsProvinceScope = foldl (flip (uncurry HM.insert)) HM.empty extraProvinceScope
+--        ,   eu4extraScriptsModifier = foldl (flip (uncurry HM.insert)) HM.empty extraModifier
         }
 
 
@@ -351,29 +354,29 @@ parseEU4Scripts :: Monad m => PPT EU4 m ()
 parseEU4Scripts = do
     -- Need idea groups and modifiers before everything else
     ideaGroups <- parseEU4IdeaGroups =<< getIdeaGroupScripts
-    modifiers <- parseEU4Modifiers =<< getModifierScripts
-    opinionModifiers <- parseEU4OpinionModifiers =<< getOpinionModifierScripts
-    provTrigModifiers <- parseEU4ProvTrigModifiers =<< getProvinceTriggeredModifierScripts
+--    modifiers <- parseEU4Modifiers =<< getModifierScripts
+--    opinionModifiers <- parseEU4OpinionModifiers =<< getOpinionModifierScripts
+--    provTrigModifiers <- parseEU4ProvTrigModifiers =<< getProvinceTriggeredModifierScripts
     decisions <- parseEU4Decisions =<< getDecisionScripts
     events <- parseEU4Events =<< getEventScripts
-    missions <- parseEU4Missions =<< getMissionScripts
+--    missions <- parseEU4Missions =<< getMissionScripts
     on_actions <- getOnActionsScripts
-    disasters <- getDisasterScripts
+--    disasters <- getDisasterScripts
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
         te3 = findTriggeredEventsInOnActions te2 (concat (HM.elems on_actions))
-        te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
-        te5 = findTriggeredEventsInMissions te4 (HM.elems missions)
+--        te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
+--        te5 = findTriggeredEventsInMissions te4 (HM.elems missions)
     --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))
     modify $ \(EU4D s) -> EU4D $
             s { eu4events = events
             ,   eu4decisions = decisions
             ,   eu4ideaGroups = ideaGroups
-            ,   eu4modifiers = modifiers
-            ,   eu4opmods = opinionModifiers
-            ,   eu4missions = missions
-            ,   eu4eventTriggers = te5
-            ,   eu4provtrigmodifiers = provTrigModifiers
+--            ,   eu4modifiers = modifiers
+--            ,   eu4opmods = opinionModifiers
+--            ,   eu4missions = missions
+            ,   eu4eventTriggers = te3
+--            ,   eu4provtrigmodifiers = provTrigModifiers
             }
 
 -- | Output the game data as wiki text.
@@ -384,9 +387,9 @@ writeEU4Scripts = do
         writeEU4IdeaGroups
         writeEU4Events
         writeEU4Decisions
-        writeEU4Missions
-        writeEU4OpinionModifiers
-        writeEU4ProvTrigModifiers
+--        writeEU4Missions
+--        writeEU4OpinionModifiers
+--        writeEU4ProvTrigModifiers
     writeEU4Extra
     writeEU4ExtraCountryScope
     writeEU4ExtraProvinceScope

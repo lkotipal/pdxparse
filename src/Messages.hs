@@ -1684,7 +1684,7 @@ data ScriptMessage
     | MsgChangePrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
-    | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
+    | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSwitchTag {scriptMessageWho :: Text}
@@ -11462,17 +11462,15 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , plural _amt " unit" " units"
                 ]
-        MsgConstructBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
+        MsgConstructBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _type, scriptMessageAmt = _level}
             -> mconcat
-                [ "Start building "
+                [ "Add "
+                , toMessage (reducedNum plainPc _level)
+                , " "
                 , _icon
                 , " "
-                , _what
-                , " at "
-                , toMessage (reducedNum plainPc _cost)
-                , " of normal cost, taking "
-                , toMessage (reducedNum plainPc _speed)
-                , " of normal time"
+                , _type
+                , " "
                 ]
         MsgAllowBaselineInviteScholar {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat

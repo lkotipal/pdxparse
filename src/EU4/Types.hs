@@ -11,9 +11,9 @@ module EU4.Types (
     ,   EU4EventSource (..), EU4EventTriggers, EU4EventWeight
     ,   EU4Decision (..)
     ,   IdeaGroup (..), Idea (..), IdeaTable
-    ,   EU4Modifier (..), EU4OpinionModifier (..)
-    ,   EU4MissionTreeBranch (..), EU4Mission (..)
-    ,   EU4ProvinceTriggeredModifier (..)
+--    ,   EU4Modifier (..), EU4OpinionModifier (..)
+--    ,   EU4MissionTreeBranch (..), EU4Mission (..)
+--    ,   EU4ProvinceTriggeredModifier (..)
         -- * Low level types
     ,   MonarchPower (..)
     ,   EU4Scope (..)
@@ -23,7 +23,7 @@ module EU4.Types (
     ,   aiWillDo
     ,   isGeographic
     -- utilities that can't go anywhere else
-    ,   getModifier
+--    ,   getModifier
     ) where
 
 import Data.List (foldl')
@@ -50,21 +50,21 @@ data EU4Data = EU4Data {
     ,   eu4events :: HashMap Text EU4Event
     ,   eu4decisions :: HashMap Text EU4Decision
     ,   eu4ideaGroups :: IdeaTable
-    ,   eu4modifiers :: HashMap Text EU4Modifier
-    ,   eu4opmods :: HashMap Text EU4OpinionModifier
-    ,   eu4missions :: HashMap Text EU4MissionTreeBranch
+--    ,   eu4modifiers :: HashMap Text EU4Modifier
+--    ,   eu4opmods :: HashMap Text EU4OpinionModifier
+--    ,   eu4missions :: HashMap Text EU4MissionTreeBranch
     ,   eu4eventTriggers :: EU4EventTriggers
     ,   eu4geoData :: HashMap Text EU4GeoType
-    ,   eu4provtrigmodifiers :: HashMap Text EU4ProvinceTriggeredModifier
+--    ,   eu4provtrigmodifiers :: HashMap Text EU4ProvinceTriggeredModifier
     ,   eu4eventScripts :: HashMap FilePath GenericScript
     ,   eu4decisionScripts :: HashMap FilePath GenericScript
     ,   eu4ideaGroupScripts :: HashMap FilePath GenericScript
-    ,   eu4modifierScripts :: HashMap FilePath GenericScript
-    ,   eu4opmodScripts :: HashMap FilePath GenericScript
-    ,   eu4missionScripts :: HashMap FilePath GenericScript
+--    ,   eu4modifierScripts :: HashMap FilePath GenericScript
+--    ,   eu4opmodScripts :: HashMap FilePath GenericScript
+--    ,   eu4missionScripts :: HashMap FilePath GenericScript
     ,   eu4onactionsScripts :: HashMap FilePath GenericScript
-    ,   eu4disasterScripts :: HashMap FilePath GenericScript
-    ,   eu4provtrigmodifierScripts :: HashMap FilePath GenericScript
+--    ,   eu4disasterScripts :: HashMap FilePath GenericScript
+--    ,   eu4provtrigmodifierScripts :: HashMap FilePath GenericScript
     ,   eu4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
     ,   eu4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   eu4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -103,33 +103,33 @@ class (IsGame g,
     -- | Get the parsed idea groups table (keyed on idea group ID).
     getIdeaGroups :: Monad m => PPT g m IdeaTable
     -- | Get the contents of all modifier script files.
-    getModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+--    getModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed modifiers table (keyed on modifier ID).
-    getModifiers :: Monad m => PPT g m (HashMap Text EU4Modifier)
+--    getModifiers :: Monad m => PPT g m (HashMap Text EU4Modifier)
     -- | Get the contents of all opinion modifier script files.
-    getOpinionModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+--    getOpinionModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed opinion modifiers table (keyed on modifier ID).
-    getOpinionModifiers :: Monad m => PPT g m (HashMap Text EU4OpinionModifier)
+--    getOpinionModifiers :: Monad m => PPT g m (HashMap Text EU4OpinionModifier)
     -- | Get the contents of all decision script files.
     getDecisionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed decisions table (keyed on decision ID).
     getDecisions :: Monad m => PPT g m (HashMap Text EU4Decision)
     -- | Get the contents of all mission script files
-    getMissionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+--    getMissionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed mission trees
-    getMissions :: Monad m => PPT g m (HashMap Text EU4MissionTreeBranch)
+--    getMissions :: Monad m => PPT g m (HashMap Text EU4MissionTreeBranch)
     -- | Get the (known) event triggers
     getEventTriggers :: Monad m => PPT g m EU4EventTriggers
     -- | Get the on actions script files
     getOnActionsScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the on disaster script files
-    getDisasterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+--    getDisasterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed geographic data
     getGeoData :: Monad m => PPT g m (HashMap Text EU4GeoType)
     -- | Get the contents of all province triggered modifier script files.
-    getProvinceTriggeredModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+--    getProvinceTriggeredModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed province triggered modifiers table (keyed on modifier ID).
-    getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text EU4ProvinceTriggeredModifier)
+--    getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text EU4ProvinceTriggeredModifier)
     -- | Get the trade nodes
     getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
     -- | Get extra scripts parsed from command line arguments
@@ -202,8 +202,8 @@ data EU4EventSource =
     | EU4EvtSrcOption Text Text                     -- Effect of choosing an event option (args are event ID and option ID)
     | EU4EvtSrcDecision Text Text                   -- Effect of taking a decision (args are id and localized decision text)
     | EU4EvtSrcOnAction Text EU4EventWeight         -- An effect from on_actions (args are the trigger and weight)
-    | EU4EvtSrcDisaster Text Text EU4EventWeight    -- Effect of a disaster (args are id, trigger and weight)
-    | EU4EvtSrcMission Text                         -- Effect of completing a mission (arg is the mission id)
+--    | EU4EvtSrcDisaster Text Text EU4EventWeight    -- Effect of a disaster (args are id, trigger and weight)
+--    | EU4EvtSrcMission Text                         -- Effect of completing a mission (arg is the mission id)
     deriving Show
 
 type EU4EventTriggers = HashMap Text [EU4EventSource]
@@ -244,7 +244,7 @@ data EU4Decision = EU4Decision
                                          --   will take the decision when available
     ,   dec_path :: Maybe FilePath -- ^ Source file
     } deriving (Show)
-
+{-
 data EU4Modifier = EU4Modifier
     {   modName :: Text
     ,   modLocName :: Maybe Text
@@ -277,7 +277,8 @@ data EU4OpinionModifier = EU4OpinionModifier
     ,   omodMaxVassal :: Maybe Double
     ,   omodMaxInOtherDirection :: Maybe Double
     } deriving (Show)
-
+-}
+{-
 data EU4Mission = EU4Mission
     {   eu4m_id :: Text
     ,   eu4m_icon :: Text
@@ -295,7 +296,7 @@ data EU4MissionTreeBranch = EU4MissionTreeBranch
     ,   eu4mtb_potential :: Maybe GenericScript
     ,   eu4mtb_missions :: [EU4Mission]
     } deriving (Show)
-
+-}
 ------------------------------
 -- Shared lower level types --
 ------------------------------
@@ -309,7 +310,8 @@ instance Hashable MonarchPower
 
 -- | Scopes
 data EU4Scope
-    = EU4Country
+    = EU4NoScope
+    | EU4Country
     | EU4Province
     | EU4TradeNode
     | EU4Geographic -- ^ Area, etc.
@@ -380,6 +382,6 @@ isGeographic _ = False
 -- Miscellaneous utilities --
 -----------------------------
 
-getModifier :: (EU4Info g, Monad m) => Text -> PPT g m (Maybe EU4Modifier)
-getModifier id = HM.lookup id <$> getModifiers
+--getModifier :: (EU4Info g, Monad m) => Text -> PPT g m (Maybe EU4Modifier)
+--getModifier id = HM.lookup id <$> getModifiers
 

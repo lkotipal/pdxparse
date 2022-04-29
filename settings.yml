@@ -10,15 +10,15 @@ settings:
     #   Windows 7+: C:\Program Files (x86)
     # For other platforms, or if it's non-standard, you'll need to specify it
     # here. If you're on Windows, leave out the drive letter.
-    #steam_dir: "/home/pwb/.local/share" # absolute
+    steam_dir: "/" # absolute
 
     # The subdirectory of steam_dir where Steam keeps its apps. You shouldn't need to change this.
     # (For Windows, slashes are automatically changed to backslashes, so this default works.)
-    #steam_apps: "Steam/steamapps/common"
+    steam_apps: "Users/PC/Desktop/mod/"
 
     # Which game we're looking at. This is the name of the directory under
     # steam_dir where the game is kept.
-    game: "Europa Universalis IV"
+    game: "equestria"
 
     # Language to extract in. Note that although the program can extract
     # non-English localization strings from the game, only English messages
@@ -26,4 +26,4 @@ settings:
     language: "english"
 
     # Game version (major patch number). Only used to add version templates.
-    version: "1.33"
+    version: "1.9.1"

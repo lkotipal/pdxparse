@@ -55,7 +55,7 @@ module EU4.Handlers (
     ,   ppAiMod
     ,   factionInfluence
     ,   factionInPower
-    ,   addModifier
+--    ,   addModifier
     ,   addCore
     ,   opinion
     ,   hasOpinion
@@ -139,10 +139,10 @@ module EU4.Handlers (
     ,   createSuccessionCrisis
     ,   hasBuildingTrigger
     ,   productionLeader
-    ,   addProvinceTriggeredModifier
+--    ,   addProvinceTriggeredModifier
     ,   hasHeir
     ,   killHeir
-    ,   createColonyMissionReward
+--    ,   createColonyMissionReward
     ,   hasIdeaGroup
     ,   killUnits
     ,   addBuildingConstruction
@@ -873,7 +873,7 @@ scriptIconFileTable = HM.fromList
     ,("military_administration", "TC military administration")
     ,("governor_general_mansion", "TC governor generals mansion")
     -- Disasters
-    ,("coup_attempt_disaster", "Coup Attempt")
+--    ,("coup_attempt_disaster", "Coup Attempt")
     -- Holy orders
     ,("dominican_order", "Dominicans")
     ,("franciscan_order", "Franciscans")
@@ -1681,7 +1681,7 @@ factionInPower [pdx| %_ = ?fac |] | Just facKey <- fac_iconkey fac
 factionInPower stmt = preStatement stmt
 
 -- Modifiers
-
+{-
 data AddModifier = AddModifier {
         amod_name :: Maybe Text
     ,   amod_key :: Maybe Text
@@ -1699,10 +1699,10 @@ addModifierLine apm [pdx| who      = ?tag      |] = apm { amod_who = Just tag }
 addModifierLine apm [pdx| duration = !duration |] = apm { amod_duration = Just duration }
 addModifierLine apm [pdx| power    = !power    |] = apm { amod_power = Just power }
 addModifierLine apm _ = apm -- e.g. hidden = yes
-
+-}
 maybeM :: Monad m => (a -> m b) -> Maybe a -> m (Maybe b)
 maybeM f = maybe (return Nothing) (fmap Just . f)
-
+{-
 addModifier :: (EU4Info g, Monad m) =>
     ScriptMessage -> StatementHandler g m
 addModifier kind stmt@(Statement _ OpEq (CompoundRhs scr)) =
@@ -1762,7 +1762,7 @@ addModifier kind stmt@(Statement _ OpEq (CompoundRhs scr)) =
             _ -> preStatement stmt -- Must have mod id
     else preStatement stmt
 addModifier _ stmt = preStatement stmt
-
+-}
 -- Add core
 
 -- "add_core = <n>" in country scope means "Gain core on <localize PROVn>"
@@ -4043,7 +4043,7 @@ foldCompound "productionLeader" "ProductionLeader" "pl"
         tgLoc <- getGameL10n _trade_goods
         return $ MsgIsProductionLeader (iconText _trade_goods) tgLoc
     |]
-
+{-
 -------------------------------------------------
 -- Handler for add_province_triggered_modifier --
 -------------------------------------------------
@@ -4059,7 +4059,7 @@ addProvinceTriggeredModifier stmt@[pdx| %_ = $id |] = do
             return $ ((i, MsgAddProvinceTriggeredModifier locName) : effect) ++ (if null trigger then [] else ((i+1, MsgLimit) : trigger))
         _ -> (trace $ "add_province_triggered_modifier: Modifier " ++ T.unpack id ++ " not found") $ preStatement stmt
 addProvinceTriggeredModifier stmt = (trace $ "Not handled in addProvinceTriggeredModifier: " ++ show stmt) $ preStatement stmt
-
+-}
 --------------------------
 -- Handler for has_heir --
 --------------------------
@@ -4083,6 +4083,7 @@ killHeir stmt = (trace $ "Not handled in killHeir: " ++ show stmt) $ preStatemen
 ----------------------------------------------
 -- Handler for create_colony_mission_reward --
 ----------------------------------------------
+{-
 createColonyMissionReward :: (EU4Info g, Monad m) => StatementHandler g m
 createColonyMissionReward stmt =
     case getEffectArg "province" stmt of
@@ -4090,7 +4091,7 @@ createColonyMissionReward stmt =
             prov <- getProvLoc num
             msgToPP $ MsgColonyMissionReward prov
         _ -> (trace $ "warning: Not handled by createColonyMissionReward: " ++ (show stmt)) $ preStatement stmt
-
+-}
 --------------------------------
 -- Handler for has_idea_group --
 --------------------------------
@@ -4131,12 +4132,12 @@ foldCompound "killUnits" "KillUnits" "ku"
 -------------------------------------------
 foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
     []
-    [CompField "building" [t|Text|] Nothing True
-    ,CompField "speed" [t|Double|] Nothing True
-    ,CompField "cost" [t|Double|] Nothing True]
+    [CompField "type" [t|Text|] Nothing True
+    ,CompField "level" [t|Double|] Nothing True
+    ,CompField "instant_build" [t|Text|] Nothing True]
     [| do
-        buildingLoc <- getGameL10n ("building_" <> _building)
-        return $ MsgConstructBuilding (iconText _building) buildingLoc _speed _cost
+        buildingLoc <- getGameL10n ("type_" <> _type)
+        return $ MsgConstructBuilding (iconText _type) buildingLoc _level
     |]
 
 ----------------------------------------------------
