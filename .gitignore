@@ -15,4 +15,5 @@ dist-newstyle/
 .stack-work/
 .cabal-sandbox
 .stack-work
+*stack.yaml.lock
 *.dump-splices
