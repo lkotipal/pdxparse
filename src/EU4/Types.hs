@@ -269,13 +269,13 @@ data EU4OpinionModifier = EU4OpinionModifier
     {   omodName :: Text
     ,   omodLocName :: Maybe Text
     ,   omodPath :: FilePath
-    ,   omodOpinion :: Maybe Double
+    ,   omodValue :: Maybe Double
     ,   omodMax :: Maybe Double
     ,   omodMin :: Maybe Double
     ,   omodDecay :: Maybe Double
     ,   omodMonths :: Maybe Double
     ,   omodYears :: Maybe Double
-    ,   omodMaxVassal :: Maybe Double
+    ,   omodTrade :: Maybe Bool
     ,   omodMaxInOtherDirection :: Maybe Double
     } deriving (Show)
 

@@ -147,8 +147,8 @@ opinionModifierAddSection Nothing _ = return Nothing
 opinionModifierAddSection mmod stmt
     = sequence (opinionModifierAddSection' <$> mmod <*> pure stmt)
     where
-        opinionModifierAddSection' mod stmt@[pdx| opinion = !rhs |]
-            = return (mod { omodOpinion = Just rhs })
+        opinionModifierAddSection' mod stmt@[pdx| value = !rhs |]
+            = return (mod { omodValue = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| max = !rhs |]
             = return (mod { omodMax = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| min = !rhs |]
@@ -159,8 +159,11 @@ opinionModifierAddSection mmod stmt
             = return (mod { omodMonths = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| years = !rhs |]
             = return (mod { omodYears = Just rhs })
-        opinionModifierAddSection' mod stmt@[pdx| max_vassal = !rhs |]
-            = return (mod { omodMaxVassal = Just rhs })
+        opinionModifierAddSection' mod stmt@[pdx| trade = %rhs |] = case rhs of
+            GenericRhs "yes" [] -> return mod { omodTrade = Just True }
+            -- no is the default, so I don't think this is ever used
+            GenericRhs "no" [] -> return mod { omodTrade = Just False }
+            _ -> throwError "bad trade opinion"
         opinionModifierAddSection' mod stmt@[pdx| max_in_other_direction = !rhs |]
             = return (mod { omodMaxInOtherDirection = Just rhs })
         opinionModifierAddSection' mod [pdx| $other = %_ |]
@@ -208,11 +211,13 @@ pp_opinion_modifer mod = do
         , " {{#ifeq:{{{2|}}}|0|| ("
         ] ++
         intersperse " / " (
-            (modText "{{icon|opinion}} " " Opinion" (omodOpinion mod))
-            ++ (yearlyDecay (omodOpinion mod) (omodDecay mod))
+            if isTrade then
+                (modText "" " Trade relation" (omodValue mod))
+                else
+                   (modText "{{icon|opinion}} " " Opinion" (omodValue mod)) 
+            ++ (yearlyDecay (omodValue mod) (omodDecay mod))
             ++ (modText "" " Min" (omodMin mod))
             ++ (modText "" " Max" (omodMax mod))
-            ++ (modText "" " Max for vassal" (omodMaxVassal mod))
             ++ (modText "" " Max for sender" (omodMaxInOtherDirection mod))
             ++ (duration (omodMonths mod) (omodYears mod))
         ) ++
@@ -224,6 +229,8 @@ pp_opinion_modifer mod = do
         modText :: Text -> Text -> Maybe Double -> [Doc]
         modText p s (Just val) | val /= 0 = [mconcat [ Doc.strictText p, colourNumSign True val, Doc.strictText s ]]
         modText _ _ _ = []
+
+        isTrade = fromMaybe False $ omodTrade mod
 
         yearlyDecay :: Maybe Double -> Maybe Double -> [Doc]
         yearlyDecay (Just op) (Just decay) = [mconcat [
