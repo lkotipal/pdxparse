@@ -3,9 +3,9 @@ Module      : EU4.Modifiers
 Description : Country, ruler, province and opinion modifiers
 -}
 module EU4.Modifiers (
-        parseEU4Modifiers, writeEU4Modifiers
-    ,   parseEU4OpinionModifiers, writeEU4OpinionModifiers
-    ,   parseEU4ProvTrigModifiers, writeEU4ProvTrigModifiers
+--        parseEU4Modifiers, writeEU4Modifiers,
+        parseEU4OpinionModifiers, writeEU4OpinionModifiers
+--    ,   parseEU4ProvTrigModifiers, writeEU4ProvTrigModifiers
     ) where
 
 import Control.Arrow ((&&&))
@@ -42,7 +42,7 @@ import Messages
 import MessageTools
 
 import Debug.Trace (trace, traceM)
-
+{-
 parseEU4Modifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
     HashMap String GenericScript -> PPT g m (HashMap Text EU4Modifier)
 parseEU4Modifiers scripts = HM.unions . HM.elems <$> do
@@ -88,7 +88,7 @@ parseEU4Modifier _ = withCurrentFile $ \file ->
 -- appropriate files.
 writeEU4Modifiers :: (EU4Info g, MonadError Text m, MonadIO m) => PPT g m ()
 writeEU4Modifiers = throwError "Sorry, writing all modifiers currently not supported."
-
+-}
 parseEU4OpinionModifiers :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
     HashMap String GenericScript -> PPT g m (HashMap Text EU4OpinionModifier)
 parseEU4OpinionModifiers scripts = HM.unions . HM.elems <$> do
@@ -153,8 +153,8 @@ opinionModifierAddSection mmod stmt
             = return (mod { omodMax = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| min = !rhs |]
             = return (mod { omodMin = Just rhs })
-        opinionModifierAddSection' mod stmt@[pdx| yearly_decay = !rhs |]
-            = return (mod { omodYearlyDecay = Just rhs })
+        opinionModifierAddSection' mod stmt@[pdx| decay = !rhs |]
+            = return (mod { omodDecay = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| months = !rhs |]
             = return (mod { omodMonths = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| years = !rhs |]
@@ -209,7 +209,7 @@ pp_opinion_modifer mod = do
         ] ++
         intersperse " / " (
             (modText "{{icon|opinion}} " " Opinion" (omodOpinion mod))
-            ++ (yearlyDecay (omodOpinion mod) (omodYearlyDecay mod))
+            ++ (yearlyDecay (omodOpinion mod) (omodDecay mod))
             ++ (modText "" " Min" (omodMin mod))
             ++ (modText "" " Max" (omodMax mod))
             ++ (modText "" " Max for vassal" (omodMaxVassal mod))
@@ -240,7 +240,7 @@ pp_opinion_modifer mod = do
 
         fmt :: Text -> Double -> Doc
         fmt t v = mconcat [ plainNum v, " ", Doc.strictText $ t <> (if v == 1.0 then "" else "s") ]
-
+{-
 parseEU4ProvTrigModifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
     HashMap String GenericScript -> PPT g m (HashMap Text EU4ProvinceTriggeredModifier)
 parseEU4ProvTrigModifiers scripts = HM.unions . HM.elems <$> do
@@ -351,3 +351,4 @@ writeEU4ProvTrigModifiers = do
                 , stpp'd, PP.line
                 ]
 
+-}

@@ -10,6 +10,9 @@
 cabal.sandbox.config
 output/
 dist/
+dist-newstyle/
+.vscode/
+.stack-work/
 .cabal-sandbox
 .stack-work
 *.dump-splices

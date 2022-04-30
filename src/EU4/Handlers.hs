@@ -1819,7 +1819,7 @@ opinion msgIndef msgDur stmt@[pdx| %_ = @scr |]
 opinion _ _ stmt = preStatement stmt
 
 data HasOpinion = HasOpinion
-        {   hop_who :: Maybe Text
+        {   hop_target :: Maybe Text
         ,   hop_value :: Maybe Double
         }
 newHasOpinion :: HasOpinion
@@ -1831,14 +1831,14 @@ hasOpinion msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_hasOpinion (foldl' addLine newHasOpinion scr)
     where
         addLine :: HasOpinion -> GenericStatement -> HasOpinion
-        addLine hop [pdx| who   = ?who |] = hop { hop_who = Just who }
+        addLine hop [pdx| target = ?target |] = hop { hop_target = Just target }
         addLine hop [pdx| value = !val |] = hop { hop_value = Just val }
         addLine hop _ = trace "warning: unrecognized has_opinion clause" hop
         pp_hasOpinion :: HasOpinion -> PPT g m ScriptMessage
-        pp_hasOpinion hop = case (hop_who hop, hop_value hop) of
-            (Just who, Just value) -> do
-                who_flag <- flag (Just EU4Country) who
-                return (msg value (Doc.doc2text who_flag))
+        pp_hasOpinion hop = case (hop_target hop, hop_value hop) of
+            (Just target, Just value) -> do
+                target_flag <- flag (Just EU4Country) target
+                return (msg value (Doc.doc2text target_flag))
             _ -> return (preMessage stmt)
 hasOpinion _ stmt = preStatement stmt
 
