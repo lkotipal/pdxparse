@@ -134,8 +134,9 @@ instance EU4Info EU4 where
         case mevt of
             Nothing -> return Nothing
             Just evt -> case eu4evt_title evt of
-                Nothing -> return Nothing
-                Just title -> getGameL10nIfPresent title
+                [] -> return Nothing
+                [EU4EvtTitleSimple key] -> getGameL10nIfPresent key
+                titles -> return Nothing
     getEventScripts = do
         EU4D ed <- get
         return (eu4eventScripts ed)

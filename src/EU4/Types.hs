@@ -7,7 +7,7 @@ module EU4.Types (
         EU4Data (..), EU4State (..)
     ,   EU4Info (..)
         -- * Features
-    ,   EU4EvtDesc (..), EU4Event (..), EU4Option (..)
+    ,   EU4EvtTitle (..), EU4EvtDesc (..), EU4Event (..), EU4Option (..)
     ,   EU4EventSource (..), EU4EventTriggers, EU4EventWeight
     ,   EU4Decision (..)
     ,   IdeaGroup (..), Idea (..), IdeaTable
@@ -143,6 +143,15 @@ class (IsGame g,
 -- Feature types --
 -------------------
 
+-- | Event title type. As of HoI4 whatever version, titles may be conditional.
+data EU4EvtTitle
+    = EU4EvtTitleSimple Text  -- title = key
+    | EU4EvtTitleConditional GenericScript Text
+            -- title = { text = key trigger = conditions }
+    | EU4EvtTitleCompound GenericScript
+            -- title = { trigger = { conditional_expressions } }
+    deriving (Show)
+
 -- | Event description type. As of EU4 1.17, descriptions may be conditional.
 data EU4EvtDesc
     = EU4EvtDescSimple Text  -- desc = key
@@ -157,7 +166,7 @@ data EU4Event = EU4Event {
     -- | Event ID
         eu4evt_id :: Maybe Text
     -- | Event title l10n key
-    ,   eu4evt_title :: Maybe Text
+    ,   eu4evt_title :: [EU4EvtTitle]
     -- | Description
     ,   eu4evt_desc :: [EU4EvtDesc]
 --  -- | Event picture

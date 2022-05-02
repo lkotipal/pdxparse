@@ -181,7 +181,7 @@ locFile = startspace *> lang <* endspace
 -- | Parse a localization file. If the parser fails, returns
 -- @Left <the parse error>@.
 parseLocFile :: Text -> Either String L10n
-parseLocFile contents = Ap.parseOnly locFile contents
+parseLocFile = Ap.parseOnly locFile
 
 -- | Parser for one language's localisations.
 lang :: Parser L10n
@@ -202,8 +202,9 @@ messages = HM.fromList <$> message `Ap.sepBy` Ap.many1 newline
 
 -- | Parse a single message. We assume the localisation files have strictly a
 -- single space at the start.
+-- in case of mods not properly formatting the localisation files hspace is used on message = (,) <$> (hspace instead of Ap.string " "
 message :: Parser (Text, LocEntry)
-message = (,) <$> (Ap.string " "
+message = (,) <$> (hspace
                *> liftA2 T.cons (Ap.satisfy (Ap.inClass "a-zA-Z._0-9-"))
                                 (Ap.takeWhile (Ap.inClass "a-zA-Z._0-9-")))
               <*> (LocEntry <$> (Ap.char ':' *> (Ap.option 0 Ap.decimal)) -- version (2021-11-15: Note: 1.32.1 contains a file that breaks this...)

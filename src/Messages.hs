@@ -487,6 +487,7 @@ data ScriptMessage
     | MsgBuildToForcelimit {scriptMessageInficon :: Text, scriptMessageInfantry :: Double, scriptMessageCavicon :: Text, scriptMessageCavalry :: Double, scriptMessageArticon :: Text, scriptMessageArtillery :: Double, scriptMessageHeavyicon :: Text, scriptMessageHeavy :: Double, scriptMessageLighticon :: Text, scriptMessageLight :: Double, scriptMessageGallicon :: Text, scriptMessageGalley :: Double, scriptMessageTranspicon :: Text, scriptMessageTransport :: Double}
     | MsgProvinceEvent
     | MsgCountryEvent
+    | MsgNewsEvent
     | MsgTriggerEvent {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text}
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgDeclareWarWithCB {scriptMessageWhom :: Text, scriptMessageCb :: Text}
@@ -4101,6 +4102,8 @@ instance RenderMessage Script ScriptMessage where
             -> "province event"
         MsgCountryEvent
             -> "country event"
+        MsgNewsEvent
+            -> "news event"
         MsgTriggerEvent {scriptMessageEvttype = _evttype, scriptMessageEvtid = _evtid, scriptMessageName = _name}
             -> mconcat
                 [ "Trigger "

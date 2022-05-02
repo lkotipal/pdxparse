@@ -48,7 +48,7 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
 newEU4Event :: EU4Scope -> FilePath -> EU4Event
-newEU4Event escope path = EU4Event Nothing Nothing [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing path
+newEU4Event escope path = EU4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing path
 -- | Empty event option vaule. Starts off Nothing everywhere.
 newEU4Option :: EU4Option
 newEU4Option = EU4Option Nothing Nothing Nothing Nothing
@@ -87,7 +87,7 @@ writeEU4Events = do
     let pathedEvents :: [Feature EU4Event]
         pathedEvents = map (\evt -> Feature {
                                     featurePath = Just (eu4evt_path evt)
-                                ,   featureId = eu4evt_id evt
+                                ,   featureId = eu4evt_id evt <> Just ".txt"
                                 ,   theFeature = Right evt })
                             (HM.elems events)
     writeFeatures "events"
@@ -129,6 +129,41 @@ parseEU4Event stmt@[pdx| %left = %right |] = case right of
 
     _ -> return (Right Nothing)
 parseEU4Event _ = throwError "operator other than ="
+
+-- | Intermediate structure for interpreting event title blocks.
+data EvtTitleI = EvtTitleI {
+        eti_text :: Maybe Text
+    ,   eti_trigger :: Maybe GenericScript
+    }
+-- | Interpret the @titlr@ section of an event. This can be either a
+-- localization key or a conditional title block. (TODO: document the
+-- format here)
+evtTitle :: MonadError Text m => Maybe Text -> GenericScript -> m EU4EvtTitle
+evtTitle meid scr = case foldl' evtTitle' (EvtTitleI Nothing Nothing) scr of
+        EvtTitleI (Just t) Nothing -- title = { text = foo }
+            -> return $ EU4EvtTitleSimple t
+        EvtTitleI Nothing (Just trig) -- title = { trigger = { .. } } (invalid)
+            -> return $ EU4EvtTitleCompound scr
+        EvtTitleI (Just t) (Just trig) -- title = { trigger = { .. } text = foo }
+                                      -- e.g. pirate.1
+            -> return $ EU4EvtTitleConditional trig t
+        EvtTitleI Nothing Nothing -- title = { switch { .. = { text = foo } } }
+                                 -- e.g. action.39
+            -> throwError $ "bad title: no trigger nor text" <> case meid of
+                Just eid -> " in event " <> eid
+                Nothing -> ""
+    where
+        evtTitle' ed [pdx| trigger = @trig |] = ed { eti_trigger = Just trig }
+        evtTitle' ed [pdx| text = ?txt |] = ed { eti_text = Just txt }
+        evtTitle' ed [pdx| title = ?txt |] = ed { eti_text = Just txt }
+        evtTitle' ed [pdx| show_sound = %_ |] = ed
+        evtTitle' ed [pdx| $label = %_ |]
+            = error ("unrecognized title section " ++ T.unpack label
+                     ++ " in " ++ maybe "(unknown)" T.unpack meid)
+        evtTitle' ed stmt
+            = error ("unrecognized title section in " ++ maybe "(unknown)" T.unpack meid
+                    ++ ": " ++ show stmt)
+
 
 -- | Intermediate structure for interpreting event description blocks.
 data EvtDescI = EvtDescI {
@@ -176,10 +211,16 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
             (_, Just nid) -> return evt { eu4evt_id = Just (T.pack $ show (nid::Int)) }
             _ -> withCurrentFile $ \file ->
                 throwError $ "bad id in " <> T.pack file <> ": " <> T.pack (show rhs)
-    eventAddSection' evt stmt@[pdx| title = %rhs |] = case textRhs rhs of
-        Just title -> return evt { eu4evt_title = Just title }
-        _ -> withCurrentFile $ \file ->
-            throwError $ "bad title in " <> T.pack file
+    eventAddSection' evt stmt@[pdx| title = %rhs |] =
+        let oldtitles = eu4evt_title evt in case rhs of
+            (textRhs -> Just title) -> return evt { eu4evt_title = oldtitles ++ [EU4EvtTitleSimple title] }
+            CompoundRhs scr -> do
+                let meid = eu4evt_id evt
+                title <- evtTitle meid scr
+                return evt { eu4evt_title = oldtitles ++ [title] }
+            _ -> throwError $ "bad title" <> case eu4evt_id evt of
+                    Just eid -> " in event " <> eid
+                    Nothing -> ""
     eventAddSection' evt stmt@[pdx| desc = %rhs |] =
         let olddescs = eu4evt_desc evt in case rhs of
             (textRhs -> Just desc) -> return evt { eu4evt_desc = olddescs ++ [EU4EvtDescSimple desc] }
@@ -260,6 +301,25 @@ optionAddEffect Nothing stmt = optionAddEffect (Just []) stmt
 optionAddEffect (Just effs) stmt = return $ Just (effs ++ [stmt])
 
 iquotes't = Doc.doc2text . iquotes
+
+-- | Present an event's title block.
+ppTitles :: (EU4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
+                                -> [EU4EvtTitle] -> PPT g m Doc
+ppTitles True _ = return "| cond_event_name = (This event is hidden and has no title.)"
+ppTitles _ [] = return "| event_name = (No title)"
+ppTitles _ [EU4EvtTitleSimple key] = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
+ppTitles _ titles = (("| cond_event_name = yes" <> PP.line <> "| event_name = ") <>) . PP.vsep <$> mapM ppTitle titles where
+    ppTitle (EU4EvtTitleSimple key) = ("Otherwise:<br>:" <>) <$> fmtTitle key
+    ppTitle (EU4EvtTitleConditional scr key) = mconcat <$> sequenceA
+        [pure "The following title is used if:", pure PP.line
+        ,imsg2doc =<< ppMany scr, pure PP.line
+        ,pure ":", fmtTitle key
+        ]
+    ppTitle (EU4EvtTitleCompound scr) =
+        imsg2doc =<< ppMany scr
+    fmtTitle key = flip liftM (getGameL10nIfPresent key) $ \case
+        Nothing -> Doc.strictText key
+        Just txt -> "''" <> Doc.strictText (Doc.nl2br txt) <> "''"
 
 -- | Present an event's description block.
 ppDescs :: (EU4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
@@ -362,13 +422,13 @@ ppTriggeredBy eventId = do
 pp_event :: forall g m. (EU4Info g, MonadError Text m) =>
     EU4Event -> PPT g m Doc
 pp_event evt = case (eu4evt_id evt
-                    ,eu4evt_title evt
+--                    ,eu4evt_title evt -- for title of event
                     ,eu4evt_options evt) of
-    (Just eid, Just title, Just options) -> setCurrentFile (eu4evt_path evt) $ do
+    (Just eid, Just options) -> setCurrentFile (eu4evt_path evt) $ do
         -- Valid event
         version <- gets (gameVersion . getSettings)
         (conditional, options_pp'd) <- pp_options (eu4evt_hide_window evt) eid options
-        titleLoc <- getGameL10n title
+        titleLoc <- ppTitles (eu4evt_hide_window evt) (eu4evt_title evt) -- get localisation of title
         descLoc <- ppDescs (eu4evt_hide_window evt) (eu4evt_desc evt)
         after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> eu4evt_after evt))
         let evtArg :: Text -> (EU4Event -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
@@ -398,7 +458,7 @@ pp_event evt = case (eu4evt_id evt
             ,"{{Event", PP.line
             ,"| version = ", Doc.strictText version, PP.line
             ,"| event_id = ", evtId, PP.line
-            ,"| event_name = ", Doc.strictText titleLoc, PP.line
+            ,titleLoc, PP.line
             ,descLoc, PP.line
             ] ++
             ( if isFireOnlyOnce then
@@ -433,10 +493,8 @@ pp_event evt = case (eu4evt_id evt
             ,"<section end=", evtId, "/>", PP.line
             ]
 
-    (Nothing, _, _) -> throwError "eu4evt_id missing"
-    (Just eid, Nothing, _) ->
-        throwError ("title missing for event id " <> eid)
-    (Just eid, _, Nothing) ->
+    (Nothing, _) -> throwError "eu4evt_id missing"
+    (Just eid, Nothing) ->
         throwError ("options missing for event id " <> eid)
 
 -- | Present the options of an event.
