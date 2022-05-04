@@ -111,6 +111,7 @@ parseEU4Event stmt@[pdx| %left = %right |] = case right of
                     "unit_leader_event" -> Just EU4Country
                     "operative_leader_event" -> Just EU4Country
                     "province_event" -> Just EU4Province
+                    "state_event" -> Just EU4Province
                     "news_event" -> Just EU4NoScope -- ?
                     "event" -> Just EU4NoScope
                     _ -> Nothing
@@ -262,7 +263,7 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
         | GenericRhs "yes" [] <- rhs = return evt { eu4evt_fire_only_once = True }
         | GenericRhs "no"  [] <- rhs = return evt { eu4evt_fire_only_once = False }
     eventAddSection' evt stmt@[pdx| major = %_ |] = return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| major_trigger = %_ |] = return evt -- do nothing
+    eventAddSection' evt stmt@[pdx| show_major = %_ |] = return evt -- do nothing
     eventAddSection' evt stmt@[pdx| hidden = %rhs |]
         | GenericRhs "yes" [] <- rhs = return evt { eu4evt_hide_window = True }
         | GenericRhs "no"  [] <- rhs = return evt { eu4evt_hide_window = False }
@@ -305,9 +306,10 @@ iquotes't = Doc.doc2text . iquotes
 -- | Present an event's title block.
 ppTitles :: (EU4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
                                 -> [EU4EvtTitle] -> PPT g m Doc
-ppTitles True _ = return "| cond_event_name = (This event is hidden and has no title.)"
+ppTitles True _ = return "| event_name = (This event is hidden and has no title.)"
 ppTitles _ [] = return "| event_name = (No title)"
 ppTitles _ [EU4EvtTitleSimple key] = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
+ppTitles True [EU4EvtTitleSimple key] = ("| event_name = (Hidden) " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
 ppTitles _ titles = (("| cond_event_name = yes" <> PP.line <> "| event_name = ") <>) . PP.vsep <$> mapM ppTitle titles where
     ppTitle (EU4EvtTitleSimple key) = ("Otherwise:<br>:" <>) <$> fmtTitle key
     ppTitle (EU4EvtTitleConditional scr key) = mconcat <$> sequenceA
@@ -423,11 +425,14 @@ pp_event :: forall g m. (EU4Info g, MonadError Text m) =>
     EU4Event -> PPT g m Doc
 pp_event evt = case (eu4evt_id evt
 --                    ,eu4evt_title evt -- for title of event
-                    ,eu4evt_options evt) of
-    (Just eid, Just options) -> setCurrentFile (eu4evt_path evt) $ do
+--                    ,eu4evt_options evt
+                    ) of
+    Just eid -> setCurrentFile (eu4evt_path evt) $ do
         -- Valid event
         version <- gets (gameVersion . getSettings)
-        (conditional, options_pp'd) <- pp_options (eu4evt_hide_window evt) eid options
+        (conditional, options_pp'd) <- case eu4evt_options evt of
+            Just options -> pp_options (eu4evt_hide_window evt) eid options
+            _ -> pp_no
         titleLoc <- ppTitles (eu4evt_hide_window evt) (eu4evt_title evt) -- get localisation of title
         descLoc <- ppDescs (eu4evt_hide_window evt) (eu4evt_desc evt)
         after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> eu4evt_after evt))
@@ -493,17 +498,23 @@ pp_event evt = case (eu4evt_id evt
             ,"<section end=", evtId, "/>", PP.line
             ]
 
-    (Nothing, _) -> throwError "eu4evt_id missing"
-    (Just eid, Nothing) ->
-        throwError ("options missing for event id " <> eid)
+    Nothing -> throwError "eu4evt_id missing"
+--    (Just eid, Nothing) ->
+--        throwError ("options missing for event id " <> eid)
 
 -- | Present the options of an event.
 pp_options :: (EU4Info g, MonadError Text m) =>
     Bool -> Text -> [EU4Option] -> PPT g m (Bool, Doc)
 pp_options hidden evtid opts = do
-    let triggered = any (isJust . eu4opt_trigger) opts
+    let triggered = any (isJust . eu4opt_trigger) (opts)
     options_pp'd <- mapM (pp_option evtid hidden triggered) opts
     return (triggered, mconcat . (PP.line:) . intersperse PP.line $ options_pp'd)
+
+-- Laxy fix for dealing with no options
+pp_no :: (EU4Info g, MonadError Text m) => PPT g m (Bool, Doc)
+pp_no = (False, pp_notext)
+pp_notext :: (EU4Info g, MonadError Text m) => PPT g m Doc
+pp_notext = (PP.text ("No options"))
 
 -- | Present a single event option.
 pp_option :: (EU4Info g, MonadError Text m) =>

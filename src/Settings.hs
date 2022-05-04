@@ -147,9 +147,7 @@ readSettings = do
 
             game <- case gamefolder of
                 "Europa Universalis IV" -> return $ Game EU4
-                "Hearts of Iron IV" -> return $ Game HOI4
-                "equestria" -> return $ Game EU4
-                "anbennar_a_fantasy_total_conversion_mod" -> return $ Game EU4
+                "Hearts of Iron IV" -> return $ Game EU4
                 "Stellaris" -> return $ Game Stellaris
                 "Victoria 2" -> return $ Game Vic2
                 other -> do

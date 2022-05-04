@@ -14,11 +14,11 @@ settings:
 
     # The subdirectory of steam_dir where Steam keeps its apps. You shouldn't need to change this.
     # (For Windows, slashes are automatically changed to backslashes, so this default works.)
-    steam_apps: "Users/PC/Desktop/mod/"
+    steam_apps: "Games"
 
     # Which game we're looking at. This is the name of the directory under
     # steam_dir where the game is kept.
-    game: "equestria"
+    game: "Hearts of Iron IV"
 
     # Language to extract in. Note that although the program can extract
     # non-English localization strings from the game, only English messages

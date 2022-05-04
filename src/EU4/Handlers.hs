@@ -2091,7 +2091,8 @@ randomList :: (EU4Info g, Monad m) => StatementHandler g m
 randomList stmt@[pdx| %_ = @scr |] = fmtRandomList $ map entry scr
     where
         entry [pdx| !weight = @scr |] = (fromIntegral weight, scr)
-        entry _ = error "Bad clause in random_list"
+        entry [pdx| %weight = @scr |] = (40, scr)
+        entry _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list, possibly vars?")
         fmtRandomList entries = withCurrentIndent $ \i ->
             let total = sum (map fst entries)
             in (:) <$> pure (i, MsgRandom)
