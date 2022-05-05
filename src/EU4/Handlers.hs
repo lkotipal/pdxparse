@@ -382,15 +382,15 @@ isPronoun s = T.map toLower s `S.member` pronouns where
         ,"capital"
         ]
 
--- Get the localization for a province ID, if available.
+-- Get the localization for a state ID, if available.
 getProvLoc :: (IsGameData (GameData g), Monad m) =>
     Int -> PPT g m Text
 getProvLoc n = do
     let provid_t = T.pack (show n)
-    mprovloc <- getGameL10nIfPresent ("PROV" <> provid_t)
+    mprovloc <- getGameL10nIfPresent ("STATE_" <> provid_t)
     return $ case mprovloc of
         Just loc -> loc <> " (" <> provid_t <> ")"
-        _ -> "Province " <> provid_t
+        _ -> "AAAAAAAAAAAAAARGH " <> provid_t
 
 -----------------------------------------------------------------
 -- Script handlers that should be used directly, not via ppOne --
@@ -1821,24 +1821,27 @@ opinion _ _ stmt = preStatement stmt
 data HasOpinion = HasOpinion
         {   hop_target :: Maybe Text
         ,   hop_value :: Maybe Double
+        ,   hop_ltgt :: Bool
         }
 newHasOpinion :: HasOpinion
-newHasOpinion = HasOpinion Nothing Nothing
+newHasOpinion = HasOpinion Nothing Nothing True
 hasOpinion :: forall g m. (EU4Info g, Monad m) =>
-    (Double -> Text -> ScriptMessage) ->
+    (Double -> Text -> Bool -> ScriptMessage) ->
     StatementHandler g m
 hasOpinion msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_hasOpinion (foldl' addLine newHasOpinion scr)
     where
         addLine :: HasOpinion -> GenericStatement -> HasOpinion
         addLine hop [pdx| target = ?target |] = hop { hop_target = Just target }
-        addLine hop [pdx| value = !val |] = hop { hop_value = Just val }
+        addLine hop [pdx| value = !val |] = hop { hop_value = Just val, hop_ltgt = True } -- at least
+        addLine hop [pdx| value > !val |] = hop { hop_value = Just val, hop_ltgt = True } -- at least
+        addLine hop [pdx| value < !val |] = hop { hop_value = Just val, hop_ltgt = False } -- less than
         addLine hop _ = trace "warning: unrecognized has_opinion clause" hop
         pp_hasOpinion :: HasOpinion -> PPT g m ScriptMessage
-        pp_hasOpinion hop = case (hop_target hop, hop_value hop) of
-            (Just target, Just value) -> do
+        pp_hasOpinion hop = case (hop_target hop, hop_value hop, hop_ltgt hop) of
+            (Just target, Just value, ltgt) -> do
                 target_flag <- flag (Just EU4Country) target
-                return (msg value (Doc.doc2text target_flag))
+                return (msg value (Doc.doc2text target_flag) ltgt)
             _ -> return (preMessage stmt)
 hasOpinion _ stmt = preStatement stmt
 
@@ -4135,10 +4138,16 @@ foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
     []
     [CompField "type" [t|Text|] Nothing True
     ,CompField "level" [t|Double|] Nothing True
-    ,CompField "instant_build" [t|Text|] Nothing True]
-    [| do
-        buildingLoc <- getGameL10n ("type_" <> _type)
-        return $ MsgConstructBuilding (iconText _type) buildingLoc _level
+    ,CompField "instant_build" [t|Text|] Nothing False]
+    [|  do
+        buildingLoc <- getGameL10n _type
+        return $ (case _type of
+            "industrial_complex" -> MsgConstructBuilding (iconText "cic")
+            "arms_factory" -> MsgConstructBuilding (iconText "mic")
+            "dockyard" -> MsgConstructBuilding (iconText "nic")
+            "bunker" -> MsgConstructBuilding (iconText "land fort")
+            _ -> MsgConstructBuilding (iconText _type)            
+         ) buildingLoc _level "check files if bunker"
     |]
 
 ----------------------------------------------------

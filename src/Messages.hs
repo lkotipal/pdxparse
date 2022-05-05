@@ -642,8 +642,8 @@ data ScriptMessage
     | MsgYearlyPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMissionaryStrengthVsHeretics {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCultureConvCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
-    | MsgReverseHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
+    | MsgHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
+    | MsgReverseHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
     | MsgNormalOrHistoricalNations {scriptMessageYn :: Bool}
     | MsgIsCustomNation {scriptMessageYn :: Bool}
     | MsgReligionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -1685,7 +1685,7 @@ data ScriptMessage
     | MsgChangePrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
-    | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageProv :: Text}
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSwitchTag {scriptMessageWho :: Text}
@@ -4557,7 +4557,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgProvince {scriptMessageWhere = _where}
             -> mconcat
-                [ "Province "
+                [ "State "
                 , _where
                 , ":"
                 ]
@@ -5139,11 +5139,11 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Culture conversion cost"
                 ]
-        MsgHasOpinion {scriptMessageAmt = _amt, scriptMessageWhom = _whom}
+        MsgHasOpinion {scriptMessageAmt = _amt, scriptMessageWhom = _whom, scriptMessageYn = _yn}
             -> mconcat
                 [ "Opinion of "
                 , _whom
-                , " is at least {{icon|opinion}} "
+                , toMessage (ifThenElseT _yn " is at least {{icon|opinion}} " " is less than {{icon|opinion}} ")
                 , toMessage (colourNumSign True _amt)
                 ]
         MsgReverseHasOpinion {scriptMessageAmt = _amt, scriptMessageWhom = _whom}
@@ -11465,15 +11465,16 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , plural _amt " unit" " units"
                 ]
-        MsgConstructBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _type, scriptMessageAmt = _level}
+        MsgConstructBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _type, scriptMessageAmt = _amt, scriptMessageProv = _prov}
             -> mconcat
                 [ "Add "
-                , toMessage (reducedNum plainPc _level)
+                , toMessage (plainNum _amt)
                 , " "
                 , _icon
                 , " "
                 , _type
                 , " "
+                ,_prov
                 ]
         MsgAllowBaselineInviteScholar {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat

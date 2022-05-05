@@ -48,6 +48,8 @@ data SettingsInput = SettingsInput {
     ,   gameFolderI  :: String
     ,   languageI    :: Text
     ,   gameVersionI :: String
+    ,   modNameI     :: Maybe String
+    ,   modDirI      :: Maybe FilePath
     } deriving (Show)
 -- Settings is defined in SettingsTypes
 
@@ -62,6 +64,8 @@ instance FromJSON SettingsInput where
                             <*> liftM T.unpack (o' .: "game")
                             <*> (o' .: "language")
                             <*> liftM T.unpack (o' .: "version")
+                            <*> liftM (fmap T.unpack) (o' .:? "mod_name")
+                            <*> liftM (fmap T.unpack) (o' .:? "mod_path") 
             _ -> fail "bad settings file"
     parseJSON _ = fail "bad settings file"
 
@@ -162,6 +166,7 @@ readSettings = do
                             , gameFolder = gamefolder
                             , gamePath = steamDirCanonicalized </> steamAppsCanonicalized </> gamefolder
                             , language = "l_" <> lang
+                            , languageFolder = lang
                             , languageS = "l_" <> T.unpack lang
                             , gameVersion = T.pack (gameVersionI settingsIn)
                             , gameL10n = HM.empty -- filled in later

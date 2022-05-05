@@ -27,3 +27,13 @@ settings:
 
     # Game version (major patch number). Only used to add version templates.
     version: "1.9.1"
+
+    # Mod name the name of the folder of the mod you're trying to parse
+    #mod_name:
+
+    # All Platforms where mod files are kept
+    #   Windows: C:\Users\<Username>\Documents\Paradox Interactive\Hearts of Iron IV\mod
+    #   Mac OS: ~/Documents/Paradox Interactive/Hearts of Iron IV/mod
+    #   Linux: ~/.local/share/Paradox Interactive/Hearts of Iron IV/mod
+    #
+    #mod_path:

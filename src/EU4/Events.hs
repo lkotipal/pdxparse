@@ -48,7 +48,7 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
 newEU4Event :: EU4Scope -> FilePath -> EU4Event
-newEU4Event escope path = EU4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing path
+newEU4Event escope path = EU4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing Nothing path
 -- | Empty event option vaule. Starts off Nothing everywhere.
 newEU4Option :: EU4Option
 newEU4Option = EU4Option Nothing Nothing Nothing Nothing
@@ -268,6 +268,11 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
         | GenericRhs "yes" [] <- rhs = return evt { eu4evt_hide_window = True }
         | GenericRhs "no"  [] <- rhs = return evt { eu4evt_hide_window = False }
     eventAddSection' evt stmt@[pdx| is_mtth_scaled_to_size = %_ |] = return evt -- do nothing (XXX)
+    eventAddSection' evt stmt@[pdx| fire_for_sender = %rhs |] = case rhs of
+        -- Yes is the default, so I don't think this is ever used
+        GenericRhs "yes" [] -> return evt { eu4evt_fire_for_sender = Just False }
+        GenericRhs "no" [] -> return evt { eu4evt_fire_for_sender = Just True }
+        _ -> throwError "bad fire_for_sender"
     eventAddSection' evt stmt@[pdx| after = @scr |] = return evt { eu4evt_after = Just scr }
     eventAddSection' evt stmt@[pdx| $label = %_ |] =
         withCurrentFile $ \file ->
@@ -288,7 +293,7 @@ optionAddStatement :: (IsGame g, Monad m) => EU4Option -> GenericStatement -> PP
 optionAddStatement opt stmt@[pdx| name = ?name |]
     = return $ opt { eu4opt_name = Just name }
 optionAddStatement opt stmt@[pdx| ai_chance = @ai_chance |]
-    = return $ opt { eu4opt_ai_chance = Just ai_chance }
+    = return $ opt { eu4opt_ai_chance = Just (aiWillDo ai_chance) } -- hope can re-use the aiWilldo script
 optionAddStatement opt stmt@[pdx| trigger = @trigger_script |]
     = return $ opt { eu4opt_trigger = Just trigger_script }
 optionAddStatement opt stmt = do
@@ -306,10 +311,10 @@ iquotes't = Doc.doc2text . iquotes
 -- | Present an event's title block.
 ppTitles :: (EU4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
                                 -> [EU4EvtTitle] -> PPT g m Doc
-ppTitles True _ = return "| event_name = (This event is hidden and has no title.)"
 ppTitles _ [] = return "| event_name = (No title)"
-ppTitles _ [EU4EvtTitleSimple key] = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
+ppTitles False [EU4EvtTitleSimple key] = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
 ppTitles True [EU4EvtTitleSimple key] = ("| event_name = (Hidden) " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
+ppTitles True _ = return "| event_name = (This event is hidden and has no title.)"
 ppTitles _ titles = (("| cond_event_name = yes" <> PP.line <> "| event_name = ") <>) . PP.vsep <$> mapM ppTitle titles where
     ppTitle (EU4EvtTitleSimple key) = ("Otherwise:<br>:" <>) <$> fmtTitle key
     ppTitle (EU4EvtTitleConditional scr key) = mconcat <$> sequenceA
@@ -425,14 +430,11 @@ pp_event :: forall g m. (EU4Info g, MonadError Text m) =>
     EU4Event -> PPT g m Doc
 pp_event evt = case (eu4evt_id evt
 --                    ,eu4evt_title evt -- for title of event
---                    ,eu4evt_options evt
-                    ) of
-    Just eid -> setCurrentFile (eu4evt_path evt) $ do
+                    ,eu4evt_options evt) of
+    (Just eid, Just options) -> setCurrentFile (eu4evt_path evt) $ do
         -- Valid event
         version <- gets (gameVersion . getSettings)
-        (conditional, options_pp'd) <- case eu4evt_options evt of
-            Just options -> pp_options (eu4evt_hide_window evt) eid options
-            _ -> pp_no
+        (conditional, options_pp'd) <- pp_options (eu4evt_hide_window evt) eid options
         titleLoc <- ppTitles (eu4evt_hide_window evt) (eu4evt_title evt) -- get localisation of title
         descLoc <- ppDescs (eu4evt_hide_window evt) (eu4evt_desc evt)
         after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> eu4evt_after evt))
@@ -449,6 +451,7 @@ pp_event evt = case (eu4evt_id evt
                     (field evt)
             isTriggeredOnly = fromMaybe False $ eu4evt_is_triggered_only evt
             isFireOnlyOnce = eu4evt_fire_only_once evt
+            isFireForSender = fromMaybe False $ eu4evt_fire_for_sender evt
             evtId = Doc.strictText eid
         trigger_pp'd <- evtArg "trigger" eu4evt_trigger pp_script
         mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (eu4evt_mean_time_to_happen evt)
@@ -468,6 +471,9 @@ pp_event evt = case (eu4evt_id evt
             ] ++
             ( if isFireOnlyOnce then
                 ["| fire_only_once = yes", PP.line]
+            else []) ++
+            ( if isFireForSender then
+                ["| fire_for_sender = no", PP.line]
             else []) ++
             -- For triggered only events, mean_time_to_happen is not
             -- really mtth but instead describes weight modifiers, for
@@ -498,23 +504,84 @@ pp_event evt = case (eu4evt_id evt
             ,"<section end=", evtId, "/>", PP.line
             ]
 
-    Nothing -> throwError "eu4evt_id missing"
---    (Just eid, Nothing) ->
---        throwError ("options missing for event id " <> eid)
+    (Nothing, _) -> throwError "eu4evt_id missing"
+    (Just eid, Nothing) -> setCurrentFile (eu4evt_path evt) $ do -- BC: Really ugly way to fix no options problem, I hate it but I;m a terrible coder
+        -- Valid event
+        version <- gets (gameVersion . getSettings)
+        titleLoc <- ppTitles (eu4evt_hide_window evt) (eu4evt_title evt) -- get localisation of title
+        descLoc <- ppDescs (eu4evt_hide_window evt) (eu4evt_desc evt)
+        after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> eu4evt_after evt))
+        let evtArg :: Text -> (EU4Event -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
+            evtArg fieldname field fmt
+                = maybe (return [])
+                    (\field_content -> do
+                        content_pp'd <- fmt field_content 
+                        return
+                            ["| ", Doc.strictText fieldname, " = "
+                            ,PP.line
+                            ,content_pp'd
+                            ,PP.line])
+                    (field evt)
+            isTriggeredOnly = fromMaybe False $ eu4evt_is_triggered_only evt
+            isFireOnlyOnce = eu4evt_fire_only_once evt
+            isFireForSender = fromMaybe False $ eu4evt_fire_for_sender evt
+            evtId = Doc.strictText eid
+        trigger_pp'd <- evtArg "trigger" eu4evt_trigger pp_script
+        mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (eu4evt_mean_time_to_happen evt)
+        immediate_pp'd <- setIsInEffect True (evtArg "immediate" eu4evt_immediate pp_script)
+        triggered_pp <- ppTriggeredBy eid
+        -- Keep track of incomplete events
+        when (not isTriggeredOnly && isNothing mmtth_pp'd) $
+            -- TODO: use logging instead of trace
+            traceM ("warning: is_triggered_only and mean_time_to_happen missing for event id " ++ T.unpack eid)
+        return . mconcat $
+            ["<section begin=", evtId, "/>", PP.line
+            ,"{{Event", PP.line
+            ,"| version = ", Doc.strictText version, PP.line
+            ,"| event_id = ", evtId, PP.line
+            ,titleLoc, PP.line
+            ,descLoc, PP.line
+            ] ++
+            ( if isFireOnlyOnce then
+                ["| fire_only_once = yes", PP.line]
+            else []) ++
+            ( if isFireForSender then
+                ["| fire_for_sender = no", PP.line]
+            else []) ++
+            -- For triggered only events, mean_time_to_happen is not
+            -- really mtth but instead describes weight modifiers, for
+            -- scripts that trigger them with a probability based on a
+            -- weight (e.g. on_bi_yearly_pulse).
+            (if isTriggeredOnly then
+                ["| triggered only = ", triggered_pp, PP.line
+                ]
+                ++ maybe [] (:[PP.line]) mmtth_pp'd
+            else []) ++
+            trigger_pp'd ++
+            -- mean_time_to_happen is only really mtth if it's *not*
+            -- triggered only.
+            (if isTriggeredOnly then [] else case mmtth_pp'd of
+                Nothing ->
+                    ["| triggered_only =", PP.line
+                    ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
+                Just mtth_pp'd ->
+                    ["| mtth = ", PP.line
+                    ,mtth_pp'd, PP.line]) ++
+            immediate_pp'd ++
+            (maybe [] (\app -> ["| after =", PP.line, app, PP.line]) after_pp'd) ++
+            ["| options = ", PP.line
+            ,"| collapse = yes", PP.line
+            ,"}}", PP.line
+            ,"<section end=", evtId, "/>", PP.line
+            ]
 
 -- | Present the options of an event.
 pp_options :: (EU4Info g, MonadError Text m) =>
     Bool -> Text -> [EU4Option] -> PPT g m (Bool, Doc)
 pp_options hidden evtid opts = do
-    let triggered = any (isJust . eu4opt_trigger) (opts)
+    let triggered = any (isJust . eu4opt_trigger) opts
     options_pp'd <- mapM (pp_option evtid hidden triggered) opts
     return (triggered, mconcat . (PP.line:) . intersperse PP.line $ options_pp'd)
-
--- Laxy fix for dealing with no options
-pp_no :: (EU4Info g, MonadError Text m) => PPT g m (Bool, Doc)
-pp_no = (False, pp_notext)
-pp_notext :: (EU4Info g, MonadError Text m) => PPT g m Doc
-pp_notext = (PP.text ("No options"))
 
 -- | Present a single event option.
 pp_option :: (EU4Info g, MonadError Text m) =>
@@ -529,6 +596,7 @@ pp_option evtid hidden triggered opt = do
             else throwError $ "some required option sections missing in " <> evtid <> " - dumping: " <> T.pack (show opt)
     where
         ok name_loc = let mtrigger = eu4opt_trigger opt in do
+            mawd_pp'd   <- mapM ((imsg2doc =<<) . ppAiWillDo) (eu4opt_ai_chance opt)
             effects_pp'd <- setIsInEffect True (pp_script (fromMaybe [] (eu4opt_effects opt)))
             mtrigger_pp'd <- sequence (pp_script <$> mtrigger)
             return . mconcat $
@@ -544,6 +612,9 @@ pp_option evtid hidden triggered opt = do
                         ) mtrigger_pp'd
                     else [])
                 ++
+                flip (maybe []) mawd_pp'd (\awd_pp'd ->
+                    ["| comment = AI decision factors:", PP.line
+                    ,awd_pp'd, PP.line]) ++
                 -- 1 = no
                 ["}}"
                 ]

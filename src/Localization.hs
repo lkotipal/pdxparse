@@ -44,6 +44,7 @@ readL10n settings = do
               </> steamApps settings
               </> gameFolder settings
               </> "localisation"
+              </> T.unpack (languageFolder settings)
     files <- filterM doesFileExist
                 . map (dir </>)
                 . (case l10nScheme settings of

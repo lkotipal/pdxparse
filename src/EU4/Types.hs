@@ -191,6 +191,8 @@ data EU4Event = EU4Event {
     ,   eu4evt_fire_only_once :: Bool
     -- | List of options for the player/AI to choose from.
     ,   eu4evt_options :: Maybe [EU4Option]
+    -- | If the event show to sender
+    ,   eu4evt_fire_for_sender :: Maybe Bool
     -- | Effects that take place after any option is selected.
     ,   eu4evt_after :: Maybe GenericScript
     -- | The event's source file.
@@ -200,7 +202,7 @@ data EU4Event = EU4Event {
 data EU4Option = EU4Option
     {   eu4opt_name :: Maybe Text               -- ^ Text of the option
     ,   eu4opt_trigger :: Maybe GenericScript   -- ^ Condition for the option to be available
-    ,   eu4opt_ai_chance :: Maybe GenericScript -- ^ Probability that the AI will choose this option
+    ,   eu4opt_ai_chance :: Maybe AIWillDo -- ^ Probability that the AI will choose this option
     ,   eu4opt_effects :: Maybe GenericScript   -- ^ What happens if the player/AI chooses this option
     } deriving (Show)
 
@@ -361,6 +363,9 @@ aiWillDo :: GenericScript -> AIWillDo
 aiWillDo = foldl' aiWillDoAddSection newAIWillDo
 aiWillDoAddSection :: AIWillDo -> GenericStatement -> AIWillDo
 aiWillDoAddSection awd [pdx| $left = %right |] = case T.toLower left of
+    "base" -> case floatRhs right of
+        Just fac -> awd { awd_base = Just fac }
+        _        -> awd
     "factor" -> case floatRhs right of
         Just fac -> awd { awd_base = Just fac }
         _        -> awd
