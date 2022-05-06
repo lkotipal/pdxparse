@@ -83,7 +83,7 @@ ppHandlers = foldl' Tr.unionL Tr.empty
     [ handlersRhsIrrelevant
     , handlersNumeric
     , handlersNumericIcons
---    , handlersModifiers
+    , handlersModifiers
     , handlersCompound
     , handlersLocRhs
     , handlersProvince
@@ -836,7 +836,7 @@ handlersNumericIcons = Tr.fromList
         ,("monthly_piety_accelerator"         , numericIcon "monthly piety accelerator" MsgMonthlyPietyAccelerator)
         ,("movement_speed_in_fleet_modifier"  , numericIcon "fleet movement speed" MsgMovementSpeedInFleetModifier)
         ]
-{-
+
 -- | Handlers for statements pertaining to modifiers
 handlersModifiers :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersModifiers = Tr.fromList
@@ -854,7 +854,7 @@ handlersModifiers = Tr.fromList
         ,("remove_country_modifier"        , withLocAtom2 MsgCountryMod MsgRemoveModifier)
         ,("remove_province_modifier"       , withLocAtom2 MsgProvMod MsgRemoveModifier)
         ]
--}
+
 -- | Handlers for simple compound statements
 handlersCompound :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersCompound = Tr.fromList
@@ -982,14 +982,14 @@ handlersLocRhs = Tr.fromList
         ,("complete_mission"      , withLocAtomTitle MsgCompleteMission)
         ,("council_position"      , withLocAtom MsgCouncilPosition)
         ,("current_debate"        , withLocAtom MsgCurrentDebate)
---        ,("end_disaster"          , withLocAtom MsgDisasterEnds)
+        ,("end_disaster"          , withLocAtom MsgDisasterEnds)
         ,("end_incident"          , withLocAtomTitle MsgEndIncident)
         ,("government"            , withLocAtom MsgGovernmentIs)
         ,("has_advisor"           , withLocAtom MsgHasAdvisor)
         ,("has_active_policy"     , withLocAtom MsgHasActivePolicy)
         ,("has_construction"      , withLocAtom MsgConstructing)
         ,("has_church_aspect"     , withLocAtom MsgHasChurchAspect)
---        ,("has_disaster"          , withLocAtom MsgDisasterOngoing)
+        ,("has_disaster"          , withLocAtom MsgDisasterOngoing)
         ,("has_estate_privilege"  , withLocAtom MsgHasEstatePrivilege)
         ,("has_faction"           , withLocAtom MsgHasFaction)
         ,("has_idea"              , withLocAtom MsgHasIdea)
@@ -1303,7 +1303,7 @@ handlersYesNo = Tr.fromList
         ,("expelling_minorities"        , withBool MsgExpellingMinorities)
         ,("has_active_debate"           , withBool MsgHasActiveDebate)
         ,("has_any_active_estate_agenda", withBool MsgHasAnyActiveEstateAgenda)
---        ,("has_any_disaster"            , withBool MsgHasAnyDisaster)
+        ,("has_any_disaster"            , withBool MsgHasAnyDisaster)
         ,("has_any_estates"             , withBool MsgHasAnyEstates)
         ,("has_active_fervor"           , withBool MsgHasActiveFervor)
         ,("has_cardinal"                , withBool MsgHasCardinal)
@@ -1534,7 +1534,7 @@ handlersTextValue = Tr.fromList
         [("add_great_project_tier"      , textValue "type" "tier" MsgAddGreatProjectTier MsgAddGreatProjectTier tryLocAndIcon)
         ,("add_incident_variable_value" , textValue "incident" "value" MsgAddIncidentVariableValue MsgAddIncidentVariableValue tryLocAndIconTitle)
         ,("add_institution_embracement" , textValue "which" "value" MsgAddInstitutionEmbracement MsgAddInstitutionEmbracement tryLocAndIcon)
---        ,("add_disaster_progress"       , textValue "disaster" "value" MsgAddDisasterProgress MsgAddDisasterProgress tryLocAndIcon)
+        ,("add_disaster_progress"       , textValue "disaster" "value" MsgAddDisasterProgress MsgAddDisasterProgress tryLocAndIcon)
         ,("add_estate_loyalty"          , textValue "estate" "loyalty" MsgAddEstateLoyalty MsgAddEstateLoyalty tryLocAndIcon)
         ,("add_named_unrest"            , textValue "name" "value" MsgAddNamedUnrest MsgAddNamedUnrest tryLocAndIcon)
         ,("add_power_projection"        , textValue "type" "amount" MsgAddPowerProjection MsgAddPowerProjection tryLocAndIcon)
@@ -1630,7 +1630,6 @@ handlersSpecialComplex = Tr.fromList
         ,("has_reached_government_reform_tier" , hasGovernmentReforTier)
         ,("has_trade_company_investment_in_area", hasTradeCompanyInvestment)
         ,("is_in_war"                    , isInWar)
-        ,("news_event"                   , scope EU4NoScope . triggerEvent MsgNewsEvent)
         ,("privateer_power"              , privateerPower)
         ,("province_event"               , scope EU4Province . triggerEvent MsgProvinceEvent)
         ,("region"                       , region)
@@ -1763,7 +1762,7 @@ handlersMisc = Tr.fromList
         ,("set_government_rank" , setGovtRank)
         ,("set_saved_name"      , setSavedName)
         ,("generate_advisor_of_type_and_semi_random_religion_effect" , randomAdvisor)
---        ,("create_colony_mission_reward" , createColonyMissionReward)
+        ,("create_colony_mission_reward" , createColonyMissionReward)
         ,("has_idea_group"      , hasIdeaGroup)
         -- Estate monopoly privileges
         ,("apply_estate_monopoly_modifier"  , estatePrivilege MsgApplyEstateModifer)

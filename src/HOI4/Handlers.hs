@@ -1,4 +1,4 @@
-module EU4.Handlers (
+module HOI4.Handlers (
         preStatement
     ,   plainMsg
     ,   msgToPP
@@ -16,7 +16,7 @@ module EU4.Handlers (
     ,   withLocAtom2
     ,   withLocAtomAndIcon
     ,   withLocAtomIcon
-    ,   withLocAtomIconEU4Scope
+    ,   withLocAtomIconHOI4Scope
     ,   withLocAtomIconBuilding
     ,   locAtomTagOrProvince
     ,   withProvince
@@ -55,7 +55,7 @@ module EU4.Handlers (
     ,   ppAiMod
     ,   factionInfluence
     ,   factionInPower
-    ,   addModifier
+--    ,   addModifier
     ,   addCore
     ,   opinion
     ,   hasOpinion
@@ -90,7 +90,7 @@ module EU4.Handlers (
     ,   setGovtRank
     ,   numProvinces
     ,   withFlagOrProvince
-    ,   withFlagOrProvinceEU4Scope 
+    ,   withFlagOrProvinceHOI4Scope 
     ,   tradeMod
     ,   isMonth
     ,   range
@@ -139,10 +139,10 @@ module EU4.Handlers (
     ,   createSuccessionCrisis
     ,   hasBuildingTrigger
     ,   productionLeader
-    ,   addProvinceTriggeredModifier
+--    ,   addProvinceTriggeredModifier
     ,   hasHeir
     ,   killHeir
-    ,   createColonyMissionReward
+--    ,   createColonyMissionReward
     ,   hasIdeaGroup
     ,   killUnits
     ,   addBuildingConstruction
@@ -189,9 +189,9 @@ import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), Ga
                      , indentUp, indentDown, withCurrentIndent, withCurrentIndentZero, alsoIndent, alsoIndent'
                      , getGameL10n, getGameL10nIfPresent, getGameL10nDefault, withCurrentFile
                      , unfoldM, unsnoc )
-import EU4.Templates
-import {-# SOURCE #-} EU4.Common (pp_script, ppMany, ppOne, extractStmt, matchLhsText)
-import EU4.Types -- everything
+import HOI4.Templates
+import {-# SOURCE #-} HOI4.Common (pp_script, ppMany, ppOne, extractStmt, matchLhsText)
+import HOI4.Types -- everything
 
 import Debug.Trace
 
@@ -202,7 +202,7 @@ import Debug.Trace
 --
 -- Will now try to recurse into nested clauses as they break the wiki layout, and
 -- it might be possible to "recover".
-preStatement :: (EU4Info g, Monad m) =>
+preStatement :: (HOI4Info g, Monad m) =>
     GenericStatement -> PPT g m IndentedMessages
 preStatement [pdx| %lhs = @scr |] = do
     [headerMsg] <- plainMsg $ "<pre>" <> Doc.doc2text (lhs2doc (const "") lhs) <> "</pre>"
@@ -248,8 +248,8 @@ iconText = Doc.doc2text . icon
 
 -- Argument may be a tag or a tagged variable. Emit a flag in the former case,
 -- and localize in the latter case.
-eflag :: (EU4Info g, Monad m) =>
-            Maybe EU4Scope -> Either Text (Text, Text) -> PPT g m (Maybe Text)
+eflag :: (HOI4Info g, Monad m) =>
+            Maybe HOI4Scope -> Either Text (Text, Text) -> PPT g m (Maybe Text)
 eflag expectScope = \case
     Left name -> Just <$> flagText expectScope name
     Right (vartag, var) -> tagged vartag var
@@ -258,20 +258,20 @@ eflag expectScope = \case
 --
 -- For example, to localize @event_target:some_name@, call
 -- @tagged "event_target" "some_name"@.
-tagged :: (EU4Info g, Monad m) =>
+tagged :: (HOI4Info g, Monad m) =>
     Text -> Text -> PPT g m (Maybe Text)
 tagged vartag var = case flip Tr.lookup varTags . TE.encodeUtf8 $ vartag of
     Just msg -> Just <$> messageText (msg var)
     Nothing -> return $ Just $ "<tt>" <> vartag <> ":" <> var <> "</tt>" -- just let it pass
 
-flagText :: (EU4Info g, Monad m) =>
-    Maybe EU4Scope -> Text -> PPT g m Text
+flagText :: (HOI4Info g, Monad m) =>
+    Maybe HOI4Scope -> Text -> PPT g m Text
 flagText expectScope = fmap Doc.doc2text . flag expectScope
 
 -- Emit an appropriate phrase if the given text is a pronoun, otherwise use the
 -- provided localization function.
-allowPronoun :: (EU4Info g, Monad m) =>
-    Maybe EU4Scope -> (Text -> PPT g m Doc) -> Text -> PPT g m Doc
+allowPronoun :: (HOI4Info g, Monad m) =>
+    Maybe HOI4Scope -> (Text -> PPT g m Doc) -> Text -> PPT g m Doc
 allowPronoun expectedScope getLoc name =
     if isPronoun name
         then pronoun expectedScope name
@@ -279,71 +279,71 @@ allowPronoun expectedScope getLoc name =
 
 -- | Emit flag template if the argument is a tag, or an appropriate phrase if
 -- it's a pronoun.
-flag :: (EU4Info g, Monad m) =>
-    Maybe EU4Scope -> Text -> PPT g m Doc
+flag :: (HOI4Info g, Monad m) =>
+    Maybe HOI4Scope -> Text -> PPT g m Doc
 flag expectscope = allowPronoun expectscope $ \name ->
                     template "flag" . (:[]) <$> getGameL10n name
 
-getScopeForPronoun :: (EU4Info g, Monad m) =>
-    Text -> PPT g m (Maybe EU4Scope)
+getScopeForPronoun :: (HOI4Info g, Monad m) =>
+    Text -> PPT g m (Maybe HOI4Scope)
 getScopeForPronoun = helper . T.toLower where
     helper "this" = getCurrentScope
     helper "root" = getRootScope
     helper "prev" = getPrevScope
-    helper "controller" = return (Just EU4Country)
-    helper "emperor" = return (Just EU4Country)
-    helper "capital" = return (Just EU4Province)
+    helper "controller" = return (Just HOI4Country)
+    helper "emperor" = return (Just HOI4Country)
+    helper "capital" = return (Just HOI4Province)
     helper _ = return Nothing
 
 -- | Emit an appropriate phrase for a pronoun.
 -- If a scope is passed, that is the type the current command expects. If they
 -- don't match, it's a synecdoche; adjust the wording appropriately.
 --
--- All handlers in this module that take an argument of type 'Maybe EU4Scope'
+-- All handlers in this module that take an argument of type 'Maybe HOI4Scope'
 -- call this function. Use whichever scope corresponds to what you expect to
 -- appear on the RHS. If it can be one of several (e.g. either a country or a
--- province), use EU4From. If it doesn't correspond to any scope, use Nothing.
-pronoun :: (EU4Info g, Monad m) =>
-    Maybe EU4Scope -> Text -> PPT g m Doc
+-- province), use HOI4From. If it doesn't correspond to any scope, use Nothing.
+pronoun :: (HOI4Info g, Monad m) =>
+    Maybe HOI4Scope -> Text -> PPT g m Doc
 pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
     "root" -> getRootScope >>= \case -- will need editing
-        Just EU4Country
-            | expectedScope `matchScope` EU4Country -> message MsgROOTCountry
+        Just HOI4Country
+            | expectedScope `matchScope` HOI4Country -> message MsgROOTCountry
             | otherwise                             -> message MsgROOTCountryAsOther
-        Just EU4Province
-            | expectedScope `matchScope` EU4Province -> message MsgROOTProvince
-            | expectedScope `matchScope` EU4Country -> message MsgROOTProvinceOwner
-            | expectedScope `matchScope` EU4TradeNode -> message MsgROOTTradeNode
+        Just HOI4Province
+            | expectedScope `matchScope` HOI4Province -> message MsgROOTProvince
+            | expectedScope `matchScope` HOI4Country -> message MsgROOTProvinceOwner
+            | expectedScope `matchScope` HOI4TradeNode -> message MsgROOTTradeNode
             | otherwise                             -> message MsgROOTProvinceAsOther
         -- No synecdoche possible
-        Just EU4TradeNode -> message MsgROOTTradeNode
+        Just HOI4TradeNode -> message MsgROOTTradeNode
         -- No synecdoche possible
-        Just EU4Geographic -> message MsgROOTGeographic
+        Just HOI4Geographic -> message MsgROOTGeographic
         _ -> return "ROOT"
     "prev" -> --do
 --      ss <- getScopeStack
 --      traceM (f ++ ": pronoun PREV: scope stack is " ++ show ss)
         getPrevScope >>= \_scope -> case _scope of -- will need editing
-            Just EU4Country
-                | expectedScope `matchScope` EU4Country -> message MsgPREVCountry
+            Just HOI4Country
+                | expectedScope `matchScope` HOI4Country -> message MsgPREVCountry
                 | otherwise                             -> message MsgPREVCountryAsOther
-            Just EU4Province
-                | expectedScope `matchScope` EU4Province -> message MsgPREVProvince
-                | expectedScope `matchScope` EU4Country -> message MsgPREVProvinceOwner
+            Just HOI4Province
+                | expectedScope `matchScope` HOI4Province -> message MsgPREVProvince
+                | expectedScope `matchScope` HOI4Country -> message MsgPREVProvinceOwner
                 | otherwise                             -> message MsgPREVProvinceAsOther
-            Just EU4TradeNode -> message MsgPREVTradeNode
-            Just EU4Geographic -> message MsgPREVGeographic
+            Just HOI4TradeNode -> message MsgPREVTradeNode
+            Just HOI4Geographic -> message MsgPREVGeographic
             _ -> return "PREV"
     "this" -> getCurrentScope >>= \case -- will need editing
-        Just EU4Country
-            | expectedScope `matchScope` EU4Country -> message MsgTHISCountry
+        Just HOI4Country
+            | expectedScope `matchScope` HOI4Country -> message MsgTHISCountry
             | otherwise                             -> message MsgTHISCountryAsOther
-        Just EU4Province
-            | expectedScope `matchScope` EU4Province -> message MsgTHISProvince
-            | expectedScope `matchScope` EU4Country -> message MsgTHISProvinceOwner
+        Just HOI4Province
+            | expectedScope `matchScope` HOI4Province -> message MsgTHISProvince
+            | expectedScope `matchScope` HOI4Country -> message MsgTHISProvinceOwner
             | otherwise                             -> message MsgTHISProvinceAsOther
-        Just EU4TradeNode -> message MsgTHISTradeNode
-        Just EU4Geographic -> message MsgTHISGeographic
+        Just HOI4TradeNode -> message MsgTHISTradeNode
+        Just HOI4Geographic -> message MsgTHISGeographic
         _ -> return "PREV"
     "controller" -> message MsgController
     "emperor" -> message MsgEmperor
@@ -382,15 +382,15 @@ isPronoun s = T.map toLower s `S.member` pronouns where
         ,"capital"
         ]
 
--- Get the localization for a province ID, if available.
+-- Get the localization for a state ID, if available.
 getProvLoc :: (IsGameData (GameData g), Monad m) =>
     Int -> PPT g m Text
 getProvLoc n = do
     let provid_t = T.pack (show n)
-    mprovloc <- getGameL10nIfPresent ("PROV" <> provid_t)
+    mprovloc <- getGameL10nIfPresent ("STATE_" <> provid_t)
     return $ case mprovloc of
         Just loc -> loc <> " (" <> provid_t <> ")"
-        _ -> "Province " <> provid_t
+        _ -> "AAAAAAAAAAAAAARGH " <> provid_t
 
 -----------------------------------------------------------------
 -- Script handlers that should be used directly, not via ppOne --
@@ -416,7 +416,7 @@ newMTTHMod :: MTTHModifier
 newMTTHMod = MTTHModifier Nothing []
 
 -- | Format a @mean_time_to_happen@ clause as wiki text.
-pp_mtth :: (EU4Info g, Monad m) => Bool -> GenericScript -> PPT g m Doc
+pp_mtth :: (HOI4Info g, Monad m) => Bool -> GenericScript -> PPT g m Doc
 pp_mtth isTriggeredOnly = pp_mtth' . foldl' addField newMTTH
     where
         addField mtth [pdx| years    = !n   |] = mtth { mtth_years = Just n }
@@ -492,7 +492,7 @@ pp_mtth isTriggeredOnly = pp_mtth' . foldl' addField newMTTH
 
 -- | Generic handler for a simple compound statement. Usually you should use
 -- 'compoundMessage' instead so the text can be localized.
-compound :: (EU4Info g, Monad m) =>
+compound :: (HOI4Info g, Monad m) =>
     Text -- ^ Text to use as the block header, without the trailing colon
     -> StatementHandler g m
 compound header [pdx| %_ = @scr |]
@@ -503,7 +503,7 @@ compound header [pdx| %_ = @scr |]
 compound _ stmt = preStatement stmt
 
 -- | Generic handler for a simple compound statement.
-compoundMessage :: (EU4Info g, Monad m) =>
+compoundMessage :: (HOI4Info g, Monad m) =>
     ScriptMessage -- ^ Message to use as the block header
     -> StatementHandler g m
 compoundMessage header [pdx| %_ = @scr |]
@@ -513,27 +513,27 @@ compoundMessage header [pdx| %_ = @scr |]
 compoundMessage _ stmt = preStatement stmt
 
 -- | Generic handler for a simple compound statement headed by a pronoun.
-compoundMessagePronoun :: (EU4Info g, Monad m) => StatementHandler g m
+compoundMessagePronoun :: (HOI4Info g, Monad m) => StatementHandler g m
 compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
     params <- withCurrentFile $ \f -> case T.toLower head of
         "root" -> do
                 newscope <- getRootScope
                 return (newscope, case newscope of
-                    Just EU4Country -> Just MsgROOTCountry
-                    Just EU4Province -> Just MsgROOTProvince
-                    Just EU4TradeNode -> Just MsgROOTTradeNode
-                    Just EU4Geographic -> Just MsgROOTGeographic
+                    Just HOI4Country -> Just MsgROOTCountry
+                    Just HOI4Province -> Just MsgROOTProvince
+                    Just HOI4TradeNode -> Just MsgROOTTradeNode
+                    Just HOI4Geographic -> Just MsgROOTGeographic
                     _ -> Nothing) -- warning printed below
         "prev" -> do
                 newscope <- getPrevScope
                 return (newscope, case newscope of
-                    Just EU4Country -> Just MsgPREVCountry
-                    Just EU4Province -> Just MsgPREVProvince
-                    Just EU4TradeNode -> Just MsgPREVTradeNode
-                    Just EU4Geographic -> Just MsgPREVGeographic
-                    Just EU4From -> Just MsgPREV -- Roll with it
+                    Just HOI4Country -> Just MsgPREVCountry
+                    Just HOI4Province -> Just MsgPREVProvince
+                    Just HOI4TradeNode -> Just MsgPREVTradeNode
+                    Just HOI4Geographic -> Just MsgPREVGeographic
+                    Just HOI4From -> Just MsgPREV -- Roll with it
                     _ -> Nothing) -- warning printed below
-        "from" -> return (Just EU4From, Just MsgFROM) -- don't know what type this is in general
+        "from" -> return (Just HOI4From, Just MsgFROM) -- don't know what type this is in general
         _ -> trace (f ++ ": compoundMessagePronoun: don't know how to handle head " ++ T.unpack head)
              $ return (Nothing, undefined)
     case params of
@@ -547,9 +547,9 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
 compoundMessagePronoun stmt = preStatement stmt
 
 -- | Generic handler for a simple compound statement with a tagged header.
-compoundMessageTagged :: (EU4Info g, Monad m) =>
+compoundMessageTagged :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage) -- ^ Message to use as the block header
-    -> Maybe EU4Scope -- ^ Scope to push on the stack, if any
+    -> Maybe HOI4Scope -- ^ Scope to push on the stack, if any
     -> StatementHandler g m
 compoundMessageTagged header mscope stmt@[pdx| $_:$tag = %_ |]
     = (case mscope of
@@ -559,7 +559,7 @@ compoundMessageTagged _ _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom.
 -- with the ability to transform the localization key
-withLocAtom' :: (EU4Info g, Monad m) =>
+withLocAtom' :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage) -> (Text -> Text) -> StatementHandler g m
 withLocAtom' msg xform [pdx| %_ = ?key |]
     = msgToPP =<< msg <$> getGameL10n (xform key)
@@ -570,7 +570,7 @@ withLocAtom msg stmt = withLocAtom' msg id stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom and we
 -- need a second one (passed to message as first arg).
-withLocAtom2 :: (EU4Info g, Monad m) =>
+withLocAtom2 :: (HOI4Info g, Monad m) =>
     ScriptMessage
         -> (Text -> Text -> Text -> ScriptMessage)
         -> StatementHandler g m
@@ -580,9 +580,9 @@ withLocAtom2 _ _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom, where we
 -- also need an icon.
-withLocAtomAndIcon :: (EU4Info g, Monad m) =>
+withLocAtomAndIcon :: (HOI4Info g, Monad m) =>
     Text -- ^ icon name - see
-         -- <https://www.eu4wiki.com/Template:Icon Template:Icon> on the wiki
+         -- <https://www.hoi4wiki.com/Template:Icon Template:Icon> on the wiki
         -> (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
 withLocAtomAndIcon iconkey msg stmt@[pdx| %_ = $vartag:$var |] = do 
@@ -597,7 +597,7 @@ withLocAtomAndIcon _ _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom that
 -- corresponds to an icon.
-withLocAtomIcon :: (EU4Info g, Monad m) =>
+withLocAtomIcon :: (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
 withLocAtomIcon msg stmt@[pdx| %_ = ?key |]
@@ -606,19 +606,19 @@ withLocAtomIcon _ stmt = preStatement stmt
 
 -- | Generic handler for a statement that needs both an atom and an icon, whose
 -- meaning changes depending on which scope it's in.
-withLocAtomIconEU4Scope :: (EU4Info g, Monad m) =>
+withLocAtomIconHOI4Scope :: (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage) -- ^ Message for country scope
         -> (Text -> Text -> ScriptMessage) -- ^ Message for province scope
         -> StatementHandler g m
-withLocAtomIconEU4Scope countrymsg provincemsg stmt = do
+withLocAtomIconHOI4Scope countrymsg provincemsg stmt = do
     thescope <- getCurrentScope
     case thescope of
-        Just EU4Country -> withLocAtomIcon countrymsg stmt
-        Just EU4Province -> withLocAtomIcon provincemsg stmt
+        Just HOI4Country -> withLocAtomIcon countrymsg stmt
+        Just HOI4Province -> withLocAtomIcon provincemsg stmt
         _ -> preStatement stmt -- others don't make sense
 
 -- | Handler for buildings. Localization needs "building_" prepended. Hack..
-withLocAtomIconBuilding :: (EU4Info g, Monad m) =>
+withLocAtomIconBuilding :: (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
 withLocAtomIconBuilding msg stmt@[pdx| %_ = ?key |]
@@ -629,7 +629,7 @@ withLocAtomIconBuilding _ stmt = preStatement stmt
 -- | Generic handler for a statement where the RHS is a localizable atom, but
 -- may be replaced with a tag or province to refer synecdochally to the
 -- corresponding value.
-locAtomTagOrProvince :: (EU4Info g, Monad m) =>
+locAtomTagOrProvince :: (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage) -- ^ Message for atom
         -> (Text -> ScriptMessage) -- ^ Message for synecdoche
         -> StatementHandler g m
@@ -647,7 +647,7 @@ locAtomTagOrProvince atomMsg synMsg stmt@[pdx| %_ = $a:$b:$c |] =
     msgToPP $ synMsg ("<tt>" <> a <> ":" <> b <> ":" <> c <> "</tt>")
 locAtomTagOrProvince _ _ stmt = preStatement stmt
 
-withProvince :: (EU4Info g, Monad m) =>
+withProvince :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage)
         -> StatementHandler g m
 withProvince msg stmt@[pdx| %lhs = $vartag:$var |] = do
@@ -656,18 +656,18 @@ withProvince msg stmt@[pdx| %lhs = $vartag:$var |] = do
         Just tagloc -> msgToPP $ msg tagloc
         Nothing -> preStatement stmt
 withProvince msg stmt@[pdx| %lhs = $var |]
-    = msgToPP =<< msg . Doc.doc2text <$> pronoun (Just EU4Province) var
+    = msgToPP =<< msg . Doc.doc2text <$> pronoun (Just HOI4Province) var
 withProvince msg [pdx| %lhs = !provid |]
     = msgToPP =<< msg <$> getProvLoc provid
 withProvince _ stmt = preStatement stmt
 
 -- As withLocAtom but no l10n.
-withNonlocAtom :: (EU4Info g, Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
+withNonlocAtom :: (HOI4Info g, Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
 withNonlocAtom msg [pdx| %_ = ?text |] = msgToPP $ msg text
 withNonlocAtom _ stmt = preStatement stmt
 
 -- | As withlocAtom but wth no l10n and an additional bit of text.
-withNonlocAtom2 :: (EU4Info g, Monad m) =>
+withNonlocAtom2 :: (HOI4Info g, Monad m) =>
     ScriptMessage
         -> (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
@@ -873,7 +873,7 @@ scriptIconFileTable = HM.fromList
     ,("military_administration", "TC military administration")
     ,("governor_general_mansion", "TC governor generals mansion")
     -- Disasters
-    ,("coup_attempt_disaster", "Coup Attempt")
+--    ,("coup_attempt_disaster", "Coup Attempt")
     -- Holy orders
     ,("dominican_order", "Dominicans")
     ,("franciscan_order", "Franciscans")
@@ -1106,10 +1106,10 @@ iconFileB = TE.encodeUtf8 . iconFile . TE.decodeUtf8
 --
 -- * say "same as <foo>" if foo refers to a country (in which case, add a flag if possible)
 -- * may not actually have an icon (localization file will know if it doesn't)
-iconOrFlag :: (EU4Info g, Monad m) =>
+iconOrFlag :: (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage)
         -> (Text -> ScriptMessage)
-        -> Maybe EU4Scope
+        -> Maybe HOI4Scope
         -> StatementHandler g m
 iconOrFlag _ flagmsg expectScope stmt@[pdx| %_ = $vartag:$var |] = do
     mwhoflag <- eflag expectScope (Right (vartag, var))
@@ -1129,10 +1129,10 @@ iconOrFlag iconmsg flagmsg expectScope [pdx| $head = $name |] = msgToPP =<< do
 iconOrFlag _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Message with icon and tag.
-withFlagAndIcon :: (EU4Info g, Monad m) =>
+withFlagAndIcon :: (HOI4Info g, Monad m) =>
     Text
         -> (Text -> Text -> ScriptMessage)
-        -> Maybe EU4Scope
+        -> Maybe HOI4Scope
         -> StatementHandler g m
 withFlagAndIcon iconkey flagmsg expectScope stmt@[pdx| %_ = $vartag:$var |] = do
     mwhoflag <- eflag expectScope (Right (vartag, var))
@@ -1145,10 +1145,10 @@ withFlagAndIcon iconkey flagmsg expectScope [pdx| %_ = $name |] = msgToPP =<< do
 withFlagAndIcon _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for statements where RHS is a tag or province id.
-tagOrProvince :: (EU4Info g, Monad m) =>
+tagOrProvince :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage)
         -> (Text -> ScriptMessage)
-        -> Maybe EU4Scope
+        -> Maybe HOI4Scope
         -> StatementHandler g m
 tagOrProvince tagmsg _ expectScope stmt@[pdx| %_ = $vartag:$var |] = do
     mwhoflag <- eflag expectScope (Right (vartag, var))
@@ -1166,7 +1166,7 @@ tagOrProvince tagmsg provmsg expectScope stmt@[pdx| %_ = ?!eobject |]
             Nothing -> return (preMessage stmt)
 tagOrProvince _ _ _ stmt = preStatement stmt
 
-tagOrProvinceIcon :: (EU4Info g, Monad m) =>
+tagOrProvinceIcon :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage)
         -> (Text -> ScriptMessage)
         -> StatementHandler g m
@@ -1195,7 +1195,7 @@ numeric msg [pdx| %_ = !n |] = msgToPP $ msg n
 numeric _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for statements where the RHS is either a number or a tag.
-numericOrTag :: (EU4Info g, Monad m) =>
+numericOrTag :: (HOI4Info g, Monad m) =>
     (Double -> ScriptMessage)
         -> (Text -> ScriptMessage)
         -> StatementHandler g m
@@ -1204,14 +1204,14 @@ numericOrTag numMsg tagMsg stmt@[pdx| %_ = %rhs |] = msgToPP =<<
         Just n -> return $ numMsg n
         Nothing -> case textRhs rhs of
             Just t -> do -- assume it's a country
-                tflag <- flag (Just EU4Country) t
+                tflag <- flag (Just HOI4Country) t
                 return $ tagMsg (Doc.doc2text tflag)
             Nothing -> return (preMessage stmt)
 numericOrTag _ _ stmt = preStatement stmt
 
 -- | Handler for statements where the RHS is either a number or a tag, that
 -- also require an icon.
-numericOrTagIcon :: (EU4Info g, Monad m) =>
+numericOrTagIcon :: (HOI4Info g, Monad m) =>
     Text
         -> (Text -> Double -> ScriptMessage)
         -> (Text -> Text -> ScriptMessage)
@@ -1221,26 +1221,26 @@ numericOrTagIcon icon numMsg tagMsg stmt@[pdx| %_ = %rhs |] = msgToPP =<<
         Just n -> return $ numMsg (iconText icon) n
         Nothing -> case textRhs rhs of
             Just t -> do -- assume it's a country
-                tflag <- flag (Just EU4Country) t
+                tflag <- flag (Just HOI4Country) t
                 return $ tagMsg (iconText icon) (Doc.doc2text tflag)
             Nothing -> return (preMessage stmt)
 numericOrTagIcon _ _ _ stmt = preStatement stmt
 
 -- | Handler for a statement referring to a country. Use a flag.
-withFlag :: (EU4Info g, Monad m) =>
+withFlag :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage) -> StatementHandler g m
 withFlag msg stmt@[pdx| %_ = $vartag:$var |] = do
-    mwhoflag <- eflag (Just EU4Country) (Right (vartag, var))
+    mwhoflag <- eflag (Just HOI4Country) (Right (vartag, var))
     case mwhoflag of
         Just whoflag -> msgToPP . msg $ whoflag
         Nothing -> preStatement stmt
 withFlag msg [pdx| %_ = $who |] = do
-    whoflag <- flag (Just EU4Country) who
+    whoflag <- flag (Just HOI4Country) who
     msgToPP . msg . Doc.doc2text $ whoflag
 withFlag _ stmt = preStatement stmt
 
 -- | Handler for yes-or-no statements.
-withBool :: (EU4Info g, Monad m) =>
+withBool :: (HOI4Info g, Monad m) =>
     (Bool -> ScriptMessage)
         -> StatementHandler g m
 withBool msg stmt = do
@@ -1250,7 +1250,7 @@ withBool msg stmt = do
           fullmsg
 
 -- | Helper for 'withBool'.
-withBool' :: (EU4Info g, Monad m) =>
+withBool' :: (HOI4Info g, Monad m) =>
     (Bool -> ScriptMessage)
         -> GenericStatement
         -> PPT g m (Maybe IndentedMessages)
@@ -1263,7 +1263,7 @@ withBool' msg [pdx| %_ = ?yn |] | T.map toLower yn `elem` ["yes","no","false"]
 withBool' _ _ = return Nothing
 
 -- | Like numericIconLoc, but for booleans
-boolIconLoc :: (EU4Info g, Monad m) =>
+boolIconLoc :: (HOI4Info g, Monad m) =>
     Text
         -> Text
         -> (Text -> Text -> Bool -> ScriptMessage)
@@ -1277,7 +1277,7 @@ boolIconLoc the_icon what msg stmt
               res
 
 -- | Handler for statements whose RHS may be "yes"/"no" or a tag.
-withFlagOrBool :: (EU4Info g, Monad m) =>
+withFlagOrBool :: (HOI4Info g, Monad m) =>
     (Bool -> ScriptMessage)
         -> (Text -> ScriptMessage)
         -> StatementHandler g m
@@ -1286,7 +1286,7 @@ withFlagOrBool bmsg _ [pdx| %_ = no  |]  = msgToPP (bmsg False)
 withFlagOrBool _ tmsg stmt = withFlag tmsg stmt
 
 -- | Handler for statements whose RHS is a number OR a tag/prounoun, with icon
-withTagOrNumber :: (EU4Info g, Monad m) =>
+withTagOrNumber :: (HOI4Info g, Monad m) =>
     Text
         -> (Text -> Double -> ScriptMessage)
         -> (Text -> Text -> ScriptMessage)
@@ -1294,7 +1294,7 @@ withTagOrNumber :: (EU4Info g, Monad m) =>
 withTagOrNumber iconkey numMsg _ [pdx| %_ = !num |]
     = msgToPP $ numMsg (iconText iconkey) num
 withTagOrNumber iconkey _ tagMsg scr@[pdx| %_ = $_ |]
-    = withFlagAndIcon iconkey tagMsg (Just EU4Country) scr
+    = withFlagAndIcon iconkey tagMsg (Just HOI4Country) scr
 withTagOrNumber  _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for statements that have a number and an icon.
@@ -1320,7 +1320,7 @@ numericIconLoc _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for statements that have a number and an icon, whose meaning
 -- differs depending on what scope it's in.
-numericIconBonus :: (EU4Info g, Monad m) =>
+numericIconBonus :: (HOI4Info g, Monad m) =>
     Text
         -> (Text -> Double -> ScriptMessage) -- ^ Message for country / other scope
         -> (Text -> Double -> ScriptMessage) -- ^ Message for bonus scope
@@ -1333,14 +1333,14 @@ numericIconBonus the_icon plainmsg yearlymsg [pdx| %_ = !amt |]
         case mscope of
             Nothing -> yearly -- ideas / bonuses
             Just thescope -> case thescope of
-                EU4Bonus -> yearly
+                HOI4Bonus -> yearly
                 _ -> -- act as though it's country for all others
                     msgToPP $ plainmsg icont amt
 numericIconBonus _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 
 -- | Like numericIconBonus but allow rhs to be a tag/scope (used for e.g. "prestige")
-numericIconBonusAllowTag :: (EU4Info g, Monad m) =>
+numericIconBonusAllowTag :: (HOI4Info g, Monad m) =>
     Text
         -> (Text -> Double -> ScriptMessage) -- ^ Message for country / other scope
         -> (Text -> Text -> ScriptMessage)   -- ^ Message for tag/scope
@@ -1348,14 +1348,14 @@ numericIconBonusAllowTag :: (EU4Info g, Monad m) =>
         -> StatementHandler g m
 numericIconBonusAllowTag the_icon plainmsg plainAsMsg yearlymsg stmt@[pdx| %_ = $what |]
     = do
-        whatLoc <- flagText (Just EU4Country) what
+        whatLoc <- flagText (Just HOI4Country) what
         msgToPP $ plainAsMsg (iconText the_icon) whatLoc
 numericIconBonusAllowTag the_icon plainmsg _ yearlymsg stmt
     = numericIconBonus the_icon plainmsg yearlymsg stmt
 
 -- | Handler for values that use a different message and icon depending on
 -- whether the value is positive or negative.
-numericIconChange :: (EU4Info g, Monad m) =>
+numericIconChange :: (HOI4Info g, Monad m) =>
     Text        -- ^ Icon for negative values
         -> Text -- ^ Icon for positive values
         -> (Text -> Double -> ScriptMessage) -- ^ Message for negative values
@@ -1369,7 +1369,7 @@ numericIconChange _ _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 
 -- | Handler for e.g. temple = X
-buildingCount :: (EU4Info g, Monad m) => StatementHandler g m
+buildingCount :: (HOI4Info g, Monad m) => StatementHandler g m
 buildingCount [pdx| $building = !count |] = do
     what <- getGameL10n ("building_" <> building)
     msgToPP $ MsgHasNumberOfBuildingType (iconText building) what count
@@ -1447,7 +1447,7 @@ parseTV whatlabel vallabel scr = foldl' addLine newTV scr
             = tv { tv_value = Just val }
         addLine nor _ = nor
 
-textValue :: forall g m. (EU4Info g, Monad m) =>
+textValue :: forall g m. (HOI4Info g, Monad m) =>
     Text                                             -- ^ Label for "what"
         -> Text                                      -- ^ Label for "how much"
         -> (Text -> Text -> Double -> ScriptMessage) -- ^ Message constructor, if abs value < 1
@@ -1491,7 +1491,7 @@ parseTA whatlabel atomlabel scr = (foldl' addLine newTA scr)
         addLine ta scr = (trace ("parseTA: Ignoring " ++ show scr)) $ ta
 
 
-textAtom :: forall g m. (EU4Info g, Monad m) =>
+textAtom :: forall g m. (HOI4Info g, Monad m) =>
     Text -- ^ Label for "what" (e.g. "who")
         -> Text -- ^ Label for atom (e.g. "name")
         -> (Text -> Text -> Text -> ScriptMessage) -- ^ Message constructor
@@ -1511,7 +1511,7 @@ textAtom whatlabel atomlabel msg loc stmt@[pdx| %_ = @scr |]
             _ -> return $ preMessage stmt
 textAtom _ _ _ _ stmt = preStatement stmt
 
-taDescAtomIcon :: forall g m. (EU4Info g, Monad m) =>
+taDescAtomIcon :: forall g m. (HOI4Info g, Monad m) =>
     Text -> Text ->
     (Text -> Text -> Text -> ScriptMessage) -> StatementHandler g m
 taDescAtomIcon tDesc tAtom msg stmt@[pdx| %_ = @scr |]
@@ -1527,7 +1527,7 @@ taDescAtomIcon tDesc tAtom msg stmt@[pdx| %_ = @scr |]
 taDescAtomIcon _ _ _ stmt = preStatement stmt
 
 
-taTypeFlag :: forall g m. (EU4Info g, Monad m) => Text -> Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
+taTypeFlag :: forall g m. (HOI4Info g, Monad m) => Text -> Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
 taTypeFlag tType tFlag msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_tf (parseTA tType tFlag scr)
     where
@@ -1535,7 +1535,7 @@ taTypeFlag tType tFlag msg stmt@[pdx| %_ = @scr |]
         pp_tf ta = case (ta_what ta, ta_atom ta) of
             (Just typ, Just flag) -> do
                 typeLoc <- getGameL10n typ
-                flagLoc <- flagText (Just EU4Country) flag
+                flagLoc <- flagText (Just HOI4Country) flag
                 return $ msg typeLoc flagLoc
             _ -> return $ preMessage stmt
 taTypeFlag _ _ _ stmt = preStatement stmt
@@ -1549,14 +1549,14 @@ getEffectArg tArg stmt@[pdx| %_ = @scr |] = case scr of
         _ -> Nothing
 getEffectArg _ _ = Nothing
 
-simpleEffectNum :: forall g m. (EU4Info g, Monad m) => Text ->  (Double -> ScriptMessage) -> StatementHandler g m
+simpleEffectNum :: forall g m. (HOI4Info g, Monad m) => Text ->  (Double -> ScriptMessage) -> StatementHandler g m
 simpleEffectNum tArg msg stmt =
     case getEffectArg tArg stmt of
         Just (FloatRhs num) -> msgToPP (msg num)
         Just (IntRhs num) -> msgToPP (msg (fromIntegral num))
         _ -> (trace $ "warning: Not handled by simpleEffectNum: " ++ (show stmt)) $ preStatement stmt
 
-simpleEffectAtom :: forall g m. (EU4Info g, Monad m) => Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
+simpleEffectAtom :: forall g m. (HOI4Info g, Monad m) => Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
 simpleEffectAtom tArg msg stmt =
     case getEffectArg tArg stmt of
         Just (GenericRhs atom _) -> do
@@ -1567,7 +1567,7 @@ simpleEffectAtom tArg msg stmt =
 -- AI decision factors
 
 -- | Extract the appropriate message(s) from an @ai_will_do@ clause.
-ppAiWillDo :: (EU4Info g, Monad m) => AIWillDo -> PPT g m IndentedMessages
+ppAiWillDo :: (HOI4Info g, Monad m) => AIWillDo -> PPT g m IndentedMessages
 ppAiWillDo (AIWillDo mbase mods) = do
     mods_pp'd <- fold <$> traverse ppAiMod mods
     let baseWtMsg = case mbase of
@@ -1578,7 +1578,7 @@ ppAiWillDo (AIWillDo mbase mods) = do
 
 -- | Extract the appropriate message(s) from a @modifier@ section within an
 -- @ai_will_do@ clause.
-ppAiMod :: (EU4Info g, Monad m) => AIModifier -> PPT g m IndentedMessages
+ppAiMod :: (HOI4Info g, Monad m) => AIModifier -> PPT g m IndentedMessages
 ppAiMod (AIModifier (Just multiplier) triggers) = do
     triggers_pp'd <- ppMany triggers
     case triggers_pp'd of
@@ -1592,14 +1592,14 @@ ppAiMod (AIModifier Nothing _) =
     plainMsg "(missing multiplier for this factor)"
 
 -- | Verify assumption about rhs
-rhsAlways :: (EU4Info g, Monad m) => Text -> ScriptMessage -> StatementHandler g m
+rhsAlways :: (HOI4Info g, Monad m) => Text -> ScriptMessage -> StatementHandler g m
 rhsAlways assumedRhs msg [pdx| %_ = ?rhs |] | T.toLower rhs == assumedRhs = msgToPP $ msg
 rhsAlways _ _ stmt = (trace $ "Expectation is wrong in statement " ++ show stmt) $ preStatement stmt
 
-rhsAlwaysYes :: (EU4Info g, Monad m) => ScriptMessage -> StatementHandler g m
+rhsAlwaysYes :: (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
 rhsAlwaysYes = rhsAlways "yes"
 
-rhsAlwaysEmptyCompound :: (EU4Info g, Monad m) => ScriptMessage -> StatementHandler g m
+rhsAlwaysEmptyCompound :: (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
 rhsAlwaysEmptyCompound msg stmt@(Statement _ OpEq (CompoundRhs [])) = msgToPP $ msg
 rhsAlwaysEmptyCompound _ stmt = (trace $ "Expectation is wrong in statement " ++ show stmt) $ preStatement stmt
 
@@ -1655,7 +1655,7 @@ data FactionInfluence = FactionInfluence {
 newInfluence :: FactionInfluence
 newInfluence = FactionInfluence Nothing Nothing
 -- | Handler for faction influence.
-factionInfluence :: (EU4Info g, Monad m) =>
+factionInfluence :: (HOI4Info g, Monad m) =>
                      (Text -> Text -> Double -> ScriptMessage) -> StatementHandler g m
 factionInfluence msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_influence (foldl' addField newInfluence scr)
@@ -1674,14 +1674,14 @@ factionInfluence msg stmt@[pdx| %_ = @scr |]
 factionInfluence _ stmt = preStatement stmt
 
 -- | Handler for trigger checking which faction is in power.
-factionInPower :: (EU4Info g, Monad m) => StatementHandler g m
+factionInPower :: (HOI4Info g, Monad m) => StatementHandler g m
 factionInPower [pdx| %_ = ?fac |] | Just facKey <- fac_iconkey fac
     = do fac_loc <- getGameL10n fac
          msgToPP $ MsgFactionInPower (iconText facKey) fac_loc
 factionInPower stmt = preStatement stmt
 
 -- Modifiers
-
+{-
 data AddModifier = AddModifier {
         amod_name :: Maybe Text
     ,   amod_key :: Maybe Text
@@ -1699,11 +1699,11 @@ addModifierLine apm [pdx| who      = ?tag      |] = apm { amod_who = Just tag }
 addModifierLine apm [pdx| duration = !duration |] = apm { amod_duration = Just duration }
 addModifierLine apm [pdx| power    = !power    |] = apm { amod_power = Just power }
 addModifierLine apm _ = apm -- e.g. hidden = yes
-
+-}
 maybeM :: Monad m => (a -> m b) -> Maybe a -> m (Maybe b)
 maybeM f = maybe (return Nothing) (fmap Just . f)
-
-addModifier :: (EU4Info g, Monad m) =>
+{-
+addModifier :: (HOI4Info g, Monad m) =>
     ScriptMessage -> StatementHandler g m
 addModifier kind stmt@(Statement _ OpEq (CompoundRhs scr)) =
     let amod = foldl' addModifierLine newAddModifier scr
@@ -1713,7 +1713,7 @@ addModifier kind stmt@(Statement _ OpEq (CompoundRhs scr)) =
         mthemod <- join <$> sequence (getModifier <$> mname) -- Nothing if trade modifier
         tkind <- messageText kind
         mwho <- maybe (return Nothing)
-                      (fmap (Just . Doc.doc2text) . flag (Just EU4Country))
+                      (fmap (Just . Doc.doc2text) . flag (Just HOI4Country))
                       (amod_who amod)
         mname_loc <- maybeM getGameL10n mname
         mkey_loc <- maybeM getGameL10n mkey
@@ -1721,7 +1721,7 @@ addModifier kind stmt@(Statement _ OpEq (CompoundRhs scr)) =
             mname_or_key = maybe mkey Just mname
             mname_or_key_loc = maybe mkey_loc Just mname_loc
             meffect = modEffects <$> mthemod
-        mpp_meffect <- scope EU4Bonus $ maybeM ppMany meffect
+        mpp_meffect <- scope HOI4Bonus $ maybeM ppMany meffect
 
         -- Is this a religious modifer?
         mpp_meffect' <- case (mpp_meffect, modReligious <$> mthemod) of
@@ -1762,16 +1762,16 @@ addModifier kind stmt@(Statement _ OpEq (CompoundRhs scr)) =
             _ -> preStatement stmt -- Must have mod id
     else preStatement stmt
 addModifier _ stmt = preStatement stmt
-
+-}
 -- Add core
 
 -- "add_core = <n>" in country scope means "Gain core on <localize PROVn>"
 -- "add_core = <tag>" in province scope means "<localize tag> gains core"
-addCore :: (EU4Info g, Monad m) =>
+addCore :: (HOI4Info g, Monad m) =>
     StatementHandler g m
 addCore [pdx| %_ = $tag |]
   = msgToPP =<< do -- tag
-    tagflag <- flagText (Just EU4Country) tag
+    tagflag <- flagText (Just HOI4Country) tag
     return $ MsgTagGainsCore tagflag
 addCore [pdx| %_ = !num |]
   = msgToPP =<< do -- province
@@ -1790,7 +1790,7 @@ data AddOpinion = AddOpinion {
 newAddOpinion :: AddOpinion
 newAddOpinion = AddOpinion Nothing Nothing Nothing
 
-opinion :: (EU4Info g, Monad m) =>
+opinion :: (HOI4Info g, Monad m) =>
     (Text -> Text -> Text -> ScriptMessage)
         -> (Text -> Text -> Text -> Double -> ScriptMessage)
         -> StatementHandler g m
@@ -1809,7 +1809,7 @@ opinion msgIndef msgDur stmt@[pdx| %_ = @scr |]
         addLine op _ = op
         pp_add_opinion op = case (op_who op, op_modifier op) of
             (Just ewhom, Just modifier) -> do
-                mwhomflag <- eflag (Just EU4Country) ewhom
+                mwhomflag <- eflag (Just HOI4Country) ewhom
                 mod_loc <- getGameL10n modifier
                 case (mwhomflag, op_years op) of
                     (Just whomflag, Nothing) -> return $ msgIndef modifier mod_loc whomflag
@@ -1819,26 +1819,29 @@ opinion msgIndef msgDur stmt@[pdx| %_ = @scr |]
 opinion _ _ stmt = preStatement stmt
 
 data HasOpinion = HasOpinion
-        {   hop_who :: Maybe Text
+        {   hop_target :: Maybe Text
         ,   hop_value :: Maybe Double
+        ,   hop_ltgt :: Bool
         }
 newHasOpinion :: HasOpinion
-newHasOpinion = HasOpinion Nothing Nothing
-hasOpinion :: forall g m. (EU4Info g, Monad m) =>
+newHasOpinion = HasOpinion Nothing Nothing True
+hasOpinion :: forall g m. (HOI4Info g, Monad m) =>
     (Double -> Text -> Bool -> ScriptMessage) ->
     StatementHandler g m
 hasOpinion msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_hasOpinion (foldl' addLine newHasOpinion scr)
     where
         addLine :: HasOpinion -> GenericStatement -> HasOpinion
-        addLine hop [pdx| who   = ?who |] = hop { hop_who = Just who }
-        addLine hop [pdx| value = !val |] = hop { hop_value = Just val }
+        addLine hop [pdx| target = ?target |] = hop { hop_target = Just target }
+        addLine hop [pdx| value = !val |] = hop { hop_value = Just val, hop_ltgt = True } -- at least
+        addLine hop [pdx| value > !val |] = hop { hop_value = Just val, hop_ltgt = True } -- at least
+        addLine hop [pdx| value < !val |] = hop { hop_value = Just val, hop_ltgt = False } -- less than
         addLine hop _ = trace "warning: unrecognized has_opinion clause" hop
         pp_hasOpinion :: HasOpinion -> PPT g m ScriptMessage
-        pp_hasOpinion hop = case (hop_who hop, hop_value hop) of
-            (Just who, Just value) -> do
-                who_flag <- flag (Just EU4Country) who
-                return (msg value (Doc.doc2text who_flag) True)
+        pp_hasOpinion hop = case (hop_target hop, hop_value hop, hop_ltgt hop) of
+            (Just target, Just value, ltgt) -> do
+                target_flag <- flag (Just HOI4Country) target
+                return (msg value (Doc.doc2text target_flag) ltgt)
             _ -> return (preMessage stmt)
 hasOpinion _ stmt = preStatement stmt
 
@@ -1905,7 +1908,7 @@ data SpawnRebels = SpawnRebels {
 newSpawnRebels :: SpawnRebels
 newSpawnRebels = SpawnRebels Nothing Nothing Nothing False Nothing Nothing
 
-spawnRebels :: forall g m. (EU4Info g, Monad m) =>
+spawnRebels :: forall g m. (HOI4Info g, Monad m) =>
     Maybe Text -> StatementHandler g m
 spawnRebels mtype stmt = msgToPP =<< spawnRebels' mtype stmt where
     spawnRebels' Nothing [pdx| %_ = @scr |]
@@ -1930,7 +1933,7 @@ spawnRebels mtype stmt = msgToPP =<< spawnRebels' mtype stmt where
                 let rtype_loc_icon = flip HM.lookup rebel_loc =<< rebelType reb
                 friendText <- case friend reb of
                     Just thefriend -> do
-                        cflag <- flagText (Just EU4Country) thefriend
+                        cflag <- flagText (Just HOI4Country) thefriend
                         mtext <- messageText (MsgRebelsFriendlyTo cflag)
                         return (" (" <> mtext <> ")")
                     Nothing -> return ""
@@ -1953,17 +1956,17 @@ spawnRebels mtype stmt = msgToPP =<< spawnRebels' mtype stmt where
                             progressText
             _ -> return $ preMessage stmt
 
-spawnRebelsSimple :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+spawnRebelsSimple :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 spawnRebelsSimple stmt@[pdx| $typ = %_ |] = spawnRebels (Just typ) stmt
 spawnRebelsSimple stmt = spawnRebels Nothing stmt -- Will probably fail
 
-hasSpawnedRebels :: (EU4Info g, Monad m) => StatementHandler g m
+hasSpawnedRebels :: (HOI4Info g, Monad m) => StatementHandler g m
 hasSpawnedRebels [pdx| %_ = $rtype |]
     | Just (rtype_loc, rtype_iconkey) <- HM.lookup rtype rebel_loc
       = msgToPP $ MsgRebelsHaveRisen (iconText rtype_iconkey) rtype_loc
 hasSpawnedRebels stmt = preStatement stmt
 
-canSpawnRebels :: (EU4Info g, Monad m) => StatementHandler g m
+canSpawnRebels :: (HOI4Info g, Monad m) => StatementHandler g m
 canSpawnRebels [pdx| %_ = $rtype |]
     | Just (rtype_loc, rtype_iconkey) <- HM.lookup rtype rebel_loc
       = msgToPP (MsgProvinceHasRebels (iconText rtype_iconkey) rtype_loc)
@@ -1978,7 +1981,7 @@ data TriggerEvent = TriggerEvent
         }
 newTriggerEvent :: TriggerEvent
 newTriggerEvent = TriggerEvent Nothing Nothing Nothing
-triggerEvent :: forall g m. (EU4Info g, Monad m) => ScriptMessage -> StatementHandler g m
+triggerEvent :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
 triggerEvent evtType stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_trigger_event =<< foldM addLine newTriggerEvent scr
     where
@@ -2005,7 +2008,7 @@ triggerEvent _ stmt = preStatement stmt
 
 -- Specific values
 
-gainMen :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+gainMen :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 gainMen [pdx| $head = !amt |]
     | "add_manpower" <- head = gainMen' ("manpower"::Text) MsgGainMPFrac MsgGainMP 1000
     | "add_sailors" <- head = gainMen' ("sailors"::Text) MsgGainSailorsFrac MsgGainSailors 1
@@ -2028,7 +2031,7 @@ data AddCB = AddCB
     }
 newAddCB :: AddCB
 newAddCB = AddCB Nothing Nothing Nothing Nothing
-addCB :: forall g m. (EU4Info g, Monad m) =>
+addCB :: forall g m. (HOI4Info g, Monad m) =>
     Bool -- ^ True for add_casus_belli, False for reverse_add_casus_belli
         -> StatementHandler g m
 addCB direct stmt@[pdx| %_ = @scr |]
@@ -2037,11 +2040,11 @@ addCB direct stmt@[pdx| %_ = @scr |]
         addLine acb [pdx| target = $target |]
             = (\target_loc -> acb
                   { acb_target_flag = target_loc })
-              <$> eflag (Just EU4Country) (Left target)
+              <$> eflag (Just HOI4Country) (Left target)
         addLine acb [pdx| target = $vartag:$var |]
             = (\target_loc -> acb
                   { acb_target_flag = target_loc })
-              <$> eflag (Just EU4Country) (Right (vartag, var))
+              <$> eflag (Just HOI4Country) (Right (vartag, var))
         addLine acb [pdx| type = $cbtype |]
             = (\cbtype_loc -> acb
                   { acb_type = Just cbtype
@@ -2067,7 +2070,7 @@ addCB _ stmt = preStatement stmt
 
 -- Random
 
-random :: (EU4Info g, Monad m) => StatementHandler g m
+random :: (HOI4Info g, Monad m) => StatementHandler g m
 random stmt@[pdx| %_ = @scr |]
     | (front, back) <- break
                         (\substmt -> case substmt of
@@ -2087,11 +2090,12 @@ random stmt = preStatement stmt
 toPct :: Double -> Double
 toPct num = (fromIntegral $ round (num * 1000)) / 10 -- round to one digit after the point
 
-randomList :: (EU4Info g, Monad m) => StatementHandler g m
+randomList :: (HOI4Info g, Monad m) => StatementHandler g m
 randomList stmt@[pdx| %_ = @scr |] = fmtRandomList $ map entry scr
     where
         entry [pdx| !weight = @scr |] = (fromIntegral weight, scr)
-        entry _ = error "Bad clause in random_list"
+        entry [pdx| %weight = @scr |] = (40, scr)
+        entry _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list, possibly vars?")
         fmtRandomList entries = withCurrentIndent $ \i ->
             let total = sum (map fst entries)
             in (:) <$> pure (i, MsgRandom)
@@ -2137,7 +2141,7 @@ data DefineAdvisor = DefineAdvisor
 newDefineAdvisor :: DefineAdvisor
 newDefineAdvisor = DefineAdvisor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
-defineAdvisor :: forall g m. (EU4Info g, Monad m) => Bool -> StatementHandler g m
+defineAdvisor :: forall g m. (HOI4Info g, Monad m) => Bool -> StatementHandler g m
 defineAdvisor isScaled stmt@[pdx| %_ = @scr |]
     = msgToPP . pp_define_advisor =<< foldM addLine newDefineAdvisor scr where
         addLine :: DefineAdvisor -> GenericStatement -> PPT g m DefineAdvisor
@@ -2276,7 +2280,7 @@ data DefineDynMember = DefineDynMember
 newDefineDynMember :: DefineDynMember
 newDefineDynMember = DefineDynMember False Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False False Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing False Nothing False Nothing Nothing False
 
-defineDynMember :: forall g m. (EU4Info g, Monad m) =>
+defineDynMember :: forall g m. (HOI4Info g, Monad m) =>
     (Bool -> ScriptMessage) ->
     (Bool -> Text -> ScriptMessage) ->
     (Bool -> ScriptMessage) ->
@@ -2491,7 +2495,7 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
             return (Just (msg, ddm { ddm_bastard = False }))
         -- Country of origin
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_country = Just country } = do
-            countryText <- flagText (Just EU4Country) country
+            countryText <- flagText (Just HOI4Country) country
             [msg] <- msgToPP $ MsgNewDynMemberCountry countryText
             return (Just (msg, ddm { ddm_country = Nothing }))
         -- Exile name
@@ -2509,24 +2513,24 @@ defineDynMember _ _ _ _ stmt = preStatement stmt
 
 -- Rulers
 
-defineRuler :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+defineRuler :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 -- Estate led regency (for now, handled here since there aren't other parameters supported)
 defineRuler stmt@(Statement (GenericLhs _ []) OpEq (CompoundRhs [Statement (GenericLhs "regency" []) OpEq (CompoundRhs [Statement (GenericLhs "estate" []) OpEq (GenericRhs estate [])])])) = do
     estateLoc <- getGameL10n estate
     msgToPP $ MsgNewEstateRegency (iconText estate) estateLoc
 defineRuler stmt = defineDynMember MsgNewRuler MsgNewRulerLeader MsgNewRulerAttribs MsgNewRulerLeaderAttribs stmt
 
-defineExiledRuler :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+defineExiledRuler :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 defineExiledRuler = defineDynMember (\_ -> MsgNewExiledRuler) (\_ -> \_ -> MsgNewExiledRuler) (\_ -> MsgNewExiledRulerAttribs) (\_ -> \_ -> MsgNewExiledRulerAttribs)
 
 -- Heirs
 
-defineHeir :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+defineHeir :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 defineHeir = defineDynMember (\_ -> MsgNewHeir) (\_ -> \_ -> MsgNewHeir) (\_ -> MsgNewHeirAttribs) (\_ -> \_ -> MsgNewHeirAttribs)
 
 -- Consorts
 
-defineConsort :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+defineConsort :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 defineConsort = defineDynMember (\_ -> MsgNewConsort) (\_ -> \_ -> MsgNewConsort) (\_ -> MsgNewConsortAttribs) (\_ -> \_ -> MsgNewConsortAttribs)
 
 --------------------
@@ -2651,9 +2655,9 @@ foldCompound "createSuccessionCrisis" "CreateSuccessionCrisis" "csc"
     ,CompField "target"   [t|Text|] Nothing True
     ]
     [| do
-        attackerLoc <- flagText (Just EU4Country) _attacker
-        defenderLoc <- flagText (Just EU4Country) _defender
-        targetLoc   <- flagText (Just EU4Country) _target
+        attackerLoc <- flagText (Just HOI4Country) _attacker
+        defenderLoc <- flagText (Just HOI4Country) _defender
+        targetLoc   <- flagText (Just HOI4Country) _target
         return $ MsgCreateSuccessionCrisis attackerLoc defenderLoc targetLoc
     |]
 
@@ -2666,7 +2670,7 @@ data DeclareWarWithCB = DeclareWarWithCB
 newDeclareWarWithCB :: DeclareWarWithCB
 newDeclareWarWithCB = DeclareWarWithCB Nothing Nothing
 
-declareWarWithCB :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+declareWarWithCB :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 declareWarWithCB stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_declare_war_with_cb (foldl' addLine newDeclareWarWithCB scr) where
         addLine :: DeclareWarWithCB -> GenericStatement -> DeclareWarWithCB
@@ -2680,7 +2684,7 @@ declareWarWithCB stmt@[pdx| %_ = @scr |]
         pp_declare_war_with_cb dwcb
               = case (dwcb_who dwcb, dwcb_cb dwcb) of
                 (Just who, Just cb) -> do
-                    whoflag <- Doc.doc2text <$> flag (Just EU4Country) who
+                    whoflag <- Doc.doc2text <$> flag (Just HOI4Country) who
                     cb_loc <- getGameL10n cb
                     return (MsgDeclareWarWithCB whoflag cb_loc)
                 _ -> return $ preMessage stmt
@@ -2688,7 +2692,7 @@ declareWarWithCB stmt = preStatement stmt
 
 -- DLC
 
-hasDlc :: (EU4Info g, Monad m) => StatementHandler g m
+hasDlc :: (HOI4Info g, Monad m) => StatementHandler g m
 hasDlc [pdx| %_ = ?dlc |]
     = msgToPP $ MsgHasDLC dlc_icon dlc
     where
@@ -2723,7 +2727,7 @@ data EstateInfluenceModifier = EstateInfluenceModifier {
     }
 newEIM :: EstateInfluenceModifier
 newEIM = EstateInfluenceModifier Nothing Nothing
-hasEstateModifier :: (EU4Info g, Monad m) => (Text -> Text -> Text -> ScriptMessage) -> StatementHandler g m
+hasEstateModifier :: (HOI4Info g, Monad m) => (Text -> Text -> Text -> ScriptMessage) -> StatementHandler g m
 hasEstateModifier msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_eim (foldl' addField newEIM scr)
     where
@@ -2748,10 +2752,10 @@ data AddEstateInfluenceModifier = AddEstateInfluenceModifier {
 newAddEstateInfluenceModifier :: AddEstateInfluenceModifier
 newAddEstateInfluenceModifier = AddEstateInfluenceModifier Nothing Nothing Nothing Nothing
 
-timeOrIndef :: (EU4Info g, Monad m) => Double -> PPT g m Text
+timeOrIndef :: (HOI4Info g, Monad m) => Double -> PPT g m Text
 timeOrIndef n = if n < 0 then messageText MsgIndefinitely else messageText (MsgForDays n)
 
-estateInfluenceModifier :: forall g m. (EU4Info g, Monad m) =>
+estateInfluenceModifier :: forall g m. (HOI4Info g, Monad m) =>
     (Text -> Text -> Text -> Double -> Text -> ScriptMessage)
         -> StatementHandler g m
 estateInfluenceModifier msg stmt@[pdx| %_ = @scr |]
@@ -2779,7 +2783,7 @@ estateInfluenceModifier msg stmt@[pdx| %_ = @scr |]
 estateInfluenceModifier _ stmt = preStatement stmt
 
 -- Trigger switch
-triggerSwitch :: (EU4Info g, Monad m) => StatementHandler g m
+triggerSwitch :: (HOI4Info g, Monad m) => StatementHandler g m
 -- A trigger switch must be of the form
 -- trigger_switch = {
 --  on_trigger = <statement lhs>
@@ -2840,7 +2844,7 @@ triggerSwitch stmt = preStatement stmt
 --  }
 -- @
 --
-calcTrueIf :: (EU4Info g, Monad m) => StatementHandler g m
+calcTrueIf :: (HOI4Info g, Monad m) => StatementHandler g m
 calcTrueIf stmt@[pdx| %_ = @stmts |] = do
     let (mvalStmt, rest) = extractStmt (matchLhsText "amount") stmts
         (_, rest') = extractStmt (matchLhsText "desc") rest -- ignore desc for missions
@@ -2858,7 +2862,7 @@ calcTrueIf stmt = preStatement stmt
 -- also used for development_in_provinces     --
 ------------------------------------------------
 
-numOwnedProvincesWith :: (EU4Info g, Monad m) => (Double -> ScriptMessage) -> StatementHandler g m
+numOwnedProvincesWith :: (HOI4Info g, Monad m) => (Double -> ScriptMessage) -> StatementHandler g m
 numOwnedProvincesWith msg stmt@[pdx| %_ = @stmts |] = do
     let (mvalStmt, rest) = extractStmt (matchLhsText "value") stmts
     case mvalStmt of
@@ -2886,7 +2890,7 @@ hreReformLoc n = getGameL10n $ case n of
     8 -> "renovatio_title"
     _ -> error "called hreReformLoc with n < 1 or n > 8"
 
-hreReformLevel :: (EU4Info g, Monad m) => StatementHandler g m
+hreReformLevel :: (HOI4Info g, Monad m) => StatementHandler g m
 hreReformLevel [pdx| %_ = !level |] | level >= 0, level <= 8
     = if level == 0
         then msgToPP MsgNoHREReforms
@@ -2895,7 +2899,7 @@ hreReformLevel stmt = preStatement stmt
 
 -- Religion
 
-religionYears :: (EU4Info g, Monad m) => StatementHandler g m
+religionYears :: (HOI4Info g, Monad m) => StatementHandler g m
 religionYears [pdx| %_ = { $rel = !years } |]
     = do
         let rel_icon = iconText rel
@@ -2905,7 +2909,7 @@ religionYears stmt = preStatement stmt
 
 -- Government
 
-govtRank :: (EU4Info g, Monad m) => StatementHandler g m
+govtRank :: (HOI4Info g, Monad m) => StatementHandler g m
 govtRank [pdx| %_ = !level |]
     = case level :: Int of
         1 -> msgToPP MsgRankDuchy -- unlikely, but account for it anyway
@@ -2914,7 +2918,7 @@ govtRank [pdx| %_ = !level |]
         _ -> error "impossible: govtRank matched an invalid rank number"
 govtRank stmt = preStatement stmt
 
-setGovtRank :: (EU4Info g, Monad m) => StatementHandler g m
+setGovtRank :: (HOI4Info g, Monad m) => StatementHandler g m
 setGovtRank [pdx| %_ = !level |] | level `elem` [1..3]
     = case level :: Int of
         1 -> msgToPP MsgSetRankDuchy
@@ -2923,7 +2927,7 @@ setGovtRank [pdx| %_ = !level |] | level `elem` [1..3]
         _ -> error "impossible: setGovtRank matched an invalid rank number"
 setGovtRank stmt = preStatement stmt
 
-numProvinces :: (EU4Info g, Monad m) =>
+numProvinces :: (HOI4Info g, Monad m) =>
     Text
         -> (Text -> Text -> Double -> ScriptMessage)
         -> StatementHandler g m
@@ -2932,7 +2936,7 @@ numProvinces micon msg [pdx| $what = !amt |] = do
     msgToPP (msg (iconText micon) what_loc amt)
 numProvinces _ _ stmt = preStatement stmt
 
-withFlagOrProvince :: (EU4Info g, Monad m) =>
+withFlagOrProvince :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage)
         -> (Text -> ScriptMessage)
         -> StatementHandler g m
@@ -2944,13 +2948,13 @@ withFlagOrProvince _ provinceMsg stmt@[pdx| %_ = !(_ :: Double) |]
     = withProvince provinceMsg stmt
 withFlagOrProvince _ _ stmt = preStatement stmt
 
-withFlagOrProvinceEU4Scope :: (EU4Info g, Monad m) =>
+withFlagOrProvinceHOI4Scope :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage)
         -> (Text -> ScriptMessage)
         -> (Text -> ScriptMessage)
         -> (Text -> ScriptMessage)
         -> StatementHandler g m
-withFlagOrProvinceEU4Scope bothCountryMsg scopeCountryParamGeogMsg scopeGeogParamCountryMsg bothGeogMsg stmt = do
+withFlagOrProvinceHOI4Scope bothCountryMsg scopeCountryParamGeogMsg scopeGeogParamCountryMsg bothGeogMsg stmt = do
     mscope <- getCurrentScope
     -- If no scope, assume country.
     if fromMaybe False (isGeographic <$> mscope) then
@@ -2958,7 +2962,7 @@ withFlagOrProvinceEU4Scope bothCountryMsg scopeCountryParamGeogMsg scopeGeogPara
     else
         withFlagOrProvince bothCountryMsg scopeCountryParamGeogMsg stmt
 
-tradeMod :: (EU4Info g, Monad m) => StatementHandler g m
+tradeMod :: (HOI4Info g, Monad m) => StatementHandler g m
 tradeMod stmt@[pdx| %_ = ?_ |]
     = withLocAtom2 MsgTradeMod MsgHasModifier stmt
 tradeMod stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_tm (foldl' addLine newTA scr)
@@ -2973,13 +2977,13 @@ tradeMod stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_tm (foldl' addLine newTA scr)
 
         pp_tm ta = case (ta_what ta, ta_atom ta) of
             (Just who, Just key) -> do
-                whoText <- flagText (Just EU4Country) who
+                whoText <- flagText (Just HOI4Country) who
                 keyText <- getGameL10n key
                 return $ MsgHasTradeModifier "" whoText keyText
             _ -> return $ preMessage stmt
 tradeMod stmt = preStatement stmt
 
-isMonth :: (EU4Info g, Monad m) => StatementHandler g m
+isMonth :: (HOI4Info g, Monad m) => StatementHandler g m
 isMonth [pdx| %_ = !(num :: Int) |] | num >= 0, num <= 11
     = do
         month_loc <- getGameL10n $ case num of
@@ -2999,22 +3003,22 @@ isMonth [pdx| %_ = !(num :: Int) |] | num >= 0, num <= 11
         msgToPP $ MsgIsMonth month_loc
 isMonth stmt = preStatement stmt
 
-range :: (EU4Info g, Monad m) => StatementHandler g m
+range :: (HOI4Info g, Monad m) => StatementHandler g m
 range stmt@[pdx| %_ = !(_ :: Double) |]
     = numericIcon "colonial range" MsgGainColonialRange stmt
 range stmt = withFlag MsgIsInColonialRange stmt
 
-area :: (EU4Info g, Monad m) => StatementHandler g m
-area stmt@[pdx| %_ = @_ |] = scope EU4Geographic $ compoundMessage MsgArea stmt
+area :: (HOI4Info g, Monad m) => StatementHandler g m
+area stmt@[pdx| %_ = @_ |] = scope HOI4Geographic $ compoundMessage MsgArea stmt
 area stmt                  = locAtomTagOrProvince (const MsgAreaIs) MsgAreaIsAs stmt
 
 -- Currently dominant_culture only appears in decisions/Cultural.txt
 -- (dominant_culture = capital).
-dominantCulture :: (EU4Info g, Monad m) => StatementHandler g m
+dominantCulture :: (HOI4Info g, Monad m) => StatementHandler g m
 dominantCulture [pdx| %_ = capital |] = msgToPP MsgCapitalCultureDominant
 dominantCulture stmt = preStatement stmt
 
-customTriggerTooltip :: (EU4Info g, Monad m) => StatementHandler g m
+customTriggerTooltip :: (HOI4Info g, Monad m) => StatementHandler g m
 customTriggerTooltip [pdx| %_ = @scr |]
     -- ignore the custom tooltip
     = let rest = flip filter scr $ \stmt -> case stmt of
@@ -3023,7 +3027,7 @@ customTriggerTooltip [pdx| %_ = @scr |]
       in indentDown $ ppMany rest
 customTriggerTooltip stmt = preStatement stmt
 
-piety :: (EU4Info g, Monad m) => StatementHandler g m
+piety :: (HOI4Info g, Monad m) => StatementHandler g m
 piety stmt@[pdx| %_ = !amt |]
     = numericIcon (case amt `compare` (0::Double) of
         LT -> "lack of piety"
@@ -3031,9 +3035,9 @@ piety stmt@[pdx| %_ = !amt |]
       MsgPiety stmt
 piety stmt = preStatement stmt
 
-dynasty :: (EU4Info g, Monad m) => StatementHandler g m
+dynasty :: (HOI4Info g, Monad m) => StatementHandler g m
 dynasty stmt@[pdx| %_ = ?str |] = do
-    nflag <- flag (Just EU4Country) str
+    nflag <- flag (Just HOI4Country) str
     if isTag str || isPronoun str then
         msgToPP $ MsgRulerIsSameDynasty (Doc.doc2text nflag)
     else
@@ -3044,7 +3048,7 @@ dynasty stmt = (trace (show stmt)) $ preStatement stmt
 -- Idea group ideas --
 ----------------------
 
-hasIdea :: (EU4Info g, Monad m) =>
+hasIdea :: (HOI4Info g, Monad m) =>
     (Text -> Int -> ScriptMessage)
         -> StatementHandler g m
 hasIdea msg stmt@[pdx| $lhs = !n |] | n >= 1, n <= 7 = do
@@ -3070,13 +3074,13 @@ data Trust = Trust
         }
 newTrust :: Trust
 newTrust = Trust Nothing Nothing False
-trust :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+trust :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 trust stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_trust =<< foldM addLine newTrust scr
     where
         addLine :: Trust -> GenericStatement -> PPT g m Trust
         addLine tr [pdx| who = $whom |] = do
-            whom' <- Doc.doc2text <$> pronoun (Just EU4Country) whom
+            whom' <- Doc.doc2text <$> pronoun (Just HOI4Country) whom
             return tr { tr_whom = Just whom' }
         addLine tr [pdx| value = !amt |]
             = return tr { tr_amount = Just amt }
@@ -3110,7 +3114,7 @@ data GovernmentPower = GovernmentPower
         }
 newGP :: GovernmentPower
 newGP = GovernmentPower Nothing Nothing Nothing
-governmentPower :: (EU4Info g, Monad m) => StatementHandler g m
+governmentPower :: (HOI4Info g, Monad m) => StatementHandler g m
 governmentPower stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_gp (foldl' addLine newGP scr)
     where
@@ -3148,7 +3152,7 @@ data EmployedAdvisor = EmployedAdvisor
 newEA :: EmployedAdvisor
 newEA = EmployedAdvisor Nothing Nothing Nothing Nothing Nothing
 
-employedAdvisor :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+employedAdvisor :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 employedAdvisor stmt@[pdx| %_ = @scr |] = do
     currentFile <- withCurrentFile $ \f -> return f
     let addLine :: EmployedAdvisor -> GenericStatement -> EmployedAdvisor
@@ -3245,7 +3249,7 @@ data SetVariable = SetVariable
 newSV :: SetVariable
 newSV = SetVariable Nothing Nothing Nothing
 
-setVariable :: forall g m. (EU4Info g, Monad m) =>
+setVariable :: forall g m. (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage) ->
     (Text -> Double -> ScriptMessage) ->
     StatementHandler g m
@@ -3274,19 +3278,19 @@ setVariable _ _ stmt = preStatement stmt
 -- Handler for is_in_war --
 ---------------------------
 
-isInWar :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+isInWar :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 isInWar stmt@[pdx| %_ = @scr |]
     = withCurrentIndent $ \i -> do
         script_pp'd <- indentUp (concat <$> mapM handleLine scr)
         return ((i, MsgIsInWar) : script_pp'd)
     where
-        handleLine :: (EU4Info g, Monad m) => StatementHandler g m
+        handleLine :: (HOI4Info g, Monad m) => StatementHandler g m
         handleLine [pdx| duration = !dur |] = msgToPP $ MsgDurationAtLeast dur
         handleLine [pdx| casus_belli = $cb |] = msgToPP =<< do
             cbText <- getGameL10n cb
             return $ MsgCasusBelliIs cbText
         handleLine stmt@[pdx| $what = $who |] = msgToPP =<< do
-            whoText <- flagText (Just EU4Country) who
+            whoText <- flagText (Just HOI4Country) who
             return $ case T.toLower what of
                         "attacker_leader" -> MsgIsAttackerWarLeader whoText
                         "defender_leader" -> MsgIsDefenderWarLeader whoText
@@ -3299,7 +3303,7 @@ isInWar stmt = preStatement stmt
 ------------------------------------------
 -- Handler for has_government_attribute --
 ------------------------------------------
-hasGovermentAttribute :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasGovermentAttribute :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 hasGovermentAttribute stmt@[pdx| %_ = $mech |]
     = msgToPP =<< MsgGovernmentHasAttribute <$> getGameL10n ("mechanic_" <> mech <> "_yes")
 hasGovermentAttribute stmt = trace ("warning: not handled for has_government_attribute: " ++ (show stmt)) $ preStatement stmt
@@ -3324,7 +3328,7 @@ newML :: MilitaryLeader
 newML = MilitaryLeader Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- Also used for hasLeaderWith
-pp_mil_leader_attrib :: forall g m. (EU4Info g, Monad m) => Bool -> MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
+pp_mil_leader_attrib :: forall g m. (HOI4Info g, Monad m) => Bool -> MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
 pp_mil_leader_attrib naval ml =
     let msgShock     = (if naval then MsgNavalLeaderShock (iconText "naval leader shock") else MsgLandLeaderShock (iconText "land leader shock"))
         msgFire      = (if naval then MsgNavalLeaderFire (iconText "naval leader fire") else MsgLandLeaderFire (iconText "land leader fire"))
@@ -3362,7 +3366,7 @@ pp_mil_leader_attrib naval ml =
         pp_mil_leader_attrib' ml
 
 
-defineMilitaryLeader :: forall g m. (EU4Info g, Monad m) => Text -> Bool -> (Text -> ScriptMessage) -> StatementHandler g m
+defineMilitaryLeader :: forall g m. (HOI4Info g, Monad m) => Text -> Bool -> (Text -> ScriptMessage) -> StatementHandler g m
 defineMilitaryLeader icon naval headline stmt@[pdx| %_ = @scr |] = do
     currentFile <- withCurrentFile $ \f -> return f
     let addLine :: MilitaryLeader -> GenericStatement -> MilitaryLeader
@@ -3394,7 +3398,7 @@ defineMilitaryLeader icon naval headline stmt@[pdx| %_ = @scr |] = do
     pp_mil_leader $ foldl' addLine newML scr
 defineMilitaryLeader _ _ _ stmt = preStatement stmt
 
-createMilitaryLeader :: forall g m. (EU4Info g, Monad m) => Text -> Bool -> (Text -> Double -> ScriptMessage) -> (Text -> ScriptMessage) -> StatementHandler g m
+createMilitaryLeader :: forall g m. (HOI4Info g, Monad m) => Text -> Bool -> (Text -> Double -> ScriptMessage) -> (Text -> ScriptMessage) -> StatementHandler g m
 createMilitaryLeader icon naval msgWithTradition msgHeadline stmt@[pdx| $_ = @stmts |] =
     let (_, rest) = extractStmt (matchLhsText "culture") stmts -- FIXME: Ignoring culture when only combined with tradition
         (mtrad, rest') = extractStmt (matchLhsText "tradition") rest in
@@ -3417,7 +3421,7 @@ data SetSavedName = SetSavedName
 newSSN :: SetSavedName
 newSSN = SetSavedName Nothing Nothing Nothing False
 
-setSavedName :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+setSavedName :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 setSavedName stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_ssn (foldl' addLine newSSN scr)
     where
@@ -3447,14 +3451,14 @@ setSavedName stmt = (trace (show stmt)) $ preStatement stmt
 -- Handler for privateer_power --
 ---------------------------------
 
-privateerPower :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+privateerPower :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 privateerPower stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_pp (parseTV "country" "share" scr)
     where
         pp_pp :: TextValue -> PPT g m ScriptMessage
         pp_pp tv = case (tv_what tv, tv_value tv) of
             (Just what, Just val) -> do
-                what_loc <- flag (Just EU4Country) what
+                what_loc <- flag (Just HOI4Country) what
                 return $ MsgPrivateerPowerCountry (Doc.doc2text what_loc) val
             (Nothing, Just val) -> do
                 return $ MsgPrivateerPower val
@@ -3464,7 +3468,7 @@ privateerPower stmt = preStatement stmt
 -------------------------------
 -- Handler for trading_bonus --
 -------------------------------
-tradingBonus :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+tradingBonus :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 tradingBonus stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_tb (parseTA "trade_goods" "value" scr)
     where
@@ -3479,7 +3483,7 @@ tradingBonus stmt = preStatement stmt
 -----------------------------------
 -- Handler for estate privileges --
 -----------------------------------
-estatePrivilege :: forall g m. (EU4Info g, Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
+estatePrivilege :: forall g m. (HOI4Info g, Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
 estatePrivilege msg [pdx| %_ = @scr |] | length scr == 1 = estatePrivilege' (head scr)
     where
         estatePrivilege' :: GenericStatement -> PPT g m IndentedMessages
@@ -3500,7 +3504,7 @@ foldCompound "hasTradeCompanyInvestment" "HasTradeCompanyInvestment" "htci"
     ,CompField "count_one_per_area" [t|Text|] Nothing False
     ]
     [| do
-        investorLoc <- flagText (Just EU4Country) _investor
+        investorLoc <- flagText (Just HOI4Country) _investor
         case (_investment, _count_one_per_area) of
             (Just investment, Nothing) -> do
                 (icon, desc) <- tryLocAndIcon investment
@@ -3513,14 +3517,14 @@ foldCompound "hasTradeCompanyInvestment" "HasTradeCompanyInvestment" "htci"
 ----------------------------------------
 -- Handler for trading_policy_in_node --
 ----------------------------------------
-tradingPolicyInNode :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+tradingPolicyInNode :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 tradingPolicyInNode stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_tpin (parseTA "node" "policy" scr)
     where
         pp_tpin :: TextAtom -> PPT g m ScriptMessage
         pp_tpin ta = case (ta_what ta, ta_atom ta) of
             (Just node, Just policy) -> do
-                nodeLoc <- Doc.doc2text <$> allowPronoun (Just EU4TradeNode) (fmap Doc.strictText . getGameL10n) node
+                nodeLoc <- Doc.doc2text <$> allowPronoun (Just HOI4TradeNode) (fmap Doc.strictText . getGameL10n) node
                 case T.toLower policy of
                     "any" -> return $ MsgTradingPolicyInNodeAny nodeLoc
                     _ -> do
@@ -3547,7 +3551,7 @@ data RandomAdvisor = RandomAdvisor
 newRA :: RandomAdvisor
 newRA = RandomAdvisor Nothing Nothing False Nothing False
 
-randomAdvisor :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+randomAdvisor :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 randomAdvisor stmt@[pdx| %_ = @scr |] = pp_ra (foldl' addLine newRA scr)
     where
         addLine :: RandomAdvisor -> GenericStatement -> RandomAdvisor
@@ -3585,7 +3589,7 @@ randomAdvisor stmt = preStatement stmt
 -----------------------------
 -- Handler for kill_leader --
 -----------------------------
-killLeader :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+killLeader :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 killLeader stmt@[pdx| %_ = @scr |] =
     let
         (mtype, rest) = extractStmt (matchLhsText "type") scr
@@ -3615,7 +3619,7 @@ data EstateLoyaltyModifier = EstateLoyaltyModifier
 newELM :: EstateLoyaltyModifier
 newELM = EstateLoyaltyModifier Nothing Nothing Nothing Nothing
 
-addEstateLoyaltyModifier :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+addEstateLoyaltyModifier :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 addEstateLoyaltyModifier stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_elm (foldl' addLine newELM scr)
     where
         addLine :: EstateLoyaltyModifier -> GenericStatement -> EstateLoyaltyModifier
@@ -3654,7 +3658,7 @@ data ExportVariable = ExportVariable
 newEV :: ExportVariable
 newEV = ExportVariable Nothing Nothing Nothing
 
-exportVariable :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+exportVariable :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 exportVariable stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_ev (foldl' addLine newEV scr)
     where
         addLine :: ExportVariable -> GenericStatement -> ExportVariable
@@ -3671,7 +3675,7 @@ exportVariable stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_ev (foldl' addLine newEV
         pp_ev ExportVariable { ev_which = Just which, ev_value = Just value, ev_who = Nothing } =
             return $ MsgExportVariable which value
         pp_ev ExportVariable { ev_which = Just which, ev_value = Just value, ev_who = Just who } = do
-            whoLoc <- Doc.doc2text <$> allowPronoun (Just EU4Country) (fmap Doc.strictText . getGameL10n) who
+            whoLoc <- Doc.doc2text <$> allowPronoun (Just HOI4Country) (fmap Doc.strictText . getGameL10n) who
             return $ MsgExportVariableWho which value whoLoc
         pp_ev ev = return $ (trace $ "Missing info for export_to_variable " ++ show ev ++ " " ++ (show stmt)) $ preMessage stmt
 exportVariable stmt = (trace $ "Not handled in export_to_variable: " ++ (show stmt)) $ preStatement stmt
@@ -3679,7 +3683,7 @@ exportVariable stmt = (trace $ "Not handled in export_to_variable: " ++ (show st
 -----------------------------------
 -- Handler for (set_)ai_attitude --
 -----------------------------------
-aiAttitude :: forall g m. (EU4Info g, Monad m) => (Text -> Text -> Text -> Bool -> ScriptMessage) -> StatementHandler g m
+aiAttitude :: forall g m. (HOI4Info g, Monad m) => (Text -> Text -> Text -> Bool -> ScriptMessage) -> StatementHandler g m
 aiAttitude msg stmt@[pdx| %_ = @scr |] =
     let
         (mlocked, rest) = extractStmt (matchLhsText "locked") scr
@@ -3697,7 +3701,7 @@ aiAttitude msg stmt@[pdx| %_ = @scr |] =
                     taggedLoc <- tagged (tags !! 0) (tags !! 1)
                     return $ msg icon attLoc (fromMaybe who taggedLoc) isLocked
                 else do
-                    whoLoc <- flagText (Just EU4Country) who
+                    whoLoc <- flagText (Just HOI4Country) who
                     return $ msg icon attLoc whoLoc isLocked
             _ -> return $ preMessage stmt
 aiAttitude _ stmt = (trace $ "Not handled in aiAttitude: " ++ show stmt) $ preStatement stmt
@@ -3705,7 +3709,7 @@ aiAttitude _ stmt = (trace $ "Not handled in aiAttitude: " ++ show stmt) $ preSt
 ------------------------------------------------------
 -- Handler for {give,take}_estate_land_share_<size> --
 ------------------------------------------------------
-estateLandShareEffect :: forall g m. (EU4Info g, Monad m) => Double -> StatementHandler g m
+estateLandShareEffect :: forall g m. (HOI4Info g, Monad m) => Double -> StatementHandler g m
 estateLandShareEffect amt stmt@[pdx| %_ = @scr |] | [pdx| estate = ?estate |] : [] <- scr =
     case T.toLower estate of
         "all" -> msgToPP $ MsgEstateLandShareEffectAll amt
@@ -3717,7 +3721,7 @@ estateLandShareEffect _ stmt = preStatement stmt
 ------------------------------------------
 -- Handler for change_estate_land_share --
 ------------------------------------------
-changeEstateLandShare :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+changeEstateLandShare :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 changeEstateLandShare stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_cels (parseTV "estate" "share" scr)
     where
@@ -3735,7 +3739,7 @@ changeEstateLandShare stmt = preStatement stmt
 --------------------------------------------------
 -- Handler for {area,region}_for_scope_province --
 --------------------------------------------------
-scopeProvince :: forall g m. (EU4Info g, Monad m) => ScriptMessage -> ScriptMessage -> StatementHandler g m
+scopeProvince :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> ScriptMessage -> StatementHandler g m
 scopeProvince msgAny msgAll stmt@[pdx| %_ = @scr |] =
     let
         (mtype, rest) = extractStmt (matchLhsText "type") scr
@@ -3755,7 +3759,7 @@ scopeProvince _ _ stmt = preStatement stmt
 ---------------------------------------
 -- Handler for *personality_ancestor --
 ---------------------------------------
-personalityAncestor :: forall g m. (EU4Info g, Monad m) => (Text -> Text -> ScriptMessage) -> StatementHandler g m
+personalityAncestor :: forall g m. (HOI4Info g, Monad m) => (Text -> Text -> ScriptMessage) -> StatementHandler g m
 personalityAncestor msg stmt@[pdx| %_ = @scr |] | [pdx| key = $personality |] : [] <- scr = do
     let perso = personality <> "_personality"
     loc <- getGameL10n perso
@@ -3771,7 +3775,7 @@ getMaybeRhsText _ = Nothing
 -----------------------------------
 -- Handler for has_great_project --
 -----------------------------------
-hasGreatProject :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasGreatProject :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 hasGreatProject stmt@[pdx| %_ = @scr |] =
     let
         (mtype, rest) = extractStmt (matchLhsText "type") scr
@@ -3826,7 +3830,7 @@ data ChangePrice = ChangePrice
 newCP :: ChangePrice
 newCP = ChangePrice Nothing Nothing Nothing Nothing
 
-changePrice :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+changePrice :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 changePrice stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_cp (foldl' addLine newCP scr)
     where
         addLine :: ChangePrice -> GenericStatement -> ChangePrice
@@ -3860,7 +3864,7 @@ data HasLeaderWith = HasLeaderWith
 newHLW :: HasLeaderWith
 newHLW = HasLeaderWith False False False Nothing Nothing Nothing Nothing Nothing
 
-hasLeaderWith :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasLeaderWith :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 hasLeaderWith stmt@[pdx| %_ = @scr |] = pp_hlw (foldl' addLine newHLW scr)
     where
         addLine :: HasLeaderWith -> GenericStatement -> HasLeaderWith
@@ -3901,7 +3905,7 @@ hasLeaderWith stmt = (trace $ "Not handled in has_leader_with: " ++ (show stmt))
 -- Handler for kill_advisor_by_category_effect --
 -------------------------------------------------
 
-killAdvisorByCategory :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+killAdvisorByCategory :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 killAdvisorByCategory stmt@[pdx| %_ = @scr |] | [[pdx| $typ = yes |]] <- scr = do
     typeLoc <- getGameL10n typ
     msgToPP $ MsgRemoveAdvisor typeLoc
@@ -3912,15 +3916,15 @@ killAdvisorByCategory stmt = (trace $ "Not handled in kill_advisor_by_category_e
 ------------------------
 --
 -- Can either be a compund statement or a normal condition
-region :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+region :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 region stmt@[pdx| %_ = $_ |] = withLocAtom MsgRegionIs stmt
-region stmt@[pdx| %_ = @_ |] = (scope EU4Province  . compoundMessage MsgRegion) stmt
+region stmt@[pdx| %_ = @_ |] = (scope HOI4Province  . compoundMessage MsgRegion) stmt
 region stmt = preStatement stmt
 
 ----------------------------------------
 -- Handler for e.g. enlightenment = X --
 ----------------------------------------
-institutionPresence :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+institutionPresence :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 institutionPresence [pdx| $inst = !val |] = do
     instLoc <- getGameL10n inst
     msgToPP $ MsgInstitutionPresence (iconText inst) instLoc val
@@ -3930,9 +3934,9 @@ institutionPresence stmt = (trace $ "Warning: institutionPresence doesn't handle
 -- Handler for expulsion_target  --
 -----------------------------------
 
-expulsionTarget :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+expulsionTarget :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 expulsionTarget stmt@[pdx| %_ = @scr |] | [[pdx| province_id = $what |]] <- scr = do -- Not seen used with actual province id yet
-    whatLoc <- Doc.doc2text <$> pronoun (Just EU4Province) what
+    whatLoc <- Doc.doc2text <$> pronoun (Just HOI4Province) what
     msgToPP $ MsgExpulsionTarget whatLoc
 expulsionTarget stmt = (trace $ "Not handled in expulsion_target : " ++ show stmt) $ preStatement stmt
 
@@ -3951,7 +3955,7 @@ data SpawnScaledRebels = SpawnScaledRebels
     , ssr_saved_name :: Maybe Text
     } deriving Show
 
-spawnScaledRebels :: forall g m. (EU4Info g, Monad m) => Bool -> StatementHandler g m
+spawnScaledRebels :: forall g m. (HOI4Info g, Monad m) => Bool -> StatementHandler g m
 spawnScaledRebels large stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_ssr (foldl' addLine (SpawnScaledRebels Nothing Nothing) scr)
     where
         addLine :: SpawnScaledRebels -> GenericStatement -> SpawnScaledRebels
@@ -3981,7 +3985,7 @@ data CreateIndependentEstate = CreateIndependentEstate
     ,   cie_play_as :: Bool
     } deriving Show
 
-createIndependentEstate :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+createIndependentEstate :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 createIndependentEstate stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_cie (foldl' addLine (CreateIndependentEstate Nothing Nothing Nothing Nothing False) scr)
     where
         addLine :: CreateIndependentEstate -> GenericStatement -> CreateIndependentEstate
@@ -4010,7 +4014,7 @@ createIndependentEstate stmt = (trace $ "Not handled in createIndependentEstate:
 -----------------------------------------
 -- Helper for has_xxx_building_trigger --
 -----------------------------------------
-hasBuildingTrigger :: forall g m. (EU4Info g, Monad m) => [Text] -> StatementHandler g m
+hasBuildingTrigger :: forall g m. (HOI4Info g, Monad m) => [Text] -> StatementHandler g m
 hasBuildingTrigger buildings stmt@[pdx| %_ = $yn |] = do
     locAndIcons <- mapM locAndIcon buildings
     let buildingText = fmtList locAndIcons
@@ -4043,27 +4047,27 @@ foldCompound "productionLeader" "ProductionLeader" "pl"
         tgLoc <- getGameL10n _trade_goods
         return $ MsgIsProductionLeader (iconText _trade_goods) tgLoc
     |]
-
+{-
 -------------------------------------------------
 -- Handler for add_province_triggered_modifier --
 -------------------------------------------------
-addProvinceTriggeredModifier :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+addProvinceTriggeredModifier :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 addProvinceTriggeredModifier stmt@[pdx| %_ = $id |] = do
     mmod <- HM.lookup id <$> getProvinceTriggeredModifiers
     case mmod of
         Just mod -> withCurrentIndent $ \i -> do
-            effect <- scope EU4Bonus $ ppMany (ptmodEffects mod)
-            trigger <- indentUp $ scope EU4Province $ ppMany (ptmodTrigger mod)
+            effect <- scope HOI4Bonus $ ppMany (ptmodEffects mod)
+            trigger <- indentUp $ scope HOI4Province $ ppMany (ptmodTrigger mod)
             let name = ptmodLocName mod
                 locName = maybe ("<tt>" <> id <> "</tt>") (Doc.doc2text . iquotes) name
             return $ ((i, MsgAddProvinceTriggeredModifier locName) : effect) ++ (if null trigger then [] else ((i+1, MsgLimit) : trigger))
         _ -> (trace $ "add_province_triggered_modifier: Modifier " ++ T.unpack id ++ " not found") $ preStatement stmt
 addProvinceTriggeredModifier stmt = (trace $ "Not handled in addProvinceTriggeredModifier: " ++ show stmt) $ preStatement stmt
-
+-}
 --------------------------
 -- Handler for has_heir --
 --------------------------
-hasHeir :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
+hasHeir :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 hasHeir stmt@[pdx| %_ = ?rhs |] = msgToPP $
     case T.toLower rhs of
         "yes" -> MsgHasHeir True
@@ -4074,7 +4078,7 @@ hasHeir stmt = (trace $ "Not handled in hasHeir " ++ show stmt) $ preStatement s
 ---------------------------
 -- Handler for kill_heir --
 ---------------------------
-killHeir :: (EU4Info g, Monad m) => StatementHandler g m
+killHeir :: (HOI4Info g, Monad m) => StatementHandler g m
 killHeir stmt@(Statement _ OpEq (CompoundRhs [])) = msgToPP $ MsgHeirDies True
 killHeir stmt@(Statement _ OpEq (CompoundRhs [Statement (GenericLhs "allow_new_heir" []) OpEq (GenericRhs "no" [])])) = msgToPP $ MsgHeirDies False
 killHeir stmt = (trace $ "Not handled in killHeir: " ++ show stmt) $ preStatement stmt
@@ -4083,18 +4087,19 @@ killHeir stmt = (trace $ "Not handled in killHeir: " ++ show stmt) $ preStatemen
 ----------------------------------------------
 -- Handler for create_colony_mission_reward --
 ----------------------------------------------
-createColonyMissionReward :: (EU4Info g, Monad m) => StatementHandler g m
+{-
+createColonyMissionReward :: (HOI4Info g, Monad m) => StatementHandler g m
 createColonyMissionReward stmt =
     case getEffectArg "province" stmt of
         Just (IntRhs num) -> do
             prov <- getProvLoc num
             msgToPP $ MsgColonyMissionReward prov
         _ -> (trace $ "warning: Not handled by createColonyMissionReward: " ++ (show stmt)) $ preStatement stmt
-
+-}
 --------------------------------
 -- Handler for has_idea_group --
 --------------------------------
-hasIdeaGroup :: (EU4Info g, Monad m) => StatementHandler g m
+hasIdeaGroup :: (HOI4Info g, Monad m) => StatementHandler g m
 hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
     -- TODO: Improve
     -- Dirty check, if of the form XXX_ideas (where XXX are upper caes letters) assume national ideas..
@@ -4121,7 +4126,7 @@ foldCompound "killUnits" "KillUnits" "ku"
     ,CompField "type" [t|Text|] Nothing True
     ,CompField "who" [t|Text|] Nothing True]
     [| do
-        who <- flagText (Just EU4Country) _who
+        who <- flagText (Just HOI4Country) _who
         what <- getGameL10n _type
         return $ MsgKillUnits (iconText what) what who _amount
     |]
@@ -4131,18 +4136,24 @@ foldCompound "killUnits" "KillUnits" "ku"
 -------------------------------------------
 foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
     []
-    [CompField "building" [t|Text|] Nothing True
-    ,CompField "speed" [t|Double|] Nothing True
-    ,CompField "cost" [t|Double|] Nothing True]
-    [| do
-        buildingLoc <- getGameL10n ("building_" <> _building)
-        return $ MsgConstructBuilding (iconText _building) buildingLoc _speed _cost
+    [CompField "type" [t|Text|] Nothing True
+    ,CompField "level" [t|Double|] Nothing True
+    ,CompField "instant_build" [t|Text|] Nothing False]
+    [|  do
+        buildingLoc <- getGameL10n _type
+        return $ (case _type of
+            "industrial_complex" -> MsgAddBuildingConstruction (iconText "cic")
+            "arms_factory" -> MsgAddBuildingConstruction (iconText "mic")
+            "dockyard" -> MsgAddBuildingConstruction (iconText "nic")
+            "bunker" -> MsgAddBuildingConstruction (iconText "land fort")
+            _ -> MsgAddBuildingConstruction (iconText _type)            
+         ) buildingLoc _level "check files if bunker"
     |]
 
 ----------------------------------------------------
 -- Handler for has_reached_government_reform_tier --
 ----------------------------------------------------
-hasGovernmentReforTier :: (EU4Info g, Monad m) => StatementHandler g m
+hasGovernmentReforTier :: (HOI4Info g, Monad m) => StatementHandler g m
 hasGovernmentReforTier stmt@(Statement _ OpEq (CompoundRhs [Statement (GenericLhs tier []) OpEq (GenericRhs "yes" [])])) | T.isPrefixOf "tier_" tier =
     msgToPP $ MsgHasReformTier $ (read (T.unpack $ T.drop 5 tier) :: Double)
 hasGovernmentReforTier stmt = (trace $ "Not handled in hasGovernmentReforTier: " ++ show stmt) $ preStatement stmt

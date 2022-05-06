@@ -1,11 +1,11 @@
 {-|
-Module      : EU4.Modifiers
+Module      : HOI4.Modifiers
 Description : Country, ruler, province and opinion modifiers
 -}
-module EU4.Modifiers (
-        parseEU4Modifiers, writeEU4Modifiers
-    ,   parseEU4OpinionModifiers, writeEU4OpinionModifiers
-    ,   parseEU4ProvTrigModifiers, writeEU4ProvTrigModifiers
+module HOI4.Modifiers (
+--        parseHOI4Modifiers, writeHOI4Modifiers,
+        parseHOI4OpinionModifiers, writeHOI4OpinionModifiers
+--    ,   parseHOI4ProvTrigModifiers, writeHOI4ProvTrigModifiers
     ) where
 
 import Control.Arrow ((&&&))
@@ -32,8 +32,8 @@ import SettingsTypes ( PPT, Settings (..){-, Game (..)-}
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions)
-import EU4.Types -- everything
-import EU4.Common (extractStmt, matchExactText, ppMany)
+import HOI4.Types -- everything
+import HOI4.Common (extractStmt, matchExactText, ppMany)
 import FileIO (Feature (..), writeFeatures)
 import Text.PrettyPrint.Leijen.Text (Doc)
 import qualified Text.PrettyPrint.Leijen.Text as PP
@@ -42,14 +42,14 @@ import Messages
 import MessageTools
 
 import Debug.Trace (trace, traceM)
-
-parseEU4Modifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
-    HashMap String GenericScript -> PPT g m (HashMap Text EU4Modifier)
-parseEU4Modifiers scripts = HM.unions . HM.elems <$> do
+{-
+parseHOI4Modifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4Modifier)
+parseHOI4Modifiers scripts = HM.unions . HM.elems <$> do
     tryParse <- hoistExceptions $
         HM.traverseWithKey
             (\sourceFile scr ->
-                setCurrentFile sourceFile $ mapM parseEU4Modifier scr)
+                setCurrentFile sourceFile $ mapM parseHOI4Modifier scr)
             scripts
     case tryParse of
         Left err -> do
@@ -63,39 +63,39 @@ parseEU4Modifiers scripts = HM.unions . HM.elems <$> do
                                  ++ ": " ++ T.unpack err
                         return Nothing
                     Right mmod -> return mmod
-                where mkModMap :: [EU4Modifier] -> HashMap Text EU4Modifier
+                where mkModMap :: [HOI4Modifier] -> HashMap Text HOI4Modifier
                       mkModMap = HM.fromList . map (modName &&& id)
 
-parseEU4Modifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
-    GenericStatement -> PPT g m (Either Text (Maybe EU4Modifier))
-parseEU4Modifier [pdx| $modid = @effects |]
+parseHOI4Modifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe HOI4Modifier))
+parseHOI4Modifier [pdx| $modid = @effects |]
     = withCurrentFile $ \file -> do
         mlocid <- getGameL10nIfPresent modid
 
         -- Handle religions modifiers
         let (mrelstmt, rest) = extractStmt (matchExactText "religion" "yes") effects
-        return . Right . Just $ EU4Modifier {
+        return . Right . Just $ HOI4Modifier {
                 modName = modid
             ,   modLocName = mlocid
             ,   modPath = file
             ,   modReligious = isJust mrelstmt
             ,   modEffects = rest
             }
-parseEU4Modifier _ = withCurrentFile $ \file ->
+parseHOI4Modifier _ = withCurrentFile $ \file ->
     throwError ("unrecognised form for modifier in " <> T.pack file)
 
 -- | Present the parsed modifiers as wiki text and write them to the
 -- appropriate files.
-writeEU4Modifiers :: (EU4Info g, MonadError Text m, MonadIO m) => PPT g m ()
-writeEU4Modifiers = throwError "Sorry, writing all modifiers currently not supported."
-
-parseEU4OpinionModifiers :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
-    HashMap String GenericScript -> PPT g m (HashMap Text EU4OpinionModifier)
-parseEU4OpinionModifiers scripts = HM.unions . HM.elems <$> do
+writeHOI4Modifiers :: (HOI4Info g, MonadError Text m, MonadIO m) => PPT g m ()
+writeHOI4Modifiers = throwError "Sorry, writing all modifiers currently not supported."
+-}
+parseHOI4OpinionModifiers :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4OpinionModifier)
+parseHOI4OpinionModifiers scripts = HM.unions . HM.elems <$> do
     tryParse <- hoistExceptions $
         HM.traverseWithKey
             (\sourceFile scr ->
-                setCurrentFile sourceFile $ mapM parseEU4OpinionModifier scr)
+                setCurrentFile sourceFile $ mapM parseHOI4OpinionModifier scr)
             scripts
     case tryParse of
         Left err -> do
@@ -109,17 +109,17 @@ parseEU4OpinionModifiers scripts = HM.unions . HM.elems <$> do
                                  ++ ": " ++ T.unpack err
                         return Nothing
                     Right mmod -> return mmod
-                where mkModMap :: [EU4OpinionModifier] -> HashMap Text EU4OpinionModifier
+                where mkModMap :: [HOI4OpinionModifier] -> HashMap Text HOI4OpinionModifier
                       mkModMap = HM.fromList . map (omodName &&& id)
 
-newEU4OpinionModifier id locid path = EU4OpinionModifier id locid path Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+newHOI4OpinionModifier id locid path = HOI4OpinionModifier id locid path Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- | Parse a statement in an opinion modifiers file. Some statements aren't
 -- modifiers; for those, and for any obvious errors, return Right Nothing.
-parseEU4OpinionModifier :: (IsGameState (GameState g), IsGameData (GameData g), MonadError Text m) =>
-    GenericStatement -> PPT g m (Either Text (Maybe EU4OpinionModifier))
-parseEU4OpinionModifier (StatementBare _) = throwError "bare statement at top level"
-parseEU4OpinionModifier [pdx| %left = %right |] = case right of
+parseHOI4OpinionModifier :: (IsGameState (GameState g), IsGameData (GameData g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe HOI4OpinionModifier))
+parseHOI4OpinionModifier (StatementBare _) = throwError "bare statement at top level"
+parseHOI4OpinionModifier [pdx| %left = %right |] = case right of
     CompoundRhs parts -> case left of
         CustomLhs _ -> throwError "internal error: custom lhs"
         IntLhs _ -> throwError "int lhs at top level"
@@ -127,7 +127,7 @@ parseEU4OpinionModifier [pdx| %left = %right |] = case right of
         GenericLhs id [] -> withCurrentFile $ \file -> do
             locid <- getGameL10nIfPresent id
             mmod <- hoistErrors $ foldM opinionModifierAddSection
-                                        (Just (newEU4OpinionModifier id locid file))
+                                        (Just (newHOI4OpinionModifier id locid file))
                                         parts
             case mmod of
                 Left err -> return (Left err)
@@ -136,31 +136,34 @@ parseEU4OpinionModifier [pdx| %left = %right |] = case right of
                     return (Right (Just mod ))
         _ -> throwError "unrecognized form for opinion modifier"
     _ -> throwError "unrecognized form for opinion modifier"
-parseEU4OpinionModifier _ = withCurrentFile $ \file ->
+parseHOI4OpinionModifier _ = withCurrentFile $ \file ->
     throwError ("unrecognised form for opinion modifier in " <> T.pack file)
 
 -- | Interpret one section of an opinion modifier. If understood, add it to the
 -- event data. If not understood, throw an exception.
 opinionModifierAddSection :: (IsGameState (GameState g), MonadError Text m) =>
-    Maybe EU4OpinionModifier -> GenericStatement -> PPT g m (Maybe EU4OpinionModifier)
+    Maybe HOI4OpinionModifier -> GenericStatement -> PPT g m (Maybe HOI4OpinionModifier)
 opinionModifierAddSection Nothing _ = return Nothing
 opinionModifierAddSection mmod stmt
     = sequence (opinionModifierAddSection' <$> mmod <*> pure stmt)
     where
-        opinionModifierAddSection' mod stmt@[pdx| opinion = !rhs |]
-            = return (mod { omodOpinion = Just rhs })
+        opinionModifierAddSection' mod stmt@[pdx| value = !rhs |]
+            = return (mod { omodValue = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| max = !rhs |]
             = return (mod { omodMax = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| min = !rhs |]
             = return (mod { omodMin = Just rhs })
-        opinionModifierAddSection' mod stmt@[pdx| yearly_decay = !rhs |]
-            = return (mod { omodYearlyDecay = Just rhs })
+        opinionModifierAddSection' mod stmt@[pdx| decay = !rhs |]
+            = return (mod { omodDecay = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| months = !rhs |]
             = return (mod { omodMonths = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| years = !rhs |]
             = return (mod { omodYears = Just rhs })
-        opinionModifierAddSection' mod stmt@[pdx| max_vassal = !rhs |]
-            = return (mod { omodMaxVassal = Just rhs })
+        opinionModifierAddSection' mod stmt@[pdx| trade = %rhs |] = case rhs of
+            GenericRhs "yes" [] -> return mod { omodTrade = Just True }
+            -- no is the default, so I don't think this is ever used
+            GenericRhs "no" [] -> return mod { omodTrade = Just False }
+            _ -> throwError "bad trade opinion"
         opinionModifierAddSection' mod stmt@[pdx| max_in_other_direction = !rhs |]
             = return (mod { omodMaxInOtherDirection = Just rhs })
         opinionModifierAddSection' mod [pdx| $other = %_ |]
@@ -168,8 +171,8 @@ opinionModifierAddSection mmod stmt
         opinionModifierAddSection' mod _
             = trace ("unrecognised form for opinion modifier section") $ return mod
 
-writeEU4OpinionModifiers :: (EU4Info g, MonadIO m) => PPT g m ()
-writeEU4OpinionModifiers = do
+writeHOI4OpinionModifiers :: (HOI4Info g, MonadIO m) => PPT g m ()
+writeHOI4OpinionModifiers = do
     opinionModifiers <- getOpinionModifiers
     writeFeatures "opinion_modifiers"
                   [Feature { featurePath = Just "templates"
@@ -179,7 +182,7 @@ writeEU4OpinionModifiers = do
                   pp_opinion_modifers
 
 -- Based on https://hoi4.paradoxwikis.com/Template:Opinion
-pp_opinion_modifers :: (EU4Info g, Monad m) => [EU4OpinionModifier] -> PPT g m Doc
+pp_opinion_modifers :: (HOI4Info g, Monad m) => [HOI4OpinionModifier] -> PPT g m Doc
 pp_opinion_modifers modifiers = do
     version <- gets (gameVersion . getSettings)
     modifiers_pp'd <- mapM pp_opinion_modifer (sortOn omodName modifiers)
@@ -197,7 +200,7 @@ pp_opinion_modifers modifiers = do
 
 
 
-pp_opinion_modifer :: (EU4Info g, Monad m) => EU4OpinionModifier -> PPT g m Doc
+pp_opinion_modifer :: (HOI4Info g, Monad m) => HOI4OpinionModifier -> PPT g m Doc
 pp_opinion_modifer mod = do
     locName <- getGameL10n (omodName mod)
     return . mconcat $
@@ -208,11 +211,13 @@ pp_opinion_modifer mod = do
         , " {{#ifeq:{{{2|}}}|0|| ("
         ] ++
         intersperse " / " (
-            (modText "{{icon|opinion}} " " Opinion" (omodOpinion mod))
-            ++ (yearlyDecay (omodOpinion mod) (omodYearlyDecay mod))
+            if isTrade then
+                (modText "" " Trade relation" (omodValue mod))
+                else
+                   (modText "{{icon|opinion}} " " Opinion" (omodValue mod)) 
+            ++ (yearlyDecay (omodValue mod) (omodDecay mod))
             ++ (modText "" " Min" (omodMin mod))
             ++ (modText "" " Max" (omodMax mod))
-            ++ (modText "" " Max for vassal" (omodMaxVassal mod))
             ++ (modText "" " Max for sender" (omodMaxInOtherDirection mod))
             ++ (duration (omodMonths mod) (omodYears mod))
         ) ++
@@ -224,6 +229,8 @@ pp_opinion_modifer mod = do
         modText :: Text -> Text -> Maybe Double -> [Doc]
         modText p s (Just val) | val /= 0 = [mconcat [ Doc.strictText p, colourNumSign True val, Doc.strictText s ]]
         modText _ _ _ = []
+
+        isTrade = fromMaybe False $ omodTrade mod
 
         yearlyDecay :: Maybe Double -> Maybe Double -> [Doc]
         yearlyDecay (Just op) (Just decay) = [mconcat [
@@ -240,14 +247,14 @@ pp_opinion_modifer mod = do
 
         fmt :: Text -> Double -> Doc
         fmt t v = mconcat [ plainNum v, " ", Doc.strictText $ t <> (if v == 1.0 then "" else "s") ]
-
-parseEU4ProvTrigModifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
-    HashMap String GenericScript -> PPT g m (HashMap Text EU4ProvinceTriggeredModifier)
-parseEU4ProvTrigModifiers scripts = HM.unions . HM.elems <$> do
+{-
+parseHOI4ProvTrigModifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4ProvinceTriggeredModifier)
+parseHOI4ProvTrigModifiers scripts = HM.unions . HM.elems <$> do
     tryParse <- hoistExceptions $
         HM.traverseWithKey
             (\sourceFile scr ->
-                setCurrentFile sourceFile $ mapM parseEU4ProvTrigModifier scr)
+                setCurrentFile sourceFile $ mapM parseHOI4ProvTrigModifier scr)
             scripts
     case tryParse of
         Left err -> do
@@ -261,15 +268,15 @@ parseEU4ProvTrigModifiers scripts = HM.unions . HM.elems <$> do
                                  ++ ": " ++ T.unpack err
                         return Nothing
                     Right mmod -> return mmod
-                where mkModMap :: [EU4ProvinceTriggeredModifier] -> HashMap Text EU4ProvinceTriggeredModifier
+                where mkModMap :: [HOI4ProvinceTriggeredModifier] -> HashMap Text HOI4ProvinceTriggeredModifier
                       mkModMap = HM.fromList . map (ptmodName &&& id)
 
-parseEU4ProvTrigModifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
-    GenericStatement -> PPT g m (Either Text (Maybe EU4ProvinceTriggeredModifier))
-parseEU4ProvTrigModifier [pdx| $modid = @effects |]
+parseHOI4ProvTrigModifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe HOI4ProvinceTriggeredModifier))
+parseHOI4ProvTrigModifier [pdx| $modid = @effects |]
     = withCurrentFile $ \file -> do
         mlocid <- getGameL10nIfPresent modid
-        let ptm = foldl' addSection (EU4ProvinceTriggeredModifier {
+        let ptm = foldl' addSection (HOI4ProvinceTriggeredModifier {
                 ptmodName = modid
             ,   ptmodLocName = mlocid
             ,   ptmodPath = file
@@ -281,7 +288,7 @@ parseEU4ProvTrigModifier [pdx| $modid = @effects |]
             }) effects
         return $ Right (Just ptm)
     where
-        addSection :: EU4ProvinceTriggeredModifier -> GenericStatement -> EU4ProvinceTriggeredModifier
+        addSection :: HOI4ProvinceTriggeredModifier -> GenericStatement -> HOI4ProvinceTriggeredModifier
         addSection ptm stmt@[pdx| $lhs = @scr |] = case lhs of
             "potential"       -> ptm { ptmodPotential = scr }
             "trigger"         -> ptm { ptmodTrigger = scr }
@@ -290,11 +297,11 @@ parseEU4ProvTrigModifier [pdx| $modid = @effects |]
             _ -> (trace $ "Urecognized statement in province triggered modifier: " ++ show stmt) $ ptm
          -- Must be an effect
         addSection ptm stmt = ptm { ptmodEffects = (ptmodEffects ptm) ++ [stmt] }
-parseEU4ProvTrigModifier stmt = (trace $ show stmt) $ withCurrentFile $ \file ->
+parseHOI4ProvTrigModifier stmt = (trace $ show stmt) $ withCurrentFile $ \file ->
     throwError ("unrecognised form for province triggered modifier in " <> T.pack file)
 
-writeEU4ProvTrigModifiers :: (EU4Info g, MonadIO m) => PPT g m ()
-writeEU4ProvTrigModifiers = do
+writeHOI4ProvTrigModifiers :: (HOI4Info g, MonadIO m) => PPT g m ()
+writeHOI4ProvTrigModifiers = do
     provTrigModifiers <- getProvinceTriggeredModifiers
     writeFeatures "province_triggered_modifiers"
                   [Feature { featurePath = Just "tables"
@@ -303,7 +310,7 @@ writeEU4ProvTrigModifiers = do
                            }]
                   pp_prov_trig_modifiers
     where
-        pp_prov_trig_modifiers :: (EU4Info g, Monad m) => [EU4ProvinceTriggeredModifier] -> PPT g m Doc
+        pp_prov_trig_modifiers :: (HOI4Info g, Monad m) => [HOI4ProvinceTriggeredModifier] -> PPT g m Doc
         pp_prov_trig_modifiers mods = do
             version <- gets (gameVersion . getSettings)
             modDoc <- mapM pp_prov_trig_modifier (sortOn (sortName . ptmodLocName) mods)
@@ -324,7 +331,7 @@ writeEU4ProvTrigModifiers = do
             in fromMaybe ln nn
         sortName _ = ""
 
-        pp_prov_trig_modifier :: (EU4Info g, Monad m) => EU4ProvinceTriggeredModifier -> PPT g m Doc
+        pp_prov_trig_modifier :: (HOI4Info g, Monad m) => HOI4ProvinceTriggeredModifier -> PPT g m Doc
         pp_prov_trig_modifier mod = do
             req <- imsg2doc =<< ppMany ((ptmodPotential mod) ++ (ptmodTrigger mod))
             eff <- imsg2doc =<< ppMany (ptmodEffects mod)
@@ -342,7 +349,7 @@ writeEU4ProvTrigModifiers = do
                 , act, dea, PP.line
                 ]
 
-        withHeader :: (EU4Info g, Monad m) => Text -> GenericScript -> PPT g m Doc
+        withHeader :: (HOI4Info g, Monad m) => Text -> GenericScript -> PPT g m Doc
         withHeader _ [] = return $ mconcat []
         withHeader hdr stmts = do
             stpp'd <- imsg2doc =<< ppMany stmts
@@ -351,3 +358,4 @@ writeEU4ProvTrigModifiers = do
                 , stpp'd, PP.line
                 ]
 
+-}

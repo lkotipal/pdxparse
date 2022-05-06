@@ -56,7 +56,8 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * Add parser for national focuses
 * Have script look for triggers in national focuses
 * Add more formatting for various lines, best case scenarion minimal editing is needed to place it on the wiki
-* Replace the files in the HoI4 folder with the edited EU4 files and properly remove mentions of EU4 stuff
+* ~~Replace the files in the HoI4 folder with the edited EU4 files and properly remove mentions of EU4 stuff~~
+* Get rid of stuff only for EU4 in HoI4 stuff
 * Support mods better by having additional settings and making localization reading more elaborate
     * Also make it so check for EU4 or HoI4 for proper folder location?
 * Make add_Building_construction, random_list work properly

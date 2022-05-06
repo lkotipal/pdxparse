@@ -1,25 +1,43 @@
+{-|
+Module      : HOI4.Types
+Description : Types specific to Europa Universalis IV
+-}
 module HOI4.Types (
-        -- Used by Settings
-        HOI4Data (..)
-    ,   HOI4State (..)
+        -- * Parser state
+        HOI4Data (..), HOI4State (..)
     ,   HOI4Info (..)
-        -- Features
-    ,   HOI4EvtDesc (..), HOI4Event (..), HOI4Option (..)
-        -- Low level
+        -- * Features
+    ,   HOI4EvtTitle (..), HOI4EvtDesc (..), HOI4Event (..), HOI4Option (..)
+    ,   HOI4EventSource (..), HOI4EventTriggers, HOI4EventWeight
+    ,   HOI4Decision (..)
+    ,   IdeaGroup (..), Idea (..), IdeaTable
+--    ,   HOI4Modifier (..)
+    ,   HOI4OpinionModifier (..)
+--    ,   HOI4MissionTreeBranch (..), HOI4Mission (..)
+--    ,   HOI4ProvinceTriggeredModifier (..)
+        -- * Low level types
+    ,   MonarchPower (..)
     ,   HOI4Scope (..)
-    ,   Party (..)
---  ,   AIWillDo (..)
---  ,   AIModifier (..)
---  ,   aiWillDo
+    ,   AIWillDo (..)
+    ,   AIModifier (..)
+    ,   HOI4GeoType (..)
+    ,   aiWillDo
+    ,   isGeographic
+    -- utilities that can't go anywhere else
+--    ,   getModifier
     ) where
 
 import Data.List (foldl')
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.HashMap.Strict (HashMap)
+import qualified Data.HashMap.Strict as HM
+import Data.Hashable (Hashable)
+import GHC.Generics (Generic)
 
 import Abstract -- everything
-import SettingsTypes ( PPT, GameState (..), Settings (..)
+import QQ (pdx)
+import SettingsTypes ( PPT, Settings
                      , IsGame (..), IsGameData (..), IsGameState (..))
 --import Doc
 
@@ -27,102 +45,327 @@ import SettingsTypes ( PPT, GameState (..), Settings (..)
 -- Types used by toplevel Settings module --
 --------------------------------------------
 
+-- | Settings, raw scripts, and parsed scripts.
 data HOI4Data = HOI4Data {
         hoi4settings :: Settings
-    ,   hoi4eventScripts :: HashMap String GenericScript
     ,   hoi4events :: HashMap Text HOI4Event
+    ,   hoi4decisions :: HashMap Text HOI4Decision
+    ,   hoi4ideaGroups :: IdeaTable
+--    ,   hoi4modifiers :: HashMap Text HOI4Modifier
+    ,   hoi4opmods :: HashMap Text HOI4OpinionModifier
+--    ,   hoi4missions :: HashMap Text HOI4MissionTreeBranch
+    ,   hoi4eventTriggers :: HOI4EventTriggers
+    ,   hoi4geoData :: HashMap Text HOI4GeoType
+--    ,   hoi4provtrigmodifiers :: HashMap Text HOI4ProvinceTriggeredModifier
+    ,   hoi4eventScripts :: HashMap FilePath GenericScript
+    ,   hoi4decisionScripts :: HashMap FilePath GenericScript
+    ,   hoi4ideaGroupScripts :: HashMap FilePath GenericScript
+--    ,   hoi4modifierScripts :: HashMap FilePath GenericScript
+    ,   hoi4opmodScripts :: HashMap FilePath GenericScript
+--    ,   hoi4missionScripts :: HashMap FilePath GenericScript
+    ,   hoi4onactionsScripts :: HashMap FilePath GenericScript
+--    ,   hoi4disasterScripts :: HashMap FilePath GenericScript
+--    ,   hoi4provtrigmodifierScripts :: HashMap FilePath GenericScript
+    ,   hoi4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
+    ,   hoi4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
+    ,   hoi4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
+    ,   hoi4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
+    ,   hoi4extraScriptsModifier :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     -- etc.
     }
 
--- State
+-- | State type for HOI4.
 data HOI4State = HOI4State {
         hoi4scopeStack :: [HOI4Scope]
     ,   hoi4currentFile :: Maybe FilePath
     ,   hoi4currentIndent :: Maybe Int
-    }
+    ,   hoi4IsInEffect :: Bool
+    } deriving (Show)
+
+-- | Interface for HOI4 feature handlers. Most of the methods just get data
+-- tables from the parser state. These are empty until the relevant parsing
+-- stages have been done. In order to avoid import loops, handlers don't know
+-- the 'HOI4.Settings.HOI4' type itself, only its instances.
+class (IsGame g,
+       Scope g ~ HOI4Scope,
+       IsGameData (GameData g),
+       IsGameState (GameState g)) => HOI4Info g where
+    -- | Get the title of an event by its ID. Only works if event scripts have
+    -- been parsed.
+    getEventTitle :: Monad m => Text -> PPT g m (Maybe Text)
+    -- | Get the contents of all event script files.
+    getEventScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Save (or amend) the contents of script event files in state.
+    setEventScripts :: Monad m => HashMap FilePath GenericScript -> PPT g m ()
+    -- | Get the parsed events table (keyed on event ID).
+    getEvents :: Monad m => PPT g m (HashMap Text HOI4Event)
+    -- | Get the contents of all idea groups files.
+    getIdeaGroupScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed idea groups table (keyed on idea group ID).
+    getIdeaGroups :: Monad m => PPT g m IdeaTable
+    -- | Get the contents of all modifier script files.
+--    getModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed modifiers table (keyed on modifier ID).
+--    getModifiers :: Monad m => PPT g m (HashMap Text HOI4Modifier)
+    -- | Get the contents of all opinion modifier script files.
+    getOpinionModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed opinion modifiers table (keyed on modifier ID).
+    getOpinionModifiers :: Monad m => PPT g m (HashMap Text HOI4OpinionModifier)
+    -- | Get the contents of all decision script files.
+    getDecisionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed decisions table (keyed on decision ID).
+    getDecisions :: Monad m => PPT g m (HashMap Text HOI4Decision)
+    -- | Get the contents of all mission script files
+--    getMissionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed mission trees
+--    getMissions :: Monad m => PPT g m (HashMap Text HOI4MissionTreeBranch)
+    -- | Get the (known) event triggers
+    getEventTriggers :: Monad m => PPT g m HOI4EventTriggers
+    -- | Get the on actions script files
+    getOnActionsScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the on disaster script files
+--    getDisasterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed geographic data
+    getGeoData :: Monad m => PPT g m (HashMap Text HOI4GeoType)
+    -- | Get the contents of all province triggered modifier script files.
+--    getProvinceTriggeredModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed province triggered modifiers table (keyed on modifier ID).
+--    getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text HOI4ProvinceTriggeredModifier)
+    -- | Get the trade nodes
+    getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
+    -- | Get extra scripts parsed from command line arguments
+    getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    getExtraScriptsCountryScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    getExtraScriptsProvinceScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    getExtraScriptsModifier :: Monad m => PPT g m (HashMap FilePath GenericScript)
 
 -------------------
 -- Feature types --
 -------------------
 
+-- | Event title type. As of HoI4 whatever version, titles may be conditional.
+data HOI4EvtTitle
+    = HOI4EvtTitleSimple Text  -- title = key
+    | HOI4EvtTitleConditional GenericScript Text
+            -- title = { text = key trigger = conditions }
+    | HOI4EvtTitleCompound GenericScript
+            -- title = { trigger = { conditional_expressions } }
+    deriving (Show)
+
+-- | Event description type. As of HOI4 1.17, descriptions may be conditional.
 data HOI4EvtDesc
     = HOI4EvtDescSimple Text  -- desc = key
     | HOI4EvtDescConditional GenericScript Text
-              -- desc = { text = key trigger = conditions }
+            -- desc = { text = key trigger = conditions }
     | HOI4EvtDescCompound GenericScript
             -- desc = { trigger = { conditional_expressions } }
     deriving (Show)
 
--- Object that accumulates info about an event.
-data HOI4Event = HOI4Event
-    {   hoi4evt_id :: Maybe Text -- event id
-    ,   hoi4evt_title :: Maybe Text -- event title l10n key
+-- | Event data.
+data HOI4Event = HOI4Event {
+    -- | Event ID
+        hoi4evt_id :: Maybe Text
+    -- | Event title l10n key
+    ,   hoi4evt_title :: [HOI4EvtTitle]
+    -- | Description
     ,   hoi4evt_desc :: [HOI4EvtDesc]
-    ,   hoi4evt_picture :: Maybe Text -- event picture
-    ,   hoi4evt_scope :: HOI4Scope -- type of thing the event happens to
+--  -- | Event picture
+--  ,   hoi4evt_picture :: Maybe Text
+    -- | Type of thing the event happens to (e.g.  for a @country_event@ this
+    -- is 'HOI4Country'). This is used to set the top level scope for its
+    -- scripts.
+    ,   hoi4evt_scope :: HOI4Scope
+    -- | What conditions allow the event to trigger.
     ,   hoi4evt_trigger :: Maybe GenericScript
+    -- | Whether the event is only triggered by script commands. If this is
+    -- @False@ and the event also has a @mean_time_to_happen@, it can happen
+    -- randomly.
     ,   hoi4evt_is_triggered_only :: Maybe Bool
+    -- | If this is a random event, how unlikely this event is to happen.
     ,   hoi4evt_mean_time_to_happen :: Maybe GenericScript
+    -- | Commands to execute as soon as the event fires.
     ,   hoi4evt_immediate :: Maybe GenericScript
+    -- | Whether this is a hidden event (it will have no options).
     ,   hoi4evt_hide_window :: Bool
-    ,   hoi4evt_options :: [HOI4Option]
-    ,   hoi4evt_path :: Maybe FilePath -- source file
+    -- | Whether this event can only happen once per campaign
+    ,   hoi4evt_fire_only_once :: Bool
+    -- | List of options for the player/AI to choose from.
+    ,   hoi4evt_options :: Maybe [HOI4Option]
+    -- | If the event show to sender
+    ,   hoi4evt_fire_for_sender :: Maybe Bool
+    -- | Effects that take place after any option is selected.
+    ,   hoi4evt_after :: Maybe GenericScript
+    -- | The event's source file.
+    ,   hoi4evt_path :: FilePath
     } deriving (Show)
+-- | Event option data.
 data HOI4Option = HOI4Option
-    {   hoi4opt_name :: Maybe Text
-    ,   hoi4opt_trigger :: Maybe GenericScript
-    ,   hoi4opt_ai_chance :: Maybe GenericScript
-    ,   hoi4opt_effects :: Maybe GenericScript
+    {   hoi4opt_name :: Maybe Text               -- ^ Text of the option
+    ,   hoi4opt_trigger :: Maybe GenericScript   -- ^ Condition for the option to be available
+    ,   hoi4opt_ai_chance :: Maybe AIWillDo -- ^ Probability that the AI will choose this option
+    ,   hoi4opt_effects :: Maybe GenericScript   -- ^ What happens if the player/AI chooses this option
     } deriving (Show)
 
-class (IsGame g,
-       Scope g ~ HOI4Scope,
-       IsGameData (GameData g),
-       IsGameState (GameState g)) => HOI4Info g where
-    getEventTitle :: Monad m => Text -- ^ Event ID
-                                -> PPT g m (Maybe Text)
-    getEventScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    setEventScripts :: Monad m => HashMap FilePath GenericScript -> PPT g m ()
-    getEvents :: Monad m => PPT g m (HashMap Text HOI4Event)
+type HOI4EventWeight = Maybe (Integer, Integer) -- Rational reduces the number, which we don't want
 
+data HOI4EventSource =
+      HOI4EvtSrcImmediate Text                       -- Immediate effect of an event (arg is event ID)
+    | HOI4EvtSrcAfter Text                           -- After effect of an event (arg is event ID)
+    | HOI4EvtSrcOption Text Text                     -- Effect of choosing an event option (args are event ID and option ID)
+    | HOI4EvtSrcDecision Text Text                   -- Effect of taking a decision (args are id and localized decision text)
+    | HOI4EvtSrcOnAction Text HOI4EventWeight         -- An effect from on_actions (args are the trigger and weight)
+--    | HOI4EvtSrcDisaster Text Text HOI4EventWeight    -- Effect of a disaster (args are id, trigger and weight)
+--    | HOI4EvtSrcMission Text                         -- Effect of completing a mission (arg is the mission id)
+    deriving Show
+
+type HOI4EventTriggers = HashMap Text [HOI4EventSource]
+
+-- | Table of idea groups, keyed by ID (e.g. @administrative_ideas@).
+type IdeaTable = HashMap Text IdeaGroup
+-- | Idea group data.
+data IdeaGroup = IdeaGroup
+    {   ig_name :: Text -- ^ Name of the idea group
+    ,   ig_name_loc :: Text -- ^ Localized name of the idea group (in the best language)
+    ,   ig_category :: Maybe MonarchPower -- ^ Which type of monarch power is used to buy these ideas
+    ,   ig_start :: Maybe GenericScript -- ^ Traditions for a country idea group
+    ,   ig_bonus :: Maybe GenericScript -- ^ Finisher / ambitions
+    ,   ig_trigger :: Maybe GenericScript -- ^ Availability conditions if any
+    ,   ig_free :: Bool -- ^ Whether this is a country idea group
+    ,   ig_ideas :: [Idea] -- ^ List of ideas (there should always be 7)
+    ,   ig_ai_will_do :: Maybe AIWillDo -- ^ Factors affecting whether AI will choose this group
+    ,   ig_path :: Maybe FilePath -- ^ Source file
+    } deriving (Show)
+-- | Idea data.
+data Idea = Idea
+    {   idea_name :: Text -- ^ Idea ID
+    ,   idea_name_loc :: Text -- ^ Localized idea name
+    ,   idea_effects :: GenericScript -- ^ Idea effects (bonus scope)
+    } deriving (Show)
+
+-- | Decision data.
+data HOI4Decision = HOI4Decision
+    {   dec_name :: Text -- ^ Decision ID
+    ,   dec_name_loc :: Text -- ^ Localized decision name
+    ,   dec_text :: Maybe Text -- ^ Descriptive text (shown on hover)
+    ,   dec_potential :: GenericScript -- ^ Conditions governing whether a
+                                       --   decision shows up in the list
+    ,   dec_allow :: GenericScript -- ^ Conditions that allow the player/AI to
+                                   --   take the decision
+    ,   dec_effect :: GenericScript -- ^ Effect on taking the decision
+    ,   dec_ai_will_do :: Maybe AIWillDo -- ^ Factors affecting whether an AI
+                                         --   will take the decision when available
+    ,   dec_path :: Maybe FilePath -- ^ Source file
+    } deriving (Show)
+{-
+data HOI4Modifier = HOI4Modifier
+    {   modName :: Text
+    ,   modLocName :: Maybe Text
+    ,   modPath :: FilePath
+    ,   modReligious :: Bool
+    ,   modEffects :: GenericScript
+    } deriving (Show)
+
+data HOI4ProvinceTriggeredModifier = HOI4ProvinceTriggeredModifier
+    {   ptmodName :: Text
+    ,   ptmodLocName :: Maybe Text
+    ,   ptmodPath :: FilePath
+    ,   ptmodEffects :: GenericScript        -- The modifier to apply when the triggered modifier is active
+    ,   ptmodPotential :: GenericScript      -- Whether the triggered modifier is visible in the Province view window
+    ,   ptmodTrigger :: GenericScript        -- Whether the triggered modifier is active
+    ,   ptmodOnActivation :: GenericScript   -- Effects to execute when the triggered modifiers switches to active (province scope)
+    ,   ptmodOnDeactivation :: GenericScript -- Effects to execute when the triggered modifiers switches to inactive
+    } deriving (Show)
+-}
+data HOI4OpinionModifier = HOI4OpinionModifier
+    {   omodName :: Text
+    ,   omodLocName :: Maybe Text
+    ,   omodPath :: FilePath
+    ,   omodValue :: Maybe Double
+    ,   omodMax :: Maybe Double
+    ,   omodMin :: Maybe Double
+    ,   omodDecay :: Maybe Double
+    ,   omodMonths :: Maybe Double
+    ,   omodYears :: Maybe Double
+    ,   omodTrade :: Maybe Bool
+    ,   omodMaxInOtherDirection :: Maybe Double
+    } deriving (Show)
+
+{-
+data HOI4Mission = HOI4Mission
+    {   hoi4m_id :: Text
+    ,   hoi4m_icon :: Text
+    ,   hoi4m_slot :: Int -- Which column (1..5) does the mission tree branch appear in?
+    ,   hoi4m_position :: Int -- Which row the mission appears in. 1 is top.
+    ,   hoi4m_prerequisites :: [Text]
+    ,   hoi4m_trigger :: GenericScript
+    ,   hoi4m_effect :: GenericScript
+    } deriving (Show)
+
+data HOI4MissionTreeBranch = HOI4MissionTreeBranch
+    {   hoi4mtb_path :: FilePath
+    ,   hoi4mtb_id :: Text
+    ,   hoi4mtb_slot :: Int -- Which column (1..5) does the mission tree branch appear in?
+    ,   hoi4mtb_potential :: Maybe GenericScript
+    ,   hoi4mtb_missions :: [HOI4Mission]
+    } deriving (Show)
+-}
 ------------------------------
 -- Shared lower level types --
 ------------------------------
 
--- TODO: expand these. Initial scopes assumed from event types.
+-- | Types of monarch power.
+data MonarchPower = Administrative
+                  | Diplomatic
+                  | Military
+    deriving (Show, Eq, Ord, Generic)
+instance Hashable MonarchPower
+
+-- | Scopes
 data HOI4Scope
     = HOI4NoScope
     | HOI4Country
     | HOI4Province
+    | HOI4TradeNode
+    | HOI4Geographic -- ^ Area, etc.
+    | HOI4Bonus
+    | HOI4From -- ^ Usually country or province, varies by context
     deriving (Show, Eq, Ord, Enum, Bounded)
 
-data Party
-    = Communism
-    | Democratic
-    | Fascism
-    | Neutrality
-    deriving (Show, Eq, Ord, Enum, Bounded)
+data HOI4GeoType
+    = HOI4GeoArea
+    | HOI4GeoRegion
+    | HOI4GeoSuperRegion
+    | HOI4GeoContinent
+    | HOI4GeoTradeCompany
+    | HOI4GeoColonialRegion
+    -- Province groups aren't used in the base game (as of 1.30.6)
+    deriving (Show)
 
--- AI decision factors
-
-{- deferred
+-- | AI decision factors.
 data AIWillDo = AIWillDo
     {   awd_base :: Maybe Double
     ,   awd_modifiers :: [AIModifier]
     } deriving (Show)
+-- | Modifiers for AI decision factors.
 data AIModifier = AIModifier
     {   aim_factor :: Maybe Double
     ,   aim_triggers :: GenericScript
     } deriving (Show)
+-- | Empty decision factor.
 newAIWillDo :: AIWillDo
 newAIWillDo = AIWillDo Nothing []
+-- | Empty modifier.
 newAIModifier :: AIModifier
 newAIModifier = AIModifier Nothing []
 
+-- | Parse an @ai_will_do@ clause.
 aiWillDo :: GenericScript -> AIWillDo
 aiWillDo = foldl' aiWillDoAddSection newAIWillDo
 aiWillDoAddSection :: AIWillDo -> GenericStatement -> AIWillDo
-aiWillDoAddSection awd (Statement (GenericLhs left) OpEq right) = case T.toLower left of
+aiWillDoAddSection awd [pdx| $left = %right |] = case T.toLower left of
+    "base" -> case floatRhs right of
+        Just fac -> awd { awd_base = Just fac }
+        _        -> awd
     "factor" -> case floatRhs right of
         Just fac -> awd { awd_base = Just fac }
         _        -> awd
@@ -132,14 +375,28 @@ aiWillDoAddSection awd (Statement (GenericLhs left) OpEq right) = case T.toLower
     _ -> awd
 aiWillDoAddSection awd _ = awd
 
+-- | Parse a @modifier@ subclause for an @ai_will_do@ clause.
 awdModifier :: GenericScript -> AIModifier
 awdModifier = foldl' awdModifierAddSection newAIModifier
 awdModifierAddSection :: AIModifier -> GenericStatement -> AIModifier
-awdModifierAddSection aim stmt@(Statement (GenericLhs left) OpEq right) = case T.toLower left of
+awdModifierAddSection aim stmt@[pdx| $left = %right |] = case T.toLower left of
     "factor" -> case floatRhs right of
         Just fac -> aim { aim_factor = Just fac }
         Nothing  -> aim
     _ -> -- the rest of the statements are just the conditions.
         aim { aim_triggers = aim_triggers aim ++ [stmt] }
 awdModifierAddSection aim _ = aim
--}
+
+isGeographic :: HOI4Scope -> Bool
+isGeographic HOI4Province = True
+isGeographic HOI4TradeNode = True
+isGeographic HOI4Geographic = True
+isGeographic _ = False
+
+-----------------------------
+-- Miscellaneous utilities --
+-----------------------------
+
+--getModifier :: (HOI4Info g, Monad m) => Text -> PPT g m (Maybe HOI4Modifier)
+--getModifier id = HM.lookup id <$> getModifiers
+

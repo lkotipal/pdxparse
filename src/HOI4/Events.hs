@@ -1,22 +1,27 @@
 {-|
 Module      : HOI4.Events
-Description : Feature handler for Hearts of Iron IV events
+Description : Feature handler for Europa Universalis IV events
 -}
 module HOI4.Events (
         parseHOI4Events
     ,   writeHOI4Events
+    ,   findTriggeredEventsInEvents
+    ,   findTriggeredEventsInDecisions
+    ,   findTriggeredEventsInOnActions
+--    ,   findTriggeredEventsInDisasters
+--    ,   findTriggeredEventsInMissions
     ) where
 
-import Debug.Trace (traceM)
+import Debug.Trace (trace, traceM)
 
 import Control.Arrow ((&&&))
-import Control.Monad (liftM, foldM, forM)
+import Control.Monad (liftM, forM, foldM, when, (<=<))
 import Control.Monad.Except (MonadError (..))
 import Control.Monad.State (MonadState (..), gets)
 import Control.Monad.Trans (MonadIO (..))
 
 import Data.List (intersperse, foldl')
-import Data.Maybe (isJust, fromMaybe, fromJust, catMaybes)
+import Data.Maybe (isJust, isNothing, fromMaybe, fromJust, catMaybes)
 import Data.Monoid ((<>))
 
 import Data.HashMap.Strict (HashMap)
@@ -32,18 +37,18 @@ import Abstract -- everything
 import qualified Doc
 import HOI4.Common -- everything
 import FileIO (Feature (..), writeFeatures)
-import Messages -- everything
+import Messages (imsg2doc)
+import MessageTools (iquotes)
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..), Game (..)
-                     , IsGame (..), IsGameState (..)
-                     , getSettings
+                     , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
-newHOI4Event :: HOI4Scope -> HOI4Event
-newHOI4Event escope = HOI4Event Nothing Nothing [] Nothing escope Nothing Nothing Nothing Nothing False [] Nothing
+newHOI4Event :: HOI4Scope -> FilePath -> HOI4Event
+newHOI4Event escope path = HOI4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing Nothing path
 -- | Empty event option vaule. Starts off Nothing everywhere.
 newHOI4Option :: HOI4Option
 newHOI4Option = HOI4Option Nothing Nothing Nothing Nothing
@@ -51,20 +56,19 @@ newHOI4Option = HOI4Option Nothing Nothing Nothing Nothing
 -- | Take the event scripts from game data and parse them into event data
 -- structures.
 parseHOI4Events :: (HOI4Info g, Monad m) =>
-    PPT g m (HashMap Text HOI4Event)
-parseHOI4Events = HM.unions . HM.elems <$> do
-    scripts <- getEventScripts
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4Event)
+parseHOI4Events scripts = HM.unions . HM.elems <$> do
     tryParse <- hoistExceptions $
         HM.traverseWithKey
             (\sourceFile scr ->
                 setCurrentFile sourceFile $ mapM parseHOI4Event scr)
-            scripts
+            scripts 
     case tryParse of
         Left err -> do
             traceM $ "Completely failed parsing events: " ++ T.unpack err
             return HM.empty
         Right eventsFilesOrErrors ->
-            flip HM.traverseWithKey eventsFilesOrErrors $ \sourceFile eevts ->
+            flip HM.traverseWithKey eventsFilesOrErrors $ \sourceFile eevts -> do
                 fmap (mkEvtMap . catMaybes) . forM eevts $ \case
                     Left err -> do
                         traceM $ "Error parsing events in " ++ sourceFile
@@ -82,8 +86,8 @@ writeHOI4Events = do
     events <- getEvents
     let pathedEvents :: [Feature HOI4Event]
         pathedEvents = map (\evt -> Feature {
-                                    featurePath = hoi4evt_path evt
-                                ,   featureId = hoi4evt_id evt
+                                    featurePath = Just (hoi4evt_path evt)
+                                ,   featureId = hoi4evt_id evt <> Just ".txt"
                                 ,   theFeature = Right evt })
                             (HM.elems events)
     writeFeatures "events"
@@ -92,10 +96,11 @@ writeHOI4Events = do
 
 -- | Parse a statement in an events file. Some statements aren't events; for
 -- those, and for any obvious errors, return Right Nothing.
-parseHOI4Event :: (IsGameState (GameState g), MonadError Text m) =>
+parseHOI4Event :: (HOI4Info g, MonadError Text m) =>
     GenericStatement -> PPT g m (Either Text (Maybe HOI4Event))
-parseHOI4Event (StatementBare _) = throwError "bare statement at top level"
-parseHOI4Event [pdx| %left = %right |] = case right of
+parseHOI4Event (StatementBare lhs) = withCurrentFile $ \f ->
+        throwError $ T.pack (f ++ ": bare statement at top level: " ++ (show lhs))
+parseHOI4Event stmt@[pdx| %left = %right |] = case right of
     CompoundRhs parts -> case left of
         CustomLhs _ -> throwError "internal error: custom lhs"
         IntLhs _ -> throwError "int lhs at top level"
@@ -106,25 +111,60 @@ parseHOI4Event [pdx| %left = %right |] = case right of
                     "unit_leader_event" -> Just HOI4Country
                     "operative_leader_event" -> Just HOI4Country
                     "province_event" -> Just HOI4Province
+                    "state_event" -> Just HOI4Province
                     "news_event" -> Just HOI4NoScope -- ?
                     "event" -> Just HOI4NoScope
                     _ -> Nothing
             in case mescope of
                 Nothing -> throwError $ "unrecognized event type " <> etype
-                Just escope -> do
-                    mevt <- hoistErrors (foldM eventAddSection (Just (newHOI4Event escope)) parts)
+                Just escope -> withCurrentFile $ \file -> do
+                    mevt <- hoistErrors (foldM eventAddSection (Just (newHOI4Event escope file)) parts)
                     case mevt of
                         Left err -> return (Left err)
                         Right Nothing -> return (Right Nothing)
-                        Right (Just evt) -> withCurrentFile $ \file ->
-                            let pathedEvt = evt { hoi4evt_path = Just file }
-                            in  if isJust (hoi4evt_id pathedEvt)
-                                then return (Right (Just pathedEvt))
-                                else return (Left $ "error parsing events in " <> T.pack file
-                                             <> ": missing event id")
+                        Right (Just evt) ->
+                            if isJust (hoi4evt_id evt)
+                            then return (Right (Just evt))
+                            else return (Left $ "error parsing events in " <> T.pack file
+                                         <> ": missing event id")
 
     _ -> return (Right Nothing)
 parseHOI4Event _ = throwError "operator other than ="
+
+-- | Intermediate structure for interpreting event title blocks.
+data EvtTitleI = EvtTitleI {
+        eti_text :: Maybe Text
+    ,   eti_trigger :: Maybe GenericScript
+    }
+-- | Interpret the @titlr@ section of an event. This can be either a
+-- localization key or a conditional title block. (TODO: document the
+-- format here)
+evtTitle :: MonadError Text m => Maybe Text -> GenericScript -> m HOI4EvtTitle
+evtTitle meid scr = case foldl' evtTitle' (EvtTitleI Nothing Nothing) scr of
+        EvtTitleI (Just t) Nothing -- title = { text = foo }
+            -> return $ HOI4EvtTitleSimple t
+        EvtTitleI Nothing (Just trig) -- title = { trigger = { .. } } (invalid)
+            -> return $ HOI4EvtTitleCompound scr
+        EvtTitleI (Just t) (Just trig) -- title = { trigger = { .. } text = foo }
+                                      -- e.g. pirate.1
+            -> return $ HOI4EvtTitleConditional trig t
+        EvtTitleI Nothing Nothing -- title = { switch { .. = { text = foo } } }
+                                 -- e.g. action.39
+            -> throwError $ "bad title: no trigger nor text" <> case meid of
+                Just eid -> " in event " <> eid
+                Nothing -> ""
+    where
+        evtTitle' ed [pdx| trigger = @trig |] = ed { eti_trigger = Just trig }
+        evtTitle' ed [pdx| text = ?txt |] = ed { eti_text = Just txt }
+        evtTitle' ed [pdx| title = ?txt |] = ed { eti_text = Just txt }
+        evtTitle' ed [pdx| show_sound = %_ |] = ed
+        evtTitle' ed [pdx| $label = %_ |]
+            = error ("unrecognized title section " ++ T.unpack label
+                     ++ " in " ++ maybe "(unknown)" T.unpack meid)
+        evtTitle' ed stmt
+            = error ("unrecognized title section in " ++ maybe "(unknown)" T.unpack meid
+                    ++ ": " ++ show stmt)
+
 
 -- | Intermediate structure for interpreting event description blocks.
 data EvtDescI = EvtDescI {
@@ -135,7 +175,7 @@ data EvtDescI = EvtDescI {
 -- localization key or a conditional description block. (TODO: document the
 -- format here)
 evtDesc :: MonadError Text m => Maybe Text -> GenericScript -> m HOI4EvtDesc
-evtDesc meid scr = case foldl' (evtDesc' meid) (EvtDescI Nothing Nothing) scr of
+evtDesc meid scr = case foldl' evtDesc' (EvtDescI Nothing Nothing) scr of
         EvtDescI (Just t) Nothing -- desc = { text = foo }
             -> return $ HOI4EvtDescSimple t
         EvtDescI Nothing (Just trig) -- desc = { trigger = { .. } } (invalid)
@@ -149,30 +189,39 @@ evtDesc meid scr = case foldl' (evtDesc' meid) (EvtDescI Nothing Nothing) scr of
                 Just eid -> " in event " <> eid
                 Nothing -> ""
     where
-        evtDesc' _ ed [pdx| trigger = @trig |] = ed { edi_trigger = Just trig }
-        evtDesc' _ ed [pdx| text = ?txt |] = ed { edi_text = Just txt }
-        evtDesc' _ ed [pdx| show_sound = %_ |] = ed
-        evtDesc' meid _ stmt = error ("evtDesc passed strange statement"
-                                     ++ maybe "" (\eid -> "in " ++ T.unpack eid) meid
-                                     ++ ": " ++ show stmt)
+        evtDesc' ed [pdx| trigger = @trig |] = ed { edi_trigger = Just trig }
+        evtDesc' ed [pdx| text = ?txt |] = ed { edi_text = Just txt }
+        evtDesc' ed [pdx| desc = ?txt |] = ed { edi_text = Just txt }
+        evtDesc' ed [pdx| show_sound = %_ |] = ed
+        evtDesc' ed [pdx| $label = %_ |]
+            = error ("unrecognized desc section " ++ T.unpack label
+                     ++ " in " ++ maybe "(unknown)" T.unpack meid)
+        evtDesc' ed stmt
+            = error ("unrecognized desc section in " ++ maybe "(unknown)" T.unpack meid
+                    ++ ": " ++ show stmt)
 
 -- | Interpret one section of an event. If understood, add it to the event
 -- data. If not understood, throw an exception.
-eventAddSection :: (IsGameState (GameState g), MonadError Text m) =>
+eventAddSection :: (HOI4Info g, MonadError Text m) =>
     Maybe HOI4Event -> GenericStatement -> PPT g m (Maybe HOI4Event)
+eventAddSection Nothing _ = return Nothing
 eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) where
     eventAddSection' evt stmt@[pdx| id = %rhs |]
         = case (textRhs rhs, floatRhs rhs) of
             (Just tid, _) -> return evt { hoi4evt_id = Just tid }
             (_, Just nid) -> return evt { hoi4evt_id = Just (T.pack $ show (nid::Int)) }
             _ -> withCurrentFile $ \file ->
-                throwError "bad id"
-    eventAddSection' evt stmt@[pdx| title = %rhs |] = case textRhs rhs of
-        Just title -> return evt { hoi4evt_title = Just title }
-        _ -> withCurrentFile $ \file ->
-            throwError $ "bad title" <> case hoi4evt_id evt of
-                Just eid -> " in event " <> eid
-                Nothing -> ""
+                throwError $ "bad id in " <> T.pack file <> ": " <> T.pack (show rhs)
+    eventAddSection' evt stmt@[pdx| title = %rhs |] =
+        let oldtitles = hoi4evt_title evt in case rhs of
+            (textRhs -> Just title) -> return evt { hoi4evt_title = oldtitles ++ [HOI4EvtTitleSimple title] }
+            CompoundRhs scr -> do
+                let meid = hoi4evt_id evt
+                title <- evtTitle meid scr
+                return evt { hoi4evt_title = oldtitles ++ [title] }
+            _ -> throwError $ "bad title" <> case hoi4evt_id evt of
+                    Just eid -> " in event " <> eid
+                    Nothing -> ""
     eventAddSection' evt stmt@[pdx| desc = %rhs |] =
         let olddescs = hoi4evt_desc evt in case rhs of
             (textRhs -> Just desc) -> return evt { hoi4evt_desc = olddescs ++ [HOI4EvtDescSimple desc] }
@@ -183,93 +232,73 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
             _ -> throwError $ "bad desc" <> case hoi4evt_id evt of
                     Just eid -> " in event " <> eid
                     Nothing -> ""
-    eventAddSection' evt stmt@[pdx| picture = %rhs |] =
-        case textRhs rhs of
-            Just pic -> return evt { hoi4evt_picture = Just pic }
-            _ -> throwError "bad picture"
-    eventAddSection' evt stmt@[pdx| trigger = %rhs |] =
-        case rhs of
-            CompoundRhs trigger_script -> case trigger_script of
-                [] -> return evt -- empty, treat as if it wasn't there
-                _ -> return evt { hoi4evt_trigger = Just trigger_script }
-            _ -> throwError "bad event trigger"
-    eventAddSection' evt stmt@[pdx| is_triggered_only = %rhs |] =
-        case rhs of
-            GenericRhs "yes" [] -> return evt { hoi4evt_is_triggered_only = Just True }
-            -- no is the default, so I don't think this is ever used
-            GenericRhs "no" [] -> return evt { hoi4evt_is_triggered_only = Just False }
-            _ -> throwError "bad trigger"
-    eventAddSection' evt stmt@[pdx| mean_time_to_happen = %rhs |] =
-        case rhs of
-            CompoundRhs mtth -> return evt { hoi4evt_mean_time_to_happen = Just mtth }
-            _ -> throwError "bad MTTH"
-    eventAddSection' evt stmt@[pdx| immediate = %rhs |] =
-        case rhs of
-            CompoundRhs immediate -> return evt { hoi4evt_immediate = Just immediate }
-            _ -> throwError "bad immediate section"
-    eventAddSection' evt stmt@[pdx| option = %rhs |] =
-        case rhs of
-            CompoundRhs option -> do
-                newHOI4Options <- addHOI4Option (hoi4evt_options evt) option
-                return evt { hoi4evt_options = newHOI4Options }
-            _ -> throwError "bad option"
-    eventAddSection' evt stmt@[pdx| fire_only_once = %_ |] =
-        return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| major = %_ |] =
-        return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| show_major = %_ |] =
-        return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| is_mtth_scaled_to_size = %_ |] =
-        return evt -- do nothing (XXX)
+    eventAddSection' evt stmt@[pdx| picture = %_ |] = return evt
+--  picture has conditions like desc. Ignore for now since we don't actually use it
+--    eventAddSection' evt stmt@[pdx| picture = %rhs |] = case textRhs rhs of
+--        Just pic -> return evt { hoi4evt_picture = Just pic }
+--        _ -> throwError "bad picture"
+    eventAddSection' evt stmt@[pdx| goto = %rhs |] = return evt
+    eventAddSection' evt stmt@[pdx| trigger = %rhs |] = case rhs of
+        CompoundRhs trigger_script -> case trigger_script of
+            [] -> return evt -- empty, treat as if it wasn't there
+            _ -> return evt { hoi4evt_trigger = Just trigger_script }
+        _ -> throwError "bad event trigger"
+    eventAddSection' evt stmt@[pdx| is_triggered_only = %rhs |] = case rhs of
+        GenericRhs "yes" [] -> return evt { hoi4evt_is_triggered_only = Just True }
+        -- no is the default, so I don't think this is ever used
+        GenericRhs "no" [] -> return evt { hoi4evt_is_triggered_only = Just False }
+        _ -> throwError "bad trigger"
+    eventAddSection' evt stmt@[pdx| mean_time_to_happen = %rhs |] = case rhs of
+        CompoundRhs mtth -> return evt { hoi4evt_mean_time_to_happen = Just mtth }
+        _ -> throwError "bad MTTH"
+    eventAddSection' evt stmt@[pdx| immediate = %rhs |] = case rhs of
+        CompoundRhs immediate -> return evt { hoi4evt_immediate = Just immediate }
+        _ -> throwError "bad immediate section"
+    eventAddSection' evt stmt@[pdx| option = %rhs |] =  case rhs of
+        CompoundRhs option -> do
+            newHOI4Options <- addHOI4Option (hoi4evt_options evt) option
+            return evt { hoi4evt_options = newHOI4Options }
+        _ -> throwError "bad option"
+    eventAddSection' evt stmt@[pdx| fire_only_once = %rhs |]
+        | GenericRhs "yes" [] <- rhs = return evt { hoi4evt_fire_only_once = True }
+        | GenericRhs "no"  [] <- rhs = return evt { hoi4evt_fire_only_once = False }
+    eventAddSection' evt stmt@[pdx| major = %_ |] = return evt -- do nothing
+    eventAddSection' evt stmt@[pdx| show_major = %_ |] = return evt -- do nothing
     eventAddSection' evt stmt@[pdx| hidden = %rhs |]
         | GenericRhs "yes" [] <- rhs = return evt { hoi4evt_hide_window = True }
         | GenericRhs "no"  [] <- rhs = return evt { hoi4evt_hide_window = False }
-    eventAddSection' evt stmt@[pdx| hide_window = %rhs |]
-        | GenericRhs "yes" [] <- rhs = return evt { hoi4evt_hide_window = True }
-        | GenericRhs "no"  [] <- rhs = return evt { hoi4evt_hide_window = False }
-    eventAddSection' evt stmt@[pdx| show_sound = %_ |] =
-        return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| location = %rhs |] =
-        return evt -- TODO: show this, and add support on the wiki
-    eventAddSection' evt stmt@[pdx| auto_opens = %_ |] =
-        return evt -- I have no idea what this means
-    eventAddSection' evt stmt@[pdx| is_advisor_event = %_ |] =
-        return evt -- probably not important to note
-    eventAddSection' evt stmt@[pdx| diplomatic = %_ |] =
-        return evt -- probably not important to note
-    eventAddSection' evt stmt@[pdx| picture_event_data = %_ |] =
-        return evt -- probably not important to note
+    eventAddSection' evt stmt@[pdx| is_mtth_scaled_to_size = %_ |] = return evt -- do nothing (XXX)
+    eventAddSection' evt stmt@[pdx| fire_for_sender = %rhs |] = case rhs of
+        -- Yes is the default, so I don't think this is ever used
+        GenericRhs "yes" [] -> return evt { hoi4evt_fire_for_sender = Just False }
+        GenericRhs "no" [] -> return evt { hoi4evt_fire_for_sender = Just True }
+        _ -> throwError "bad fire_for_sender"
+    eventAddSection' evt stmt@[pdx| after = @scr |] = return evt { hoi4evt_after = Just scr }
     eventAddSection' evt stmt@[pdx| $label = %_ |] =
         withCurrentFile $ \file ->
             throwError $ "unrecognized event section in " <> T.pack file <> ": " <> label
-    eventAddSection' evt _ = return evt
+    eventAddSection' evt stmt =
+        withCurrentFile $ \file ->
+            throwError $ "unrecognized event section in " <> T.pack file <> ": " <> T.pack (show stmt)
 
 -- | Interpret an option block and append it to the list of options.
-addHOI4Option :: Monad m => [HOI4Option] -> GenericScript -> PPT g m [HOI4Option]
-addHOI4Option opts opt = do
+addHOI4Option :: (IsGame g, Monad m) => Maybe [HOI4Option] -> GenericScript -> PPT g m (Maybe [HOI4Option])
+addHOI4Option Nothing opt = addHOI4Option (Just []) opt
+addHOI4Option (Just opts) opt = do
     optn <- foldM optionAddStatement newHOI4Option opt
-    return $ opts ++ [optn]
+    return $ Just (opts ++ [optn])
 
 -- | Interpret one section of an option block and add it to the option data.
-optionAddStatement :: Monad m => HOI4Option -> GenericStatement -> PPT g m HOI4Option
-optionAddStatement opt stmt@[pdx| $label = %rhs |] =
-    case label of
-        "name" -> case textRhs rhs of
-            Just name -> return $ opt { hoi4opt_name = Just name }
-            _ -> error "bad option name"
-        "ai_chance" -> case rhs of
-            CompoundRhs ai_chance -> return $ opt { hoi4opt_ai_chance = Just ai_chance }
-            _ -> error "bad option ai_chance"
-        "trigger" -> case rhs of
-            CompoundRhs trigger_script -> return $ opt { hoi4opt_trigger = Just trigger_script }
-            _ -> error "bad option trigger"
-        -- Other statements are just effects.
-        _ -> do
-            effects_pp'd <- optionAddEffect (hoi4opt_effects opt) stmt
-            return $ opt { hoi4opt_effects = effects_pp'd }
+optionAddStatement :: (IsGame g, Monad m) => HOI4Option -> GenericStatement -> PPT g m HOI4Option
+optionAddStatement opt stmt@[pdx| name = ?name |]
+    = return $ opt { hoi4opt_name = Just name }
+optionAddStatement opt stmt@[pdx| ai_chance = @ai_chance |]
+    = return $ opt { hoi4opt_ai_chance = Just (aiWillDo ai_chance) } -- hope can re-use the aiWilldo script
+optionAddStatement opt stmt@[pdx| trigger = @trigger_script |]
+    = return $ opt { hoi4opt_trigger = Just trigger_script }
 optionAddStatement opt stmt = do
     -- Not a GenericLhs - presumably an effect.
-    effects_pp'd <- optionAddEffect (hoi4opt_effects opt) stmt
+    effects_pp'd <- setIsInEffect True (optionAddEffect (hoi4opt_effects opt) stmt)
     return $ opt { hoi4opt_effects = effects_pp'd }
 
 -- | Append an effect to the effects of an option.
@@ -277,13 +306,35 @@ optionAddEffect :: Monad m => Maybe GenericScript -> GenericStatement -> PPT g m
 optionAddEffect Nothing stmt = optionAddEffect (Just []) stmt
 optionAddEffect (Just effs) stmt = return $ Just (effs ++ [stmt])
 
+iquotes't = Doc.doc2text . iquotes
+
+-- | Present an event's title block.
+ppTitles :: (HOI4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
+                                -> [HOI4EvtTitle] -> PPT g m Doc
+ppTitles _ [] = return "| event_name = (No title)"
+ppTitles False [HOI4EvtTitleSimple key] = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
+ppTitles True [HOI4EvtTitleSimple key] = ("| event_name = (Hidden) " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
+ppTitles True _ = return "| event_name = (This event is hidden and has no title.)"
+ppTitles _ titles = (("| cond_event_name = yes" <> PP.line <> "| event_name = ") <>) . PP.vsep <$> mapM ppTitle titles where
+    ppTitle (HOI4EvtTitleSimple key) = ("Otherwise:<br>:" <>) <$> fmtTitle key
+    ppTitle (HOI4EvtTitleConditional scr key) = mconcat <$> sequenceA
+        [pure "The following title is used if:", pure PP.line
+        ,imsg2doc =<< ppMany scr, pure PP.line
+        ,pure ":", fmtTitle key
+        ]
+    ppTitle (HOI4EvtTitleCompound scr) =
+        imsg2doc =<< ppMany scr
+    fmtTitle key = flip liftM (getGameL10nIfPresent key) $ \case
+        Nothing -> Doc.strictText key
+        Just txt -> "''" <> Doc.strictText (Doc.nl2br txt) <> "''"
+
 -- | Present an event's description block.
-ppDescs :: (HOI4Info g, Monad m) =>
-    Bool -> [HOI4EvtDesc] -> PPT g m Doc
+ppDescs :: (HOI4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
+                                -> [HOI4EvtDesc] -> PPT g m Doc
 ppDescs True _ = return "| cond_event_text = (This event is hidden and has no description.)"
 ppDescs _ [] = return "| event_text = (No description)"
-ppDescs _ [HOI4EvtDescSimple key] = ("| event_text = " <>) . Doc.strictText <$> getGameL10n key
-ppDescs _ descs = ("| cond_event_text = " <>) .PP.vsep <$> mapM ppDesc descs where
+ppDescs _ [HOI4EvtDescSimple key] = ("| event_text = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
+ppDescs _ descs = (("| cond_event_text = yes" <> PP.line <> "| event_text = ") <>) . PP.vsep <$> mapM ppDesc descs where
     ppDesc (HOI4EvtDescSimple key) = ("Otherwise:<br>:" <>) <$> fmtDesc key
     ppDesc (HOI4EvtDescConditional scr key) = mconcat <$> sequenceA
         [pure "The following description is used if:", pure PP.line
@@ -291,29 +342,107 @@ ppDescs _ descs = ("| cond_event_text = " <>) .PP.vsep <$> mapM ppDesc descs whe
         ,pure ":", fmtDesc key
         ]
     ppDesc (HOI4EvtDescCompound scr) =
-        (("| cond_event_text =" <> PP.line) <>) <$> (imsg2doc =<< ppMany scr)
+        imsg2doc =<< ppMany scr
     fmtDesc key = flip liftM (getGameL10nIfPresent key) $ \case
         Nothing -> Doc.strictText key
         Just txt -> "''" <> Doc.strictText (Doc.nl2br txt) <> "''"
+
+ppEventLoc :: (HOI4Info g, Monad m) => Text -> PPT g m Text
+ppEventLoc id = do
+    loc <- getEventTitle id -- Note: Hidden events often have empty titles, see e.g. fetishist_flavor.400
+    case loc of
+        (Just t) | T.length (T.strip t) /= 0 -> return $ "<!-- " <> id <> " -->" <> iquotes't t -- TODO: Add link if possible
+        _ -> return $ "<tt>" <> id <> "</tt>"
+
+formatWeight :: HOI4EventWeight -> Text
+formatWeight Nothing = ""
+formatWeight (Just (n, d)) = T.pack (" (Base weight: " ++ show n ++ "/" ++ show d ++ ")")
+
+ppEventSource :: (HOI4Info g, Monad m) => HOI4EventSource -> PPT g m Doc
+ppEventSource (HOI4EvtSrcOption eventId optionId) = do
+    eventLoc <- ppEventLoc eventId
+    optLoc <- getGameL10n optionId
+    return $ Doc.strictText $ mconcat [ "The event "
+        , eventLoc
+        , " option "
+        , iquotes't optLoc
+        ]
+ppEventSource (HOI4EvtSrcAfter eventId) = do
+    eventLoc <- ppEventLoc eventId
+    return $ Doc.strictText $ mconcat [ "After choosing an option an option in the "
+        , eventLoc
+        , " event"
+        ]
+ppEventSource (HOI4EvtSrcImmediate eventId) = do
+    eventLoc <- ppEventLoc eventId
+    return $ Doc.strictText $ mconcat [ "As an immediate effect of the "
+        , eventLoc
+        , " event"
+        ]
+ppEventSource (HOI4EvtSrcDecision id loc) = do
+    return $ Doc.strictText $ mconcat ["Taking the decision "
+        , "<!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        ]
+ppEventSource (HOI4EvtSrcOnAction act weight) = do
+    return $ Doc.strictText $ act <> formatWeight weight
+{-
+ppEventSource (HOI4EvtSrcDisaster id trig weight) = do
+    idLoc <- getGameL10n id
+    return $ Doc.strictText $ mconcat [trig
+        , " of the <!-- "
+        , id
+        , " -->"
+        , iquotes't idLoc
+        , " disaster"
+        , formatWeight weight
+        ]
+
+ppEventSource (HOI4EvtSrcMission missionId) = do
+    title <- getGameL10n (missionId <> "_title")
+    return $ Doc.strictText $ mconcat ["Completing the <!-- "
+        , missionId
+        , " -->"
+        , iquotes't title
+        , " mission"
+        ]
+-}
+ppTriggeredBy :: (HOI4Info g, Monad m) => Text -> PPT g m Doc
+ppTriggeredBy eventId = do
+    eventTriggers <- getEventTriggers
+    let mtriggers = HM.lookup eventId eventTriggers
+    case mtriggers of
+        Just triggers -> do
+            ts <- mapM ppEventSource triggers
+            -- FIXME: This is a bit ugly, but we only want a list if there's more than one trigger
+            let ts' = if length ts < 2 then
+                    ts
+                else
+                    map (\d -> Doc.strictText $ "* " <> (Doc.doc2text d)) ts
+            return $ mconcat $ [PP.line] ++ (intersperse PP.line ts')
+        _ -> return $ Doc.strictText "(please describe trigger here)"
 
 -- | Pretty-print an event. If some essential parts are missing from the data,
 -- throw an exception.
 pp_event :: forall g m. (HOI4Info g, MonadError Text m) =>
     HOI4Event -> PPT g m Doc
-pp_event evt = case hoi4evt_id evt of
-    Just eid
-        | (isJust (hoi4evt_is_triggered_only evt) ||
-           isJust (hoi4evt_mean_time_to_happen evt)) -> do
+pp_event evt = case (hoi4evt_id evt
+--                    ,hoi4evt_title evt -- for title of event
+                    ,hoi4evt_options evt) of
+    (Just eid, Just options) -> setCurrentFile (hoi4evt_path evt) $ do
         -- Valid event
-        version <- gameVersion <$> gets getSettings
-        (conditional, options_pp'd) <- pp_options (hoi4evt_hide_window evt) eid (hoi4evt_options evt)
-        titleLoc <- fromMaybe eid <$> sequence (getGameL10n <$> hoi4evt_title evt)
+        version <- gets (gameVersion . getSettings)
+        (conditional, options_pp'd) <- pp_options (hoi4evt_hide_window evt) eid options
+        titleLoc <- ppTitles (hoi4evt_hide_window evt) (hoi4evt_title evt) -- get localisation of title
         descLoc <- ppDescs (hoi4evt_hide_window evt) (hoi4evt_desc evt)
+        after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> hoi4evt_after evt))
         let evtArg :: Text -> (HOI4Event -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
             evtArg fieldname field fmt
                 = maybe (return [])
                     (\field_content -> do
-                        content_pp'd <- fmt field_content
+                        content_pp'd <- fmt field_content 
                         return
                             ["| ", Doc.strictText fieldname, " = "
                             ,PP.line
@@ -321,23 +450,37 @@ pp_event evt = case hoi4evt_id evt of
                             ,PP.line])
                     (field evt)
             isTriggeredOnly = fromMaybe False $ hoi4evt_is_triggered_only evt
+            isFireOnlyOnce = hoi4evt_fire_only_once evt
+            isFireForSender = fromMaybe False $ hoi4evt_fire_for_sender evt
             evtId = Doc.strictText eid
         trigger_pp'd <- evtArg "trigger" hoi4evt_trigger pp_script
-        mmtth_pp'd <- mapM pp_mtth (hoi4evt_mean_time_to_happen evt)
-        immediate_pp'd <- evtArg "immediate" hoi4evt_immediate pp_script
+        mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (hoi4evt_mean_time_to_happen evt)
+        immediate_pp'd <- setIsInEffect True (evtArg "immediate" hoi4evt_immediate pp_script)
+        triggered_pp <- ppTriggeredBy eid
+        -- Keep track of incomplete events
+        when (not isTriggeredOnly && isNothing mmtth_pp'd) $
+            -- TODO: use logging instead of trace
+            traceM ("warning: is_triggered_only and mean_time_to_happen missing for event id " ++ T.unpack eid)
         return . mconcat $
             ["<section begin=", evtId, "/>", PP.line
             ,"{{Event", PP.line
             ,"| version = ", Doc.strictText version, PP.line
-            ,"| event_name = ", Doc.strictText titleLoc, PP.line
+            ,"| event_id = ", evtId, PP.line
+            ,titleLoc, PP.line
             ,descLoc, PP.line
             ] ++
+            ( if isFireOnlyOnce then
+                ["| fire_only_once = yes", PP.line]
+            else []) ++
+            ( if isFireForSender then
+                ["| fire_for_sender = no", PP.line]
+            else []) ++
             -- For triggered only events, mean_time_to_happen is not
             -- really mtth but instead describes weight modifiers, for
             -- scripts that trigger them with a probability based on a
             -- weight (e.g. on_bi_yearly_pulse).
             (if isTriggeredOnly then
-                ["| triggered only = (please describe trigger here)",PP.line
+                ["| triggered only = ", triggered_pp, PP.line
                 ]
                 ++ maybe [] (:[PP.line]) mmtth_pp'd
             else []) ++
@@ -345,60 +488,319 @@ pp_event evt = case hoi4evt_id evt of
             -- mean_time_to_happen is only really mtth if it's *not*
             -- triggered only.
             (if isTriggeredOnly then [] else case mmtth_pp'd of
-                Nothing -> []
+                Nothing ->
+                    ["| triggered_only =", PP.line
+                    ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
                 Just mtth_pp'd ->
                     ["| mtth = ", PP.line
-                    ,mtth_pp'd]) ++
+                    ,mtth_pp'd, PP.line]) ++
             immediate_pp'd ++
             (if conditional then ["| option conditions = yes", PP.line] else []) ++
             -- option_conditions = no (not implemented yet)
+            (maybe [] (\app -> ["| after =", PP.line, app, PP.line]) after_pp'd) ++
             ["| options = ", options_pp'd, PP.line
             ,"| collapse = yes", PP.line
             ,"}}", PP.line
-            ,"<section end=", evtId, "/>"
+            ,"<section end=", evtId, "/>", PP.line
             ]
-        | otherwise ->
-            throwError ("is_triggered_only and mean_time_to_happen missing for event id " <> eid)
 
-    Nothing -> throwError "hoi4evt_id missing"
+    (Nothing, _) -> throwError "hoi4evt_id missing"
+    (Just eid, Nothing) -> setCurrentFile (hoi4evt_path evt) $ do -- BC: Really ugly way to fix no options problem, I hate it but I;m a terrible coder
+        -- Valid event
+        version <- gets (gameVersion . getSettings)
+        titleLoc <- ppTitles (hoi4evt_hide_window evt) (hoi4evt_title evt) -- get localisation of title
+        descLoc <- ppDescs (hoi4evt_hide_window evt) (hoi4evt_desc evt)
+        after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> hoi4evt_after evt))
+        let evtArg :: Text -> (HOI4Event -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
+            evtArg fieldname field fmt
+                = maybe (return [])
+                    (\field_content -> do
+                        content_pp'd <- fmt field_content 
+                        return
+                            ["| ", Doc.strictText fieldname, " = "
+                            ,PP.line
+                            ,content_pp'd
+                            ,PP.line])
+                    (field evt)
+            isTriggeredOnly = fromMaybe False $ hoi4evt_is_triggered_only evt
+            isFireOnlyOnce = hoi4evt_fire_only_once evt
+            isFireForSender = fromMaybe False $ hoi4evt_fire_for_sender evt
+            evtId = Doc.strictText eid
+        trigger_pp'd <- evtArg "trigger" hoi4evt_trigger pp_script
+        mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (hoi4evt_mean_time_to_happen evt)
+        immediate_pp'd <- setIsInEffect True (evtArg "immediate" hoi4evt_immediate pp_script)
+        triggered_pp <- ppTriggeredBy eid
+        -- Keep track of incomplete events
+        when (not isTriggeredOnly && isNothing mmtth_pp'd) $
+            -- TODO: use logging instead of trace
+            traceM ("warning: is_triggered_only and mean_time_to_happen missing for event id " ++ T.unpack eid)
+        return . mconcat $
+            ["<section begin=", evtId, "/>", PP.line
+            ,"{{Event", PP.line
+            ,"| version = ", Doc.strictText version, PP.line
+            ,"| event_id = ", evtId, PP.line
+            ,titleLoc, PP.line
+            ,descLoc, PP.line
+            ] ++
+            ( if isFireOnlyOnce then
+                ["| fire_only_once = yes", PP.line]
+            else []) ++
+            ( if isFireForSender then
+                ["| fire_for_sender = no", PP.line]
+            else []) ++
+            -- For triggered only events, mean_time_to_happen is not
+            -- really mtth but instead describes weight modifiers, for
+            -- scripts that trigger them with a probability based on a
+            -- weight (e.g. on_bi_yearly_pulse).
+            (if isTriggeredOnly then
+                ["| triggered only = ", triggered_pp, PP.line
+                ]
+                ++ maybe [] (:[PP.line]) mmtth_pp'd
+            else []) ++
+            trigger_pp'd ++
+            -- mean_time_to_happen is only really mtth if it's *not*
+            -- triggered only.
+            (if isTriggeredOnly then [] else case mmtth_pp'd of
+                Nothing ->
+                    ["| triggered_only =", PP.line
+                    ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
+                Just mtth_pp'd ->
+                    ["| mtth = ", PP.line
+                    ,mtth_pp'd, PP.line]) ++
+            immediate_pp'd ++
+            (maybe [] (\app -> ["| after =", PP.line, app, PP.line]) after_pp'd) ++
+            ["| options = ", PP.line
+            ,"| collapse = yes", PP.line
+            ,"}}", PP.line
+            ,"<section end=", evtId, "/>", PP.line
+            ]
 
 -- | Present the options of an event.
 pp_options :: (HOI4Info g, MonadError Text m) =>
     Bool -> Text -> [HOI4Option] -> PPT g m (Bool, Doc)
-pp_options hidden eid opts = do
+pp_options hidden evtid opts = do
     let triggered = any (isJust . hoi4opt_trigger) opts
-    options_pp'd <- mapM (pp_option hidden triggered eid) opts
+    options_pp'd <- mapM (pp_option evtid hidden triggered) opts
     return (triggered, mconcat . (PP.line:) . intersperse PP.line $ options_pp'd)
 
 -- | Present a single event option.
 pp_option :: (HOI4Info g, MonadError Text m) =>
-    Bool -> Bool -> Text -> HOI4Option -> PPT g m Doc
-pp_option hidden triggered eid opt = do
+    Text -> Bool -> Bool -> HOI4Option -> PPT g m Doc
+pp_option evtid hidden triggered opt = do
     optNameLoc <- getGameL10n `mapM` hoi4opt_name opt
-    let optNameLoc' = if hidden
-                        then maybe (Just "(No text)") Just optNameLoc
-                        else optNameLoc
-    case optNameLoc' of
+    case optNameLoc of
         -- NB: some options have no effect, e.g. start of Peasants' War.
-        Just name_loc ->
-            let mtrigger = hoi4opt_trigger opt
-            in do
-                effects_pp'd <- pp_script (fromMaybe [] (hoi4opt_effects opt))
-                mtrigger_pp'd <- sequence (pp_script <$> mtrigger)
-                return . mconcat $
-                    ["{{Option\n"
-                    ,"| option_text = ", Doc.strictText name_loc, PP.line
-                    ,"| effect =", PP.line, effects_pp'd, PP.line]
-                    ++ (if triggered then
-                            maybe
-                                ["| trigger = Always enabled:", PP.line] -- no trigger
-                            (\trigger_pp'd ->
-                                ["| trigger = Enabled if:", PP.line -- trigger
-                                ,trigger_pp'd, PP.line]
-                            ) mtrigger_pp'd
-                        else [])
-                    ++
-                    -- 1 = no
-                    ["}}"
-                    ]
-        Nothing -> throwError $ "option for non-hidden event " <> eid <> " has no text"
+        Just name_loc -> ok name_loc
+        Nothing -> if hidden
+            then ok "(Dummy option for hidden event)"
+            else throwError $ "some required option sections missing in " <> evtid <> " - dumping: " <> T.pack (show opt)
+    where
+        ok name_loc = let mtrigger = hoi4opt_trigger opt in do
+            mawd_pp'd   <- mapM ((imsg2doc =<<) . ppAiWillDo) (hoi4opt_ai_chance opt)
+            effects_pp'd <- setIsInEffect True (pp_script (fromMaybe [] (hoi4opt_effects opt)))
+            mtrigger_pp'd <- sequence (pp_script <$> mtrigger)
+            return . mconcat $
+                ["{{Option\n"
+                ,"| option_text = ", Doc.strictText name_loc, PP.line
+                ,"| effect =", PP.line, effects_pp'd, PP.line]
+                ++ (if triggered then
+                        maybe
+                            ["| trigger = always", PP.line] -- no trigger
+                        (\trigger_pp'd ->
+                            ["| trigger = ", PP.line -- trigger
+                            ,trigger_pp'd, PP.line]
+                        ) mtrigger_pp'd
+                    else [])
+                ++
+                flip (maybe []) mawd_pp'd (\awd_pp'd ->
+                    ["| comment = AI decision factors:", PP.line
+                    ,awd_pp'd, PP.line]) ++
+                -- 1 = no
+                ["}}"
+                ]
+
+findInStmt :: GenericStatement -> [(HOI4EventWeight, Text)]
+findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "province_event" = case getId scr of
+    Just triggeredId -> [(Nothing, triggeredId)]
+    _ -> (trace $ "Unrecognized event trigger: " ++ show stmt) $ []
+    where
+        getId :: [GenericStatement] -> Maybe Text
+        getId [] = Nothing
+        getId (stmt@[pdx| id = ?!id |] : _) = case id of
+            Just (Left n) -> Just $ T.pack (show (n :: Int))
+            Just (Right t) -> Just t
+            _ -> (trace $ "Invalid event id statement: " ++ show stmt) $ Nothing
+        getId (_ : ss) = getId ss
+findInStmt [pdx| events = @scr |]  = catMaybes $ map extractEvent scr
+    where
+        extractEvent :: GenericStatement -> Maybe (HOI4EventWeight, Text)
+        extractEvent (StatementBare (GenericLhs e [])) = Just (Nothing, e)
+        extractEvent (StatementBare (IntLhs e)) = Just (Nothing, T.pack (show e))
+        extractEvent stmt = (trace $ "Unknown in events statement: " ++ show stmt) $ Nothing
+findInStmt [pdx| random_events = @scr |] =
+    let evts = catMaybes $ map extractRandomEvent scr
+        total = sum $ map fst evts
+    in map (\t -> (Just (fst t, total), snd t)) evts
+    where
+        extractRandomEvent :: GenericStatement -> Maybe (Integer, Text)
+        extractRandomEvent stmt@[pdx| !weight = ?!id |] = case id of
+            Just (Left n) -> Just (fromIntegral weight, T.pack (show (n :: Int)))
+            Just (Right t) -> Just (fromIntegral weight, t)
+            _ -> (trace $ "Invalid event id in random_events: " ++ show stmt) $ Nothing
+        extractRandomEvent stmt = (trace $ "Unknown in random_events statement: " ++ show stmt) $ Nothing
+findInStmt [pdx| %_ = @scr |] = findInStmts scr
+findInStmt _ = []
+
+findInStmts :: [GenericStatement] -> [(HOI4EventWeight, Text)]
+findInStmts stmts = concatMap findInStmt stmts
+
+addEventSource :: (HOI4EventWeight -> HOI4EventSource) -> [(HOI4EventWeight, Text)] -> [(Text, HOI4EventSource)]
+addEventSource es l = map (\t -> (snd t, es (fst t))) l
+
+findInOptions :: Text -> [HOI4Option] -> [(Text, HOI4EventSource)]
+findInOptions eventId opts = concatMap (\o -> case hoi4opt_name o of
+    Just optName -> addEventSource (const (HOI4EvtSrcOption eventId optName)) (maybe [] (concatMap findInStmt) (hoi4opt_effects o))
+    _ -> []
+    ) opts
+
+addEventTriggers :: HOI4EventTriggers -> [(Text, HOI4EventSource)] -> HOI4EventTriggers
+addEventTriggers hm l = foldl' ins hm l
+    where
+        ins :: HOI4EventTriggers -> (Text, HOI4EventSource) -> HOI4EventTriggers
+        ins hm (k, v) = HM.alter (\orig -> case orig of
+            Just l -> Just $ l ++ [v]
+            Nothing -> Just [v]) k hm
+
+findTriggeredEventsInEvents :: HOI4EventTriggers -> [HOI4Event] -> HOI4EventTriggers
+findTriggeredEventsInEvents hm evts = addEventTriggers hm (concatMap findInEvent evts)
+    where
+        findInEvent :: HOI4Event -> [(Text, HOI4EventSource)]
+        findInEvent evt@HOI4Event{hoi4evt_id = Just eventId} =
+            (case hoi4evt_options evt of
+                Just opts -> findInOptions eventId opts
+                _ -> []) ++
+            (addEventSource (const (HOI4EvtSrcImmediate eventId)) (maybe [] findInStmts (hoi4evt_immediate evt))) ++
+            (addEventSource (const (HOI4EvtSrcAfter eventId)) (maybe [] findInStmts (hoi4evt_after evt)))
+        findInEvent _ = []
+
+findTriggeredEventsInDecisions :: HOI4EventTriggers -> [HOI4Decision] -> HOI4EventTriggers
+findTriggeredEventsInDecisions hm ds = addEventTriggers hm (concatMap findInDecision ds)
+    where
+        findInDecision :: HOI4Decision -> [(Text, HOI4EventSource)]
+        findInDecision d = addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (findInStmts (dec_effect d))
+
+findTriggeredEventsInOnActions :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers
+findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
+    where
+        findInAction :: HOI4EventTriggers -> GenericStatement -> HOI4EventTriggers
+        findInAction hm stmt@[pdx| $lhs = @scr |] = addEventTriggers hm (addEventSource (HOI4EvtSrcOnAction (actionName lhs)) (findInStmts scr))
+        findInAction hm stmt = (trace $ "Unknown on_actions statement: " ++ show stmt) $ hm
+
+        actionName :: Text -> Text
+        actionName n = HM.lookupDefault ("<pre>" <> n <> "</pre>") n actionNameTable
+
+
+        -- TODO: This should in principle be localizable at some point
+        actionNameTable :: HashMap Text Text
+        actionNameTable = HM.fromList
+            [("on_annexed", "When a nation is annexed")
+            --,("on_battle_lost_country", "")
+            ,("on_battle_lost_province", "<!-- on_battle_lost_province -->Losing a battle to ''From'' in the province") -- # root = location, from = winner country
+            --,("on_battle_lost_unit", "")
+            --,("on_battle_won_province", "")
+            --,("on_become_free_city", "")
+            ,("on_bi_yearly_pulse", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse I]]")
+            ,("on_bi_yearly_pulse_2", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse II]]")
+            ,("on_bi_yearly_pulse_3", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse III]]")
+            ,("on_bi_yearly_pulse_4", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse IV]]")
+            ,("on_bi_yearly_pulse_5", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse V]]")
+            --,("on_buy_religious_reform", "")
+            --,("on_change_hre_religion", "")
+            --,("on_circumnavigation", "")
+            --,("on_colonial_liberation", "")
+            --,("on_colonial_pulse", "")
+            --,("on_colonial_reintegration", "")
+            ,("on_conquistador_empty", "<!-- on_conquistador_empty -->{{icon|conquistador}} Conquistador is entering a uncolonized province with ''\"Hunt for the Seven Cities of Gold\"'' mission")
+            ,("on_conquistador_native", "<!-- on_conquistador_native -->{{icon|conquistador}} Conquistador is entering a province owned by natives with ''\"Hunt for the Seven Cities of Gold\"'' mission")
+            --,("on_death_election", "")
+            --,("on_death_foreign_slave_ruler", "")
+            --,("on_death_has_harem", "")
+            --,("on_dependency_gained", "")
+            --,("on_diplomatic_annex", "")
+            --,("on_dismantle_revolution", "")
+
+            -- Note: Should probably be "An estate *becoming* more influential", but that doesn't seem to be the behavior in 1.31.3
+            ,("on_estate_led_regency_surpassed", "<!-- on_estate_led_regency_surpassed -->An estate being more influential than the one leading the regency")
+            --,("on_explore_coast", "")
+            ,("on_extended_regency", "<!-- on_extended_regency -->Extending a regency")
+            --,("on_fetishist_cult_change", "")
+            ,("on_five_year_pulse", "The [[list_of_event_lists#5_year_pulse|five year pulse I]]")
+            ,("on_five_year_pulse_2", "The [[list_of_event_lists#5_year_pulse|five year pulse II]]")
+            ,("on_five_year_pulse_3", "The [[list_of_event_lists#5_year_pulse|five year pulse III]]")
+            --,("on_flagship_captured", "")
+            --,("on_flagship_destroyed", "")
+            ,("on_four_year_pulse", "The [[List_of_event_lists#4_year_pulse|4 year pulse]]")
+            --,("on_harmonized_buddhism", "")
+            --,("on_harmonized_christian", "")
+            --,("on_harmonized_dharmic", "")
+            --,("on_harmonized_jewish_group", "")
+            --,("on_harmonized_mahayana", "")
+            --,("on_harmonized_muslim", "")
+            --,("on_harmonized_pagan", "")
+            --,("on_harmonized_shinto", "")
+            --,("on_harmonized_vajrayana", "")
+            --,("on_harmonized_zoroastrian_group", "")
+            ,("on_heir_death", "<!-- on_heir_death -->Heir dying")
+            ,("on_heir_needed_theocracy", "<!-- on_heir_needed_theocracy -->A theocracy needing an heir")
+            --,("on_hre_non_defense", "")
+            --,("on_hre_religion_white_peace", "")
+            --,("on_integrate", "")
+            --,("on_lock_hre_religion", "")
+            ,("on_mandate_of_heaven_gained", "<!-- on_mandate_of_heaven_gained -->Our country becoming the [[Emperor of China]] instead of ''From''")
+            ,("on_monarch_death", "<!-- on_monarch_death-->Curent ruler dying")
+            ,("on_new_consort", "<!-- on_new_consort -->Getting a new consort")
+            ,("on_new_monarch", "<!-- on_new_monarch -->Getting a new ruler")
+            --,("on_new_term_election", "")
+            ,("on_overextension_pulse", "The overextension pulse")
+            ,("on_peace_actor", "<!-- on_peace_actor -->Sending a peace offer")
+            ,("on_peace_recipient", "<!-- on_peace_recipient -->Receiving a peace offer")
+            --,("on_province_owner_change", "")
+            --,("on_regent", "")
+            ,("on_religion_change", "<!-- on_religion_change -->Changing religion")
+            --,("on_remove_free_city", "")
+            --,("on_replace_governor", "")
+            --,("on_revoke_estate_land", "")
+            ,("on_siege_lost_country", "<!-- on_siege_lost_country -->Our country lost a siege in ''From''") -- root = losing country, from = location
+            --,("on_siege_lost_province", "")
+            ,("on_siege_won_country", "<!-- on_siege_won_country -->Our country winning a siege in ''From''") -- root = winning country, from = location
+            --,("on_siege_won_province", "")
+            ,("on_startup", "<!-- on_startup -->Starting the game")
+            --,("on_successive_emperor", "")
+            ,("on_thri_yearly_pulse", "The [[list_of_event_lists#3_year_pulse|three year pulse I]]")
+            ,("on_thri_yearly_pulse_2", "The [[list_of_event_lists#3_year_pulse|three year pulse II]]")
+            ,("on_thri_yearly_pulse_3", "The [[list_of_event_lists#3_year_pulse|three year pulse III]]")
+            ,("on_thri_yearly_pulse_4", "The [[list_of_event_lists#3_year_pulse|three year pulse IV]]")
+            ,("on_war_lost", "<!-- on_war_lost -->Losing a war against ''From''") -- # root = loser country, from = winner country
+            ,("on_war_won", "<!-- on_war_won -->Winning a war against ''From''") -- root = winning country, from = loser country
+            --,("on_weak_heir_claim", "")
+            ]
+{-
+findTriggeredEventsInDisasters :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers
+findTriggeredEventsInDisasters hm scr = foldl' findInDisaster hm scr
+    where
+        findInDisaster :: HOI4EventTriggers -> GenericStatement -> HOI4EventTriggers
+        findInDisaster hm stmt@[pdx| $id = @scr |] = foldl' (findInDisaster' id) hm scr
+        findInDisaster hm stmt = (trace $ "Unknown top-level disaster statement: " ++ show stmt) $ hm
+
+        findInDisaster' :: Text -> HOI4EventTriggers -> GenericStatement -> HOI4EventTriggers
+        findInDisaster' id hm [pdx| on_start = $event |] = addEventTriggers hm [(event, HOI4EvtSrcDisaster id "Start" Nothing)]
+        findInDisaster' id hm [pdx| on_end = $event |] = addEventTriggers hm [(event, HOI4EvtSrcDisaster id "End" Nothing)]
+        findInDisaster' id hm [pdx| on_monthly = @scr |] = addEventTriggers hm ((addEventSource (HOI4EvtSrcDisaster id "Monthly pulse")) (findInStmts scr))
+        findInDisaster' _ hm _ = hm
+
+findTriggeredEventsInMissions :: HOI4EventTriggers -> [HOI4MissionTreeBranch] -> HOI4EventTriggers
+findTriggeredEventsInMissions hm mtbs = foldl' (\h -> \m -> foldl' findInMission h (hoi4mtb_missions m)) hm mtbs
+    where
+        findInMission :: HOI4EventTriggers -> HOI4Mission -> HOI4EventTriggers
+        findInMission hm m = addEventTriggers hm $ addEventSource (const (HOI4EvtSrcMission (hoi4m_id m))) (findInStmts (hoi4m_effect m))
+-}

@@ -555,6 +555,7 @@ data ScriptMessage
     | MsgGainCoreOnProvince {scriptMessageProv :: Text}
     | MsgHasDLC {scriptMessageIcon :: Text, scriptMessageDlc :: Text}
     | MsgProvince {scriptMessageWhere :: Text}
+    | MsgState {scriptMessageWhere :: Text}
     | MsgTechGroup {scriptMessageIcon :: Text, scriptMessageName :: Text}
     | MsgUnlockCult {scriptMessageIcon :: Text, scriptMessageName :: Text}
     | MsgNumOfReligion {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
@@ -1685,7 +1686,8 @@ data ScriptMessage
     | MsgChangePrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
-    | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageProv :: Text}
+    | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
+    | MsgAddBuildingConstruction {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageProv :: Text}
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSwitchTag {scriptMessageWho :: Text}
@@ -4556,6 +4558,12 @@ instance RenderMessage Script ScriptMessage where
                 , " is active"
                 ]
         MsgProvince {scriptMessageWhere = _where}
+            -> mconcat
+                [ "Province "
+                , _where
+                , ":"
+                ]
+        MsgState {scriptMessageWhere = _where}
             -> mconcat
                 [ "State "
                 , _where
@@ -11464,8 +11472,20 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , plural _amt " unit" " units"
+                ]                
+        MsgConstructBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
+            -> mconcat
+                [ "Start building "
+                , _icon
+                , " "
+                , _what
+                , " at "
+                , toMessage (reducedNum plainPc _cost)
+                , " of normal cost, taking "
+                , toMessage (reducedNum plainPc _speed)
+                , " of normal time"
                 ]
-        MsgConstructBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _type, scriptMessageAmt = _amt, scriptMessageProv = _prov}
+        MsgAddBuildingConstruction {scriptMessageIcon = _icon, scriptMessageWhat = _type, scriptMessageAmt = _amt, scriptMessageProv = _prov}
             -> mconcat
                 [ "Add "
                 , toMessage (plainNum _amt)

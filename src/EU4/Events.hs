@@ -8,8 +8,8 @@ module EU4.Events (
     ,   findTriggeredEventsInEvents
     ,   findTriggeredEventsInDecisions
     ,   findTriggeredEventsInOnActions
---    ,   findTriggeredEventsInDisasters
---    ,   findTriggeredEventsInMissions
+    ,   findTriggeredEventsInDisasters
+    ,   findTriggeredEventsInMissions
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -48,7 +48,7 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
 newEU4Event :: EU4Scope -> FilePath -> EU4Event
-newEU4Event escope path = EU4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing Nothing path
+newEU4Event escope path = EU4Event Nothing Nothing [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing path
 -- | Empty event option vaule. Starts off Nothing everywhere.
 newEU4Option :: EU4Option
 newEU4Option = EU4Option Nothing Nothing Nothing Nothing
@@ -87,7 +87,7 @@ writeEU4Events = do
     let pathedEvents :: [Feature EU4Event]
         pathedEvents = map (\evt -> Feature {
                                     featurePath = Just (eu4evt_path evt)
-                                ,   featureId = eu4evt_id evt <> Just ".txt"
+                                ,   featureId = eu4evt_id evt
                                 ,   theFeature = Right evt })
                             (HM.elems events)
     writeFeatures "events"
@@ -108,12 +108,7 @@ parseEU4Event stmt@[pdx| %left = %right |] = case right of
         GenericLhs etype _ ->
             let mescope = case etype of
                     "country_event" -> Just EU4Country
-                    "unit_leader_event" -> Just EU4Country
-                    "operative_leader_event" -> Just EU4Country
                     "province_event" -> Just EU4Province
-                    "state_event" -> Just EU4Province
-                    "news_event" -> Just EU4NoScope -- ?
-                    "event" -> Just EU4NoScope
                     _ -> Nothing
             in case mescope of
                 Nothing -> throwError $ "unrecognized event type " <> etype
@@ -130,41 +125,6 @@ parseEU4Event stmt@[pdx| %left = %right |] = case right of
 
     _ -> return (Right Nothing)
 parseEU4Event _ = throwError "operator other than ="
-
--- | Intermediate structure for interpreting event title blocks.
-data EvtTitleI = EvtTitleI {
-        eti_text :: Maybe Text
-    ,   eti_trigger :: Maybe GenericScript
-    }
--- | Interpret the @titlr@ section of an event. This can be either a
--- localization key or a conditional title block. (TODO: document the
--- format here)
-evtTitle :: MonadError Text m => Maybe Text -> GenericScript -> m EU4EvtTitle
-evtTitle meid scr = case foldl' evtTitle' (EvtTitleI Nothing Nothing) scr of
-        EvtTitleI (Just t) Nothing -- title = { text = foo }
-            -> return $ EU4EvtTitleSimple t
-        EvtTitleI Nothing (Just trig) -- title = { trigger = { .. } } (invalid)
-            -> return $ EU4EvtTitleCompound scr
-        EvtTitleI (Just t) (Just trig) -- title = { trigger = { .. } text = foo }
-                                      -- e.g. pirate.1
-            -> return $ EU4EvtTitleConditional trig t
-        EvtTitleI Nothing Nothing -- title = { switch { .. = { text = foo } } }
-                                 -- e.g. action.39
-            -> throwError $ "bad title: no trigger nor text" <> case meid of
-                Just eid -> " in event " <> eid
-                Nothing -> ""
-    where
-        evtTitle' ed [pdx| trigger = @trig |] = ed { eti_trigger = Just trig }
-        evtTitle' ed [pdx| text = ?txt |] = ed { eti_text = Just txt }
-        evtTitle' ed [pdx| title = ?txt |] = ed { eti_text = Just txt }
-        evtTitle' ed [pdx| show_sound = %_ |] = ed
-        evtTitle' ed [pdx| $label = %_ |]
-            = error ("unrecognized title section " ++ T.unpack label
-                     ++ " in " ++ maybe "(unknown)" T.unpack meid)
-        evtTitle' ed stmt
-            = error ("unrecognized title section in " ++ maybe "(unknown)" T.unpack meid
-                    ++ ": " ++ show stmt)
-
 
 -- | Intermediate structure for interpreting event description blocks.
 data EvtDescI = EvtDescI {
@@ -212,16 +172,10 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
             (_, Just nid) -> return evt { eu4evt_id = Just (T.pack $ show (nid::Int)) }
             _ -> withCurrentFile $ \file ->
                 throwError $ "bad id in " <> T.pack file <> ": " <> T.pack (show rhs)
-    eventAddSection' evt stmt@[pdx| title = %rhs |] =
-        let oldtitles = eu4evt_title evt in case rhs of
-            (textRhs -> Just title) -> return evt { eu4evt_title = oldtitles ++ [EU4EvtTitleSimple title] }
-            CompoundRhs scr -> do
-                let meid = eu4evt_id evt
-                title <- evtTitle meid scr
-                return evt { eu4evt_title = oldtitles ++ [title] }
-            _ -> throwError $ "bad title" <> case eu4evt_id evt of
-                    Just eid -> " in event " <> eid
-                    Nothing -> ""
+    eventAddSection' evt stmt@[pdx| title = %rhs |] = case textRhs rhs of
+        Just title -> return evt { eu4evt_title = Just title }
+        _ -> withCurrentFile $ \file ->
+            throwError $ "bad title in " <> T.pack file
     eventAddSection' evt stmt@[pdx| desc = %rhs |] =
         let olddescs = eu4evt_desc evt in case rhs of
             (textRhs -> Just desc) -> return evt { eu4evt_desc = olddescs ++ [EU4EvtDescSimple desc] }
@@ -263,16 +217,11 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
         | GenericRhs "yes" [] <- rhs = return evt { eu4evt_fire_only_once = True }
         | GenericRhs "no"  [] <- rhs = return evt { eu4evt_fire_only_once = False }
     eventAddSection' evt stmt@[pdx| major = %_ |] = return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| show_major = %_ |] = return evt -- do nothing
+    eventAddSection' evt stmt@[pdx| major_trigger = %_ |] = return evt -- do nothing
     eventAddSection' evt stmt@[pdx| hidden = %rhs |]
         | GenericRhs "yes" [] <- rhs = return evt { eu4evt_hide_window = True }
         | GenericRhs "no"  [] <- rhs = return evt { eu4evt_hide_window = False }
     eventAddSection' evt stmt@[pdx| is_mtth_scaled_to_size = %_ |] = return evt -- do nothing (XXX)
-    eventAddSection' evt stmt@[pdx| fire_for_sender = %rhs |] = case rhs of
-        -- Yes is the default, so I don't think this is ever used
-        GenericRhs "yes" [] -> return evt { eu4evt_fire_for_sender = Just False }
-        GenericRhs "no" [] -> return evt { eu4evt_fire_for_sender = Just True }
-        _ -> throwError "bad fire_for_sender"
     eventAddSection' evt stmt@[pdx| after = @scr |] = return evt { eu4evt_after = Just scr }
     eventAddSection' evt stmt@[pdx| $label = %_ |] =
         withCurrentFile $ \file ->
@@ -293,7 +242,7 @@ optionAddStatement :: (IsGame g, Monad m) => EU4Option -> GenericStatement -> PP
 optionAddStatement opt stmt@[pdx| name = ?name |]
     = return $ opt { eu4opt_name = Just name }
 optionAddStatement opt stmt@[pdx| ai_chance = @ai_chance |]
-    = return $ opt { eu4opt_ai_chance = Just (aiWillDo ai_chance) } -- hope can re-use the aiWilldo script
+    = return $ opt { eu4opt_ai_chance = Just ai_chance }
 optionAddStatement opt stmt@[pdx| trigger = @trigger_script |]
     = return $ opt { eu4opt_trigger = Just trigger_script }
 optionAddStatement opt stmt = do
@@ -307,26 +256,6 @@ optionAddEffect Nothing stmt = optionAddEffect (Just []) stmt
 optionAddEffect (Just effs) stmt = return $ Just (effs ++ [stmt])
 
 iquotes't = Doc.doc2text . iquotes
-
--- | Present an event's title block.
-ppTitles :: (EU4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
-                                -> [EU4EvtTitle] -> PPT g m Doc
-ppTitles _ [] = return "| event_name = (No title)"
-ppTitles False [EU4EvtTitleSimple key] = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
-ppTitles True [EU4EvtTitleSimple key] = ("| event_name = (Hidden) " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
-ppTitles True _ = return "| event_name = (This event is hidden and has no title.)"
-ppTitles _ titles = (("| cond_event_name = yes" <> PP.line <> "| event_name = ") <>) . PP.vsep <$> mapM ppTitle titles where
-    ppTitle (EU4EvtTitleSimple key) = ("Otherwise:<br>:" <>) <$> fmtTitle key
-    ppTitle (EU4EvtTitleConditional scr key) = mconcat <$> sequenceA
-        [pure "The following title is used if:", pure PP.line
-        ,imsg2doc =<< ppMany scr, pure PP.line
-        ,pure ":", fmtTitle key
-        ]
-    ppTitle (EU4EvtTitleCompound scr) =
-        imsg2doc =<< ppMany scr
-    fmtTitle key = flip liftM (getGameL10nIfPresent key) $ \case
-        Nothing -> Doc.strictText key
-        Just txt -> "''" <> Doc.strictText (Doc.nl2br txt) <> "''"
 
 -- | Present an event's description block.
 ppDescs :: (EU4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
@@ -388,7 +317,6 @@ ppEventSource (EU4EvtSrcDecision id loc) = do
         ]
 ppEventSource (EU4EvtSrcOnAction act weight) = do
     return $ Doc.strictText $ act <> formatWeight weight
-{-
 ppEventSource (EU4EvtSrcDisaster id trig weight) = do
     idLoc <- getGameL10n id
     return $ Doc.strictText $ mconcat [trig
@@ -399,7 +327,6 @@ ppEventSource (EU4EvtSrcDisaster id trig weight) = do
         , " disaster"
         , formatWeight weight
         ]
-
 ppEventSource (EU4EvtSrcMission missionId) = do
     title <- getGameL10n (missionId <> "_title")
     return $ Doc.strictText $ mconcat ["Completing the <!-- "
@@ -408,7 +335,7 @@ ppEventSource (EU4EvtSrcMission missionId) = do
         , iquotes't title
         , " mission"
         ]
--}
+
 ppTriggeredBy :: (EU4Info g, Monad m) => Text -> PPT g m Doc
 ppTriggeredBy eventId = do
     eventTriggers <- getEventTriggers
@@ -429,13 +356,13 @@ ppTriggeredBy eventId = do
 pp_event :: forall g m. (EU4Info g, MonadError Text m) =>
     EU4Event -> PPT g m Doc
 pp_event evt = case (eu4evt_id evt
---                    ,eu4evt_title evt -- for title of event
+                    ,eu4evt_title evt
                     ,eu4evt_options evt) of
-    (Just eid, Just options) -> setCurrentFile (eu4evt_path evt) $ do
+    (Just eid, Just title, Just options) -> setCurrentFile (eu4evt_path evt) $ do
         -- Valid event
         version <- gets (gameVersion . getSettings)
         (conditional, options_pp'd) <- pp_options (eu4evt_hide_window evt) eid options
-        titleLoc <- ppTitles (eu4evt_hide_window evt) (eu4evt_title evt) -- get localisation of title
+        titleLoc <- getGameL10n title
         descLoc <- ppDescs (eu4evt_hide_window evt) (eu4evt_desc evt)
         after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> eu4evt_after evt))
         let evtArg :: Text -> (EU4Event -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
@@ -451,7 +378,6 @@ pp_event evt = case (eu4evt_id evt
                     (field evt)
             isTriggeredOnly = fromMaybe False $ eu4evt_is_triggered_only evt
             isFireOnlyOnce = eu4evt_fire_only_once evt
-            isFireForSender = fromMaybe False $ eu4evt_fire_for_sender evt
             evtId = Doc.strictText eid
         trigger_pp'd <- evtArg "trigger" eu4evt_trigger pp_script
         mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (eu4evt_mean_time_to_happen evt)
@@ -466,14 +392,11 @@ pp_event evt = case (eu4evt_id evt
             ,"{{Event", PP.line
             ,"| version = ", Doc.strictText version, PP.line
             ,"| event_id = ", evtId, PP.line
-            ,titleLoc, PP.line
+            ,"| event_name = ", Doc.strictText titleLoc, PP.line
             ,descLoc, PP.line
             ] ++
             ( if isFireOnlyOnce then
                 ["| fire_only_once = yes", PP.line]
-            else []) ++
-            ( if isFireForSender then
-                ["| fire_for_sender = no", PP.line]
             else []) ++
             -- For triggered only events, mean_time_to_happen is not
             -- really mtth but instead describes weight modifiers, for
@@ -504,76 +427,11 @@ pp_event evt = case (eu4evt_id evt
             ,"<section end=", evtId, "/>", PP.line
             ]
 
-    (Nothing, _) -> throwError "eu4evt_id missing"
-    (Just eid, Nothing) -> setCurrentFile (eu4evt_path evt) $ do -- BC: Really ugly way to fix no options problem, I hate it but I;m a terrible coder
-        -- Valid event
-        version <- gets (gameVersion . getSettings)
-        titleLoc <- ppTitles (eu4evt_hide_window evt) (eu4evt_title evt) -- get localisation of title
-        descLoc <- ppDescs (eu4evt_hide_window evt) (eu4evt_desc evt)
-        after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> eu4evt_after evt))
-        let evtArg :: Text -> (EU4Event -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
-            evtArg fieldname field fmt
-                = maybe (return [])
-                    (\field_content -> do
-                        content_pp'd <- fmt field_content 
-                        return
-                            ["| ", Doc.strictText fieldname, " = "
-                            ,PP.line
-                            ,content_pp'd
-                            ,PP.line])
-                    (field evt)
-            isTriggeredOnly = fromMaybe False $ eu4evt_is_triggered_only evt
-            isFireOnlyOnce = eu4evt_fire_only_once evt
-            isFireForSender = fromMaybe False $ eu4evt_fire_for_sender evt
-            evtId = Doc.strictText eid
-        trigger_pp'd <- evtArg "trigger" eu4evt_trigger pp_script
-        mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (eu4evt_mean_time_to_happen evt)
-        immediate_pp'd <- setIsInEffect True (evtArg "immediate" eu4evt_immediate pp_script)
-        triggered_pp <- ppTriggeredBy eid
-        -- Keep track of incomplete events
-        when (not isTriggeredOnly && isNothing mmtth_pp'd) $
-            -- TODO: use logging instead of trace
-            traceM ("warning: is_triggered_only and mean_time_to_happen missing for event id " ++ T.unpack eid)
-        return . mconcat $
-            ["<section begin=", evtId, "/>", PP.line
-            ,"{{Event", PP.line
-            ,"| version = ", Doc.strictText version, PP.line
-            ,"| event_id = ", evtId, PP.line
-            ,titleLoc, PP.line
-            ,descLoc, PP.line
-            ] ++
-            ( if isFireOnlyOnce then
-                ["| fire_only_once = yes", PP.line]
-            else []) ++
-            ( if isFireForSender then
-                ["| fire_for_sender = no", PP.line]
-            else []) ++
-            -- For triggered only events, mean_time_to_happen is not
-            -- really mtth but instead describes weight modifiers, for
-            -- scripts that trigger them with a probability based on a
-            -- weight (e.g. on_bi_yearly_pulse).
-            (if isTriggeredOnly then
-                ["| triggered only = ", triggered_pp, PP.line
-                ]
-                ++ maybe [] (:[PP.line]) mmtth_pp'd
-            else []) ++
-            trigger_pp'd ++
-            -- mean_time_to_happen is only really mtth if it's *not*
-            -- triggered only.
-            (if isTriggeredOnly then [] else case mmtth_pp'd of
-                Nothing ->
-                    ["| triggered_only =", PP.line
-                    ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
-                Just mtth_pp'd ->
-                    ["| mtth = ", PP.line
-                    ,mtth_pp'd, PP.line]) ++
-            immediate_pp'd ++
-            (maybe [] (\app -> ["| after =", PP.line, app, PP.line]) after_pp'd) ++
-            ["| options = ", PP.line
-            ,"| collapse = yes", PP.line
-            ,"}}", PP.line
-            ,"<section end=", evtId, "/>", PP.line
-            ]
+    (Nothing, _, _) -> throwError "eu4evt_id missing"
+    (Just eid, Nothing, _) ->
+        throwError ("title missing for event id " <> eid)
+    (Just eid, _, Nothing) ->
+        throwError ("options missing for event id " <> eid)
 
 -- | Present the options of an event.
 pp_options :: (EU4Info g, MonadError Text m) =>
@@ -596,7 +454,6 @@ pp_option evtid hidden triggered opt = do
             else throwError $ "some required option sections missing in " <> evtid <> " - dumping: " <> T.pack (show opt)
     where
         ok name_loc = let mtrigger = eu4opt_trigger opt in do
-            mawd_pp'd   <- mapM ((imsg2doc =<<) . ppAiWillDo) (eu4opt_ai_chance opt)
             effects_pp'd <- setIsInEffect True (pp_script (fromMaybe [] (eu4opt_effects opt)))
             mtrigger_pp'd <- sequence (pp_script <$> mtrigger)
             return . mconcat $
@@ -612,9 +469,6 @@ pp_option evtid hidden triggered opt = do
                         ) mtrigger_pp'd
                     else [])
                 ++
-                flip (maybe []) mawd_pp'd (\awd_pp'd ->
-                    ["| comment = AI decision factors:", PP.line
-                    ,awd_pp'd, PP.line]) ++
                 -- 1 = no
                 ["}}"
                 ]
@@ -784,7 +638,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             ,("on_war_won", "<!-- on_war_won -->Winning a war against ''From''") -- root = winning country, from = loser country
             --,("on_weak_heir_claim", "")
             ]
-{-
+
 findTriggeredEventsInDisasters :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
 findTriggeredEventsInDisasters hm scr = foldl' findInDisaster hm scr
     where
@@ -803,4 +657,3 @@ findTriggeredEventsInMissions hm mtbs = foldl' (\h -> \m -> foldl' findInMission
     where
         findInMission :: EU4EventTriggers -> EU4Mission -> EU4EventTriggers
         findInMission hm m = addEventTriggers hm $ addEventSource (const (EU4EvtSrcMission (eu4m_id m))) (findInStmts (eu4m_effect m))
--}
