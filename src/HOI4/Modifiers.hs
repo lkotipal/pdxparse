@@ -94,8 +94,9 @@ parseHOI4OpinionModifiers :: (IsGameState (GameState g), IsGameData (GameData g)
 parseHOI4OpinionModifiers scripts = HM.unions . HM.elems <$> do
     tryParse <- hoistExceptions $
         HM.traverseWithKey
-            (\sourceFile scr ->
-                setCurrentFile sourceFile $ mapM parseHOI4OpinionModifier scr)
+            (\sourceFile scr -> setCurrentFile sourceFile $ mapM parseHOI4OpinionModifier $ case scr of
+                [[pdx| opinion_modifiers = @mods |]] -> mods
+                _ -> scr)
             scripts
     case tryParse of
         Left err -> do
@@ -112,7 +113,7 @@ parseHOI4OpinionModifiers scripts = HM.unions . HM.elems <$> do
                 where mkModMap :: [HOI4OpinionModifier] -> HashMap Text HOI4OpinionModifier
                       mkModMap = HM.fromList . map (omodName &&& id)
 
-newHOI4OpinionModifier id locid path = HOI4OpinionModifier id locid path Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+newHOI4OpinionModifier id locid path = HOI4OpinionModifier id locid path Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- | Parse a statement in an opinion modifiers file. Some statements aren't
 -- modifiers; for those, and for any obvious errors, return Right Nothing.
@@ -149,12 +150,14 @@ opinionModifierAddSection mmod stmt
     where
         opinionModifierAddSection' mod stmt@[pdx| value = !rhs |]
             = return (mod { omodValue = Just rhs })
-        opinionModifierAddSection' mod stmt@[pdx| max = !rhs |]
+        opinionModifierAddSection' mod stmt@[pdx| max_trust = !rhs |]
             = return (mod { omodMax = Just rhs })
-        opinionModifierAddSection' mod stmt@[pdx| min = !rhs |]
+        opinionModifierAddSection' mod stmt@[pdx| min_trust = !rhs |]
             = return (mod { omodMin = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| decay = !rhs |]
             = return (mod { omodDecay = Just rhs })
+        opinionModifierAddSection' mod stmt@[pdx| days = !rhs |]
+            = return (mod { omodDays = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| months = !rhs |]
             = return (mod { omodMonths = Just rhs })
         opinionModifierAddSection' mod stmt@[pdx| years = !rhs |]
@@ -164,8 +167,11 @@ opinionModifierAddSection mmod stmt
             -- no is the default, so I don't think this is ever used
             GenericRhs "no" [] -> return mod { omodTrade = Just False }
             _ -> throwError "bad trade opinion"
-        opinionModifierAddSection' mod stmt@[pdx| max_in_other_direction = !rhs |]
-            = return (mod { omodMaxInOtherDirection = Just rhs })
+        opinionModifierAddSection' mod stmt@[pdx| target = %rhs |] = case rhs of
+            GenericRhs "yes" [] -> return mod { omodTarget = Just True }
+            -- no is the default, so I don't think this is ever used
+            GenericRhs "no" [] -> return mod { omodTarget = Just False }
+            _ -> throwError "bad target opinion"
         opinionModifierAddSection' mod [pdx| $other = %_ |]
             = trace ("unknown opinion modifier section: " ++ T.unpack other) $ return mod
         opinionModifierAddSection' mod _
@@ -215,11 +221,10 @@ pp_opinion_modifer mod = do
                 (modText "" " Trade relation" (omodValue mod))
                 else
                    (modText "{{icon|opinion}} " " Opinion" (omodValue mod)) 
-            ++ (yearlyDecay (omodValue mod) (omodDecay mod))
+            ++ (monthlyDecay (omodValue mod) (omodDecay mod))
             ++ (modText "" " Min" (omodMin mod))
             ++ (modText "" " Max" (omodMax mod))
-            ++ (modText "" " Max for sender" (omodMaxInOtherDirection mod))
-            ++ (duration (omodMonths mod) (omodYears mod))
+            ++ (duration (omodDays mod) (omodMonths mod) (omodYears mod))
         ) ++
         [ ") }}"
         , PP.line
@@ -231,19 +236,21 @@ pp_opinion_modifer mod = do
         modText _ _ _ = []
 
         isTrade = fromMaybe False $ omodTrade mod
+        isTarget = fromMaybe False $ omodTarget mod
 
-        yearlyDecay :: Maybe Double -> Maybe Double -> [Doc]
-        yearlyDecay (Just op) (Just decay) = [mconcat [
+        monthlyDecay :: Maybe Double -> Maybe Double -> [Doc]
+        monthlyDecay (Just op) (Just decay) = [mconcat [
                 colourNumSign True (if op < 0 then decay else -decay)
-                , Doc.strictText " Yearly decay"
+                , Doc.strictText " Monthly decay"
             ]]
-        yearlyDecay _ _ = []
+        monthlyDecay _ _ = []
 
-        duration :: Maybe Double -> Maybe Double -> [Doc]
-        duration (Just m) Nothing | m /= 0 = [fmt "Month" m]
-        duration Nothing (Just y) | y /= 0 = [fmt "Year" y]
-        duration (Just m) (Just y) | m /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", fmt "Month" m]]
-        duration _ _ = []
+        duration :: Maybe Double -> Maybe Double -> Maybe Double -> [Doc]
+        duration (Just d) Nothing Nothing | d /= 0 = [fmt "Day" d]
+        duration Nothing (Just m) Nothing | m /= 0 = [fmt "Month" m]
+        duration Nothing Nothing (Just y) | y /= 0 = [fmt "Year" y]
+        duration (Just d) (Just m) (Just y) | d /= 0 || m /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", fmt "Month" m, " and ", fmt "Day" d]]
+        duration _ _ _ = []
 
         fmt :: Text -> Double -> Doc
         fmt t v = mconcat [ plainNum v, " ", Doc.strictText $ t <> (if v == 1.0 then "" else "s") ]

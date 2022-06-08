@@ -337,6 +337,7 @@ script customLhs customRhs = statement customLhs customRhs `Ap.sepBy` skipSpace
 lhs :: Parser lhs -> Parser (Lhs lhs)
 lhs custom = CustomLhs <$> custom
          <|> AtLhs <$> ("@" *> ident) -- guessing at the syntax here...
+         <|> AtLhs <$> stringLit -- in case of a literal string lhs, ugly solution
          <|> GenericLhs <$> ident <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")
          <|> IntLhs <$> Ap.decimal
     <?> "statement LHS"
@@ -369,6 +370,7 @@ rhs customLhs customRhs
         <|> GenericRhs  <$> ident <*> Ap.many' (":" *> ident)
         <|> CompoundRhs <$> compoundRhs customLhs customRhs)
         <|> StringRhs   <$> "---" -- FIXME: Hack to work around weird "set_revolution_target = ---" line in the center_of_revolution.1500 event
+        -- Need solution for variables like ^ ... = whatever?0 
     <?> "statement RHS"
 
 -- | A RHS that consists of multiple statements grouped by braces. Frequently

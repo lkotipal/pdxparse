@@ -284,10 +284,11 @@ data HOI4OpinionModifier = HOI4OpinionModifier
     ,   omodMax :: Maybe Double
     ,   omodMin :: Maybe Double
     ,   omodDecay :: Maybe Double
+    ,   omodDays :: Maybe Double
     ,   omodMonths :: Maybe Double
     ,   omodYears :: Maybe Double
     ,   omodTrade :: Maybe Bool
-    ,   omodMaxInOtherDirection :: Maybe Double
+    ,   omodTarget :: Maybe Bool
     } deriving (Show)
 
 {-

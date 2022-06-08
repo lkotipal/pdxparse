@@ -4,7 +4,7 @@ module HOI4.Handlers (
     ,   msgToPP
     ,   flagText
     ,   isTag
-    ,   getProvLoc
+    ,   getStateLoc
     ,   pp_mtth
     ,   compound
     ,   compoundMessage
@@ -383,14 +383,14 @@ isPronoun s = T.map toLower s `S.member` pronouns where
         ]
 
 -- Get the localization for a state ID, if available.
-getProvLoc :: (IsGameData (GameData g), Monad m) =>
+getStateLoc :: (IsGameData (GameData g), Monad m) =>
     Int -> PPT g m Text
-getProvLoc n = do
-    let provid_t = T.pack (show n)
-    mprovloc <- getGameL10nIfPresent ("STATE_" <> provid_t)
-    return $ case mprovloc of
-        Just loc -> loc <> " (" <> provid_t <> ")"
-        _ -> "AAAAAAAAAAAAAARGH " <> provid_t
+getStateLoc n = do
+    let stateid_t = T.pack (show n)
+    mstateloc <- getGameL10nIfPresent ("STATE_" <> stateid_t)
+    return $ case mstateloc of
+        Just loc -> loc <> " (" <> stateid_t <> ")"
+        _ -> "AAAAAAAAAAAAAARGH " <> stateid_t
 
 -----------------------------------------------------------------
 -- Script handlers that should be used directly, not via ppOne --
@@ -657,8 +657,8 @@ withProvince msg stmt@[pdx| %lhs = $vartag:$var |] = do
         Nothing -> preStatement stmt
 withProvince msg stmt@[pdx| %lhs = $var |]
     = msgToPP =<< msg . Doc.doc2text <$> pronoun (Just HOI4Province) var
-withProvince msg [pdx| %lhs = !provid |]
-    = msgToPP =<< msg <$> getProvLoc provid
+withProvince msg [pdx| %lhs = !stateid |]
+    = msgToPP =<< msg <$> getStateLoc stateid
 withProvince _ stmt = preStatement stmt
 
 -- As withLocAtom but no l10n.
@@ -1160,9 +1160,9 @@ tagOrProvince tagmsg provmsg expectScope stmt@[pdx| %_ = ?!eobject |]
             Just (Right tag) -> do
                 tagflag <- flag expectScope tag
                 return . tagmsg . Doc.doc2text $ tagflag
-            Just (Left provid) -> do -- is a province id
-                prov_loc <- getProvLoc provid
-                return . provmsg $ prov_loc
+            Just (Left stateid) -> do -- is a state id
+                state_loc <- getStateLoc stateid
+                return . provmsg $ state_loc
             Nothing -> return (preMessage stmt)
 tagOrProvince _ _ _ stmt = preStatement stmt
 
@@ -1179,9 +1179,9 @@ tagOrProvinceIcon tagmsg provmsg stmt@[pdx| $head = ?!eobject |]
 --                  traceM $ "PREV scope is: " ++ show ps
                 tagflag <- flag Nothing tag
                 return . tagmsg . Doc.doc2text $ tagflag
-            Just (Left provid) -> do -- is a province id
-                prov_loc <- getProvLoc provid
-                return . provmsg $ prov_loc
+            Just (Left stateid) -> do -- is a state id
+                state_loc <- getStateLoc stateid
+                return . provmsg $ state_loc
             Nothing -> return (preMessage stmt)
 tagOrProvinceIcon _ _ stmt = preStatement stmt
 
@@ -1775,8 +1775,8 @@ addCore [pdx| %_ = $tag |]
     return $ MsgTagGainsCore tagflag
 addCore [pdx| %_ = !num |]
   = msgToPP =<< do -- province
-    prov <- getProvLoc num
-    return $ MsgGainCoreOnProvince prov
+    state <- getStateLoc num
+    return $ MsgGainCoreOnProvince state
 addCore stmt = preStatement stmt
 
 -- Opinions
@@ -2172,7 +2172,7 @@ defineAdvisor isScaled stmt@[pdx| %_ = @scr |]
             "cost_multiplier" -> return $ da { da_discount = floatRhs rhs }
             "location" -> do
                 let location_code = floatRhs rhs
-                location_loc <- sequence (getProvLoc <$> location_code)
+                location_loc <- sequence (getStateLoc <$> location_code)
                 return $ da { da_location = location_code
                             , da_location_loc = location_loc }
             "skill" -> return $ da { da_skill = floatRhs rhs }
@@ -4092,7 +4092,7 @@ createColonyMissionReward :: (HOI4Info g, Monad m) => StatementHandler g m
 createColonyMissionReward stmt =
     case getEffectArg "province" stmt of
         Just (IntRhs num) -> do
-            prov <- getProvLoc num
+            prov <- getStateLoc num
             msgToPP $ MsgColonyMissionReward prov
         _ -> (trace $ "warning: Not handled by createColonyMissionReward: " ++ (show stmt)) $ preStatement stmt
 -}

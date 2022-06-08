@@ -1870,8 +1870,8 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
                         scriptMsgs <- scope HOI4TradeNode $ ppMany scr
                         return (header ++ scriptMsgs)
                     _ -> do
-                        prov_loc <- getProvLoc n
-                        header <- msgToPP (MsgState prov_loc)
+                        state_loc <- getStateLoc n
+                        header <- msgToPP (MsgState state_loc)
                         scriptMsgs <- scope HOI4Province $ ppMany scr
                         return (header ++ scriptMsgs)
             _ -> preStatement stmt

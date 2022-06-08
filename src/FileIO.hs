@@ -10,6 +10,8 @@ module FileIO (
     ,   writeFeatures
     ) where
 
+import Debug.Trace (trace, traceM)
+
 import Control.Monad (forM, forM_)
 import Control.Monad.Except (ExceptT)
 import Control.Monad.Trans (MonadIO (..))

@@ -233,6 +233,7 @@ readHOI4Scripts = do
     let readOneScript :: String -> String -> PPT HOI4 m (String, GenericScript)
         readOneScript category target = do
             content <- liftIO $ readScript settings target
+            traceM (show target)
             when (null content) $
                 liftIO $ hPutStrLn stderr $
                     "Warning: " ++ target
