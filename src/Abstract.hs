@@ -221,7 +221,7 @@ restOfLine = (Ap.many1' Ap.endOfLine >> return "")
 ident :: Parser Text
 ident = do
         res <- (<>) <$> (T.singleton <$> (Ap.satisfy (\c -> c  == '_' || isAlphaNum c)))
-                    <*> Ap.takeWhile (\c -> c `elem` ['_','.','@','-'] || isAlphaNum c)
+                    <*> Ap.takeWhile (\c -> c `elem` ['_','.','@','-','?'] || isAlphaNum c)
         if T.all isDigit res
             then fail "ident: numeric identifier"
             else return res

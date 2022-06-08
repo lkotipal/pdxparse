@@ -693,6 +693,7 @@ findTriggeredEventsInOnActions :: HOI4EventTriggers -> [GenericStatement] -> HOI
 findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
     where
         findInAction :: HOI4EventTriggers -> GenericStatement -> HOI4EventTriggers
+        findInAction hm [pdx|on_actions = @stmts |] = foldl' findInAction hm stmts
         findInAction hm stmt@[pdx| $lhs = @scr |] = addEventTriggers hm (addEventSource (HOI4EvtSrcOnAction (actionName lhs)) (findInStmts scr))
         findInAction hm stmt = (trace $ "Unknown on_actions statement: " ++ show stmt) $ hm
 
