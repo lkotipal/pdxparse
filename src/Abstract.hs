@@ -61,21 +61,21 @@ module Abstract (
 
 import Control.Applicative (Applicative (..), Alternative (..))
 import Control.Monad (void)
-import qualified Data.Foldable as F
-import Data.Monoid (Monoid (..), (<>))
 
+import qualified Data.Foldable as F
 import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
 import Data.List (intersperse)
 import Data.Maybe (fromMaybe)
-
+import Data.Monoid
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
+import Data.Void
 
 import Data.Attoparsec.Text (Parser, (<?>))
 import qualified Data.Attoparsec.Text as Ap
 
-import Text.PrettyPrint.Leijen.Text (Doc, (<++>))
+import Doc (Doc, (<++>))
 import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import qualified Doc
@@ -91,7 +91,7 @@ data Statement lhs rhs
         | Statement (Lhs lhs) Operator (Rhs lhs rhs)
     deriving (Eq, Ord, Show, Read)
 -- | Statement with no custom components.
-type GenericStatement = Statement () ()
+type GenericStatement = Statement Void Void
 
 -- | The operator between the two sides of a statement. Usually an equals sign,
 -- but can be less than or greater than.
@@ -127,7 +127,7 @@ data Lhs lhs
     | IntLhs Int                    -- ^ 1234 = ...
     deriving (Eq, Ord, Show, Read)
 -- | LHS with no custom elements.
-type GenericLhs = Lhs ()
+type GenericLhs = Lhs Void
 
 -- | Type of statement right-hand sides (the part after the '='). Since this is
 -- mutually recursive with 'Statement', it also requires the custom LHS type as
@@ -146,8 +146,9 @@ data Rhs lhs rhs
     | CompoundRhs [Statement lhs rhs] -- ^ ... = { ... }
     | DateRhs Date                  -- ^ ... = 11.10.1234
     deriving (Eq, Ord, Show, Read)
+
 -- | RHS with no custom elements.
-type GenericRhs = Rhs () ()
+type GenericRhs = Rhs Void Void
 
 -- | Script, i.e. list of statements.
 type Script lhs rhs = [Statement lhs rhs]
@@ -370,7 +371,7 @@ rhs customLhs customRhs
         <|> GenericRhs  <$> ident <*> Ap.many' (":" *> ident)
         <|> CompoundRhs <$> compoundRhs customLhs customRhs)
         <|> StringRhs   <$> "---" -- FIXME: Hack to work around weird "set_revolution_target = ---" line in the center_of_revolution.1500 event
-        -- Need solution for variables like ^ ... = whatever?0 
+        -- Need solution for variables like ^ ... = whatever?0
     <?> "statement RHS"
 
 -- | A RHS that consists of multiple statements grouped by braces. Frequently

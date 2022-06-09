@@ -60,7 +60,7 @@ In a pattern:
         @
 
         * @$foo@ => @foo :: Text@, matches a bare_word
-        
+
         * @!foo@ => @foo :: Int@, matches a number (goes through @floatRhs@)
 
     * on the RHS only:
@@ -100,7 +100,6 @@ import Language.Haskell.TH -- everything
 import qualified Language.Haskell.TH.Lift as TL
 import Language.Haskell.TH.Quote (QuasiQuoter (..))
 import Instances.TH.Lift ()
---import Language.Haskell.Exts.QQ
 import Language.Haskell.Meta (parseExp, parsePat)
 
 import Abstract

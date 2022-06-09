@@ -78,7 +78,7 @@ parseHOI4DecisionGroup [pdx| $left = @scr |]
     | left `elem` ["country_decisions", "religion_decisions"]
     = forM scr $ \stmt -> (Right <$> parseHOI4Decision stmt)
                             `catchError` (return . Left)
-    | otherwise = throwError "unrecognized form for decision block (LHS)"
+    | otherwise = throwError "unrecognized form for decision block category (LHS)"
 parseHOI4DecisionGroup [pdx| $_ = %_ |]
     = throwError "unrecognized form for decision block (RHS)"
 parseHOI4DecisionGroup _ = throwError "unrecognized form for decision block (LHS)"

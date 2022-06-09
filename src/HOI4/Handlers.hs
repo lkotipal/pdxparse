@@ -1,14 +1,16 @@
 module HOI4.Handlers (
         preStatement
     ,   plainMsg
+    ,   plainMsg'
     ,   msgToPP
+    ,   msgToPP'
     ,   flagText
     ,   isTag
     ,   getStateLoc
     ,   pp_mtth
     ,   compound
     ,   compoundMessage
-    ,   compoundMessagePronoun 
+    ,   compoundMessagePronoun
     ,   compoundMessageTagged
     ,   allowPronoun
     ,   withLocAtom
@@ -31,12 +33,12 @@ module HOI4.Handlers (
     ,   numeric
     ,   numericOrTag
     ,   numericOrTagIcon
-    ,   numericIconChange 
+    ,   numericIconChange
     ,   buildingCount
-    ,   withFlag 
+    ,   withFlag
     ,   withBool
     ,   withFlagOrBool
-    ,   withTagOrNumber 
+    ,   withTagOrNumber
     ,   numericIcon
     ,   numericIconLoc
     ,   numericIconBonus
@@ -90,7 +92,7 @@ module HOI4.Handlers (
     ,   setGovtRank
     ,   numProvinces
     ,   withFlagOrProvince
-    ,   withFlagOrProvinceHOI4Scope 
+    ,   withFlagOrProvinceHOI4Scope
     ,   tradeMod
     ,   isMonth
     ,   range
@@ -205,7 +207,7 @@ import Debug.Trace
 preStatement :: (HOI4Info g, Monad m) =>
     GenericStatement -> PPT g m IndentedMessages
 preStatement [pdx| %lhs = @scr |] = do
-    [headerMsg] <- plainMsg $ "<pre>" <> Doc.doc2text (lhs2doc (const "") lhs) <> "</pre>"
+    headerMsg <- plainMsg' $ "<pre>" <> Doc.doc2text (lhs2doc (const "") lhs) <> "</pre>"
     msgs <- ppMany scr
     return (headerMsg : msgs)
 preStatement stmt = (:[]) <$> alsoIndent' (preMessage stmt)
@@ -232,10 +234,16 @@ preMessage = MsgUnprocessed
 -- | Create a generic message from a piece of text. The rendering function will
 -- pass this through unaltered.
 plainMsg :: (IsGameState (GameState g), Monad m) => Text -> PPT g m IndentedMessages
-plainMsg msg = (:[]) <$> (alsoIndent' . MsgUnprocessed $ msg)
+plainMsg msg = (:[]) <$> plainMsg' msg
+
+plainMsg' :: (IsGameState (GameState g), Monad m) => Text -> PPT g m IndentedMessage
+plainMsg' msg = alsoIndent' . MsgUnprocessed $ msg
 
 msgToPP :: (IsGameState (GameState g), Monad m) => ScriptMessage -> PPT g m IndentedMessages
-msgToPP msg = (:[]) <$> alsoIndent' msg
+msgToPP msg = (:[]) <$> msgToPP' msg
+
+msgToPP' :: (IsGameState (GameState g), Monad m) => ScriptMessage -> PPT g m IndentedMessage
+msgToPP' msg = alsoIndent' msg
 
 -- Emit icon template.
 icon :: Text -> Doc
@@ -585,7 +593,7 @@ withLocAtomAndIcon :: (HOI4Info g, Monad m) =>
          -- <https://www.hoi4wiki.com/Template:Icon Template:Icon> on the wiki
         -> (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
-withLocAtomAndIcon iconkey msg stmt@[pdx| %_ = $vartag:$var |] = do 
+withLocAtomAndIcon iconkey msg stmt@[pdx| %_ = $vartag:$var |] = do
     mtagloc <- tagged vartag var
     case mtagloc of
         Just tagloc -> msgToPP $ msg (iconText iconkey) tagloc
@@ -1543,7 +1551,7 @@ taTypeFlag _ _ _ stmt = preStatement stmt
 -- | Helper for effects, where the argument is a single statement in a clause
 -- E.g. generate_traitor_advisor_effect
 
-getEffectArg :: Text -> GenericStatement -> Maybe (Rhs () ())
+getEffectArg :: Text -> GenericStatement -> Maybe GenericRhs
 getEffectArg tArg stmt@[pdx| %_ = @scr |] = case scr of
         [[pdx| $arg = %val |]] | T.toLower arg == tArg -> Just val
         _ -> Nothing
@@ -2396,115 +2404,115 @@ defineDynMember msgNew msgNewLeader msgNewAttribs msgNewLeaderAttribs [pdx| %_ =
         pp_define_dyn_member_attrib :: DefineDynMember -> PPT g m (Maybe (IndentedMessage, DefineDynMember))
         -- "Named <foo>"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_name = Just name } = do
-            [msg] <- msgToPP (MsgNamed name)
+            msg <- msgToPP' (MsgNamed name)
             return (Just (msg, ddm { ddm_name = Nothing }))
         -- "Of the <foo> dynasty"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_dynasty = Just dynasty } =
             case dynasty of
                 DynText dyntext -> do
-                    [msg] <- msgToPP (MsgNewDynMemberDynasty dyntext)
+                    msg <- msgToPP' (MsgNewDynMemberDynasty dyntext)
                     return (Just (msg, ddm { ddm_dynasty = Nothing }))
                 DynPron dyntext -> do
-                    [msg] <- msgToPP (MsgNewDynMemberDynastyAs dyntext)
+                    msg <- msgToPP' (MsgNewDynMemberDynastyAs dyntext)
                     return (Just (msg, ddm { ddm_dynasty = Nothing }))
                 DynOriginal -> do
-                    [msg] <- msgToPP MsgNewDynMemberOriginalDynasty
+                    msg <- msgToPP' MsgNewDynMemberOriginalDynasty
                     return (Just (msg, ddm { ddm_dynasty = Nothing }))
                 DynHistoric -> do
-                    [msg] <- msgToPP MsgNewDynMemberHistoricDynasty
+                    msg <- msgToPP' MsgNewDynMemberHistoricDynasty
                     return (Just (msg, ddm { ddm_dynasty = Nothing }))
         -- "Aged <foo> years"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_age = Just age } = do
-            [msg] <- msgToPP (MsgNewDynMemberAge age)
+            msg <- msgToPP' (MsgNewDynMemberAge age)
             return (Just (msg, ddm { ddm_age = Nothing }))
         -- "With {{icon|adm}} <foo> administrative skill"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_adm = Just adm, ddm_fixed = fixed } = do
-            [msg] <- msgToPP (MsgNewDynMemberAdm fixed (fromIntegral adm))
+            msg <- msgToPP' (MsgNewDynMemberAdm fixed (fromIntegral adm))
             return (Just (msg, ddm { ddm_adm = Nothing }))
         -- "With {{icon|adm}} <foo> diplomatic skill"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_dip = Just dip, ddm_fixed = fixed } = do
-            [msg] <- msgToPP (MsgNewDynMemberDip fixed (fromIntegral dip))
+            msg <- msgToPP' (MsgNewDynMemberDip fixed (fromIntegral dip))
             return (Just (msg, ddm { ddm_dip = Nothing }))
         -- "With {{icon|adm}} <foo> military skill"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_mil = Just mil, ddm_fixed = fixed } = do
-            [msg] <- msgToPP (MsgNewDynMemberMil fixed (fromIntegral mil))
+            msg <- msgToPP' (MsgNewDynMemberMil fixed (fromIntegral mil))
             return (Just (msg, ddm { ddm_mil = Nothing }))
         -- "At most <foo> skill"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_max_adm = Just adm } = do
-            [msg] <- msgToPP (MsgNewDynMemberMaxAdm (fromIntegral adm))
+            msg <- msgToPP' (MsgNewDynMemberMaxAdm (fromIntegral adm))
             return (Just (msg, ddm { ddm_max_adm = Nothing }))
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_max_dip = Just dip } = do
-            [msg] <- msgToPP (MsgNewDynMemberMaxDip (fromIntegral dip))
+            msg <- msgToPP' (MsgNewDynMemberMaxDip (fromIntegral dip))
             return (Just (msg, ddm { ddm_max_dip = Nothing }))
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_max_mil = Just mil } = do
-            [msg] <- msgToPP (MsgNewDynMemberMaxMil (fromIntegral mil))
+            msg <- msgToPP' (MsgNewDynMemberMaxMil (fromIntegral mil))
             return (Just (msg, ddm { ddm_max_mil = Nothing }))
         -- "Claim strength <foo>"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_claim = Just claim } = do
-            [msg] <- msgToPP $ MsgNewDynMemberClaim claim
+            msg <- msgToPP' $ MsgNewDynMemberClaim claim
             return (Just (msg, ddm { ddm_claim = Nothing }))
         -- "Of the <foo> culture"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_culture = Just culture } = case culture of
             Left cultureText -> do
               locCulture <- getGameL10n cultureText
-              [msg] <- msgToPP $ MsgNewDynMemberCulture locCulture
+              msg <- msgToPP' $ MsgNewDynMemberCulture locCulture
               return (Just (msg, ddm { ddm_culture = Nothing }))
             Right cultureText -> do
-              [msg] <- msgToPP $ MsgNewDynMemberCultureAs cultureText
+              msg <- msgToPP' $ MsgNewDynMemberCultureAs cultureText
               return (Just (msg, ddm { ddm_culture = Nothing }))
         -- "Following the <foo> religion"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_religion = Just religion } = case religion of
             Left religionText  -> do
               locReligion <- getGameL10n religionText
-              [msg] <- msgToPP $ MsgNewDynMemberReligion (iconText religionText) locReligion
+              msg <- msgToPP' $ MsgNewDynMemberReligion (iconText religionText) locReligion
               return (Just (msg, ddm { ddm_religion = Nothing }))
             Right religionText -> do
-              [msg] <- msgToPP $ MsgNewDynMemberReligionAs religionText
+              msg <- msgToPP' $ MsgNewDynMemberReligionAs religionText
               return (Just (msg, ddm { ddm_religion = Nothing }))
         -- "With skills hidden"
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_hidden_skills = True } = do
-            [msg] <- msgToPP $ MsgNewDynMemberHiddenSkills
+            msg <- msgToPP' $ MsgNewDynMemberHiddenSkills
             return (Just (msg, ddm { ddm_hidden_skills = False }))
         -- Random gender
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_random_gender = Just True } = do
-            [msg] <- msgToPP $ MsgNewDynMemberRandomGender
+            msg <- msgToPP' $ MsgNewDynMemberRandomGender
             return (Just (msg, ddm { ddm_random_gender = Nothing }))
         -- Assigned gender
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_female = Just female } = do
-            [msg] <- msgToPP $ MsgWithGender (not female)
+            msg <- msgToPP' $ MsgWithGender (not female)
             return (Just (msg, ddm { ddm_female = Nothing }))
         -- Min age
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_min_age = Just age } = do
-            [msg] <- msgToPP (MsgNewDynMemberMinAge (fromIntegral age))
+            msg <- msgToPP' (MsgNewDynMemberMinAge (fromIntegral age))
             return (Just (msg, ddm { ddm_min_age = Nothing }))
         -- Max age
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_max_age = Just age } = do
-            [msg] <- msgToPP (MsgNewDynMemberMaxAge (fromIntegral age))
+            msg <- msgToPP' (MsgNewDynMemberMaxAge (fromIntegral age))
             return (Just (msg, ddm { ddm_max_age = Nothing }))
         -- Disinherit blockde
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_block_disinherit = True } = do
-            [msg] <- msgToPP $ MsgNewDynMemberBlockDisinherit
+            msg <- msgToPP' $ MsgNewDynMemberBlockDisinherit
             return (Just (msg, ddm { ddm_block_disinherit = False }))
         -- Birth date
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_birth_date = Just date } = do
-            [msg] <- msgToPP $ MsgNewDynMemberBirthdate date
+            msg <- msgToPP' $ MsgNewDynMemberBirthdate date
             return (Just (msg, ddm { ddm_birth_date = Nothing }))
         -- Bastard
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_bastard = True } = do
-            [msg] <- msgToPP $ MsgNewDynMemberBastard
+            msg <- msgToPP' $ MsgNewDynMemberBastard
             return (Just (msg, ddm { ddm_bastard = False }))
         -- Country of origin
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_country = Just country } = do
             countryText <- flagText (Just HOI4Country) country
-            [msg] <- msgToPP $ MsgNewDynMemberCountry countryText
+            msg <- msgToPP' $ MsgNewDynMemberCountry countryText
             return (Just (msg, ddm { ddm_country = Nothing }))
         -- Exile name
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_exiled_as = Just exiled_as } = do
-            [msg] <- msgToPP (MsgExiledAs exiled_as)
+            msg <- msgToPP' (MsgExiledAs exiled_as)
             return (Just (msg, ddm { ddm_exiled_as = Nothing }))
         -- Force republican names
         pp_define_dyn_member_attrib ddm@DefineDynMember { ddm_force_republican_names = True } = do
-            [msg] <- msgToPP $ MsgNewDynMemberForceRepublicanNames
+            msg <- msgToPP' $ MsgNewDynMemberForceRepublicanNames
             return (Just (msg, ddm { ddm_force_republican_names = False }))
         -- Nothing left
         pp_define_dyn_member_attrib _ = return Nothing
@@ -2800,7 +2808,8 @@ triggerSwitch stmt@(Statement _ OpEq (CompoundRhs
                 [pdx| $condrhs = @action |] -> do
                     -- construct a fake condition to pp
                     let cond = [pdx| $condlhs = $condrhs |]
-                    ((_, guardMsg):_) <- ppOne cond -- XXX: match may fail (but shouldn't)
+                    guardMsg' <- ppOne cond
+                    let ((_, guardMsg):_) = guardMsg' -- XXX: match may fail (but shouldn't)
                     guardText <- messageText guardMsg
                     -- pp the rest of the block, at the next level (done automatically by ppMany)
                     statementMsgs <- ppMany action
@@ -2810,7 +2819,7 @@ triggerSwitch stmt@(Statement _ OpEq (CompoundRhs
 triggerSwitch stmt = preStatement stmt
 
 -- | Handle @calc_true_if@ clauses, of the following form:
--- 
+--
 -- @
 --  calc_true_if = {
 --       <conditions>
@@ -3197,39 +3206,39 @@ employedAdvisor stmt@[pdx| %_ = @scr |] = do
                     Administrative -> MsgEmployedAdvisorAdmin
                     Diplomatic -> MsgEmployedAdvisorDiplo
                     Military -> MsgEmployedAdvisorMiltary
-            [msg] <- msgToPP mt
+            msg <- msgToPP' mt
             return (Just (msg, ea { ea_category = Nothing }))
         pp_employed_advisor_attrib ea@EmployedAdvisor { ea_type = Just typ } = do
             (t, i) <- tryLocAndIcon typ
-            [msg] <- msgToPP $ MsgEmployedAdvisorType t i
+            msg <- msgToPP' $ MsgEmployedAdvisorType t i
             return (Just (msg, ea { ea_type = Nothing }))
         pp_employed_advisor_attrib ea@EmployedAdvisor { ea_male = Just male } = do
-            [msg] <- msgToPP $ MsgEmployedAdvisorMale male
+            msg <- msgToPP' $ MsgEmployedAdvisorMale male
             return (Just (msg, ea { ea_male = Nothing }))
         pp_employed_advisor_attrib ea@EmployedAdvisor { ea_culture = Just culture } =
             if isPronoun culture then do
                 text <- Doc.doc2text <$> pronoun Nothing culture
-                [msg] <- msgToPP $ MsgCultureIsAs text
+                msg <- msgToPP' $ MsgCultureIsAs text
                 return (Just (msg, ea { ea_culture = Nothing }))
             else do
                 text <- getGameL10n culture
-                [msg] <- msgToPP $ MsgCultureIs text
+                msg <- msgToPP' $ MsgCultureIs text
                 return (Just (msg, ea { ea_culture = Nothing }))
         -- TODO: Better localization (neither heretic nor heathen seem to be in the localization files)
         pp_employed_advisor_attrib ea@EmployedAdvisor { ea_religion = Just "heretic" } = do
-            [msg] <- msgToPP $ MsgReligion (iconText "tolerance heretic") "hertical"
+            msg <- msgToPP' $ MsgReligion (iconText "tolerance heretic") "hertical"
             return (Just (msg, ea { ea_religion = Nothing }))
         pp_employed_advisor_attrib ea@EmployedAdvisor { ea_religion = Just "heathen" } = do
-            [msg] <- msgToPP $ MsgReligion (iconText "tolerance heathen") "heathen"
+            msg <- msgToPP' $ MsgReligion (iconText "tolerance heathen") "heathen"
             return (Just (msg, ea { ea_religion = Nothing }))
         pp_employed_advisor_attrib ea@EmployedAdvisor { ea_religion = Just religion } =
             if isPronoun religion then do
                 text <- Doc.doc2text <$> pronoun Nothing religion
-                [msg] <- msgToPP $ MsgSameReligion text
+                msg <- msgToPP' $ MsgSameReligion text
                 return (Just (msg, ea { ea_religion = Nothing }))
             else do
                 (t, i) <- tryLocAndIcon religion
-                [msg] <- msgToPP $ MsgReligion i t
+                msg <- msgToPP' $ MsgReligion i t
                 return (Just (msg, ea { ea_religion = Nothing }))
         pp_employed_advisor_attrib _ = return Nothing
 
@@ -3337,29 +3346,29 @@ pp_mil_leader_attrib naval ml =
 
         pp_mil_leader_attrib' :: MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_tradition = Just trad } = do
-            [msg] <- msgToPP $ MsgLeaderTradition naval trad
+            msg <- msgToPP' $ MsgLeaderTradition naval trad
             return (Just (msg, ml { ml_tradition = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_shock = Just shock } = do
-            [msg] <- msgToPP $ msgShock shock
+            msg <- msgToPP' $ msgShock shock
             return (Just (msg, ml { ml_shock = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_fire = Just fire } = do
-            [msg] <- msgToPP $ msgFire fire
+            msg <- msgToPP' $ msgFire fire
             return (Just (msg, ml { ml_fire = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_manuever = Just manuever } = do
-            [msg] <- msgToPP $ msgManuever manuever
+            msg <- msgToPP' $ msgManuever manuever
             return (Just (msg, ml { ml_manuever = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_siege = Just siege } = do
-            [msg] <- msgToPP $ msgSiege siege
+            msg <- msgToPP' $ msgSiege siege
             return (Just (msg, ml { ml_siege = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_name = Just name } = do
-            [msg] <- msgToPP $ MsgNamed name
+            msg <- msgToPP' $ MsgNamed name
             return (Just (msg, ml { ml_name = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_female = Just True } = do
-            [msg] <- msgToPP $ MsgWithGender False
+            msg <- msgToPP' $ MsgWithGender False
             return (Just (msg, ml { ml_female = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_trait = Just trait } = do
             text <- getGameL10n trait
-            [msg] <- msgToPP $ MsgMilitaryLeaderTrait text
+            msg <- msgToPP' $ MsgMilitaryLeaderTrait text
             return (Just (msg, ml { ml_trait = Nothing }))
         pp_mil_leader_attrib' _ = return Nothing
     in
@@ -3565,13 +3574,13 @@ randomAdvisor stmt@[pdx| %_ = @scr |] = pp_ra (foldl' addLine newRA scr)
         pp_ra_attrib :: RandomAdvisor -> PPT g m (Maybe (IndentedMessage, RandomAdvisor))
         pp_ra_attrib ra@RandomAdvisor{ra_type_non_state = Just typ} | T.toLower typ /= maybe "" T.toLower (ra_type ra) = do
             (t, i) <- tryLocAndIcon typ
-            [msg] <- msgToPP $ MsgRandomAdvisorNonState i t
+            msg <- msgToPP' $ MsgRandomAdvisorNonState i t
             return (Just (msg, ra { ra_type_non_state = Nothing }))
         pp_ra_attrib ra@RandomAdvisor{ra_skill = Just skill} = do
-            [msg] <- msgToPP $ MsgRandomAdvisorSkill skill
+            msg <- msgToPP' $ MsgRandomAdvisorSkill skill
             return (Just (msg, ra { ra_skill = Nothing }))
         pp_ra_attrib ra@RandomAdvisor{ra_scaled_skill = True} = do
-            [msg] <- msgToPP $ MsgRandomAdvisorScaledSkill
+            msg <- msgToPP' $ MsgRandomAdvisorScaledSkill
             return (Just (msg, ra { ra_scaled_skill = False }))
         pp_ra_attrib ra = return Nothing
 
@@ -3695,7 +3704,7 @@ aiAttitude msg stmt@[pdx| %_ = @scr |] =
         pp_aia isLocked ta = case (ta_what ta, ta_atom ta) of
             (Just who, Just attitude) -> do
                 let tags = T.splitOn ":" who -- A bit of a hack
-                    icon = (iconText attitude) 
+                    icon = (iconText attitude)
                 attLoc <- getGameL10n attitude
                 if length tags == 2 then do
                     taggedLoc <- tagged (tags !! 0) (tags !! 1)
@@ -3880,7 +3889,7 @@ hasLeaderWith stmt@[pdx| %_ = @scr |] = pp_hlw (foldl' addLine newHLW scr)
 
         pp_hlw_attrib :: HasLeaderWith -> PPT g m (Maybe (IndentedMessage, HasLeaderWith))
         pp_hlw_attrib hlw@HasLeaderWith { hlw_total_pips = Just pips } = do
-            [msg] <- msgToPP $ MsgTotalPips pips
+            msg <- msgToPP' $ MsgTotalPips pips
             return (Just (msg, hlw { hlw_total_pips = Nothing }))
         pp_hlw_attrib _ = return Nothing
 
@@ -4146,7 +4155,7 @@ foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
             "arms_factory" -> MsgAddBuildingConstruction (iconText "mic")
             "dockyard" -> MsgAddBuildingConstruction (iconText "nic")
             "bunker" -> MsgAddBuildingConstruction (iconText "land fort")
-            _ -> MsgAddBuildingConstruction (iconText _type)            
+            _ -> MsgAddBuildingConstruction (iconText _type)
          ) buildingLoc _level "check files if bunker"
     |]
 

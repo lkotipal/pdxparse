@@ -2,15 +2,16 @@
 Module      : Doc
 Description : Front end to Wadler/Leijen pretty printer
 -}
-module Doc (
-        strictText
-    ,   pp_string
-    ,   doc2text
-    ,   pp_signed, pp_nosigned
-    ,   pp_float
-    ,   pp_float_t
-    ,   nl2br
-    ,   Doc
+module Doc
+    ( strictText
+    , pp_string
+    , doc2text
+    , pp_signed, pp_nosigned
+    , pp_float
+    , pp_float_t
+    , nl2br
+    , Doc
+    , (PP.<++>)
     ) where
 
 import Data.List (unfoldr)
@@ -55,11 +56,14 @@ pp_nosigned pp_num n =
 -- | Pretty-print a Double. If it's a whole number, display it without a
 -- decimal.
 pp_float :: Double -> Doc
-pp_float n =
-    let trunc = floor n :: Int
-    in if fromIntegral trunc == n
-        then PP.int (fromIntegral trunc)
-        else PP.text . TL.pack $ showFFloat Nothing n ""
+pp_float n
+    | fromIntegral trunc == n =
+        PP.int (fromIntegral trunc)
+    | otherwise =
+        PP.text . TL.pack $ showFFloat Nothing n ""
+    where
+    trunc :: Int
+    trunc = floor n
 
 -- | Pretty-print a Double, as Text.
 pp_float_t :: Double -> Text

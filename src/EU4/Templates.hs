@@ -84,7 +84,7 @@ foldCompound :: String -> String -> String -> [(String, Q Type)] -> [CompField] 
 foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
     let -- Missing TH library function
         funT :: TypeQ -> TypeQ -> TypeQ
-        funT t1 t2 = [t| $t1 -> $t2 |] 
+        funT t1 t2 = [t| $t1 -> $t2 |]
         -- Variable names
         name_acc = mkName "acc"
         name_addLine = mkName "addLine"
@@ -151,7 +151,7 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
             dataD (cxt []) tyname [] Nothing
                   [recC tyname recFields
                   ]
-                  (cxt [])
+                  [DerivClause Nothing <$> cxt []]
         -- Initial accumulator
         -- new<AccType> :: <AccType>
         -- new<AccType> = AccType <default1> <default2> ...

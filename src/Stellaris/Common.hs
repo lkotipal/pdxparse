@@ -844,7 +844,7 @@ random :: (StellarisInfo g, Monad m) =>
     GenericStatement -> PPT g m IndentedMessages
 random stmt@[pdx| %_ = @scr |]
     | (front, back) <- break
-                        (\substmt -> case substmt of 
+                        (\substmt -> case substmt of
                             [pdx| chance = %_ |] -> True
                             _ -> False)
                         scr
@@ -921,7 +921,8 @@ triggerSwitch stmt@(Statement _ OpEq (CompoundRhs
         [pdx| $condrhs = @action |] -> do
             -- construct a fake condition to pp
             let cond = [pdx| $condlhs = $condrhs |]
-            ((_, guardMsg):_) <- ppOne cond -- XXX: match may fail (but shouldn't)
+            cond' <- ppOne cond
+            let ((_, guardMsg):_) = cond' -- XXX: match may fail (but shouldn't)
             guardText <- messageText guardMsg
             -- pp the rest of the block, at the next level
             statementMsgs <- indentUp (ppMany action)

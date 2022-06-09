@@ -19,7 +19,7 @@ import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import Abstract
 import HOI4.Common
-import HOI4.Handlers (plainMsg)
+import HOI4.Handlers (plainMsg')
 import FileIO (Feature (..), writeFeatures)
 import Messages (imsg2doc, IndentedMessages)
 import QQ (pdx)
@@ -88,7 +88,7 @@ ppExtraLine stmt@[pdx| $lhs = @scr |] = do
     let label = case loc of
                     Just t -> t <> "<!-- " <> lhs <> " -->"
                     _ -> lhs
-    [labMsg] <- plainMsg (label <> ":")
+    labMsg <- plainMsg' (label <> ":")
     msgs <- ppMany scr
     return (labMsg : msgs)
 ppExtraLine stmt = ppOne stmt

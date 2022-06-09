@@ -88,7 +88,7 @@ ppHandlers = foldl' Tr.unionL Tr.empty
     , handlersLocRhs
     , handlersProvince
     , handlersFlagOrProvince
-    , handlersNumericOrFlag 
+    , handlersNumericOrFlag
     , handlersAdvisorId
     , handlersTypewriter
     , handlersSimpleIcon
@@ -1842,7 +1842,7 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
              then case rhs of
                 CompoundRhs scr ->
                     withCurrentIndent $ \_ -> do -- force indent level at least 1
-                        [lflag] <- plainMsg =<< (<> ":") <$> flagText (Just EU4Country) label
+                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just EU4Country) label
                         scriptMsgs <- scope EU4Country $ ppMany scr
                         return (lflag : scriptMsgs)
                 _ -> preStatement stmt
@@ -1924,7 +1924,7 @@ ppMaybeGeo label loc scr = do
     case HM.lookup label geoData of
         Just geoType -> do
             inEffect <- getIsInEffect
-            [header] <- plainMsg $ (if isJust mtypeStmt || inEffect then "All provinces" else "Any province")
+            header <- plainMsg' $ (if isJust mtypeStmt || inEffect then "All provinces" else "Any province")
                 <> " in the " <> loc <> " " <> (describe geoType) <> ":"
             scriptMsgs <- scope EU4Province $ ppMany rest
             return (header : scriptMsgs)
@@ -1933,7 +1933,7 @@ ppMaybeGeo label loc scr = do
                     EU4Country
                 else
                     EU4Province
-            [header] <- plainMsg $ loc <> ":"
+            header <- plainMsg' $ loc <> ":"
             scriptMsgs <- scope actScope $ ppMany scr
             return (header : scriptMsgs)
 

@@ -52,7 +52,7 @@ parseStellarisEvents = HM.unions . HM.elems <$> do
         HM.traverseWithKey
             (\sourceFile scr ->
                 setCurrentFile sourceFile $ mapM parseStellarisEvent scr)
-            scripts 
+            scripts
     case tryParse of
         Left err -> do
             traceM $ "Completely failed parsing events: " ++ T.unpack err
@@ -292,7 +292,7 @@ pp_event evt = case stevt_id evt of
             evtArg fieldname field fmt
                 = maybe (return [])
                     (\field_content -> do
-                        content_pp'd <- fmt field_content 
+                        content_pp'd <- fmt field_content
                         return
                             ["| ", Doc.strictText fieldname, " = "
                             ,PP.line
