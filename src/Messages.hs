@@ -85,6 +85,7 @@ data ScriptMessage
     | MsgGainMIL {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainNavyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainPapalInfluence {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainPoliticalPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainStability {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainWarExhaustion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1914,6 +1915,15 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True _amt)
                 , " {{DLC-only|revolutionary zeal}}"
+                ]
+        MsgGainPoliticalPower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " Political power"
                 ]
         MsgGainStability {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

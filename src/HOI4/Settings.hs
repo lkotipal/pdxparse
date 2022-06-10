@@ -255,6 +255,9 @@ readHOI4Scripts = do
                     "colonial_regions" -> "common" </> "colonial_regions"
 --                    "province_triggered_modifiers" -> "common" </> "province_triggered_modifiers"
                     "decisions" -> "common" </> "decisions"
+                    "decisioncats" -> "common" </> "decisions" </> "categories"
+                    "national_focus" -> "common" </> "national_focus"
+
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
@@ -370,6 +373,7 @@ parseHOI4Scripts = do
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
         te3 = findTriggeredEventsInOnActions te2 (concat (HM.elems on_actions))
+--        te4 = findTriggeredEventsInNationalFocuss te3 (concat (HM.elems national_focus)) -- not yet implemented
 --        te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
 --        te5 = findTriggeredEventsInMissions te4 (HM.elems missions)
     --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))

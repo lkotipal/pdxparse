@@ -315,7 +315,7 @@ ppTitles _ [] = return "| event_name = (No title)"
 ppTitles False [HOI4EvtTitleSimple key] = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
 ppTitles True [HOI4EvtTitleSimple key] = ("| event_name = (Hidden) " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
 ppTitles True _ = return "| event_name = (This event is hidden and has no title.)"
-ppTitles _ titles = (("| cond_event_name = yes" <> PP.line <> "| event_name = ") <>) . PP.vsep <$> mapM ppTitle titles where
+ppTitles _ titles = (("| cond_event_name = yes" <> PP.line <> "| cond_name = ") <>) . PP.vsep <$> mapM ppTitle titles where
     ppTitle (HOI4EvtTitleSimple key) = ("Otherwise:<br>:" <>) <$> fmtTitle key
     ppTitle (HOI4EvtTitleConditional scr key) = mconcat <$> sequenceA
         [pure "The following title is used if:", pure PP.line

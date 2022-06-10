@@ -4155,6 +4155,7 @@ foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
             "arms_factory" -> MsgAddBuildingConstruction (iconText "mic")
             "dockyard" -> MsgAddBuildingConstruction (iconText "nic")
             "bunker" -> MsgAddBuildingConstruction (iconText "land fort")
+            "supply_node" -> MsgAddBuildingConstruction (iconText "supply hub")
             _ -> MsgAddBuildingConstruction (iconText _type)
          ) buildingLoc _level "check files if bunker"
     |]

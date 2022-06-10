@@ -361,6 +361,7 @@ handlersNumericIcons = Tr.fromList
         ,("add_piety"                , numericIconChange "mysticism" "legalism" MsgGainMysticism MsgGainLegalism)
         ,("add_prestige"             , numericIcon "prestige" MsgGainPrestige)
         ,("add_prosperity"           , numericIcon "prosperity" MsgGainProsperity)
+        ,("add_political_power"      , numericIcon "Political power" MsgGainPoliticalPower)
         ,("add_reform_desire"        , numericIcon "reform desire" MsgGainReformDesire)
         ,("add_republican_tradition" , numericIcon "republican tradition" MsgGainRepTrad)
         ,("add_revolutionary_zeal"   , numericIcon "revolutionary zeal" MsgGainRevolutionaryZeal)

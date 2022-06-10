@@ -26,7 +26,7 @@ settings:
     language: "english"
 
     # Game version (major patch number). Only used to add version templates.
-    version: "1.9.1"
+    version: "1.11.12"
 
     # Mod name the name of the folder of the mod you're trying to parse
     #mod_name:
