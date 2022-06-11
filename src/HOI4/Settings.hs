@@ -61,8 +61,8 @@ fixLocalization s =
     let
         lan  = language s
         l10n = gameL10n s
-        l10nForLan = HM.lookupDefault HM.empty lan l10n
-        findKey key = content $ HM.lookupDefault (LocEntry 0 key) key l10nForLan
+        l10nForLan = HM.findWithDefault HM.empty lan l10n
+        findKey key = content $ HM.findWithDefault (LocEntry 0 key) key l10nForLan
         hawLoc = findKey "HAW"
         newHavLoc = hawLoc <> " (HAW)"
         newL10n = HM.insert "HAW" (LocEntry 0 newHavLoc) l10nForLan

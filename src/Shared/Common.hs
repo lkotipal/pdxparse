@@ -107,7 +107,7 @@ flagText = fmap Doc.doc2text . flag
 
 -- Emit icon template.
 icon :: HashMap Text Text -> Text -> Doc
-icon table what = template "icon" [HM.lookupDefault what what table, "28px"]
+icon table what = template "icon" [HM.findWithDefault what what table, "28px"]
 iconText :: HashMap Text Text -> Text -> Text
 iconText table = Doc.doc2text . icon table
 
@@ -264,7 +264,7 @@ iconKeyFromTable = flip HM.lookup
 -- | Given an {{icon}} key, give the corresponding icon file name. Feed this a
 -- key -> file name table.
 iconFileFromTable :: HashMap Text Text -> Text -> Text
-iconFileFromTable table s = HM.lookupDefault s s table
+iconFileFromTable table s = HM.findWithDefault s s table
 -- | ByteString version of 'iconFile'.
 iconFileBFromTable :: HashMap Text Text -> ByteString -> ByteString
 iconFileBFromTable table = TE.encodeUtf8 . iconFileFromTable table . TE.decodeUtf8
@@ -284,7 +284,7 @@ iconOrFlag table iconmsg flagmsg [pdx| %_ = $name |] = msgToPP =<< do
     nflag <- flag name -- laziness means this might not get evaluated
     if isTag name || isPronoun name
         then return . flagmsg . Doc.doc2text $ nflag
-        else iconmsg <$> return (iconText table . HM.lookupDefault name name $ table)
+        else iconmsg <$> return (iconText table . HM.findWithDefault name name $ table)
                      <*> getGameL10n name
 iconOrFlag _ _ _ stmt = plainMsg $ pre_statement' stmt
 

@@ -620,7 +620,7 @@ pp_option evtid hidden triggered opt = do
                 ]
 
 findInStmt :: GenericStatement -> [(HOI4EventWeight, Text)]
-findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "news_event" || lhs == "unit_leader_event" || lhs == "state_event" = case getId scr of
+findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "news_event" || lhs == "unit_leader_event" || lhs == "state_event" || lhs == "operative_leader_event" = case getId scr of
     Just triggeredId -> [(Nothing, triggeredId)]
     _ -> (trace $ "Unrecognized event trigger: " ++ show stmt) $ []
     where
@@ -698,92 +698,58 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
         findInAction hm stmt = (trace $ "Unknown on_actions statement: " ++ show stmt) $ hm
 
         actionName :: Text -> Text
-        actionName n = HM.lookupDefault ("<pre>" <> n <> "</pre>") n actionNameTable
+        actionName n = HM.findWithDefault ("<pre>" <> n <> "</pre>") n actionNameTable
 
 
-        -- TODO: This should in principle be localizable at some point
+        -- TODO: Deal with tagged on_weekly_<TAG>, etc.
         actionNameTable :: HashMap Text Text
         actionNameTable = HM.fromList
-            [("on_annexed", "When a nation is annexed")
-            --,("on_battle_lost_country", "")
-            ,("on_battle_lost_province", "<!-- on_battle_lost_province -->Losing a battle to ''From'' in the province") -- # root = location, from = winner country
-            --,("on_battle_lost_unit", "")
-            --,("on_battle_won_province", "")
-            --,("on_become_free_city", "")
-            ,("on_bi_yearly_pulse", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse I]]")
-            ,("on_bi_yearly_pulse_2", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse II]]")
-            ,("on_bi_yearly_pulse_3", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse III]]")
-            ,("on_bi_yearly_pulse_4", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse IV]]")
-            ,("on_bi_yearly_pulse_5", "The [[List_of_event_lists#2_year_pulse|bi-yearly pulse V]]")
-            --,("on_buy_religious_reform", "")
-            --,("on_change_hre_religion", "")
-            --,("on_circumnavigation", "")
-            --,("on_colonial_liberation", "")
-            --,("on_colonial_pulse", "")
-            --,("on_colonial_reintegration", "")
-            ,("on_conquistador_empty", "<!-- on_conquistador_empty -->{{icon|conquistador}} Conquistador is entering a uncolonized province with ''\"Hunt for the Seven Cities of Gold\"'' mission")
-            ,("on_conquistador_native", "<!-- on_conquistador_native -->{{icon|conquistador}} Conquistador is entering a province owned by natives with ''\"Hunt for the Seven Cities of Gold\"'' mission")
-            --,("on_death_election", "")
-            --,("on_death_foreign_slave_ruler", "")
-            --,("on_death_has_harem", "")
-            --,("on_dependency_gained", "")
-            --,("on_diplomatic_annex", "")
-            --,("on_dismantle_revolution", "")
-
-            -- Note: Should probably be "An estate *becoming* more influential", but that doesn't seem to be the behavior in 1.31.3
-            ,("on_estate_led_regency_surpassed", "<!-- on_estate_led_regency_surpassed -->An estate being more influential than the one leading the regency")
-            --,("on_explore_coast", "")
-            ,("on_extended_regency", "<!-- on_extended_regency -->Extending a regency")
-            --,("on_fetishist_cult_change", "")
-            ,("on_five_year_pulse", "The [[list_of_event_lists#5_year_pulse|five year pulse I]]")
-            ,("on_five_year_pulse_2", "The [[list_of_event_lists#5_year_pulse|five year pulse II]]")
-            ,("on_five_year_pulse_3", "The [[list_of_event_lists#5_year_pulse|five year pulse III]]")
-            --,("on_flagship_captured", "")
-            --,("on_flagship_destroyed", "")
-            ,("on_four_year_pulse", "The [[List_of_event_lists#4_year_pulse|4 year pulse]]")
-            --,("on_harmonized_buddhism", "")
-            --,("on_harmonized_christian", "")
-            --,("on_harmonized_dharmic", "")
-            --,("on_harmonized_jewish_group", "")
-            --,("on_harmonized_mahayana", "")
-            --,("on_harmonized_muslim", "")
-            --,("on_harmonized_pagan", "")
-            --,("on_harmonized_shinto", "")
-            --,("on_harmonized_vajrayana", "")
-            --,("on_harmonized_zoroastrian_group", "")
-            ,("on_heir_death", "<!-- on_heir_death -->Heir dying")
-            ,("on_heir_needed_theocracy", "<!-- on_heir_needed_theocracy -->A theocracy needing an heir")
-            --,("on_hre_non_defense", "")
-            --,("on_hre_religion_white_peace", "")
-            --,("on_integrate", "")
-            --,("on_lock_hre_religion", "")
-            ,("on_mandate_of_heaven_gained", "<!-- on_mandate_of_heaven_gained -->Our country becoming the [[Emperor of China]] instead of ''From''")
-            ,("on_monarch_death", "<!-- on_monarch_death-->Curent ruler dying")
-            ,("on_new_consort", "<!-- on_new_consort -->Getting a new consort")
-            ,("on_new_monarch", "<!-- on_new_monarch -->Getting a new ruler")
-            --,("on_new_term_election", "")
-            ,("on_overextension_pulse", "The overextension pulse")
-            ,("on_peace_actor", "<!-- on_peace_actor -->Sending a peace offer")
-            ,("on_peace_recipient", "<!-- on_peace_recipient -->Receiving a peace offer")
-            --,("on_province_owner_change", "")
-            --,("on_regent", "")
-            ,("on_religion_change", "<!-- on_religion_change -->Changing religion")
-            --,("on_remove_free_city", "")
-            --,("on_replace_governor", "")
-            --,("on_revoke_estate_land", "")
-            ,("on_siege_lost_country", "<!-- on_siege_lost_country -->Our country lost a siege in ''From''") -- root = losing country, from = location
-            --,("on_siege_lost_province", "")
-            ,("on_siege_won_country", "<!-- on_siege_won_country -->Our country winning a siege in ''From''") -- root = winning country, from = location
-            --,("on_siege_won_province", "")
+            [("on_ace_promoted", "<!-- on_ace_promoted -->")
+            ,("on_ace_killed", "<!-- on_ace_killed -->")
+            ,("on_ace_killed_by_ace", "<!-- on_ace_killed_by_ace -->")
+            ,("on_ace_killed_other_ace", "<!-- on_ace_killed_other_ace -->")
+            ,("on_aces_killed_each_other", "<!-- on_aces_killed_each_other -->")        
+            ,("on_annex", "<!-- on_annex -->When a nation is annexed")
+            ,("on_army_leader_daily", "<!-- on_army_leader_daily -->")
+            ,("on_army_leader_lost_combat", "<!-- on_army_leader_lost_combat -->")
+            ,("on_army_leader_won_combat", "<!-- on_army_leader_won_combat -->")
+            ,("on_border_war_lost", "<!-- on_border_war_lost -->")
+            ,("on_capitulation", "<!-- on_capitulation -->")
+            ,("on_civil_war_end", "<!-- on_civil_war_end -->")
+            ,("on_civil_war_end_before_annexation", "<!-- on_civil_war_end_before_annexation -->")
+            ,("on_create_faction", "<!-- on_create_faction -->")
+            ,("on_daily", "<!-- on_daily -->")
+--            on_daily_SOV
+            ,("on_declare_war", "<!-- on_declare_war -->")
+            ,("on_faction_formed", "<!-- on_faction_formed -->")
+            ,("on_government_change", "<!-- on_government_change -->")
+            ,("on_government_exiled", "<!-- on_government_exiled -->")
+            ,("on_join_faction", "<!-- on_join_faction -->")
+            ,("on_justifying_wargoal_pulse", "<!-- on_justifying_wargoal_pulse -->")
+            ,("on_liberate", "<!-- on_liberate -->")
+            ,("on_monthly", "<!-- on_monthly -->")
+--            on_monthly_BUL
+--            on_monthly_SOV
+            ,("on_new_term_election", "<!-- on_new_term_election -->")
+            ,("on_nuke_drop", "<!-- on_nuke_drop -->")
+            ,("on_offer_join_faction", "<!-- on_offer_join_faction -->")
+            ,("on_operative_captured", "<!-- on_operative_captured -->")
+            ,("on_operative_death", "<!-- on_operative_death -->")
+            ,("on_operative_detected_during_operation", "<!-- on_operative_detected_during_operation -->")
+            ,("on_peaceconference_ended", "<!-- on_peaceconference_ended -->")
+            ,("on_puppet", "<!-- on_puppet -->")
+            ,("on_release_as_free", "<!-- on_release_as_free -->")
+            ,("on_release_as_puppet", "<!-- on_release_as_puppet -->")
+            ,("on_ruling_party_change", "<!-- on_ruling_party_change -->")
             ,("on_startup", "<!-- on_startup -->Starting the game")
-            --,("on_successive_emperor", "")
-            ,("on_thri_yearly_pulse", "The [[list_of_event_lists#3_year_pulse|three year pulse I]]")
-            ,("on_thri_yearly_pulse_2", "The [[list_of_event_lists#3_year_pulse|three year pulse II]]")
-            ,("on_thri_yearly_pulse_3", "The [[list_of_event_lists#3_year_pulse|three year pulse III]]")
-            ,("on_thri_yearly_pulse_4", "The [[list_of_event_lists#3_year_pulse|three year pulse IV]]")
-            ,("on_war_lost", "<!-- on_war_lost -->Losing a war against ''From''") -- # root = loser country, from = winner country
-            ,("on_war_won", "<!-- on_war_won -->Winning a war against ''From''") -- root = winning country, from = loser country
-            --,("on_weak_heir_claim", "")
+            ,("on_state_control_changed", "<!-- on_state_control_changed -->")
+            ,("on_subject_annexed", "<!-- on_subject_annexed -->")
+            ,("on_subject_free", "<!-- on_subject_free -->")
+            ,("on_unit_leader_created", "<!-- on_unit_leader_created -->")
+            ,("on_war_relation_added", "<!-- on_war_relation_added -->")
+            ,("on_wargoal_expire", "<!-- on_wargoal_expire -->")
+--            on_weekly_BUL
+--            on_weekly_SOV
             ]
 {-
 findTriggeredEventsInDisasters :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers

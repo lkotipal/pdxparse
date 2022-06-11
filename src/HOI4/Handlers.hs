@@ -250,7 +250,7 @@ icon :: Text -> Doc
 icon what = case HM.lookup what scriptIconFileTable of
     Just "" -> Doc.strictText $ "[[File:" <> what <> ".png|28px]]" -- shorthand notation
     Just file -> Doc.strictText $ "[[File:" <> file <> ".png|28px]]"
-    _ -> template "icon" [HM.lookupDefault what what scriptIconTable, "28px"]
+    _ -> template "icon" [HM.findWithDefault what what scriptIconTable, "28px"]
 iconText :: Text -> Text
 iconText = Doc.doc2text . icon
 
@@ -1105,7 +1105,7 @@ iconFileTable = HM.fromList
 --
 -- Needed for idea groups, which don't use {{icon}}.
 iconFile :: Text -> Text
-iconFile s = HM.lookupDefault s s iconFileTable
+iconFile s = HM.findWithDefault s s iconFileTable
 -- | ByteString version of 'iconFile'.
 iconFileB :: ByteString -> ByteString
 iconFileB = TE.encodeUtf8 . iconFile . TE.decodeUtf8
@@ -1132,7 +1132,7 @@ iconOrFlag iconmsg flagmsg expectScope [pdx| $head = $name |] = msgToPP =<< do
 --       traceM $ "PREV scope is: " ++ show ps
     if isTag name || isPronoun name
         then return . flagmsg . Doc.doc2text $ nflag
-        else iconmsg <$> return (iconText . HM.lookupDefault name name $ scriptIconTable)
+        else iconmsg <$> return (iconText . HM.findWithDefault name name $ scriptIconTable)
                      <*> getGameL10n name
 iconOrFlag _ _ _ stmt = plainMsg $ pre_statement' stmt
 
@@ -1424,7 +1424,7 @@ tryLocAndIcon atom = do
 -- | Same as tryLocAndIcon but for global modifiers
 tryLocAndLocMod :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
 tryLocAndLocMod atom = do
-    loc <- tryLoc (HM.lookupDefault atom atom locTable)
+    loc <- tryLoc (HM.findWithDefault atom atom locTable)
     when (isNothing loc) (traceM $ "tryLocAndLocMod: Localization failed for modifier: " ++ (T.unpack atom))
     return (maybe mempty id (Just (iconText atom)),
             maybe ("<tt>" <> atom <> "</tt>") id loc)

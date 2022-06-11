@@ -333,17 +333,17 @@ alsoIndent' x = withCurrentIndent $ \i -> return (i,x)
 
 -- | Get the current game language.
 getCurrentLang :: (IsGameData (GameData g), Monad m) => PPT g m L10nLang
-getCurrentLang = HM.lookupDefault HM.empty <$> gets (language . getSettings) <*> gets (gameL10n . getSettings)
+getCurrentLang = HM.findWithDefault HM.empty <$> gets (language . getSettings) <*> gets (gameL10n . getSettings)
 
 -- | Get the localization string for a given key. If it doesn't exist, use the
 -- key itself.
 getGameL10n :: (IsGameData (GameData g), Monad m) => Text -> PPT g m Text
-getGameL10n key = content <$> HM.lookupDefault (LocEntry 0 key) key <$> getCurrentLang
+getGameL10n key = content <$> HM.findWithDefault (LocEntry 0 key) key <$> getCurrentLang
 
 -- | Get the localization string for a given key. If it doesn't exist, use the
 -- given default (the first argument) instead.
 getGameL10nDefault :: (IsGameData (GameData g), Monad m) => Text -> Text -> PPT g m Text
-getGameL10nDefault def key = content <$> HM.lookupDefault (LocEntry 0 def) key <$> getCurrentLang
+getGameL10nDefault def key = content <$> HM.findWithDefault (LocEntry 0 def) key <$> getCurrentLang
 
 -- | Get the localization string for a given key, if it exists.
 getGameL10nIfPresent :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Maybe Text)
