@@ -238,7 +238,7 @@ data Settings = Settings {
                                 --   game's name, e.g. "Hearts of Iron IV".
     ,   gamePath    :: FilePath -- ^ Full path to game directory.
     ,   language    :: Text     -- ^ Localization language code (e.g. \"en\")
-    ,   languageFolder :: Text  -- ^ used to find folder 
+    ,   languageFolder :: FilePath  -- ^ used to find folder 
     ,   languageS   :: String   -- ^ Output language code, as String for easy
                                 --   manipulation of FilePaths.  
     ,   gameVersion :: Text     -- ^ Version of the game (e.g. \"1.22\")

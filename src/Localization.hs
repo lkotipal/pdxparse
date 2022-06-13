@@ -43,8 +43,7 @@ readL10n settings = do
     let dir = steamDir settings
               </> steamApps settings
               </> gameFolder settings
-              </> "localisation"
-              </> T.unpack (languageFolder settings)
+              </> languageFolder settings
     files <- filterM doesFileExist
                 . map (dir </>)
                 . (case l10nScheme settings of

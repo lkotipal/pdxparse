@@ -158,6 +158,10 @@ readSettings = do
                     putStrLn $ "I don't know how to handle " ++ other ++ "!"
                     exitFailure
 
+            langFolder <- case gamefolder of
+                "Hearts of Iron IV" -> return $ "localisation" </> T.unpack lang
+                other -> return (T.unpack lang)
+
             let provisionalSettings = Settings
                             { steamDir = steamDirCanonicalized
                             , steamApps = steamAppsCanonicalized
@@ -166,7 +170,7 @@ readSettings = do
                             , gameFolder = gamefolder
                             , gamePath = steamDirCanonicalized </> steamAppsCanonicalized </> gamefolder
                             , language = "l_" <> lang
-                            , languageFolder = lang
+                            , languageFolder = langFolder
                             , languageS = "l_" <> T.unpack lang
                             , gameVersion = T.pack (gameVersionI settingsIn)
                             , gameL10n = HM.empty -- filled in later

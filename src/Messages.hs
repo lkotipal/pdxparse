@@ -1688,7 +1688,7 @@ data ScriptMessage
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
-    | MsgAddBuildingConstruction {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageProv :: Text}
+    | MsgAddBuildingConstruction {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageVar :: Text, scriptMessageProv :: Text}
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSwitchTag {scriptMessageWho :: Text}
@@ -5367,14 +5367,16 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAIFactorOneline {scriptMessageFactor = _factor, scriptMessageMultiplier = _multiplier}
             -> mconcat
-                [ _factor
-                , ": "
+                [ "Base weight * "
                 , toMessage (bold (plainNum _multiplier))
+                , " if the following is true: "
+                ,_factor
                 ]
         MsgAIFactorHeader {scriptMessageMultiplier = _multiplier}
             -> mconcat
-                [ toMessage (bold (plainNum _multiplier))
-                , ":"
+                [ "* Base weight * "
+                , toMessage (bold (plainNum _multiplier))
+                , " if the following are true:"
                 ]
         MsgLucky {scriptMessageYn = _yn}
             -> mconcat
@@ -11495,15 +11497,14 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum plainPc _speed)
                 , " of normal time"
                 ]
-        MsgAddBuildingConstruction {scriptMessageIcon = _icon, scriptMessageWhat = _type, scriptMessageAmt = _amt, scriptMessageProv = _prov}
+        MsgAddBuildingConstruction {scriptMessageIcon = _icon, scriptMessageWhat = _type, scriptMessageAmt = _amt, scriptMessageVar = _var, scriptMessageProv = _prov}
             -> mconcat
                 [ "Add "
-                , toMessage (plainNum _amt)
+                , if _var == "" then toMessage (plainNum _amt) else _var
                 , " "
                 , _icon
                 , " "
                 , _type
-                , " "
                 ,_prov
                 ]
         MsgAllowBaselineInviteScholar {scriptMessageIcon = _icon, scriptMessageWhat = _what}
