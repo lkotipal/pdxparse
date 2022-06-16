@@ -1,6 +1,6 @@
 {-|
 Module      : HOI4.Common
-Description : Message handler for Europa Universalis IV
+Description : Message handler for Europa Hearts of Iron IV
 -}
 module HOI4.Common (
         pp_script
@@ -351,6 +351,7 @@ handlersNumericIcons = Tr.fromList
         ,("add_liberty_desire"       , numericIcon "liberty desire" MsgGainLibertyDesire)
         ,("add_local_autonomy"       , numericIcon "local autonomy" MsgGainLocalAutonomy)
         ,("add_mandate"              , numericIcon "mandate" MsgGainMandate)
+        ,("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgGainManpower)
         ,("add_mercantilism"         , numericIcon "mercantilism" MsgGainMercantilism)
         ,("add_meritocracy"          , numericIcon "meritocracy" MsgGainMeritocracy)
         ,("add_mil_power"            , numericIcon "mil" MsgGainMIL)
@@ -1728,8 +1729,8 @@ handlersMisc = Tr.fromList
         -- Special
         ,("add_estate_loyalty_modifier" , addEstateLoyaltyModifier)
         ,("add_core"            , addCore)
-        ,("add_manpower"        , gainMen)
-        ,("add_sailors"         , gainMen)
+--        ,("add_manpower"        , gainMen)
+--        ,("add_sailors"         , gainMen)
         ,("calc_true_if"        , calcTrueIf)
         ,("change_estate_land_share" , changeEstateLandShare)
         ,("create_independent_estate" , createIndependentEstate)

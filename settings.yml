@@ -13,7 +13,7 @@ settings:
     steam_dir: "/" # absolute
 
     # The subdirectory of steam_dir where Steam keeps its apps. You shouldn't need to change this.
-    # (For Windows, slashes are automatically changed to backslashes, so this default works.)
+    # (For Windows, slashes are automatically changed to backslashes, so this ("Steam/steamapps/common") default works.)
     steam_apps: "Games"
 
     # Which game we're looking at. This is the name of the directory under
@@ -25,15 +25,15 @@ settings:
     # are produced otherwise.
     language: "english"
 
-    # Game version (major patch number). Only used to add version templates.
+    # Game version (major patch number) (or mod version). Only used to add version templates.
     version: "1.11.12"
 
-    # Mod name the name of the folder of the mod you're trying to parse
-    #mod_name:
-
     # All Platforms where mod files are kept
-    #   Windows: C:\Users\<Username>\Documents\Paradox Interactive\Hearts of Iron IV\mod
-    #   Mac OS: ~/Documents/Paradox Interactive/Hearts of Iron IV/mod
-    #   Linux: ~/.local/share/Paradox Interactive/Hearts of Iron IV/mod
+    #   Windows: C:\Users\<Username>\Documents\Paradox Interactive\Hearts of Iron IV\mod\nameofmod
+    #   Mac OS: ~/Documents/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
+    #   Linux: ~/.local/share/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
     #
-    #mod_path:
+    #mod_path: 
+
+    # The name of the mod you're trying to parse eg. Kaiserreich
+    #mod_name: 

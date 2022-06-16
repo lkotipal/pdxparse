@@ -148,6 +148,8 @@ readSettings = do
             let steamAppsCanonicalized = fromMaybe "Steam/steamapps/common" (steamAppsI settingsIn)
                 lang = languageI settingsIn
                 gamefolder = gameFolderI settingsIn
+                modfolder = fromMaybe "" (modNameI settingsIn)
+                modlocation = fromMaybe "" (modDirI settingsIn)
 
             game <- case gamefolder of
                 "Europa Universalis IV" -> return $ Game EU4
@@ -160,7 +162,15 @@ readSettings = do
 
             langFolder <- case gamefolder of
                 "Hearts of Iron IV" -> return $ "localisation" </> T.unpack lang
-                other -> return (T.unpack lang)
+                other -> return "localisation"
+
+            gameormodpath <- case modNameI settingsIn of
+                Just mname -> return modlocation
+                _ -> return $ steamDirCanonicalized </> steamAppsCanonicalized </> gamefolder
+            
+            gameormodfolder <- case modNameI settingsIn of
+                Just mname -> return modfolder
+                _ -> return gamefolder
 
             let provisionalSettings = Settings
                             { steamDir = steamDirCanonicalized
@@ -168,7 +178,9 @@ readSettings = do
                             , l10nScheme = case game of Game g -> locScheme g
                             , game = game
                             , gameFolder = gamefolder
-                            , gamePath = steamDirCanonicalized </> steamAppsCanonicalized </> gamefolder
+                            , gameOrModFolder = gameormodfolder
+                            , gamePath = gameormodpath
+                            , justLanguage = (T.unpack lang)
                             , language = "l_" <> lang
                             , languageFolder = langFolder
                             , languageS = "l_" <> T.unpack lang

@@ -66,7 +66,7 @@ module HOI4.Handlers (
     ,   hasSpawnedRebels
     ,   canSpawnRebels
     ,   triggerEvent
-    ,   gainMen
+--    ,   gainMen
     ,   addCB
     ,   random
     ,   randomList
@@ -398,7 +398,7 @@ getStateLoc n = do
     mstateloc <- getGameL10nIfPresent ("STATE_" <> stateid_t)
     return $ case mstateloc of
         Just loc -> loc <> " (" <> stateid_t <> ")"
-        _ -> "AAAAAAAAAAAAAARGH " <> stateid_t
+        _ -> "State" <> stateid_t
 
 -----------------------------------------------------------------
 -- Script handlers that should be used directly, not via ppOne --
@@ -2015,7 +2015,7 @@ triggerEvent evtType stmt@[pdx| %_ = @scr |]
 triggerEvent _ stmt = preStatement stmt
 
 -- Specific values
-
+{-
 gainMen :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 gainMen [pdx| $head = !amt |]
     | "add_manpower" <- head = gainMen' ("manpower"::Text) MsgGainMPFrac MsgGainMP 1000
@@ -2028,7 +2028,7 @@ gainMen [pdx| $head = !amt |]
             --  interpret amt as exact number, multiplied by mult
             else return $ msgWhole (iconText theicon) (amt*mult)
 gainMen stmt = preStatement stmt
-
+-}
 -- Casus belli
 
 data AddCB = AddCB
@@ -2102,7 +2102,7 @@ randomList :: (HOI4Info g, Monad m) => StatementHandler g m
 randomList stmt@[pdx| %_ = @scr |] = fmtRandomList $ map entry scr
     where
         entry [pdx| !weight = @scr |] = (fromIntegral weight, scr)
-        entry [pdx| %weight = @scr |] = (40, scr)
+        entry [pdx| %weight = @scr |] = trace ("DEBUG: random_list " ++ show weight) $ (40, scr)
         entry _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list, possibly vars?")
         fmtRandomList entries = withCurrentIndent $ \i ->
             let total = sum (map fst entries)

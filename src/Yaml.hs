@@ -110,6 +110,7 @@ newline = hspace *> Ap.endOfLine *> nothing
 startspace :: Parser ()
 startspace = Ap.option mempty (Ap.string "\xFEFF" <|> Ap.string "\xFFFE") -- BOM
           *> Ap.option mempty (many newline)
+          *> hspace
           *> nothing
     <?> "space at start of file"
 

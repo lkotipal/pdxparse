@@ -594,7 +594,8 @@ pp_option evtid hidden triggered opt = do
         Just name_loc -> ok name_loc
         Nothing -> if hidden
             then ok "(Dummy option for hidden event)"
-            else throwError $ "some required option sections missing in " <> evtid <> " - dumping: " <> T.pack (show opt)
+            else ok "(Dummy option for possibly AI or invisible actions)"
+                --old thing-throwError $ "some required option sections missing in " <> evtid <> " - dumping: " <> T.pack (show opt)
     where
         ok name_loc = let mtrigger = hoi4opt_trigger opt in do
             mawd_pp'd   <- mapM ((imsg2doc =<<) . ppAiWillDo) (hoi4opt_ai_chance opt)

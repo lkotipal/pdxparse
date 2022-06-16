@@ -15,6 +15,7 @@ import Debug.Trace (trace, traceM)
 import Control.Monad (forM, forM_)
 import Control.Monad.Except (ExceptT)
 import Control.Monad.Trans (MonadIO (..))
+import Control.Monad.State (gets)
 import Control.Exception (try)
 
 import Data.Monoid ((<>))
@@ -36,7 +37,7 @@ import Text.PrettyPrint.Leijen.Text (Doc)
 import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import Abstract -- everything
-import SettingsTypes (Settings (..), PPT, hoistExceptions)
+import SettingsTypes (Settings (..), IsGameData (..), GameData (..), PPT, hoistExceptions)
 
 -- | Read a file as Text. Unfortunately EU4 script files use several incompatible
 -- encodings. Try the following encodings in order:
@@ -64,7 +65,7 @@ readFileRetry path = do
 --  buildPath settings "events/FlavorENG.txt" = "C:\Program Files (x86)\Steam\steamapps\common\Europa Universalis IV\events\FlavorENG.txt"
 -- @
 buildPath :: Settings -> FilePath -> FilePath
-buildPath settings path = steamDir settings </> steamApps settings </> gameFolder settings </> path
+buildPath settings path = gamePath settings </> path
 
 -------------------------------
 -- Reading scripts from file --
@@ -102,10 +103,12 @@ data Feature a = Feature {
 -- TODO: allow writing to a different output directory
 -- | Write a parsed and presented feature to the given file under the directory
 -- @./output@. If the filename includes directories, create them first.
-writeFeature :: FilePath -> Doc -> IO ()
-writeFeature path output = do
-    let destinationFile = "output" </> dropDrive path
+writeFeature :: FilePath -> String -> Doc -> IO ()
+writeFeature path gamefold output = do
+    let destinationGame = "output" </> gamefold
+        destinationFile = destinationGame </> dropDrive path
         destinationDir  = takeDirectory destinationFile
+    createDirectoryIfMissing True (takeDirectory destinationGame)
     createDirectoryIfMissing True destinationDir
     withFile destinationFile WriteMode $ \h -> do
         result <- try $
@@ -117,13 +120,14 @@ writeFeature path output = do
 
 -- | Given a list of features, present them and output to the appropriate files
 -- under the directory @./output@.
-writeFeatures :: MonadIO m =>
+writeFeatures :: (IsGameData (GameData g), MonadIO m) =>
     Text -- ^ Name of feature (e.g. "idea groups")
         -> [Feature a]
         -> (a -> PPT g (ExceptT Text m) Doc) -- ^ Rendering function
         -- PPT g (ExceptT Text IO) = StateT Settings (ReaderT GameState (ExceptT Text IO))
         -> PPT g m ()
 writeFeatures featureName features pprint = do
+    gamefoldr <- gets (gameOrModFolder . getSettings)
     efeatures_pathed_pp'd <- forM features $ \feature ->
         case theFeature feature of
             Left err ->
@@ -150,7 +154,7 @@ writeFeatures featureName features pprint = do
     liftIO $ forM_ efeatures_pathed_pp'd $ \feature -> case theFeature feature of
         Right (Right output) -> case (featurePath feature, featureId feature) of
             (Just sourcePath, Just feature_id) ->
-                writeFeature (sourcePath </> T.unpack feature_id) output
+                writeFeature (sourcePath </> T.unpack feature_id) gamefoldr output
             (Just sourcePath, Nothing) -> liftIO . TIO.putStrLn $
                 "Error while writing " <> featureName <> " in " <> T.pack sourcePath <> ": missing id"
             (Nothing, Just fid) -> liftIO . TIO.putStrLn $
