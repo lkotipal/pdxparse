@@ -33,7 +33,7 @@ settings:
     #   Mac OS: ~/Documents/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
     #   Linux: ~/.local/share/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
     #
-    #mod_path: 
+    mod_path: "C:/Users/PC/Documents/Paradox Interactive/Hearts of Iron IV/mod/equestria"
 
     # The name of the mod you're trying to parse eg. Kaiserreich
-    #mod_name: 
+    mod_name: "Equestria at War"

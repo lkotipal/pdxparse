@@ -7,7 +7,7 @@ module Localization (
     ,   L10n -- re-exported from Yaml
     ) where
 
-import Control.Monad (liftM, filterM, forM)
+import Control.Monad (liftM, filterM, forM, when)
 
 import Data.List (isInfixOf, foldl')
 import Data.HashMap.Strict (HashMap)
@@ -25,7 +25,7 @@ import qualified Data.Yaml as Y
 import Data.Attoparsec.Text (Parser)
 import qualified Data.Attoparsec.Text as Ap
 
-import System.Directory (doesFileExist, getDirectoryContents)
+import System.Directory (doesFileExist, getDirectoryContents, doesDirectoryExist)
 import System.FilePath ((</>))
 import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
@@ -40,23 +40,25 @@ import Yaml (L10n, LocEntry (..), parseLocFile, mergeLangs, mergeLangList)
 -- true YAML localisation, which, as far as I know, no PDS game uses any more.
 readL10n :: Settings -> IO L10n
 readL10n settings = do
-    let dir = steamDir settings
-              </> steamApps settings
-              </> gameFolder settings
-              </> languageFolder settings
-    files <- filterM doesFileExist
-                . map (dir </>)
-                . (case l10nScheme settings of
-                    -- CK2 and earlier use semicolon-delimited CSV.
-                    --  KEY;English;French;German;;Spanish;;;;;;;;;x
-                    L10nCSV -> id
-                    -- EU4 and later use a quasi-YAML format, one file per language.
-                    --  l_language: (e.g. l_english)
-                    --   KEY:0 "Content with "unescaped" quotation marks"
-                    -- where the 0 is a version number. We discard languages we
-                    -- don't care about.
-                    L10nQYAML -> filter (T.unpack (language settings) `isInfixOf`))
-                    =<< getDirectoryContents dir
+    let dir           = gamePath settings 
+                        </> languageFolder settings
+        dirifYAMLmod  = gamePath settings 
+                        </> "localisation" 
+                        </> "replace"
+                        </> justLanguage settings
+        dirgameifmod  = steamDir settings 
+                        </> steamApps settings
+                        </> gameFolder settings
+                        </> languageFolder settings
+    replaceexist <- doesDirectoryExist dirifYAMLmod
+    let dirs = addlistdir(addlistdir 
+                [dir] 
+                (gameFolder settings /= gameOrModFolder settings && l10nScheme settings == L10nQYAML && replaceexist)
+                [dirifYAMLmod])
+                (gameFolder settings /= gameOrModFolder settings)
+                [dirgameifmod]
+        
+    files <- mconcat (map (readL10nDirs settings) dirs)
     case l10nScheme settings of
         L10nCSV ->
             let csvField :: Parser Text
@@ -92,3 +94,24 @@ readL10n settings = do
                     hPutStrLn stderr $ "Parsing localisation file " ++ file ++ " failed: " ++ show exc
                     return HM.empty
                 Right contents -> return contents
+
+readL10nDirs :: Settings -> FilePath -> IO [FilePath]
+readL10nDirs settings dirs = filterM doesFileExist
+                . map (dirs </>)
+                . (case l10nScheme settings of
+                    -- CK2 and earlier use semicolon-delimited CSV.
+                    --  KEY;English;French;German;;Spanish;;;;;;;;;x
+                    L10nCSV -> id
+                    -- EU4 and later use a quasi-YAML format, one file per language.
+                    --  l_language: (e.g. l_english)
+                    --   KEY:0 "Content with "unescaped" quotation marks"
+                    -- where the 0 is a version number. We discard languages we
+                    -- don't care about.
+                    L10nQYAML -> filter (T.unpack (language settings) `isInfixOf`))
+                    =<< getDirectoryContents dirs
+addlistdir :: [FilePath] -> Bool -> [FilePath] ->[FilePath]
+addlistdir dir1 check dir2 = 
+    if check then
+        dir1 ++ dir2
+    else
+        dir1
