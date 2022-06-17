@@ -108,6 +108,7 @@ data ScriptMessage
     | MsgGainLocalAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgReformDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainReformDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainManpower {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgGainMercantilism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMPFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -2097,6 +2098,16 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (reducedNum (colourPc False) _amt)
                 , " reform desire"
+                ]
+        MsgGainManpower {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " "
+                , _loc
                 ]
         MsgGainMercantilism {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

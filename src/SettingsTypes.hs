@@ -236,7 +236,9 @@ data Settings = Settings {
     ,   gameFolder  :: String   -- ^ Folder under apps directory containing the
                                 --   game files.  Usually the same as the
                                 --   game's name, e.g. "Hearts of Iron IV".
+    ,   gameOrModFolder  :: String
     ,   gamePath    :: FilePath -- ^ Full path to game directory.
+    ,   justLanguage :: String
     ,   language    :: Text     -- ^ Localization language code (e.g. \"en\")
     ,   languageFolder :: FilePath  -- ^ used to find folder 
     ,   languageS   :: String   -- ^ Output language code, as String for easy
