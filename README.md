@@ -7,13 +7,13 @@ other games as well.
 ## Building
 
 The easiest way to get it running is to use
-[Stack](http://docs.haskellstack.org/en/stable/README.html). Install it, then
+[GHCup](https://www.haskell.org/ghcup/). Install it, then
 `cd` to the directory where you cloned `pdxparse` and type:
 
     $ stack install --install-ghc
 
 This will automatically install the compiler and all dependencies. (If you
-already have GHC 7.10.3 installed, you can probably omit `--install-ghc`.)
+already have GHC 8.10.7 installed, you can probably omit `--install-ghc`.)
 
 You may also be able to just use `cabal-install` if you have it:
 
@@ -48,7 +48,7 @@ only the files you want, and rebuild.
     * triggers for events aren't looked for in national focuses
     * Various lines don't have custom messages yet
     * ~~Localization files need to be directly in the localisation folder and not the localisation->english folder to work~~
-    * There are like 5 events where hidden and picture have the first letter capitilized making them fail to parse
+    * ~~There are like 5 events where hidden and picture have the first letter capitilized making them fail to parse~~
 
 ## To do
 Feel extremely free to help with any of these or the issues, I honestly doubt I can do any of these except maybe the additonal formatting
@@ -58,7 +58,7 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * Add more formatting for various lines, best case scenarion minimal editing is needed to place it on the wiki
 * ~~Replace the files in the HoI4 folder with the edited EU4 files and properly remove mentions of EU4 stuff~~
 * Get rid of stuff only for EU4 in HoI4 stuff
-* Support mods better by having additional settings and making localization reading more elaborate
+* ~~Support mods better by having additional settings and making localization reading more elaborate~~
     * ~~Also make it so check for EU4 or HoI4 for proper folder location?~~
 * Make add_Building_construction, random_list work properly
 * Find propper solution for dealing whith ~~opinion_modifier~~, ~~on_action~~ file formats

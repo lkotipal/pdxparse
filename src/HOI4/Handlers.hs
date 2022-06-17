@@ -250,7 +250,7 @@ icon :: Text -> Doc
 icon what = case HM.lookup what scriptIconFileTable of
     Just "" -> Doc.strictText $ "[[File:" <> what <> ".png|28px]]" -- shorthand notation
     Just file -> Doc.strictText $ "[[File:" <> file <> ".png|28px]]"
-    _ -> template "icon" [HM.findWithDefault what what scriptIconTable, "28px"]
+    _ -> template "icon" [HM.findWithDefault what what scriptIconTable]
 iconText :: Text -> Text
 iconText = Doc.doc2text . icon
 

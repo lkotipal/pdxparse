@@ -1932,7 +1932,7 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _icon
                 , " "
-                , toMessage (colourNum True _amt)
+                , toMessage (colourPc True _amt)
                 , " stability"
                 ]
         MsgGainWarExhaustion {scriptMessageIcon = _icon, scriptMessageAmt = _amt}

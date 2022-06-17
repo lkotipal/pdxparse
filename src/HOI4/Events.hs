@@ -602,7 +602,7 @@ pp_option evtid hidden triggered opt = do
             effects_pp'd <- setIsInEffect True (pp_script (fromMaybe [] (hoi4opt_effects opt)))
             mtrigger_pp'd <- sequence (pp_script <$> mtrigger)
             return . mconcat $
-                ["{{Option\n"
+                ["{{Option",PP.line
                 ,"| option_text = ", Doc.strictText name_loc, PP.line
                 ,"| effect =", PP.line, effects_pp'd, PP.line]
                 ++ (if triggered then
