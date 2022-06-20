@@ -41,7 +41,7 @@ only the files you want, and rebuild.
 
 * HoI4
     * random_list with variables won't properly show the variable name currently being fed a straight number to make it work. needs manual checking gf files for editing
-    * add_building_sconstruction doesn't handle the contents of province = {} well. needs manual editing
+    * ~~add_building_sconstruction doesn't handle the contents of province = {} well. needs manual editing~~
     * script doesn't like improperly formatted localizations, doesn't handle a space in front of l_<language> at the top of file
     * Tags aren't localized to country names
     * Doesn't like some uses of ROOT and PREV (maybe more). No clue how to fix it
@@ -60,9 +60,8 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * Get rid of stuff only for EU4 in HoI4 stuff
 * ~~Support mods better by having additional settings and making localization reading more elaborate~~
     * ~~Also make it so check for EU4 or HoI4 for proper folder location?~~
-* Make add_Building_construction, random_list work properly
+* Make ~~add_Building_construction~~, random_list work properly
 * Find propper solution for dealing whith ~~opinion_modifier~~, ~~on_action~~ file formats
     * Make on_action also add the limits/trigger other than just the action
 * Rewrite parser for decison for HoI 4
 * Find none ugly solution for events that have no options
-
