@@ -4143,6 +4143,7 @@ foldCompound "killUnits" "KillUnits" "ku"
 -------------------------------------------
 -- Handler for add_building_construction --
 -------------------------------------------
+{-
 foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
     []
     [CompField "type" [t|Text|] Nothing True
@@ -4159,22 +4160,15 @@ foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
             _ -> MsgAddBuildingConstruction (iconText _type)
          ) buildingLoc _level "" "check files if bunker" 
     |]
-
+-}
 --------------------------------------------------------------
-{-
+
 data HOI4ABCProv
     = HOI4ABCProvSimple Double  -- province = key
-    | HOI4ABCProvMult GenericScript Text
+    | HOI4ABCProvMult GenericScript
             -- province = { id = key id = key }
             -- province = { all_provinces = yes	limit_to_border = yes}
     deriving Show
-
--- | Intermediate structure for interpreting addbuildingconstuction province block.
-data ABCProvI = ABCProvI {
-        provi_id :: Maybe [Double]
-    ,   provi_all_provinces :: Maybe Bool
-    ,   provi_limit_to_border :: Maybe Bool
-    }
 
 data HOI4ABCLevel
     = HOI4ABCLevelSimple Double
@@ -4183,57 +4177,75 @@ data HOI4ABCLevel
 
 data HOI4AddBC = HOI4AddBC{ 
       addbc_type :: Text
-    , addbc_level :: HOI4ABCLevel
+    , addbc_level :: Maybe HOI4ABCLevel
     , addbc_instantbuild :: Bool
     , addbc_province :: Maybe HOI4ABCProv
     } deriving Show
 
-newABC :: HOI4ABCLevel -> HOI4AddBC
-newABC leveltype = HOI4AddBC "" leveltype False Nothing
+newABC :: HOI4AddBC
+newABC = HOI4AddBC "" Nothing False Nothing
 
 addBuildingConstruction :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 addBuildingConstruction stmt@[pdx| %_ = @scr |] = 
-    let leveltype = foldl' levelCheck HOI4ABCLevel scr in
-    msgToPP =<< pp_abc (foldl' addLine (newABC leveltype) scr)
+--    let leveltype = foldl' levelCheck HOI4AddBC scr in
+    msgToPP =<< pp_abc (foldl' addLine newABC scr)
     where
-        levelCheck :: HOI4AddBC -> GenericStatement -> HOI4ABCLevel
-        levelCheck lvl [pdx| level = !levelint |] = lvl HOI4ABCLevelSimple
-        levelCheck lvl [pdx| level = $levelvar |] = lvl HOI4ABCLevelVariable
-        levelcheck lvl stmt = lvl
+--        levelCheck :: HOI4AddBC -> GenericStatement -> HOI4ABCLevel
+--        levelCheck lvl [pdx| level = !levelint |] = lvl HOI4ABCLevelSimple
+--        levelCheck lvl [pdx| level = $levelvar |] = lvl HOI4ABCLevelVariable
+--        levelcheck lvl stmt = lvl
         
         addLine :: HOI4AddBC -> GenericStatement -> HOI4AddBC
         addLine abc [pdx| type = $build |] = abc { addbc_type = build }
-        addLine abc [pdx| level = !levelint |] = abc { addbc_level = Just HOI4ABCLevelSimple levelint }
-        addLine abc [pdx| level = $levelvar |] = abc { addbc_level = Just HOI4ABCLevelVariable levelvar }
+        addLine abc stmt@[pdx| level = %rhs |] = 
+            case rhs of
+                (floatRhs -> Just amount) -> abc { addbc_level = Just (HOI4ABCLevelSimple amount) }
+                GenericRhs amount [] -> abc { addbc_level = Just (HOI4ABCLevelVariable amount) }
+                _ -> (trace $ "Unknown leveltype in add_building_construction: " ++ show stmt) $ abc 
         addLine abc [pdx| instant_build = yes |] = abc { addbc_instantbuild = True } --default is no an doesn't exist
-        addLine abc [pdx| province = !province |] = abc { addbc_province = Just HOI4ABCProvSimple province }
-        addLine abc [pdx| province = @provinces |] =  do
-            provinces' <- abcProv provinces
-            return abc { addbc_level = HOI4ABCProvMult provinces' }
+        addLine abc [pdx| province = %rhs |] =
+            case rhs of
+                (floatRhs -> Just id) -> abc { addbc_province = Just (HOI4ABCProvSimple id) }
+--                CompoundRhs provs -> do
+--                    provinces <- abcProv provs
+--                    return $ abc { addbc_province = Just (HOI4ABCProvMult provinces) }
+                _ -> (trace $ "Unknown provincetype in add_building_construction: ") $ abc
 
         addLine abc stmt = (trace $ "Unknown in add_building_construction: " ++ show stmt) $ abc
 
-        abcProv :: GenericScript -> m HOI4AddBC
-        abcProv scr = foldl' abcProv' (ABCProvI Nothing Nothing Nothing)scr
-            where
-                abcProv' abc [pdx| id = !prov |] =
-                    let oldprovids = provi_id abc in abc { provi_id = oldprovids ++ [prov] }
-                abcProv' abc [pdx| all_provinces = yes |] = abc { provi_all_provinces = Just True } --default is no an doesn't exist
-                abcProv' abc [pdx| limit_to_border = yes |] = abc { provi_limit_to_border = Just True } --default is no an doesn't exist
-                abcProv' abc [pdx| $label = %_ |]
-                    = (trace $ "Unknown section in province in add_building_construction:" ++ show abc) $ abc
-                abcProv' abc stmt
-                    = (trace $ "Unknown section in province in add_building_construction:" ++ show abc) $ abc
-
         pp_abc :: HOI4AddBC -> PPT g m ScriptMessage
-        pp_abc abc@HOI4AddBC{addbc_type = building, addbc_level = amountvar, addbc_province = Just prov} = do
+        pp_abc abc@HOI4AddBC{addbc_type = building, addbc_level = Just amountvar} = do
             buildingLoc <- getGameL10n building
-            provform <- "test"
-            amount <- 1
-            variable <- ""
+            let provform = case addbc_province abc of
+                    Just (HOI4ABCProvSimple id) -> mconcat [" to the province (", T.pack (show id),")"]
+                    _ -> ""
+                amount = case amountvar of
+                    HOI4ABCLevelSimple amount -> amount
+                    HOI4ABCLevelVariable amount -> 0
+                variable = case amountvar of
+                    HOI4ABCLevelVariable amount -> amount
+                    HOI4ABCLevelSimple amount -> ""                   
             return $ MsgAddBuildingConstruction (iconText (T.toLower buildingLoc)) buildingLoc amount variable provform
         pp_abc abc = return $ (trace $ "Not handled in caddBuildingConstruction: abc=" ++ show abc ++ " stmt=" ++ show stmt) $ preMessage stmt
 addBuildingConstruction stmt = (trace $ "Not handled in addBuildingConstruction: " ++ show stmt) $ preStatement stmt
+
+-- | Intermediate structure for interpreting addbuildingconstuction province block.
+{-
+data ABCProvI = ABCProvI {
+        provi_id :: Maybe [Double]
+    ,   provi_all_provinces :: Maybe Bool
+    ,   provi_limit_to_border :: Maybe Bool
+    }
+
+abcProv :: GenericScript -> HOI4ABCProv
+abcProv scr = foldl' abcProv' (ABCProvI Nothing Nothing Nothing) scr
+    where
+        abcProv' abc [pdx| id = !prov |] =
+            let oldprovids = provi_id abc in abc { provi_id = oldprovids ++ [prov] }
+        abcProv' abc [pdx| all_provinces = yes |] = abc { provi_all_provinces = Just True } --default is no an doesn't exist
+        abcProv' abc [pdx| limit_to_border = yes |] = abc { provi_limit_to_border = Just True } --default is no an doesn't exist
+        abcProv' abc stmt
+            = (trace $ "Unknown section in province in add_building_construction:" ++ show abc) $ abc
 -}
 ----------------------------------------------------
 -- Handler for has_reached_government_reform_tier --

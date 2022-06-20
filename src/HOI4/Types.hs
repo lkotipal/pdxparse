@@ -152,7 +152,7 @@ data HOI4EvtTitle
             -- title = { trigger = { conditional_expressions } }
     deriving (Show)
 
--- | Event description type. As of HOI4 1.17, descriptions may be conditional.
+-- | Event description type. As of HOI4 whatever version, descriptions may be conditional.
 data HOI4EvtDesc
     = HOI4EvtDescSimple Text  -- desc = key
     | HOI4EvtDescConditional GenericScript Text
