@@ -61,7 +61,8 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * ~~Support mods better by having additional settings and making localization reading more elaborate~~
     * ~~Also make it so check for EU4 or HoI4 for proper folder location?~~
 * Make ~~add_Building_construction~~, random_list work properly
-* Find propper solution for dealing whith ~~opinion_modifier~~, ~~on_action~~ file formats
-    * Make on_action also add the limits/trigger other than just the action
+* ~~Find propper solution for dealing whith opinion_modifier, on_action file formats~~
+* Make on_action also add the limits/trigger other than just the action
 * Rewrite parser for decison for HoI 4
 * Find none ugly solution for events that have no options
+* random_list, ~~ai_chance~~ and possibly more needs to also handle "add" besides "factor" in their "modifier"

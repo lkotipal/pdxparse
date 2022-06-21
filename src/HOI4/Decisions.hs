@@ -47,8 +47,8 @@ newDecision = HOI4Decision undefined undefined Nothing [] [] [] Nothing Nothing
 parseHOI4Decisions :: (IsGameData (GameData g),
                       IsGameState (GameState g),
                       Monad m) =>
-    HashMap String GenericScript -> PPT g m (HashMap Text HOI4Decision)
-parseHOI4Decisions scripts = do
+    HashMap String GenericScript -> HashMap String GenericScript -> PPT g m (HashMap Text HOI4Decision)
+parseHOI4Decisions deccats scripts = do
     tryParse <- hoistExceptions . flip HM.traverseWithKey scripts $ \f script ->
                     setCurrentFile f (concat <$> mapM parseHOI4DecisionGroup script)
     case tryParse of
@@ -156,7 +156,7 @@ pp_decision dec = do
         ,"| decision_name = ", Doc.strictText name_loc, PP.line
         ,maybe mempty
                (\txt -> mconcat ["| decision_text = ", Doc.strictText txt, PP.line])
-               (dec_text dec) 
+               (dec_text dec)
         ,"| potential = ", PP.line, pot_pp'd, PP.line
         ,"| allow = ", PP.line, allow_pp'd, PP.line
         ,"| effect = ", PP.line, effect_pp'd, PP.line

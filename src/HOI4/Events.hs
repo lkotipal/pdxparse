@@ -62,7 +62,7 @@ parseHOI4Events scripts = HM.unions . HM.elems <$> do
         HM.traverseWithKey
             (\sourceFile scr ->
                 setCurrentFile sourceFile $ mapM parseHOI4Event scr)
-            scripts 
+            scripts
     case tryParse of
         Left err -> do
             traceM $ "Completely failed parsing events: " ++ T.unpack err
@@ -136,7 +136,7 @@ data EvtTitleI = EvtTitleI {
         eti_text :: Maybe Text
     ,   eti_trigger :: Maybe GenericScript
     }
--- | Interpret the @titlr@ section of an event. This can be either a
+-- | Interpret the @title@ section of an event. This can be either a
 -- localization key or a conditional title block. (TODO: document the
 -- format here)
 evtTitle :: MonadError Text m => Maybe Text -> GenericScript -> m HOI4EvtTitle
@@ -443,7 +443,7 @@ pp_event evt = case (hoi4evt_id evt
             evtArg fieldname field fmt
                 = maybe (return [])
                     (\field_content -> do
-                        content_pp'd <- fmt field_content 
+                        content_pp'd <- fmt field_content
                         return
                             ["| ", Doc.strictText fieldname, " = "
                             ,PP.line
@@ -516,7 +516,7 @@ pp_event evt = case (hoi4evt_id evt
             evtArg fieldname field fmt
                 = maybe (return [])
                     (\field_content -> do
-                        content_pp'd <- fmt field_content 
+                        content_pp'd <- fmt field_content
                         return
                             ["| ", Doc.strictText fieldname, " = "
                             ,PP.line
@@ -706,46 +706,46 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
         -- TODO: deal with on_weekly_<TAG> on_daily_<TAG> etc.
         actionNameTable :: HashMap Text Text
         actionNameTable = HM.fromList
-            [("on_ace_killed","<!-- on_ace_killed -->")
-            ,("on_ace_killed_by_ace","<!-- on_ace_killed_by_ace -->")
-            ,("on_ace_killed_other_ace","<!-- on_ace_killed_other_ace -->")
-            ,("on_aces_killed_each_other","<!-- on_aces_killed_each_other -->")
-            ,("on_ace_promoted","<!-- on_ace_promoted -->")
-            ,("on_annex", "<!-- on_annex -->When a nation is annexed")
-            ,("on_army_leader_daily","<!-- on_army_leader_daily -->")
-            ,("on_army_leader_lost_combat","<!-- oon_army_leader_lost_combat -->")
-            ,("on_army_leader_won_combat","<!-- on_army_leader_won_combat -->")
-            ,("on_border_war_lost","<!-- on_border_war_lost -->")
-            ,("on_capitulation","<!-- on_capitulation -->")
-            ,("on_civil_war_end","<!-- on_civil_war_end -->")
-            ,("on_civil_war_end_before_annexation","<!-- on_civil_war_end_before_annexation -->")
-            ,("on_daily","<!-- on_daily -->")
-            ,("on_declare_war","<!-- on_declare_war -->")
-            ,("on_faction_formed","<!-- on_faction_formed -->")
-            ,("on_government_change","<!-- on_government_change -->")
-            ,("on_government_exiled","<!-- on_government_exiled -->")
-            ,("on_join_faction","<!-- on_join_faction -->")
-            ,("on_justifying_wargoal_pulse","<!-- on_justifying_wargoal_pulse -->")
-            ,("on_liberate","<!-- on_liberate -->")
-            ,("on_new_term_election","<!-- on_new_term_election -->")
-            ,("on_nuke_drop","<!-- on_nuke_drop -->")
-            ,("on_monthly","<!-- on_monthly -->")
-            ,("on_offer_join_faction","<!-- on_offer_join_faction -->")
-            ,("on_operative_captured","<!-- on_operative_captured -->")
-            ,("on_operative_death","<!-- on_operative_death -->")
-            ,("on_operative_detected_during_operation","<!-- on_operative_detected_during_operation -->")
-            ,("on_peaceconference_ended","<!-- on_peaceconference_ended -->")
-            ,("on_puppet","<!-- on_puppet -->")
-            ,("on_release_as_free","<!-- on_release_as_free -->")
-            ,("on_release_as_puppet","<!-- on_release_as_puppet -->")
-            ,("on_ruling_party_change","<!-- on_ruling_party_change -->")
-            ,("on_state_control_changed","<!-- on_state_control_changed -->")
-            ,("on_startup", "<!-- on_startup -->Starting the game")
-            ,("on_subject_annexed","<!-- on_subject_annexed -->")
-            ,("on_subject_free","<!-- on_subject_free -->")
-            ,("on_unit_leader_created","<!-- on_unit_leader_created -->")
-            ,("on_war_relation_added","<!-- on_war_relation_added -->")
-            ,("on_wargoal_expire","<!-- on_wargoal_expire -->")
+            [("on_ace_killed","<!-- on_ace_killed -->On ace killed")
+            ,("on_ace_killed_by_ace","<!-- on_ace_killed_by_ace -->On ace killed by ace")
+            ,("on_ace_killed_other_ace","<!-- on_ace_killed_other_ace -->On ace kills ace")
+            ,("on_aces_killed_each_other","<!-- on_aces_killed_each_other -->On aces killed each other")
+            ,("on_ace_promoted","<!-- on_ace_promoted -->On ace promoted")
+            ,("on_annex", "<!-- on_annex -->On nation annexed")
+            ,("on_army_leader_daily","<!-- on_army_leader_daily -->On every day for army leader")
+            ,("on_army_leader_lost_combat","<!-- on_army_leader_lost_combat -->On army leader loses combat")
+            ,("on_army_leader_won_combat","<!-- on_army_leader_won_combat -->On army leader wins combat")
+            ,("on_border_war_lost","<!-- on_border_war_lost -->On lost border conflict war")
+            ,("on_capitulation","<!-- on_capitulation -->On nation capitulation")
+            ,("on_civil_war_end","<!-- on_civil_war_end -->On civil war end")
+            ,("on_civil_war_end_before_annexation","<!-- on_civil_war_end_before_annexation -->On civil war end before annexation")
+            ,("on_daily","<!-- on_daily -->On every day")
+            ,("on_declare_war","<!-- on_declare_war -->On declared war")
+            ,("on_faction_formed","<!-- on_faction_formed -->On faction formed")
+            ,("on_government_change","<!-- on_government_change -->On government changed")
+            ,("on_government_exiled","<!-- on_government_exiled -->On government exiled")
+            ,("on_join_faction","<!-- on_join_faction -->On faction joined")
+            ,("on_justifying_wargoal_pulse","<!-- on_justifying_wargoal_pulse -->On justifying wargoal")
+            ,("on_liberate","<!-- on_liberate -->On nation liberated")
+            ,("on_new_term_election","<!-- on_new_term_election -->On new term election")
+            ,("on_nuke_drop","<!-- on_nuke_drop -->On nuke dropped")
+            ,("on_monthly","<!-- on_monthly -->On every month")
+            ,("on_offer_join_faction","<!-- on_offer_join_faction -->On nation invited to faction")
+            ,("on_operative_captured","<!-- on_operative_captured -->On operative captured")
+            ,("on_operative_death","<!-- on_operative_death -->On operative death")
+            ,("on_operative_detected_during_operation","<!-- on_operative_detected_during_operation -->On operative detected during operation")
+            ,("on_peaceconference_ended","<!-- on_peaceconference_ended -->On peace conference ended")
+            ,("on_puppet","<!-- on_puppet -->On nation puppeted")
+            ,("on_release_as_free","<!-- on_release_as_free -->On nation released as free nation")
+            ,("on_release_as_puppet","<!-- on_release_as_puppet -->On nation released as puppet")
+            ,("on_ruling_party_change","<!-- on_ruling_party_change -->On ruling party change")
+            ,("on_state_control_changed","<!-- on_state_control_changed -->On state control changed")
+            ,("on_startup", "<!-- on_startup -->On startup")
+            ,("on_subject_annexed","<!-- on_subject_annexed -->On subject nation annexed")
+            ,("on_subject_free","<!-- on_subject_free -->On subject nation freed")
+            ,("on_unit_leader_created","<!-- on_unit_leader_created -->On army leader created")
+            ,("on_war_relation_added","<!-- on_war_relation_added -->On nation joined war")
+            ,("on_wargoal_expire","<!-- on_wargoal_expire -->On wargoal expired")
             ]
 {-
 findTriggeredEventsInDisasters :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers

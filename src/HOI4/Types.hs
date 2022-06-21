@@ -9,7 +9,7 @@ module HOI4.Types (
         -- * Features
     ,   HOI4EvtTitle (..), HOI4EvtDesc (..), HOI4Event (..), HOI4Option (..)
     ,   HOI4EventSource (..), HOI4EventTriggers, HOI4EventWeight
-    ,   HOI4Decision (..)
+    ,   HOI4Decision (..),HOI4Decisioncat (..)
     ,   IdeaGroup (..), Idea (..), IdeaTable
 --    ,   HOI4Modifier (..)
     ,   HOI4OpinionModifier (..)
@@ -49,6 +49,7 @@ import SettingsTypes ( PPT, Settings
 data HOI4Data = HOI4Data {
         hoi4settings :: Settings
     ,   hoi4events :: HashMap Text HOI4Event
+    ,   hoi4decisioncats :: HashMap Text HOI4Decisioncat
     ,   hoi4decisions :: HashMap Text HOI4Decision
     ,   hoi4ideaGroups :: IdeaTable
 --    ,   hoi4modifiers :: HashMap Text HOI4Modifier
@@ -58,6 +59,7 @@ data HOI4Data = HOI4Data {
     ,   hoi4geoData :: HashMap Text HOI4GeoType
 --    ,   hoi4provtrigmodifiers :: HashMap Text HOI4ProvinceTriggeredModifier
     ,   hoi4eventScripts :: HashMap FilePath GenericScript
+    ,   hoi4decisioncatScripts :: HashMap FilePath GenericScript
     ,   hoi4decisionScripts :: HashMap FilePath GenericScript
     ,   hoi4ideaGroupScripts :: HashMap FilePath GenericScript
 --    ,   hoi4modifierScripts :: HashMap FilePath GenericScript
@@ -111,6 +113,8 @@ class (IsGame g,
     getOpinionModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed opinion modifiers table (keyed on modifier ID).
     getOpinionModifiers :: Monad m => PPT g m (HashMap Text HOI4OpinionModifier)
+    -- | Get the contents of all decision script files.
+    getDecisioncatScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the contents of all decision script files.
     getDecisionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed decisions table (keyed on decision ID).
@@ -243,6 +247,26 @@ data Idea = Idea
     } deriving (Show)
 
 -- | Decision data.
+data HOI4Decisioncat = HOI4Decisioncat
+    {   decc_name :: Text -- ^ Decision category ID
+    ,   decc_name_loc :: Text -- ^ Localized decision category name
+    ,   decc_picture :: Text
+    ,   decc_priority :: HOI4Deccatprio -- ^ Determines place on the list
+    ,   decc_allowed :: GenericScript -- ^ Conditions that allow the category to appear
+    ,   decc_effect :: GenericScript -- ^ Effect on taking the decision
+    ,   decc_visible_when_empty :: Maybe Text
+    ,   decc_scripted_gui :: Maybe Text
+    ,   decc_highlight_states :: Maybe GenericScript
+    ,   decc_on_map_area :: Maybe GenericScript
+    ,   decc_path :: Maybe FilePath -- ^ Source file
+    } deriving (Show)
+
+data HOI4Deccatprio =
+     HOI4catprionum Double
+    |HOI4catprioscript GenericScript
+    deriving Show
+
+-- | Decision data.
 data HOI4Decision = HOI4Decision
     {   dec_name :: Text -- ^ Decision ID
     ,   dec_name_loc :: Text -- ^ Localized decision name
@@ -350,6 +374,7 @@ data AIWillDo = AIWillDo
 -- | Modifiers for AI decision factors.
 data AIModifier = AIModifier
     {   aim_factor :: Maybe Double
+    ,   aim_add :: Maybe Double
     ,   aim_triggers :: GenericScript
     } deriving (Show)
 -- | Empty decision factor.
@@ -357,7 +382,7 @@ newAIWillDo :: AIWillDo
 newAIWillDo = AIWillDo Nothing []
 -- | Empty modifier.
 newAIModifier :: AIModifier
-newAIModifier = AIModifier Nothing []
+newAIModifier = AIModifier Nothing Nothing []
 
 -- | Parse an @ai_will_do@ clause.
 aiWillDo :: GenericScript -> AIWillDo
@@ -384,8 +409,13 @@ awdModifierAddSection aim stmt@[pdx| $left = %right |] = case T.toLower left of
     "factor" -> case floatRhs right of
         Just fac -> aim { aim_factor = Just fac }
         Nothing  -> aim
+    "add" -> case floatRhs right of
+        Just add -> aim { aim_add = Just add }
+        Nothing  -> aim
     _ -> -- the rest of the statements are just the conditions.
         aim { aim_triggers = aim_triggers aim ++ [stmt] }
+awdModifierAddSection aim stmt@[pdx| $left > %right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
+awdModifierAddSection aim stmt@[pdx| $left < %right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
 awdModifierAddSection aim _ = aim
 
 isGeographic :: HOI4Scope -> Bool
@@ -400,4 +430,3 @@ isGeographic _ = False
 
 --getModifier :: (HOI4Info g, Monad m) => Text -> PPT g m (Maybe HOI4Modifier)
 --getModifier id = HM.lookup id <$> getModifiers
-

@@ -41,7 +41,7 @@ import Yaml (LocEntry (..))
 -- Handlers
 import HOI4.Decisions (parseHOI4Decisions, writeHOI4Decisions)
 import HOI4.IdeaGroups (parseHOI4IdeaGroups, writeHOI4IdeaGroups)
-import HOI4.Modifiers ( 
+import HOI4.Modifiers (
 --                    parseHOI4Modifiers, writeHOI4Modifiers,
                       parseHOI4OpinionModifiers, writeHOI4OpinionModifiers
 --                    , parseHOI4ProvTrigModifiers, writeHOI4ProvTrigModifiers
@@ -88,6 +88,8 @@ instance IsGame HOI4 where
                     hoi4settings = fixLocalization settings
                 ,   hoi4events = HM.empty
                 ,   hoi4eventScripts = HM.empty
+                ,   hoi4decisioncatScripts = HM.empty
+                ,   hoi4decisioncats = HM.empty
                 ,   hoi4decisions = HM.empty
                 ,   hoi4decisionScripts = HM.empty
                 ,   hoi4ideaGroups = HM.empty
@@ -152,6 +154,9 @@ instance HOI4Info HOI4 where
     getIdeaGroups = do
         HOI4D ed <- get
         return (hoi4ideaGroups ed)
+    getDecisioncatScripts = do
+        HOI4D ed <- get
+        return (hoi4decisioncatScripts ed)
     getDecisionScripts = do
         HOI4D ed <- get
         return (hoi4decisionScripts ed)
@@ -309,6 +314,7 @@ readHOI4Scripts = do
         getModifierFileFromOpts _ = []
 -}
     ideaGroups <- readHOI4Script "ideagroups"
+    decisioncats <- readHOI4Script "decisioncats"
     decisions <- readHOI4Script "decisions"
     events <- readHOI4Script "events"
 --    modifiers <- readHOI4Script "modifiers"
@@ -339,6 +345,7 @@ readHOI4Scripts = do
 -}
     modify $ \(HOI4D s) -> HOI4D $ s {
             hoi4ideaGroupScripts = ideaGroups
+        ,   hoi4decisioncatScripts = decisioncats
         ,   hoi4decisionScripts = decisions
         ,   hoi4eventScripts = events
 --        ,   hoi4modifierScripts = modifiers
@@ -365,7 +372,8 @@ parseHOI4Scripts = do
 
     opinionModifiers <- parseHOI4OpinionModifiers =<< getOpinionModifierScripts
 --    provTrigModifiers <- parseHOI4ProvTrigModifiers =<< getProvinceTriggeredModifierScripts
-    decisions <- parseHOI4Decisions =<< getDecisionScripts
+    decisioncats <- getDecisioncatScripts
+    decisions <- parseHOI4Decisions decisioncats =<< getDecisionScripts
     events <- parseHOI4Events =<< getEventScripts
 --    missions <- parseHOI4Missions =<< getMissionScripts
     on_actions <- getOnActionsScripts

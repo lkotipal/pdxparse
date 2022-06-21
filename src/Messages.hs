@@ -683,7 +683,9 @@ data ScriptMessage
     | MsgNoBaseWeight
     | MsgAIBaseWeight {scriptMessageAmt :: Double}
     | MsgAIFactorOneline {scriptMessageFactor :: Text, scriptMessageMultiplier :: Double}
+    | MsgAIAddOneline {scriptMessageFactor :: Text, scriptMessageMultiplier :: Double}
     | MsgAIFactorHeader {scriptMessageMultiplier :: Double}
+    | MsgAIAddHeader {scriptMessageMultiplier :: Double}
     | MsgLucky {scriptMessageYn :: Bool}
     | MsgHasAdvisorLevel {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageLevel :: Double}
     | MsgNumRoyalMarriages {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1547,6 +1549,7 @@ data ScriptMessage
     | MsgHasTradeCompanyInvestmentInState {scriptMessageWhom :: Text}
     | MsgRandomListTrigger
     | MsgRandomListModifier {scriptMessageAmt :: Double}
+    | MsgRandomListAddModifier {scriptMessageAmt :: Double}
     | MsgOwnOrNonTribSubjectDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgOwnOrNonTribSubjectDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgHasOneOfBuildings {scriptMessageYn :: Bool, scriptMessageWhat :: Text}
@@ -5383,10 +5386,23 @@ instance RenderMessage Script ScriptMessage where
                 , " if the following is true: "
                 ,_factor
                 ]
+        MsgAIAddOneline {scriptMessageFactor = _factor, scriptMessageMultiplier = _multiplier}
+            -> mconcat
+                [ "Base weight "
+                , toMessage (bold (plainNumSign _multiplier))
+                , " if the following is true: "
+                ,_factor
+                ]
         MsgAIFactorHeader {scriptMessageMultiplier = _multiplier}
             -> mconcat
                 [ "* Base weight * "
                 , toMessage (bold (plainNum _multiplier))
+                , " if the following are true:"
+                ]
+        MsgAIAddHeader {scriptMessageMultiplier = _multiplier}
+            -> mconcat
+                [ "* Base weight "
+                , toMessage (bold (plainNumSign _multiplier))
                 , " if the following are true:"
                 ]
         MsgLucky {scriptMessageYn = _yn}
@@ -10647,6 +10663,12 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , "''' if:"
                 ]
+        MsgRandomListAddModifier {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Chance increases '''"
+                , toMessage (plainNumSign _amt)
+                , "''' if:"
+                ]
         MsgOwnOrNonTribSubjectDevelopment {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Own or non-tributary subject "
@@ -11495,7 +11517,7 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , plural _amt " unit" " units"
-                ]                
+                ]
         MsgConstructBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
             -> mconcat
                 [ "Start building "
@@ -11633,4 +11655,3 @@ imsg2doc_html msgs@((i,_):_)
                 m <- PP.enclose "<li>" "</li>" <$> message rm
                 (postdoc, restmsgs) <- imsg2doc' msgs
                 return (m <> PP.line <> postdoc, restmsgs)
-

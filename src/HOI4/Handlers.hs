@@ -1587,7 +1587,7 @@ ppAiWillDo (AIWillDo mbase mods) = do
 -- | Extract the appropriate message(s) from a @modifier@ section within an
 -- @ai_will_do@ clause.
 ppAiMod :: (HOI4Info g, Monad m) => AIModifier -> PPT g m IndentedMessages
-ppAiMod (AIModifier (Just multiplier) triggers) = do
+ppAiMod (AIModifier Nothing (Just multiplier) triggers) = do
     triggers_pp'd <- ppMany triggers
     case triggers_pp'd of
         [(i, triggerMsg)] -> do
@@ -1596,8 +1596,17 @@ ppAiMod (AIModifier (Just multiplier) triggers) = do
         _ -> withCurrentIndentZero $ \i -> return $
             (i, MsgAIFactorHeader multiplier)
             : map (first succ) triggers_pp'd -- indent up
-ppAiMod (AIModifier Nothing _) =
-    plainMsg "(missing multiplier for this factor)"
+ppAiMod (AIModifier (Just addition) Nothing triggers) = do
+    triggers_pp'd <- ppMany triggers
+    case triggers_pp'd of
+        [(i, triggerMsg)] -> do
+            triggerText <- messageText triggerMsg
+            return [(i, MsgAIAddOneline triggerText addition)]
+        _ -> withCurrentIndentZero $ \i -> return $
+            (i, MsgAIAddHeader addition)
+            : map (first succ) triggers_pp'd -- indent up
+ppAiMod (AIModifier _ _ _) =
+    plainMsg "(missing multiplier/add for this factor)"
 
 -- | Verify assumption about rhs
 rhsAlways :: (HOI4Info g, Monad m) => Text -> ScriptMessage -> StatementHandler g m
