@@ -795,7 +795,7 @@ hasOpinion stmt@(Statement _ OpEq (CompoundRhs scr))
         pp_hasOpinion :: HasOpinion -> PPT g m ScriptMessage
         pp_hasOpinion hop = case (hop_who hop, hop_value hop) of
             (Just who, Just value) ->
-                return (MsgHasOpinion value who True)
+                return (MsgHasOpinion value who)
             _ -> return (preMessage stmt)
 hasOpinion stmt = preStatement stmt
 

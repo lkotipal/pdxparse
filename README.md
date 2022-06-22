@@ -40,7 +40,8 @@ only the files you want, and rebuild.
 ## Known Issues
 
 * HoI4
-    * random_list with variables won't properly show the variable name currently being fed a straight number to make it work. needs manual checking gf files for editing
+    * ~~random_list with variables won't properly show the variable name currently being fed a straight number to make it work. needs manual checking gf files for editing~~
+    * random_list handles only numbers for the weight OR only variables for the weight
     * ~~add_building_sconstruction doesn't handle the contents of province = {} well. needs manual editing~~
     * script doesn't like improperly formatted localizations, doesn't handle a space in front of l_<language> at the top of file
     * Tags aren't localized to country names
@@ -65,4 +66,4 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * Make on_action also add the limits/trigger other than just the action
 * Rewrite parser for decison for HoI 4
 * Find none ugly solution for events that have no options
-* random_list, ~~ai_chance~~ and possibly more needs to also handle "add" besides "factor" in their "modifier"
+*  ~~random_list, ~~ai_chance~~ and possibly more needs to also handle "add" besides "factor" in their "modifier"~~

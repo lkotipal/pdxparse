@@ -229,6 +229,8 @@ data ScriptMessage
     | MsgStrongestTradePower
     | MsgWhile
     | MsgRandomChance {scriptMessageChance :: Double}
+    | MsgRandomVarChance {scriptMessageWhat :: Text}
+    | MsgRandomChanceHOI4 {scriptMessageChance :: Double, scriptMessageAmt :: Double}
     | MsgRandom
     | MsgChangeGovernment {scriptMessageWhat :: Text}
     | MsgContinentIs {scriptMessageWhat :: Text}
@@ -492,6 +494,7 @@ data ScriptMessage
     | MsgNewsEvent
     | MsgTriggerEvent {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text}
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
+    | MsgTriggerEventTime {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageTime :: Text}
     | MsgDeclareWarWithCB {scriptMessageWhom :: Text, scriptMessageCb :: Text}
     | MsgGainAdvisor {scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
     | MsgGainAdvisorLoc {scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
@@ -645,8 +648,9 @@ data ScriptMessage
     | MsgYearlyPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMissionaryStrengthVsHeretics {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCultureConvCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
-    | MsgReverseHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
+    | MsgHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
+    | MsgHasOpinionHOI4 {scriptMessageAmt :: Double, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
+    | MsgReverseHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
     | MsgNormalOrHistoricalNations {scriptMessageYn :: Bool}
     | MsgIsCustomNation {scriptMessageYn :: Bool}
     | MsgReligionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -2493,6 +2497,18 @@ instance RenderMessage Script ScriptMessage where
                 [ toMessage (plainPc _chance)
                 , " chance of:"
                 ]
+        MsgRandomChanceHOI4 {scriptMessageChance = _chance, scriptMessageAmt = _amt}
+            -> mconcat
+                [ toMessage (plainPc _chance)
+                ," (",toMessage (plainNum _amt),")"
+                , " chance of:"
+                ]
+        MsgRandomVarChance {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Based on "
+                , _what
+                , " chance of:"
+                ]
         MsgRandom
             -> "One of the following at random:"
         MsgChangeGovernment {scriptMessageWhat = _what}
@@ -4151,6 +4167,17 @@ instance RenderMessage Script ScriptMessage where
                 , " --> in "
                 , toMessage (formatDays _days)
                 ]
+        MsgTriggerEventTime {scriptMessageEvttype = _evttype, scriptMessageEvtid = _evtid, scriptMessageName = _name, scriptMessageTime = _time}
+            -> mconcat
+                [ "Trigger "
+                , _evttype
+                , " "
+                , toMessage (iquotes _name)
+                , " <!-- "
+                , _evtid
+                , " --> in "
+                , _time
+                ]
         MsgDeclareWarWithCB {scriptMessageWhom = _whom, scriptMessageCb = _cbtype}
             -> mconcat
                 [ "Declare war on "
@@ -5171,7 +5198,14 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Culture conversion cost"
                 ]
-        MsgHasOpinion {scriptMessageAmt = _amt, scriptMessageWhom = _whom, scriptMessageYn = _yn}
+        MsgHasOpinion {scriptMessageAmt = _amt, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Opinion of "
+                , _whom
+                , " is at least {{icon|opinion}} "
+                , toMessage (colourNumSign True _amt)
+                ]
+        MsgHasOpinionHOI4 {scriptMessageAmt = _amt, scriptMessageWhom = _whom, scriptMessageYn = _yn}
             -> mconcat
                 [ "Opinion of "
                 , _whom
@@ -10665,7 +10699,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgRandomListAddModifier {scriptMessageAmt = _amt}
             -> mconcat
-                [ "Chance increases '''"
+                [ "Chance base weight changes by '''"
                 , toMessage (plainNumSign _amt)
                 , "''' if:"
                 ]

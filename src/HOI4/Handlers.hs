@@ -185,7 +185,7 @@ import Abstract -- everything
 import Doc (Doc)
 import qualified Doc -- everything
 import Messages -- everything
-import MessageTools (plural, iquotes)
+import MessageTools (plural, iquotes, formatDays, formatHours)
 import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, indentDown, withCurrentIndent, withCurrentIndentZero, alsoIndent, alsoIndent'
@@ -1995,9 +1995,13 @@ data TriggerEvent = TriggerEvent
         { e_id :: Maybe Text
         , e_title_loc :: Maybe Text
         , e_days :: Maybe Double
+        , e_hours :: Maybe Double
+        , e_random :: Maybe Double
+        , e_random_days :: Maybe Double
+        , e_random_hours :: Maybe Double
         }
 newTriggerEvent :: TriggerEvent
-newTriggerEvent = TriggerEvent Nothing Nothing Nothing
+newTriggerEvent = TriggerEvent Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 triggerEvent :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
 triggerEvent evtType stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_trigger_event =<< foldM addLine newTriggerEvent scr
@@ -2010,6 +2014,14 @@ triggerEvent evtType stmt@[pdx| %_ = @scr |]
                 return evt { e_id = Just eid, e_title_loc = mevt_t }
         addLine evt [pdx| days = %rhs |]
             = return evt { e_days = floatRhs rhs }
+        addLine evt [pdx| hours = %rhs |]
+            = return evt { e_hours = floatRhs rhs }
+        addLine evt [pdx| random = %rhs |]
+            = return evt { e_random = floatRhs rhs }
+        addLine evt [pdx| random_days = %rhs |]
+            = return evt { e_random_days = floatRhs rhs }
+        addLine evt [pdx| random_hours = %rhs |]
+            = return evt { e_random_hours = floatRhs rhs }
         addLine evt _ = return evt
         pp_trigger_event :: TriggerEvent -> PPT g m ScriptMessage
         pp_trigger_event evt = do
@@ -2017,9 +2029,13 @@ triggerEvent evtType stmt@[pdx| %_ = @scr |]
             case e_id evt of
                 Just msgid ->
                     let loc = fromMaybe msgid (e_title_loc evt)
-                    in case e_days evt of
-                        Just days -> return $ MsgTriggerEventDays evtType_t msgid loc days
-                        Nothing -> return $ MsgTriggerEvent evtType_t msgid loc
+                        time = (fromMaybe 0 (e_days evt)) * 24 + (fromMaybe 0 (e_hours evt))
+                        timernd = time + (fromMaybe 0 (e_random_days evt)) * 24 + (fromMaybe 0 (e_random evt)) + (fromMaybe 0 (e_hours evt))
+                        tottimer = (formatHours time) <> if timernd /= time then " to " <> (formatHours timernd) else ""
+                    in if time > 0 then
+                        return $ MsgTriggerEventTime evtType_t msgid loc tottimer
+                    else
+                        return $ MsgTriggerEvent evtType_t msgid loc
                 _ -> return $ preMessage stmt
 triggerEvent _ stmt = preStatement stmt
 
@@ -2108,11 +2124,19 @@ toPct :: Double -> Double
 toPct num = (fromIntegral $ round (num * 1000)) / 10 -- round to one digit after the point
 
 randomList :: (HOI4Info g, Monad m) => StatementHandler g m
-randomList stmt@[pdx| %_ = @scr |] = fmtRandomList $ map entry scr
+randomList stmt@[pdx| %_ = @scr |] = if or (map chk scr) then -- Ugly solution for vars in random list and only works if all chances are vars or numbers not a mix
+        fmtRandomList $ map entry scr
+    else
+        fmtRandomVarList $ map entryv scr
     where
+        chk [pdx| !weight = @scr |] = True
+        chk [pdx| %var = @scr |] = False
+        chk _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list check")
         entry [pdx| !weight = @scr |] = (fromIntegral weight, scr)
-        entry [pdx| %weight = @scr |] = trace ("DEBUG: random_list " ++ show weight) $ (40, scr)
         entry _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list, possibly vars?")
+        entryv [pdx| $var = @scr |] = trace ("DEBUG: random_list " ++ show var) $ (var, scr)
+        entryv [pdx| $_:$var = @scr |] = trace ("DEBUG: random_list " ++ show var) $ (var, scr)
+        entryv _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list, possibly ints?")
         fmtRandomList entries = withCurrentIndent $ \i ->
             let total = sum (map fst entries)
             in (:) <$> pure (i, MsgRandom)
@@ -2128,17 +2152,54 @@ randomList stmt@[pdx| %_ = @scr |] = fmtRandomList $ map entry scr
                 Just s@[pdx| %_ = @scr |] ->
                     let
                         (mfactor, s') = extractStmt (matchLhsText "factor") scr
+                        (madd, sa') = extractStmt (matchLhsText "add") scr
                     in
                         case mfactor of
                             Just [pdx| %_ = !factor |] -> do
                                 cond <- ppMany s'
                                 liftA2 (++) (msgToPP $ MsgRandomListModifier factor) (pure cond)
-                            _ -> preStatement s
+                            _ -> case madd of
+                                    Just [pdx| %_ = !add |] -> do
+                                        cond <- ppMany sa'
+                                        liftA2 (++) (msgToPP $ MsgRandomListAddModifier add) (pure cond)
+                                    _ -> preStatement s
                 Just s -> preStatement s
                 _ -> return [])
             body <- ppMany rest' -- has integral indentUp
             liftA2 (++)
-                (msgToPP $ MsgRandomChance $ toPct (wt / total))
+                (msgToPP $ MsgRandomChanceHOI4 (toPct (wt / total)) wt)
+                (pure (trig ++ mod ++ body))
+        -- Ugly solution for vars in random list and only works if all chances are vars or numbers not a mix
+        fmtRandomVarList entries = withCurrentIndent $ \i ->
+            (:) <$> pure (i, MsgRandom)
+                <*> (concat <$> indentUp (mapM fmtRandomVarList' entries))
+        fmtRandomVarList' (wt, what) = do
+            -- TODO: Could probably be simplified.
+            let (mtrigger, rest) = extractStmt (matchLhsText "trigger") what
+                (mmodifier, rest') = extractStmt (matchLhsText "modifier") rest
+            trig <- (case mtrigger of
+                Just s -> indentUp (compoundMessage MsgRandomListTrigger s)
+                _ -> return [])
+            mod <- indentUp (case mmodifier of
+                Just s@[pdx| %_ = @scr |] ->
+                    let
+                        (mfactor, s') = extractStmt (matchLhsText "factor") scr
+                        (madd, sa') = extractStmt (matchLhsText "add") scr
+                    in
+                        case mfactor of
+                            Just [pdx| %_ = !factor |] -> do
+                                cond <- ppMany s'
+                                liftA2 (++) (msgToPP $ MsgRandomListModifier factor) (pure cond)
+                            _ -> case madd of
+                                    Just [pdx| %_ = !add |] -> do
+                                        cond <- ppMany sa'
+                                        liftA2 (++) (msgToPP $ MsgRandomListAddModifier add) (pure cond)
+                                    _ -> preStatement s
+                Just s -> preStatement s
+                _ -> return [])
+            body <- ppMany rest' -- has integral indentUp
+            liftA2 (++)
+                (msgToPP $ MsgRandomVarChance wt)
                 (pure (trig ++ mod ++ body))
 randomList _ = withCurrentFile $ \file ->
     error ("randomList sent strange statement in " ++ file)

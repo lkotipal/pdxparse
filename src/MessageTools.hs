@@ -29,6 +29,7 @@ module MessageTools (
     -- * Advisor text helpers
     ,   advisorDiscountText
     -- * Time formatting
+    , formatHours
     , formatDays
     , formatMonths
     -- * Wiki markup
@@ -88,7 +89,7 @@ ppNumSep' isint
         . (if isint then reverse else id)
         . intersperse "&#8239;"
         . (if isint then map reverse else id)
-        . group3 
+        . group3
         . (if isint then reverse else id)
 
 instance PPSep Int where
@@ -263,6 +264,20 @@ formatMonths months = formatMonths' (round months :: Int)
                                 ""
                             else
                                 " and " <> formatMonths' (months `mod` 12))
+
+-- | Format hours
+formatHours :: Double -> Text
+formatHours hours = formatHours' (round hours :: Int)
+    where
+    formatHours' :: Int -> Text
+    formatHours' hours | hours < 0   = "the rest of the game"
+    formatHours' 1                 = "1 hour"
+    formatHours' hours | hours < 24 = T.pack $ show hours <> " hours"
+    formatHours' hours              = formatDays (fromIntegral (hours `div` 24)) <>
+                                        (if hours `mod` 24 == 0 then
+                                            ""
+                                         else
+                                            " and " <> formatHours' (hours `mod` 24))
 
 -----------------
 ---- Wiki text --
