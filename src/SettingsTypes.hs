@@ -208,7 +208,7 @@ instance IsGameState (GameState UnknownGame) where
     modifyCurrentIndent mci (UGS s) = UGS $ s { ugCurrentIndent = mci }
 
 -- | Existentially quantified game handlers type.
--- 
+--
 -- To support a new game, create an actions type for it in the game's
 -- @Settings@ module, and make it an instance of 'IsGame'. Do /not/ define it
 -- in the game's @Types@ module. Instead, have game-specific code be
@@ -240,12 +240,12 @@ data Settings = Settings {
     ,   gamePath    :: FilePath -- ^ Full path to game directory.
     ,   justLanguage :: String
     ,   language    :: Text     -- ^ Localization language code (e.g. \"en\")
-    ,   languageFolder :: FilePath  -- ^ used to find folder 
+    ,   languageFolder :: FilePath  -- ^ used to find folder
     ,   languageS   :: String   -- ^ Output language code, as String for easy
-                                --   manipulation of FilePaths.  
+                                --   manipulation of FilePaths.
     ,   gameVersion :: Text     -- ^ Version of the game (e.g. \"1.22\")
     ,   gameL10n    :: L10n     -- ^ Game localization table. See "Yaml" for
-                                --   the definition of this type.  
+                                --   the definition of this type.
     ,   langs       :: [Lang]   -- ^ Preferential list of output languages.
                                 --   Currently only \"en\" is supported.
     ,   settingsFile :: FilePath -- ^ Path to @settings.yaml@.

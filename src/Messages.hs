@@ -135,6 +135,9 @@ data ScriptMessage
     | MsgROOTCountry
     | MsgROOTCountryAsOther
     | MsgROOTProvince
+    | MsgROOTState
+    | MsgROOTOperative
+    | MsgROOTUnitLeader
     | MsgROOTProvinceOwner
     | MsgROOTProvinceAsOther
     | MsgROOTTradeNode
@@ -143,16 +146,22 @@ data ScriptMessage
     | MsgPREVCountry
     | MsgPREVCountryAsOther
     | MsgPREVProvince
+    | MsgPREVState
     | MsgPREVProvinceOwner
     | MsgPREVProvinceAsOther
+    | MsgPREVOperative
+    | MsgPREVUnitLeader
     | MsgPREVTradeNode
     | MsgPREVGeographic
     | MsgTHISCountry
     | MsgTHISCountryAsOther
     | MsgTHISProvince
+    | MsgTHISState
     | MsgTHISProvinceOwner
     | MsgTHISProvinceAsOther
     | MsgTHISTradeNode
+    | MsgTHISOperative
+    | MsgTHISUnitLeader
     | MsgTHISGeographic
     | MsgController
     | MsgEmperor
@@ -192,6 +201,7 @@ data ScriptMessage
     | MsgEveryCoreCountry
     | MsgEveryCoreProvince
     | MsgEveryCountry
+    | MsgEveryOtherCountry
     | MsgEveryEnemyCountry
     | MsgEveryHereticProvince
     | MsgEveryKnownCountry
@@ -220,7 +230,9 @@ data ScriptMessage
     | MsgRandomList
     | MsgRandomNeighborCountry
     | MsgRandomNeighborProvince
+    | MsgRandomOwnedControlledState
     | MsgRandomOwnedProvince
+    | MsgRandomOtherCountry
     | MsgRandomPrivateeringCountry
     | MsgRandomProvince
     | MsgRandomRival
@@ -492,6 +504,9 @@ data ScriptMessage
     | MsgProvinceEvent
     | MsgCountryEvent
     | MsgNewsEvent
+    | MsgStateEvent
+    | MsgOperativeEvent
+    | MsgUnitLeaderEvent
     | MsgTriggerEvent {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text}
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgTriggerEventTime {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageTime :: Text}
@@ -2297,7 +2312,7 @@ instance RenderMessage Script ScriptMessage where
         MsgAllOf
             -> "All of:"
         MsgFROM
-            -> "FROM:"
+            -> "The country that sent the event:"
         MsgROOT
             -> "ROOT"
         MsgROOTCountry
@@ -2306,6 +2321,12 @@ instance RenderMessage Script ScriptMessage where
             -> "same as our country"
         MsgROOTProvince
             -> "The currently considered province"
+        MsgROOTState
+            -> "The currently considered state"
+        MsgROOTOperative
+            -> "The currently considered operative"
+        MsgROOTUnitLeader
+            -> "The currently considered unit leader"
         MsgROOTProvinceOwner
             -> "the owner of the currently considered province"
         MsgROOTProvinceAsOther
@@ -2322,6 +2343,8 @@ instance RenderMessage Script ScriptMessage where
             -> "same as the previously mentioned country"
         MsgPREVProvince
             -> "The previously mentioned province"
+        MsgPREVState
+            -> "The previously mentioned state"
         MsgPREVProvinceOwner
             -> "the owner of the previously mentioned province"
         MsgPREVProvinceAsOther
@@ -2330,16 +2353,26 @@ instance RenderMessage Script ScriptMessage where
             -> "The previously mentioned trade node"
         MsgPREVGeographic
             -> "The previously mentioned location"
+        MsgPREVOperative
+            -> "The previously mentioned operative"
+        MsgPREVUnitLeader
+            -> "The previously mentioned unit leader"
         MsgTHISCountry
             -> "this country"
         MsgTHISCountryAsOther
             -> "same as this country"
         MsgTHISProvince
             -> "this province"
+        MsgTHISState
+            -> "this province"
         MsgTHISProvinceOwner
             -> "the owner of this province"
         MsgTHISProvinceAsOther
             -> "same as this province"
+        MsgTHISOperative
+            -> "this operative"
+        MsgTHISUnitLeader
+            -> "this unit leader"
         MsgTHISTradeNode
             -> "This trade node"
         MsgTHISGeographic
@@ -2416,6 +2449,8 @@ instance RenderMessage Script ScriptMessage where
             -> "Every ally:"
         MsgEveryCountry
             -> "Every country in the world:"
+        MsgEveryOtherCountry
+            -> "Every other country in the world:"
         MsgEveryCoreCountry
             -> "Every country with a core:"
         MsgEveryCoreProvince
@@ -2476,8 +2511,12 @@ instance RenderMessage Script ScriptMessage where
             -> "One random neighbouring country:"
         MsgRandomNeighborProvince
             -> "One random neighbouring province:"
+        MsgRandomOwnedControlledState
+            -> "One random owned and controlled state:"
         MsgRandomOwnedProvince
             -> "One random owned province:"
+        MsgRandomOtherCountry
+            -> "One random country other than your own:"
         MsgRandomPrivateeringCountry
             -> "One random country privateering in this node:"
         MsgRandomProvince
@@ -4146,6 +4185,12 @@ instance RenderMessage Script ScriptMessage where
             -> "country event"
         MsgNewsEvent
             -> "news event"
+        MsgStateEvent
+            -> "state event"
+        MsgOperativeEvent
+            -> "operative event"
+        MsgUnitLeaderEvent
+            -> "unit leader event"
         MsgTriggerEvent {scriptMessageEvttype = _evttype, scriptMessageEvtid = _evtid, scriptMessageName = _name}
             -> mconcat
                 [ "Trigger "

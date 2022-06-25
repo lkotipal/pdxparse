@@ -14,7 +14,7 @@ module HOI4.Types (
 --    ,   HOI4Modifier (..)
     ,   HOI4OpinionModifier (..)
 --    ,   HOI4MissionTreeBranch (..), HOI4Mission (..)
---    ,   HOI4ProvinceTriggeredModifier (..)
+--    ,   HOI4ScopeStateTriggeredModifier (..)
         -- * Low level types
     ,   MonarchPower (..)
     ,   HOI4Scope (..)
@@ -57,7 +57,7 @@ data HOI4Data = HOI4Data {
 --    ,   hoi4missions :: HashMap Text HOI4MissionTreeBranch
     ,   hoi4eventTriggers :: HOI4EventTriggers
     ,   hoi4geoData :: HashMap Text HOI4GeoType
---    ,   hoi4provtrigmodifiers :: HashMap Text HOI4ProvinceTriggeredModifier
+--    ,   hoi4provtrigmodifiers :: HashMap Text HOI4ScopeStateTriggeredModifier
     ,   hoi4eventScripts :: HashMap FilePath GenericScript
     ,   hoi4decisioncatScripts :: HashMap FilePath GenericScript
     ,   hoi4decisionScripts :: HashMap FilePath GenericScript
@@ -113,10 +113,12 @@ class (IsGame g,
     getOpinionModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed opinion modifiers table (keyed on modifier ID).
     getOpinionModifiers :: Monad m => PPT g m (HashMap Text HOI4OpinionModifier)
-    -- | Get the contents of all decision script files.
+    -- | Get the contents of all decision categories script files.
     getDecisioncatScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the contents of all decision script files.
     getDecisionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed decision categories table (keyed on decision category ID).
+    getDecisioncats :: Monad m => PPT g m (HashMap Text HOI4Decisioncat)
     -- | Get the parsed decisions table (keyed on decision ID).
     getDecisions :: Monad m => PPT g m (HashMap Text HOI4Decision)
     -- | Get the contents of all mission script files
@@ -134,7 +136,7 @@ class (IsGame g,
     -- | Get the contents of all province triggered modifier script files.
 --    getProvinceTriggeredModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed province triggered modifiers table (keyed on modifier ID).
---    getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text HOI4ProvinceTriggeredModifier)
+--    getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text HOI4ScopeStateTriggeredModifier)
     -- | Get the trade nodes
     getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
     -- | Get extra scripts parsed from command line arguments
@@ -249,22 +251,22 @@ data Idea = Idea
 -- | Decision data.
 data HOI4Decisioncat = HOI4Decisioncat
     {   decc_name :: Text -- ^ Decision category ID
-    ,   decc_name_loc :: Text -- ^ Localized decision category name
-    ,   decc_picture :: Text
-    ,   decc_priority :: HOI4Deccatprio -- ^ Determines place on the list
-    ,   decc_allowed :: GenericScript -- ^ Conditions that allow the category to appear
-    ,   decc_effect :: GenericScript -- ^ Effect on taking the decision
+    ,   decc_name_loc :: Maybe Text -- ^ Localized decision category name
+    ,   decc_desc_loc :: Maybe Text
+    ,   decc_icon :: Text
+    ,   decc_picture :: Maybe Text
+    ,   decc_custom_icon :: Maybe GenericScript
+    ,   decc_visible :: Maybe GenericScript
+    ,   decc_available :: Maybe GenericScript
+    ,   decc_visiblity_type :: Maybe Text
+    ,   decc_priority :: Maybe Text -- ^ Determines place on the list
+    ,   decc_allowed :: Maybe GenericScript -- ^ Conditions that allow the category to appear
     ,   decc_visible_when_empty :: Maybe Text
     ,   decc_scripted_gui :: Maybe Text
     ,   decc_highlight_states :: Maybe GenericScript
     ,   decc_on_map_area :: Maybe GenericScript
-    ,   decc_path :: Maybe FilePath -- ^ Source file
+    ,   decc_path :: FilePath -- ^ Source file
     } deriving (Show)
-
-data HOI4Deccatprio =
-     HOI4catprionum Double
-    |HOI4catprioscript GenericScript
-    deriving Show
 
 -- | Decision data.
 data HOI4Decision = HOI4Decision
@@ -289,7 +291,7 @@ data HOI4Modifier = HOI4Modifier
     ,   modEffects :: GenericScript
     } deriving (Show)
 
-data HOI4ProvinceTriggeredModifier = HOI4ProvinceTriggeredModifier
+data HOI4ScopeStateTriggeredModifier = HOI4ScopeStateTriggeredModifier
     {   ptmodName :: Text
     ,   ptmodLocName :: Maybe Text
     ,   ptmodPath :: FilePath
@@ -349,10 +351,13 @@ instance Hashable MonarchPower
 data HOI4Scope
     = HOI4NoScope
     | HOI4Country
-    | HOI4Province
+    | HOI4ScopeState
     | HOI4TradeNode
     | HOI4Geographic -- ^ Area, etc.
     | HOI4Bonus
+    | HOI4UnitLeader
+    | HOI4Operative
+    | HOI4DualScope
     | HOI4From -- ^ Usually country or province, varies by context
     deriving (Show, Eq, Ord, Enum, Bounded)
 
@@ -419,7 +424,7 @@ awdModifierAddSection aim stmt@[pdx| $left < %right |] = aim { aim_triggers = ai
 awdModifierAddSection aim _ = aim
 
 isGeographic :: HOI4Scope -> Bool
-isGeographic HOI4Province = True
+isGeographic HOI4ScopeState = True
 isGeographic HOI4TradeNode = True
 isGeographic HOI4Geographic = True
 isGeographic _ = False

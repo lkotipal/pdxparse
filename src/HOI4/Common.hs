@@ -861,56 +861,56 @@ handlersModifiers = Tr.fromList
 handlersCompound :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersCompound = Tr.fromList
         -- Note that "any" can mean "all" or "one or more" depending on context.
-        [("and" , compoundMessage MsgAllOf)
-        ,("root", compoundMessagePronoun)
-        ,("from", compoundMessagePronoun)
-        ,("prev", compoundMessagePronoun)
+        [("and" , compoundMessage MsgAllOf) --AND
+        ,("root", compoundMessagePronoun) --ROOT
+        ,("from", compoundMessagePronoun) --FROM
+        ,("prev", compoundMessagePronoun) --PREV
         -- no THIS, not used on LHS
-        ,("not" , compoundMessage MsgNoneOf)
-        ,("or"  , compoundMessage MsgAtLeastOneOf)
+        ,("not" , compoundMessage MsgNoneOf) --NOT
+        ,("or"  , compoundMessage MsgAtLeastOneOf) --OR
         -- Tagged blocks
         ,("event_target", compoundMessageTagged MsgEventTarget (Just HOI4From))
         -- There is a semantic distinction between "all" and "every",
         -- namely that the former means "this is true for all <type>" while
         -- the latter means "do this for every <type>."
         ,("all_ally"                , scope HOI4Country   . compoundMessage MsgAllAllies)
-        ,("all_core_province"       , scope HOI4Province  . compoundMessage MsgAllCoreProvince)
+        ,("all_core_province"       , scope HOI4ScopeState  . compoundMessage MsgAllCoreProvince)
         ,("all_country" {- sic -}   , scope HOI4Country   . compoundMessage MsgAllCountries)
         ,("all_elector"             , scope HOI4Country   . compoundMessage MsgAllElectors)
         ,("all_federation_members"  , scope HOI4Country   . compoundMessage MsgAllFederationMembers)
         ,("all_known_country"       , scope HOI4Country   . compoundMessage MsgAllKnownCountries)
         ,("all_neighbor_country"    , scope HOI4Country   . compoundMessage MsgAllNeighborCountries)
-        ,("all_owned_province"      , scope HOI4Province  . compoundMessage MsgEveryOwnedProvince)
-        ,("all_province"            , scope HOI4Province  . compoundMessage MsgAllProvince)
+        ,("all_owned_province"      , scope HOI4ScopeState  . compoundMessage MsgEveryOwnedProvince)
+        ,("all_province"            , scope HOI4ScopeState  . compoundMessage MsgAllProvince)
         ,("all_rival_country"       , scope HOI4Country   . compoundMessage MsgAllRivalCountries)
         ,("all_subject_country"     , scope HOI4Country   . compoundMessage MsgAllSubjectCountries)
         ,("all_trade_node"          , scope HOI4TradeNode . compoundMessage MsgAllTradeNodes)
-        ,("all_trade_node_member_province" , scope HOI4Province . compoundMessage MsgAllTradeNodeProvince)
+        ,("all_trade_node_member_province" , scope HOI4ScopeState . compoundMessage MsgAllTradeNodeProvince)
         ,("any_active_trade_node"   , scope HOI4TradeNode . compoundMessage MsgAnyActiveTradeNode)
         ,("any_ally"                , scope HOI4Country   . compoundMessage MsgAnyAlly)
         ,("any_army"                ,                      compoundMessage MsgAnyArmy)
         ,("any_core_country"        , scope HOI4Country   . compoundMessage MsgAnyCoreCountry) -- used in province scope
-        ,("any_core_province"       , scope HOI4Province  . compoundMessage MsgAnyCoreProvince)
+        ,("any_core_province"       , scope HOI4ScopeState  . compoundMessage MsgAnyCoreProvince)
         ,("any_country"             , scope HOI4Country   . compoundMessage MsgAnyCountry)
         ,("any_country_active_in_node" , scope HOI4Country . compoundMessage MsgAnyCountryActiveInNode)
-        ,("any_empty_neighbor_province", scope HOI4Province  . compoundMessage MsgAnyEmptyNeighborProvince)
+        ,("any_empty_neighbor_province", scope HOI4ScopeState  . compoundMessage MsgAnyEmptyNeighborProvince)
         ,("any_enemy_country"       , scope HOI4Country   . compoundMessage MsgAnyEnemyCountry)
-        ,("any_heretic_province"    , scope HOI4Province  . compoundMessage MsgAnyHereticProvince)
+        ,("any_heretic_province"    , scope HOI4ScopeState  . compoundMessage MsgAnyHereticProvince)
         ,("any_hired_mercenary_company" ,                  compoundMessage MsgAnyHiredMercenaryCompany) -- TOOD: Need unit scope?
         ,("any_known_country"       , scope HOI4Country   . compoundMessage MsgAnyKnownCountry)
         ,("any_neighbor_country"    , scope HOI4Country   . compoundMessage MsgAnyNeighborCountry)
-        ,("any_neighbor_province"   , scope HOI4Province  . compoundMessage MsgAnyNeighborProvince)
-        ,("any_owned_province"      , scope HOI4Province  . compoundMessage MsgAnyOwnedProvince)
+        ,("any_neighbor_province"   , scope HOI4ScopeState  . compoundMessage MsgAnyNeighborProvince)
+        ,("any_owned_province"      , scope HOI4ScopeState  . compoundMessage MsgAnyOwnedProvince)
         ,("any_privateering_country", scope HOI4TradeNode . compoundMessage MsgAnyPrivateeringCountry)
-        ,("any_province"            , scope HOI4Province  . compoundMessage MsgAnyProvince)
-        ,("any_province_in_state"   , scope HOI4Province  . compoundMessage MsgAnyProvinceInState)
+        ,("any_province"            , scope HOI4ScopeState  . compoundMessage MsgAnyProvince)
+        ,("any_province_in_state"   , scope HOI4ScopeState  . compoundMessage MsgAnyProvinceInState)
         ,("any_rival_country"       , scope HOI4Country   . compoundMessage MsgAnyRival)
         ,("any_subject_country"     , scope HOI4Country   . compoundMessage MsgAnySubject)
         ,("any_trade_node"          , scope HOI4TradeNode . compoundMessage MsgAnyTradeNode)
         ,("any_trade_node_member_country" , scope HOI4Country . compoundMessage MsgAnyTradeNodeCountry)
-        ,("any_trade_node_member_province" , scope HOI4Province . compoundMessage MsgAnyTradeNodeProvince)
-        ,("area_for_scope_province" , scope HOI4Province  . scopeProvince MsgAreaOfProvince MsgAreaOfProvinceAll)
-        ,("capital_scope"           , scope HOI4Province  . compoundMessage MsgCapital)
+        ,("any_trade_node_member_province" , scope HOI4ScopeState . compoundMessage MsgAnyTradeNodeProvince)
+        ,("area_for_scope_province" , scope HOI4ScopeState  . scopeProvince MsgAreaOfProvince MsgAreaOfProvinceAll)
+        ,("capital_scope"           , scope HOI4ScopeState  . compoundMessage MsgCapital)
         ,("colonial_parent"         , scope HOI4Country   . compoundMessage MsgColonialParent)
         ,("controller"              , scope HOI4Country   . compoundMessage MsgController)
         ,("else"                    ,                      compoundMessage MsgElse)
@@ -919,16 +919,17 @@ handlersCompound = Tr.fromList
         ,("every_active_trade_node" , scope HOI4TradeNode . compoundMessage MsgEveryActiveTradeNode)
         ,("every_ally"              , scope HOI4TradeNode . compoundMessage MsgEveryAlly)
         ,("every_core_country"      , scope HOI4Country   . compoundMessage MsgEveryCoreCountry) -- used in province scope
-        ,("every_core_province"     , scope HOI4Province  . compoundMessage MsgEveryCoreProvince)
+        ,("every_core_province"     , scope HOI4ScopeState  . compoundMessage MsgEveryCoreProvince)
         ,("every_country"           , scope HOI4Country   . compoundMessage MsgEveryCountry)
+        ,("every_other_country"     , scope HOI4Country   . compoundMessage MsgEveryOtherCountry)
         ,("every_enemy_country"     , scope HOI4Country   . compoundMessage MsgEveryEnemyCountry)
         ,("every_federation_member" , scope HOI4Country   . compoundMessage MsgEveryFederationMember)
-        ,("every_heretic_province"  , scope HOI4Province  . compoundMessage MsgEveryHereticProvince)
+        ,("every_heretic_province"  , scope HOI4ScopeState  . compoundMessage MsgEveryHereticProvince)
         ,("every_known_country"     , scope HOI4Country   . compoundMessage MsgEveryKnownCountry)
         ,("every_neighbor_country"  , scope HOI4Country   . compoundMessage MsgEveryNeighborCountry)
-        ,("every_neighbor_province" , scope HOI4Province  . compoundMessage MsgEveryNeighborProvince)
-        ,("every_owned_province"    , scope HOI4Province  . compoundMessage MsgEveryOwnedProvince)
-        ,("every_province"          , scope HOI4Province  . compoundMessage MsgEveryProvince)
+        ,("every_neighbor_province" , scope HOI4ScopeState  . compoundMessage MsgEveryNeighborProvince)
+        ,("every_owned_province"    , scope HOI4ScopeState  . compoundMessage MsgEveryOwnedProvince)
+        ,("every_province"          , scope HOI4ScopeState  . compoundMessage MsgEveryProvince)
         ,("every_rival_country"     , scope HOI4Country   . compoundMessage MsgEveryRival)
         ,("every_subject_country"   , scope HOI4Country   . compoundMessage MsgEverySubject)
         ,("every_trade_node_member_country" , scope HOI4Country . compoundMessage MsgEveryTradeNodeMemberCountry)
@@ -939,7 +940,7 @@ handlersCompound = Tr.fromList
         ,("hidden_trigger"          ,                      compoundMessage MsgHiddenTrigger)
         ,("if"                      ,                      compoundMessage MsgIf) -- always needs editing
         ,("limit"                   , setIsInEffect False . compoundMessage MsgLimit) -- always needs editing
-        ,("location"                , scope HOI4Province  . compoundMessage MsgLocation) -- For mercs
+        ,("location"                , scope HOI4ScopeState  . compoundMessage MsgLocation) -- For mercs
         ,("most_province_trade_power", scope HOI4Country  . compoundMessage MsgMostProvinceTradePower)
         ,("overlord"                , scope HOI4Country   . compoundMessage MsgOverlord)
         ,("owner"                   , scope HOI4Country   . compoundMessage MsgOwner)
@@ -950,21 +951,23 @@ handlersCompound = Tr.fromList
         ,("random_country"          , scope HOI4Country   . compoundMessage MsgRandomCountry)
         ,("random_elector"          , scope HOI4Country   . compoundMessage MsgRandomElector)
         ,("random_enemy_country"    , scope HOI4Country   . compoundMessage MsgRandomEnemyCountry)
-        ,("random_empty_neighbor_province", scope HOI4Province . compoundMessage MsgRandomEmptyNeighborProvince)
-        ,("random_heretic_province"    , scope HOI4Province  . compoundMessage MsgRandomHereticProvince)
+        ,("random_empty_neighbor_province", scope HOI4ScopeState . compoundMessage MsgRandomEmptyNeighborProvince)
+        ,("random_heretic_province"    , scope HOI4ScopeState  . compoundMessage MsgRandomHereticProvince)
         ,("random_hired_mercenary_company" ,                compoundMessage MsgRandomHiredMercenaryCompany) -- TODO: Need unit scope?
         ,("random_known_country"    , scope HOI4Country   . compoundMessage MsgRandomKnownCountry)
         ,("random_neighbor_country" , scope HOI4Country   . compoundMessage MsgRandomNeighborCountry)
-        ,("random_neighbor_province", scope HOI4Province  . compoundMessage MsgRandomNeighborProvince)
-        ,("random_owned_area"       , scope HOI4Province  . compoundMessage MsgRandomOwnedArea)
-        ,("random_owned_province"   , scope HOI4Province  . compoundMessage MsgRandomOwnedProvince)
+        ,("random_neighbor_province", scope HOI4ScopeState  . compoundMessage MsgRandomNeighborProvince)
+        ,("random_owned_area"       , scope HOI4ScopeState  . compoundMessage MsgRandomOwnedArea)
+        ,("random_owned_province"   , scope HOI4ScopeState  . compoundMessage MsgRandomOwnedProvince)
+        ,("random_owned_controlled_state", scope HOI4ScopeState  . compoundMessage MsgRandomOwnedControlledState)
+        ,("random_other_country"    , scope HOI4Country   . compoundMessage MsgRandomOtherCountry)
         ,("random_privateering_country", scope HOI4TradeNode . compoundMessage MsgRandomPrivateeringCountry)
-        ,("random_province"         , scope HOI4Province  . compoundMessage MsgRandomProvince)
+        ,("random_province"         , scope HOI4ScopeState  . compoundMessage MsgRandomProvince)
         ,("random_rival_country"    , scope HOI4Country   . compoundMessage MsgRandomRival)
         ,("random_subject_country"  , scope HOI4Country   . compoundMessage MsgRandomSubjectCountry)
         ,("random_trade_node"       , scope HOI4TradeNode . compoundMessage MsgRandomTradeNode)
-        ,("random_trade_node_member_province" , scope HOI4Province . compoundMessage MsgRandomTradeNodeMemberProvince)
-        ,("region_for_scope_province" , scope HOI4Province . scopeProvince MsgRegionProvinceScope MsgRegionProvinceScopeAll)
+        ,("random_trade_node_member_province" , scope HOI4ScopeState . compoundMessage MsgRandomTradeNodeMemberProvince)
+        ,("region_for_scope_province" , scope HOI4ScopeState . scopeProvince MsgRegionProvinceScope MsgRegionProvinceScopeAll)
         ,("strongest_trade_power"   , scope HOI4Country   . compoundMessage MsgStrongestTradePower) -- always needs editing
         ,("variable_arithmetic_trigger" ,                  compoundMessage MsgVariableArithmeticTrigger)
         ,("while"                   , scope HOI4Country   . compoundMessage MsgWhile) -- always needs editing
@@ -1632,9 +1635,9 @@ handlersSpecialComplex = Tr.fromList
         ,("has_reached_government_reform_tier" , hasGovernmentReforTier)
         ,("has_trade_company_investment_in_area", hasTradeCompanyInvestment)
         ,("is_in_war"                    , isInWar)
-        ,("news_event"                   , scope HOI4NoScope . triggerEvent MsgNewsEvent)
+        ,("news_event"                   , scope HOI4Country . triggerEvent MsgNewsEvent)
         ,("privateer_power"              , privateerPower)
-        ,("province_event"               , scope HOI4Province . triggerEvent MsgProvinceEvent)
+        ,("province_event"               , scope HOI4ScopeState . triggerEvent MsgProvinceEvent)
         ,("region"                       , region)
         ,("remove_opinion"               , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
 --        ,("reverse_has_opinion"          , hasOpinion MsgReverseHasOpinion)
@@ -1642,10 +1645,13 @@ handlersSpecialComplex = Tr.fromList
         ,("reverse_remove_opinion"       , opinion MsgReverseRemoveOpinionMod (\modid what who _years -> MsgReverseRemoveOpinionMod modid what who))
         ,("religion_years"               , religionYears)
         ,("set_ai_attitude"              , aiAttitude MsgSetAiAttitude)
+        ,("state_event"                  , scope HOI4ScopeState . triggerEvent MsgStateEvent)
         ,("reverse_add_casus_belli"      , addCB False)
         ,("trading_bonus"                , tradingBonus)
         ,("trading_policy_in_node"       , tradingPolicyInNode)
         ,("trigger_switch"               , triggerSwitch)
+        ,("unit_leader_event"            , scope HOI4UnitLeader . triggerEvent MsgUnitLeaderEvent)
+        ,("operative_leader_event"       , scope HOI4Operative . triggerEvent MsgOperativeEvent)
 
         -- Effects
         ,("add_loot_from_rich_province_general_effect" , simpleEffectAtom "looter" MsgAddLootFromRichProvince) -- Note: RHS ignored
@@ -1874,7 +1880,7 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
                     _ -> do
                         state_loc <- getStateLoc n
                         header <- msgToPP (MsgState state_loc)
-                        scriptMsgs <- scope HOI4Province $ ppMany scr
+                        scriptMsgs <- scope HOI4ScopeState $ ppMany scr
                         return (header ++ scriptMsgs)
             _ -> preStatement stmt
     CustomLhs _ -> preStatement stmt
@@ -1929,13 +1935,13 @@ ppMaybeGeo label loc scr = do
             inEffect <- getIsInEffect
             header <- plainMsg' $ (if isJust mtypeStmt || inEffect then "All provinces" else "Any province")
                 <> " in the " <> loc <> " " <> (describe geoType) <> ":"
-            scriptMsgs <- scope HOI4Province $ ppMany rest
+            scriptMsgs <- scope HOI4ScopeState $ ppMany rest
             return (header : scriptMsgs)
         Nothing -> do
             let actScope = if (T.toLower label) `elem` ["emperor", "revolution_target", "crusade_target"] then
                     HOI4Country
                 else
-                    HOI4Province
+                    HOI4ScopeState
             header <- plainMsg' $ loc <> ":"
             scriptMsgs <- scope actScope $ ppMany scr
             return (header : scriptMsgs)

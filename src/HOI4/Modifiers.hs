@@ -220,7 +220,7 @@ pp_opinion_modifer mod = do
             if isTrade then
                 (modText "" " Trade relation" (omodValue mod))
                 else
-                   (modText "{{icon|opinion}} " " Opinion" (omodValue mod)) 
+                   (modText "{{icon|opinion}} " " Opinion" (omodValue mod))
             ++ (monthlyDecay (omodValue mod) (omodDecay mod))
             ++ (modText "" " Min" (omodMin mod))
             ++ (modText "" " Max" (omodMax mod))
@@ -256,7 +256,7 @@ pp_opinion_modifer mod = do
         fmt t v = mconcat [ plainNum v, " ", Doc.strictText $ t <> (if v == 1.0 then "" else "s") ]
 {-
 parseHOI4ProvTrigModifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
-    HashMap String GenericScript -> PPT g m (HashMap Text HOI4ProvinceTriggeredModifier)
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4ScopeStateTriggeredModifier)
 parseHOI4ProvTrigModifiers scripts = HM.unions . HM.elems <$> do
     tryParse <- hoistExceptions $
         HM.traverseWithKey
@@ -275,15 +275,15 @@ parseHOI4ProvTrigModifiers scripts = HM.unions . HM.elems <$> do
                                  ++ ": " ++ T.unpack err
                         return Nothing
                     Right mmod -> return mmod
-                where mkModMap :: [HOI4ProvinceTriggeredModifier] -> HashMap Text HOI4ProvinceTriggeredModifier
+                where mkModMap :: [HOI4ScopeStateTriggeredModifier] -> HashMap Text HOI4ScopeStateTriggeredModifier
                       mkModMap = HM.fromList . map (ptmodName &&& id)
 
 parseHOI4ProvTrigModifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
-    GenericStatement -> PPT g m (Either Text (Maybe HOI4ProvinceTriggeredModifier))
+    GenericStatement -> PPT g m (Either Text (Maybe HOI4ScopeStateTriggeredModifier))
 parseHOI4ProvTrigModifier [pdx| $modid = @effects |]
     = withCurrentFile $ \file -> do
         mlocid <- getGameL10nIfPresent modid
-        let ptm = foldl' addSection (HOI4ProvinceTriggeredModifier {
+        let ptm = foldl' addSection (HOI4ScopeStateTriggeredModifier {
                 ptmodName = modid
             ,   ptmodLocName = mlocid
             ,   ptmodPath = file
@@ -295,7 +295,7 @@ parseHOI4ProvTrigModifier [pdx| $modid = @effects |]
             }) effects
         return $ Right (Just ptm)
     where
-        addSection :: HOI4ProvinceTriggeredModifier -> GenericStatement -> HOI4ProvinceTriggeredModifier
+        addSection :: HOI4ScopeStateTriggeredModifier -> GenericStatement -> HOI4ScopeStateTriggeredModifier
         addSection ptm stmt@[pdx| $lhs = @scr |] = case lhs of
             "potential"       -> ptm { ptmodPotential = scr }
             "trigger"         -> ptm { ptmodTrigger = scr }
@@ -317,7 +317,7 @@ writeHOI4ProvTrigModifiers = do
                            }]
                   pp_prov_trig_modifiers
     where
-        pp_prov_trig_modifiers :: (HOI4Info g, Monad m) => [HOI4ProvinceTriggeredModifier] -> PPT g m Doc
+        pp_prov_trig_modifiers :: (HOI4Info g, Monad m) => [HOI4ScopeStateTriggeredModifier] -> PPT g m Doc
         pp_prov_trig_modifiers mods = do
             version <- gets (gameVersion . getSettings)
             modDoc <- mapM pp_prov_trig_modifier (sortOn (sortName . ptmodLocName) mods)
@@ -338,7 +338,7 @@ writeHOI4ProvTrigModifiers = do
             in fromMaybe ln nn
         sortName _ = ""
 
-        pp_prov_trig_modifier :: (HOI4Info g, Monad m) => HOI4ProvinceTriggeredModifier -> PPT g m Doc
+        pp_prov_trig_modifier :: (HOI4Info g, Monad m) => HOI4ScopeStateTriggeredModifier -> PPT g m Doc
         pp_prov_trig_modifier mod = do
             req <- imsg2doc =<< ppMany ((ptmodPotential mod) ++ (ptmodTrigger mod))
             eff <- imsg2doc =<< ppMany (ptmodEffects mod)

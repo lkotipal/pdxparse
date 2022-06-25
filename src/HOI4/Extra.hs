@@ -58,7 +58,7 @@ writeHOI4ExtraProvinceScope = do
                                            , featureId = Just $ T.pack (takeFileName f)
                                            , theFeature = Right s })
                        (HM.toList scripts)
-    writeFeatures "extraProvinceScope" features (\e -> scope (HOI4Province) $ pp_extra_without_label e)
+    writeFeatures "extraProvinceScope" features (\e -> scope (HOI4ScopeState) $ pp_extra_without_label e)
 
 writeHOI4ExtraModifier :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4ExtraModifier = do

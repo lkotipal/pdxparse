@@ -43,9 +43,11 @@ only the files you want, and rebuild.
     * ~~random_list with variables won't properly show the variable name currently being fed a straight number to make it work. needs manual checking gf files for editing~~
     * random_list handles only numbers for the weight OR only variables for the weight
     * ~~add_building_sconstruction doesn't handle the contents of province = {} well. needs manual editing~~
-    * script doesn't like improperly formatted localizations, doesn't handle a space in front of l_<language> at the top of file
-    * Tags aren't localized to country names
-    * Doesn't like some uses of ROOT and PREV (maybe more). No clue how to fix it
+    * ~~script doesn't like improperly formatted localizations, doesn't handle a space in front of l_<language> at the top of file~~
+    * Decisions aren't parsed and checked for event triggers
+    * Tags aren't localized to country names? Sometimes they are?
+    * ~~Doesn't like some uses of ROOT and PREV etc. No clue how to fix it~~
+    * Don't know if multiple RHS scopes work (e.g. PREV.PREV)
     * triggers for events aren't looked for in national focuses
     * Various lines don't have custom messages yet
     * ~~Localization files need to be directly in the localisation folder and not the localisation->english folder to work~~

@@ -300,7 +300,7 @@ getScopeForPronoun = helper . T.toLower where
     helper "prev" = getPrevScope
     helper "controller" = return (Just HOI4Country)
     helper "emperor" = return (Just HOI4Country)
-    helper "capital" = return (Just HOI4Province)
+    helper "capital" = return (Just HOI4ScopeState)
     helper _ = return Nothing
 
 -- | Emit an appropriate phrase for a pronoun.
@@ -318,8 +318,8 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
         Just HOI4Country
             | expectedScope `matchScope` HOI4Country -> message MsgROOTCountry
             | otherwise                             -> message MsgROOTCountryAsOther
-        Just HOI4Province
-            | expectedScope `matchScope` HOI4Province -> message MsgROOTProvince
+        Just HOI4ScopeState
+            | expectedScope `matchScope` HOI4ScopeState -> message MsgROOTState
             | expectedScope `matchScope` HOI4Country -> message MsgROOTProvinceOwner
             | expectedScope `matchScope` HOI4TradeNode -> message MsgROOTTradeNode
             | otherwise                             -> message MsgROOTProvinceAsOther
@@ -335,8 +335,8 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
             Just HOI4Country
                 | expectedScope `matchScope` HOI4Country -> message MsgPREVCountry
                 | otherwise                             -> message MsgPREVCountryAsOther
-            Just HOI4Province
-                | expectedScope `matchScope` HOI4Province -> message MsgPREVProvince
+            Just HOI4ScopeState
+                | expectedScope `matchScope` HOI4ScopeState -> message MsgPREVState
                 | expectedScope `matchScope` HOI4Country -> message MsgPREVProvinceOwner
                 | otherwise                             -> message MsgPREVProvinceAsOther
             Just HOI4TradeNode -> message MsgPREVTradeNode
@@ -346,8 +346,10 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
         Just HOI4Country
             | expectedScope `matchScope` HOI4Country -> message MsgTHISCountry
             | otherwise                             -> message MsgTHISCountryAsOther
-        Just HOI4Province
-            | expectedScope `matchScope` HOI4Province -> message MsgTHISProvince
+        Just HOI4ScopeState
+            | expectedScope `matchScope` HOI4ScopeState -> message MsgTHISState
+            | expectedScope `matchScope` HOI4Operative -> message MsgTHISOperative
+            | expectedScope `matchScope` HOI4UnitLeader -> message MsgTHISUnitLeader
             | expectedScope `matchScope` HOI4Country -> message MsgTHISProvinceOwner
             | otherwise                             -> message MsgTHISProvinceAsOther
         Just HOI4TradeNode -> message MsgTHISTradeNode
@@ -358,7 +360,7 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
     "original_dynasty" -> message MsgOriginalDynasty
     "historic_dynasty" -> message MsgHistoricDynasty
     "capital" -> message MsgCapital
-    "from" -> return "[From]" -- TODO: Handle this properly (if possible)
+    "from" -> message MsgFROM -- TODO: Handle this properly (if possible)
     _ -> return $ Doc.strictText name -- something else; regurgitate untouched
     where
         Nothing `matchScope` _ = True
@@ -524,24 +526,28 @@ compoundMessage _ stmt = preStatement stmt
 compoundMessagePronoun :: (HOI4Info g, Monad m) => StatementHandler g m
 compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
     params <- withCurrentFile $ \f -> case T.toLower head of
-        "root" -> do
+        "root" -> do --ROOT
                 newscope <- getRootScope
                 return (newscope, case newscope of
                     Just HOI4Country -> Just MsgROOTCountry
-                    Just HOI4Province -> Just MsgROOTProvince
+                    Just HOI4ScopeState -> Just MsgROOTState
+                    Just HOI4UnitLeader -> Just MsgROOTUnitLeader
+                    Just HOI4Operative -> Just MsgROOTOperative
                     Just HOI4TradeNode -> Just MsgROOTTradeNode
                     Just HOI4Geographic -> Just MsgROOTGeographic
                     _ -> Nothing) -- warning printed below
-        "prev" -> do
-                newscope <- getPrevScope
+        "prev" -> do --PREV
+                newscope <- getCurrentScope
                 return (newscope, case newscope of
                     Just HOI4Country -> Just MsgPREVCountry
-                    Just HOI4Province -> Just MsgPREVProvince
+                    Just HOI4ScopeState -> Just MsgPREVState
+                    Just HOI4Operative -> Just MsgPREVOperative
+                    Just HOI4UnitLeader -> Just MsgPREVUnitLeader
                     Just HOI4TradeNode -> Just MsgPREVTradeNode
                     Just HOI4Geographic -> Just MsgPREVGeographic
-                    Just HOI4From -> Just MsgPREV -- Roll with it
+                    Just HOI4From -> Just MsgFROM -- Roll with it
                     _ -> Nothing) -- warning printed below
-        "from" -> return (Just HOI4From, Just MsgFROM) -- don't know what type this is in general
+        "from" -> return (Just HOI4From, Just MsgFROM) -- FROM / Should be some way to have different message depending on if it is event or decison, etc.
         _ -> trace (f ++ ": compoundMessagePronoun: don't know how to handle head " ++ T.unpack head)
              $ return (Nothing, undefined)
     case params of
@@ -622,7 +628,7 @@ withLocAtomIconHOI4Scope countrymsg provincemsg stmt = do
     thescope <- getCurrentScope
     case thescope of
         Just HOI4Country -> withLocAtomIcon countrymsg stmt
-        Just HOI4Province -> withLocAtomIcon provincemsg stmt
+        Just HOI4ScopeState -> withLocAtomIcon provincemsg stmt
         _ -> preStatement stmt -- others don't make sense
 
 -- | Handler for buildings. Localization needs "building_" prepended. Hack..
@@ -664,7 +670,7 @@ withProvince msg stmt@[pdx| %lhs = $vartag:$var |] = do
         Just tagloc -> msgToPP $ msg tagloc
         Nothing -> preStatement stmt
 withProvince msg stmt@[pdx| %lhs = $var |]
-    = msgToPP =<< msg . Doc.doc2text <$> pronoun (Just HOI4Province) var
+    = msgToPP =<< msg . Doc.doc2text <$> pronoun (Just HOI4ScopeState) var
 withProvince msg [pdx| %lhs = !stateid |]
     = msgToPP =<< msg <$> getStateLoc stateid
 withProvince _ stmt = preStatement stmt
@@ -3997,7 +4003,7 @@ killAdvisorByCategory stmt = (trace $ "Not handled in kill_advisor_by_category_e
 -- Can either be a compund statement or a normal condition
 region :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 region stmt@[pdx| %_ = $_ |] = withLocAtom MsgRegionIs stmt
-region stmt@[pdx| %_ = @_ |] = (scope HOI4Province  . compoundMessage MsgRegion) stmt
+region stmt@[pdx| %_ = @_ |] = (scope HOI4ScopeState  . compoundMessage MsgRegion) stmt
 region stmt = preStatement stmt
 
 ----------------------------------------
@@ -4015,7 +4021,7 @@ institutionPresence stmt = (trace $ "Warning: institutionPresence doesn't handle
 
 expulsionTarget :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 expulsionTarget stmt@[pdx| %_ = @scr |] | [[pdx| province_id = $what |]] <- scr = do -- Not seen used with actual province id yet
-    whatLoc <- Doc.doc2text <$> pronoun (Just HOI4Province) what
+    whatLoc <- Doc.doc2text <$> pronoun (Just HOI4ScopeState) what
     msgToPP $ MsgExpulsionTarget whatLoc
 expulsionTarget stmt = (trace $ "Not handled in expulsion_target : " ++ show stmt) $ preStatement stmt
 
@@ -4136,7 +4142,7 @@ addProvinceTriggeredModifier stmt@[pdx| %_ = $id |] = do
     case mmod of
         Just mod -> withCurrentIndent $ \i -> do
             effect <- scope HOI4Bonus $ ppMany (ptmodEffects mod)
-            trigger <- indentUp $ scope HOI4Province $ ppMany (ptmodTrigger mod)
+            trigger <- indentUp $ scope HOI4ScopeState $ ppMany (ptmodTrigger mod)
             let name = ptmodLocName mod
                 locName = maybe ("<tt>" <> id <> "</tt>") (Doc.doc2text . iquotes) name
             return $ ((i, MsgAddProvinceTriggeredModifier locName) : effect) ++ (if null trigger then [] else ((i+1, MsgLimit) : trigger))

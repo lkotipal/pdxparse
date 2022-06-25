@@ -108,11 +108,11 @@ parseHOI4Event stmt@[pdx| %left = %right |] = case right of
         GenericLhs etype _ ->
             let mescope = case etype of
                     "country_event" -> Just HOI4Country
-                    "unit_leader_event" -> Just HOI4Country
-                    "operative_leader_event" -> Just HOI4Country
-                    "province_event" -> Just HOI4Province
-                    "state_event" -> Just HOI4Province
-                    "news_event" -> Just HOI4NoScope -- ?
+                    "unit_leader_event" -> Just HOI4UnitLeader
+                    "operative_leader_event" -> Just HOI4Operative
+                    "province_event" -> Just HOI4ScopeState
+                    "state_event" -> Just HOI4ScopeState
+                    "news_event" -> Just HOI4Country -- ?
                     "event" -> Just HOI4NoScope
                     _ -> Nothing
             in case mescope of

@@ -39,7 +39,8 @@ import HOI4.Types -- everything
 import Yaml (LocEntry (..))
 
 -- Handlers
-import HOI4.Decisions (parseHOI4Decisions, writeHOI4Decisions)
+import HOI4.Decisions (parseHOI4Decisioncats
+                      ,parseHOI4Decisions, writeHOI4Decisions)
 import HOI4.IdeaGroups (parseHOI4IdeaGroups, writeHOI4IdeaGroups)
 import HOI4.Modifiers (
 --                    parseHOI4Modifiers, writeHOI4Modifiers,
@@ -160,6 +161,9 @@ instance HOI4Info HOI4 where
     getDecisionScripts = do
         HOI4D ed <- get
         return (hoi4decisionScripts ed)
+    getDecisioncats = do
+        HOI4D ed <- get
+        return (hoi4decisioncats ed)
     getDecisions = do
         HOI4D ed <- get
         return (hoi4decisions ed)
@@ -372,8 +376,8 @@ parseHOI4Scripts = do
 
     opinionModifiers <- parseHOI4OpinionModifiers =<< getOpinionModifierScripts
 --    provTrigModifiers <- parseHOI4ProvTrigModifiers =<< getProvinceTriggeredModifierScripts
-    decisioncats <- getDecisioncatScripts
-    decisions <- parseHOI4Decisions decisioncats =<< getDecisionScripts
+    decisioncats <- parseHOI4Decisioncats =<< getDecisioncatScripts
+    decisions <- parseHOI4Decisions =<< getDecisionScripts
     events <- parseHOI4Events =<< getEventScripts
 --    missions <- parseHOI4Missions =<< getMissionScripts
     on_actions <- getOnActionsScripts
@@ -387,6 +391,7 @@ parseHOI4Scripts = do
     --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))
     modify $ \(HOI4D s) -> HOI4D $
             s { hoi4events = events
+            ,   hoi4decisioncats = decisioncats
             ,   hoi4decisions = decisions
             ,   hoi4ideaGroups = ideaGroups
 --            ,   hoi4modifiers = modifiers

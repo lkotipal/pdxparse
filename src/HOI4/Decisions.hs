@@ -3,8 +3,8 @@ Module      : HOI4.Decisions
 Description : Feature handler for Europa Universalis IV decisions
 -}
 module HOI4.Decisions (
-        parseHOI4Decisions
-    ,   writeHOI4Decisions
+        parseHOI4Decisioncats,
+        parseHOI4Decisions, writeHOI4Decisions
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -34,8 +34,85 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
-                     , hoistExceptions)
+                     , hoistErrors, hoistExceptions)
 import HOI4.Common -- everything
+
+-- | Empty decision category. Starts off Nothing/empty everywhere, except id and name
+-- (which should get filled in immediately).
+newDecisionCat id locid locdesc path = HOI4Decisioncat id locid locdesc undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing path
+
+-- | Take the decisions categories scripts from game data and parse them into decision
+-- data structures.
+parseHOI4Decisioncats :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4Decisioncat)
+parseHOI4Decisioncats scripts = HM.unions . HM.elems <$> do
+    tryParse <- hoistExceptions $
+        HM.traverseWithKey
+            (\sourceFile scr ->
+                setCurrentFile sourceFile $ mapM parseHOI4Decisioncat scr)
+            scripts
+    case tryParse of
+        Left err -> do
+            traceM $ "Completely failed parsing decision category: " ++ T.unpack err
+            return HM.empty
+        Right deccatFilesOrErrors ->
+            flip HM.traverseWithKey deccatFilesOrErrors $ \sourceFile edeccats ->
+                fmap (mkDecCatMap . catMaybes) . forM edeccats $ \case
+                    Left err -> do
+                        traceM $ "Error parsing decion categories in " ++ sourceFile
+                                 ++ ": " ++ T.unpack err
+                        return Nothing
+                    Right ddeccat -> return ddeccat
+                where mkDecCatMap :: [HOI4Decisioncat] -> HashMap Text HOI4Decisioncat
+                      mkDecCatMap = HM.fromList . map (decc_name &&& id)
+-- | Parse one decisioncategory script into a decision data structure.
+parseHOI4Decisioncat :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe HOI4Decisioncat))
+parseHOI4Decisioncat (StatementBare _) = throwError "bare statement at top level"
+parseHOI4Decisioncat [pdx| %left = %right |] = case right of
+    CompoundRhs parts -> case left of
+        CustomLhs _ -> throwError "internal error: custom lhs"
+        IntLhs _ -> throwError "int lhs at top level"
+        AtLhs _ -> return (Right Nothing)
+        GenericLhs id [] -> withCurrentFile $ \file -> do
+            locid <- getGameL10nIfPresent id
+            locdesc <- getGameL10nIfPresent (id <> "_desc")
+            ddeccat <- hoistErrors $ foldM decisioncatAddSection
+                                        (Just (newDecisionCat id locid locdesc file))
+                                        parts
+            case ddeccat of
+                Left err -> return (Left err)
+                Right Nothing -> return (Right Nothing)
+                Right (Just deccat) -> withCurrentFile $ \file ->
+                    return (Right (Just deccat ))
+        _ -> throwError "unrecognized form for decision category"
+    _ -> throwError "unrecognized form for decision category"
+parseHOI4Decisioncat _ = withCurrentFile $ \file ->
+    throwError ("unrecognised form for decision category in " <> T.pack file)
+
+-- | Add a sub-clause of the decision categry script to the data structure.
+decisioncatAddSection :: (IsGameState (GameState g), MonadError Text m) =>
+    Maybe HOI4Decisioncat -> GenericStatement -> PPT g m (Maybe HOI4Decisioncat)
+decisioncatAddSection Nothing _ = return Nothing
+decisioncatAddSection ddeccat stmt
+    = sequence (decisioncatAddSection' <$> ddeccat <*> pure stmt)
+    where
+        decisioncatAddSection' decc stmt@[pdx| icon           = $txt  |] = return (decc { decc_icon = txt })
+        decisioncatAddSection' decc stmt@[pdx| visible        = @scr  |] = return (decc { decc_visible = Just scr })
+        decisioncatAddSection' decc stmt@[pdx| available      = @scr  |] = return (decc { decc_available = Just scr })
+        decisioncatAddSection' decc stmt@[pdx| picture        = $txt  |] = return (decc { decc_picture = Just txt })
+        decisioncatAddSection' decc stmt@[pdx| custom_icon    = %_    |] = return decc
+        decisioncatAddSection' decc stmt@[pdx| visibility_type = %_   |] = return decc
+        decisioncatAddSection' decc stmt@[pdx| priority       = %_    |] = return decc
+        decisioncatAddSection' decc stmt@[pdx| allowed        = @scr  |] = return (decc { decc_allowed = Just scr })
+        decisioncatAddSection' decc stmt@[pdx| visible_when_empty = %_ |] = return decc -- maybe mention this in AI notes
+        decisioncatAddSection' decc stmt@[pdx| scripted_gui   = %_    |] = return decc -- currently no field in the template for this
+        decisioncatAddSection' decc stmt@[pdx| highlight_states = %_  |] = return decc -- not interesting
+        decisioncatAddSection' decc stmt@[pdx| on_map_area    = %_    |] = return decc
+        decisioncatAddSection' decc [pdx| $other = %_ |]
+            = trace ("unknown opinion decision category section: " ++ T.unpack other) $ return decc
+        decisioncatAddSection' decc _
+            = trace ("unrecognised form for decision category section") $ return decc
 
 -- | Empty decision. Starts off Nothing/empty everywhere, except id and name
 -- (which should get filled in immediately).
@@ -47,8 +124,8 @@ newDecision = HOI4Decision undefined undefined Nothing [] [] [] Nothing Nothing
 parseHOI4Decisions :: (IsGameData (GameData g),
                       IsGameState (GameState g),
                       Monad m) =>
-    HashMap String GenericScript -> HashMap String GenericScript -> PPT g m (HashMap Text HOI4Decision)
-parseHOI4Decisions deccats scripts = do
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4Decision)
+parseHOI4Decisions scripts = do
     tryParse <- hoistExceptions . flip HM.traverseWithKey scripts $ \f script ->
                     setCurrentFile f (concat <$> mapM parseHOI4DecisionGroup script)
     case tryParse of
@@ -65,7 +142,7 @@ parseHOI4Decisions deccats scripts = do
                     traceM $ "Error parsing " ++ sourceFile
                              ++ ": " ++ T.unpack err
                     return Nothing
-                Right dec -> return (Just dec)
+                Right dec -> trace ("DEBUG: DEC CATS: " ++ show (Just dec)) $ return (Just dec)
 
 --parseHOI4Event :: MonadError Text m => FilePath -> GenericStatement -> PPT g m (Either Text (Maybe HOI4Event))
 
@@ -130,7 +207,7 @@ writeHOI4Decisions = do
     let pathedDecisions :: [Feature HOI4Decision]
         pathedDecisions = map (\dec -> Feature {
                                         featurePath = dec_path dec
-                                    ,   featureId = Just (dec_name dec)
+                                    ,   featureId = Just (dec_name dec) <> Just ".txt"
                                     ,   theFeature = Right dec })
                               (HM.elems decisions)
     writeFeatures "decisions"
