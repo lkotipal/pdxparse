@@ -1,6 +1,6 @@
 {-|
 Module      : HOI4.Settings
-Description : Interface for Europa Universalis IV backend
+Description : Interface for Hearts of Iron IV backend
 -}
 module HOI4.Settings (
         HOI4 (..)
@@ -112,6 +112,7 @@ instance IsGame HOI4 where
                 ,   hoi4extraScriptsCountryScope = HM.empty
                 ,   hoi4extraScriptsProvinceScope = HM.empty
                 ,   hoi4extraScriptsModifier = HM.empty
+                ,   hoi4nationalfocusScripts = HM.empty
                 }))
                 (HOI4S $ HOI4State {
                     hoi4currentFile = Nothing
@@ -218,6 +219,9 @@ instance HOI4Info HOI4 where
     getExtraScriptsModifier = do
         HOI4D ed <- get
         return (hoi4extraScriptsModifier ed)
+    getNationalFocusScripts = do
+        HOI4D ed <- get
+        return (hoi4nationalfocusScripts ed)
 
 instance IsGameData (GameData HOI4) where
     getSettings (HOI4D ed) = hoi4settings ed
@@ -327,6 +331,7 @@ readHOI4Scripts = do
     on_actions <- readHOI4Script "on_actions"
 --    disasters <- readHOI4Script "disasters"
 --    provTrigModifiers <- readHOI4Script "province_triggered_modifiers"
+    national_focus <- readHOI4Script "national_focus"
 
 --    extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
 --    extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
@@ -364,6 +369,7 @@ readHOI4Scripts = do
 --        ,   hoi4extraScriptsCountryScope = foldl (flip (uncurry HM.insert)) HM.empty extraCountryScope
 --        ,   hoi4extraScriptsProvinceScope = foldl (flip (uncurry HM.insert)) HM.empty extraProvinceScope
 --        ,   hoi4extraScriptsModifier = foldl (flip (uncurry HM.insert)) HM.empty extraModifier
+        ,   hoi4nationalfocusScripts = national_focus
         }
 
 
@@ -385,7 +391,7 @@ parseHOI4Scripts = do
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
         te3 = findTriggeredEventsInOnActions te2 (concat (HM.elems on_actions))
---        te4 = findTriggeredEventsInNationalFocuss te3 (concat (HM.elems national_focus)) -- not yet implemented
+--        te4 = findTriggeredEventsInNationalFocus te3 (concat (HM.elems national_focus)) -- not yet implemented
 --        te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
 --        te5 = findTriggeredEventsInMissions te4 (HM.elems missions)
     --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))

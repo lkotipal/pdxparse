@@ -1,12 +1,12 @@
 {-|
 Module      : HOI4.IdeaGroups
-Description : Feature handler for Europa Universalis IV idea groups
+Description : Feature handler for Hearts of Iron IV idea groups
 -}
 module HOI4.IdeaGroups (
         IdeaGroup (..)
     ,   Idea (..)
     ,   parseHOI4IdeaGroups
-    ,   writeHOI4IdeaGroups 
+    ,   writeHOI4IdeaGroups
     ) where
 
 import Control.Arrow (first)

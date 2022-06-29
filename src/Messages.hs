@@ -2312,23 +2312,23 @@ instance RenderMessage Script ScriptMessage where
         MsgAllOf
             -> "All of:"
         MsgFROM
-            -> "The country that sent the event:"
+            -> "[SCOPE]FROM, for event the country that sent the events, for decisions the target of the decision:"
         MsgROOT
-            -> "ROOT"
+            -> "[SCOPE]ROOT"
         MsgROOTCountry
-            -> "Our country"
+            -> "[SCOPE]Our country"
         MsgROOTCountryAsOther
-            -> "same as our country"
+            -> "[SCOPE]same as our country"
         MsgROOTProvince
-            -> "The currently considered province"
+            -> "[SCOPE]The currently considered province"
         MsgROOTState
-            -> "The currently considered state"
+            -> "[SCOPE]The currently considered state"
         MsgROOTOperative
-            -> "The currently considered operative"
+            -> "[SCOPE]The currently considered operative"
         MsgROOTUnitLeader
-            -> "The currently considered unit leader"
+            -> "[SCOPE]The currently considered unit leader"
         MsgROOTProvinceOwner
-            -> "the owner of the currently considered province"
+            -> "[SCOPE]the owner of the currently considered province"
         MsgROOTProvinceAsOther
             -> "same as the currently considered province"
         MsgROOTTradeNode
@@ -2336,15 +2336,15 @@ instance RenderMessage Script ScriptMessage where
         MsgROOTGeographic
             -> "The currently considered location"
         MsgPREV
-            -> "PREV"
+            -> "[SCOPE]PREV"
         MsgPREVCountry
-            -> "Previously mentioned country"
+            -> "[SCOPE]Previously mentioned country scope"
         MsgPREVCountryAsOther
             -> "same as the previously mentioned country"
         MsgPREVProvince
             -> "The previously mentioned province"
         MsgPREVState
-            -> "The previously mentioned state"
+            -> "[SCOPE]The previously mentioned state scope"
         MsgPREVProvinceOwner
             -> "the owner of the previously mentioned province"
         MsgPREVProvinceAsOther
@@ -2354,25 +2354,25 @@ instance RenderMessage Script ScriptMessage where
         MsgPREVGeographic
             -> "The previously mentioned location"
         MsgPREVOperative
-            -> "The previously mentioned operative"
+            -> "[SCOPE]The previously mentioned operative scope"
         MsgPREVUnitLeader
-            -> "The previously mentioned unit leader"
+            -> "[SCOPE]The previously mentioned unit leader scope"
         MsgTHISCountry
-            -> "this country"
+            -> "this country scope"
         MsgTHISCountryAsOther
             -> "same as this country"
         MsgTHISProvince
             -> "this province"
         MsgTHISState
-            -> "this province"
+            -> "this state scope"
         MsgTHISProvinceOwner
             -> "the owner of this province"
         MsgTHISProvinceAsOther
             -> "same as this province"
         MsgTHISOperative
-            -> "this operative"
+            -> "this operative scope"
         MsgTHISUnitLeader
-            -> "this unit leader"
+            -> "this unit leader scope"
         MsgTHISTradeNode
             -> "This trade node"
         MsgTHISGeographic

@@ -167,4 +167,3 @@ writeFeatures featureName features pprint = do
             eitherError (Left err) = err
     -- TODO: within each input file, sort by id, then write to a
     -- consolidated file.
-

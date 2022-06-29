@@ -1,6 +1,6 @@
 {-|
 Module      : HOI4.IO
-Description : Read Europa Universalis IV scripts and parse to raw AST
+Description : Read Hearts of Iron IV scripts and parse to raw AST
 -}
 module HOI4.IO (
         readHOI4Scripts
@@ -37,4 +37,3 @@ readHOI4Scripts settings category =
             when (null content) $
                 hPutStrLn stderr $ "Warning: " ++ target ++ " contains no scripts - failed parse? Expected feature type " ++ category
             return (target, content)
-

@@ -1,6 +1,6 @@
 {-|
 Module      : HOI4.Missions
-Description : Feature handler for Europa Universalis IV missions
+Description : Feature handler for Hearts of Iron IV missions
 -}
 module HOI4.Missions (
         parseHOI4Missions, writeHOI4Missions

@@ -1,6 +1,6 @@
 {-
 Module      : HOI4.Decisions
-Description : Feature handler for Europa Universalis IV decisions
+Description : Feature handler for Hearts of Iron IV decisions
 -}
 module HOI4.Decisions (
         parseHOI4Decisioncats,
@@ -39,7 +39,7 @@ import HOI4.Common -- everything
 
 -- | Empty decision category. Starts off Nothing/empty everywhere, except id and name
 -- (which should get filled in immediately).
-newDecisionCat id locid locdesc path = HOI4Decisioncat id locid locdesc undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing path
+newDecisionCat id locid locdesc path = HOI4Decisioncat id locid locdesc Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing path
 
 -- | Take the decisions categories scripts from game data and parse them into decision
 -- data structures.
@@ -59,12 +59,13 @@ parseHOI4Decisioncats scripts = HM.unions . HM.elems <$> do
             flip HM.traverseWithKey deccatFilesOrErrors $ \sourceFile edeccats ->
                 fmap (mkDecCatMap . catMaybes) . forM edeccats $ \case
                     Left err -> do
-                        traceM $ "Error parsing decion categories in " ++ sourceFile
+                        traceM $ "Error parsing decision categories in " ++ sourceFile
                                  ++ ": " ++ T.unpack err
                         return Nothing
                     Right ddeccat -> return ddeccat
                 where mkDecCatMap :: [HOI4Decisioncat] -> HashMap Text HOI4Decisioncat
                       mkDecCatMap = HM.fromList . map (decc_name &&& id)
+
 -- | Parse one decisioncategory script into a decision data structure.
 parseHOI4Decisioncat :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
     GenericStatement -> PPT g m (Either Text (Maybe HOI4Decisioncat))
@@ -88,116 +89,202 @@ parseHOI4Decisioncat [pdx| %left = %right |] = case right of
         _ -> throwError "unrecognized form for decision category"
     _ -> throwError "unrecognized form for decision category"
 parseHOI4Decisioncat _ = withCurrentFile $ \file ->
-    throwError ("unrecognised form for decision category in " <> T.pack file)
+    throwError ("unrecognised form for decisi= reon category in " <> T.pack file)
 
 -- | Add a sub-clause of the decision categry script to the data structure.
 decisioncatAddSection :: (IsGameState (GameState g), MonadError Text m) =>
     Maybe HOI4Decisioncat -> GenericStatement -> PPT g m (Maybe HOI4Decisioncat)
 decisioncatAddSection Nothing _ = return Nothing
 decisioncatAddSection ddeccat stmt
-    = sequence (decisioncatAddSection' <$> ddeccat <*> pure stmt)
+    = return $ (`decisioncatAddSection'` stmt) <$> ddeccat
     where
-        decisioncatAddSection' decc stmt@[pdx| icon           = $txt  |] = return (decc { decc_icon = txt })
-        decisioncatAddSection' decc stmt@[pdx| visible        = @scr  |] = return (decc { decc_visible = Just scr })
-        decisioncatAddSection' decc stmt@[pdx| available      = @scr  |] = return (decc { decc_available = Just scr })
-        decisioncatAddSection' decc stmt@[pdx| picture        = $txt  |] = return (decc { decc_picture = Just txt })
-        decisioncatAddSection' decc stmt@[pdx| custom_icon    = %_    |] = return decc
-        decisioncatAddSection' decc stmt@[pdx| visibility_type = %_   |] = return decc
-        decisioncatAddSection' decc stmt@[pdx| priority       = %_    |] = return decc
-        decisioncatAddSection' decc stmt@[pdx| allowed        = @scr  |] = return (decc { decc_allowed = Just scr })
-        decisioncatAddSection' decc stmt@[pdx| visible_when_empty = %_ |] = return decc -- maybe mention this in AI notes
-        decisioncatAddSection' decc stmt@[pdx| scripted_gui   = %_    |] = return decc -- currently no field in the template for this
-        decisioncatAddSection' decc stmt@[pdx| highlight_states = %_  |] = return decc -- not interesting
-        decisioncatAddSection' decc stmt@[pdx| on_map_area    = %_    |] = return decc
-        decisioncatAddSection' decc [pdx| $other = %_ |]
-            = trace ("unknown opinion decision category section: " ++ T.unpack other) $ return decc
-        decisioncatAddSection' decc _
-            = trace ("unrecognised form for decision category section") $ return decc
+        decisioncatAddSection' decc stmt = case stmt of
+            [pdx| icon           = $txt  |] -> (decc { decc_icon = Just txt })
+            [pdx| visible        = @scr  |] -> (decc { decc_visible = Just scr })
+            [pdx| available      = @scr  |] -> (decc { decc_available = Just scr })
+            [pdx| picture        = $txt  |] -> (decc { decc_picture = Just txt })
+            [pdx| custom_icon    = %_    |] -> decc
+            [pdx| visibility_type = %_   |] -> decc
+            [pdx| priority       = %_    |] -> decc
+            [pdx| allowed        = @scr  |] -> (decc { decc_allowed = Just scr })
+            [pdx| visible_when_empty = %_ |] -> decc
+            [pdx| scripted_gui   = %_    |] -> decc
+            [pdx| highlight_states = %_  |] -> decc
+            [pdx| on_map_area    = %_    |] -> decc
+            [pdx| $other = %_ |] -> trace ("unknown decision category section: " ++ T.unpack other) $ decc
+            _ -> trace ("unrecognised form for decision category section") $ decc
 
 -- | Empty decision. Starts off Nothing/empty everywhere, except id and name
 -- (which should get filled in immediately).
 newDecision :: HOI4Decision
-newDecision = HOI4Decision undefined undefined Nothing [] [] [] Nothing Nothing
+newDecision = HOI4Decision undefined undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing False False False False Nothing Nothing Nothing undefined
 
 -- | Take the decisions scripts from game data and parse them into decision
 -- data structures.
-parseHOI4Decisions :: (IsGameData (GameData g),
-                      IsGameState (GameState g),
-                      Monad m) =>
+parseHOI4Decisions :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
     HashMap String GenericScript -> PPT g m (HashMap Text HOI4Decision)
-parseHOI4Decisions scripts = do
-    tryParse <- hoistExceptions . flip HM.traverseWithKey scripts $ \f script ->
-                    setCurrentFile f (concat <$> mapM parseHOI4DecisionGroup script)
+parseHOI4Decisions scripts = HM.unions . HM.elems <$> do
+    tryParse <- hoistExceptions $
+        HM.traverseWithKey
+            (\sourceFile scr ->
+                setCurrentFile sourceFile $ concat <$> mapM parseHOI4DecisionGroup scr)
+            scripts
     case tryParse of
         Left err -> do
-            -- TODO: use logging instead of trace
             traceM $ "Completely failed parsing decisions: " ++ T.unpack err
             return HM.empty
-        Right files -> fmap (HM.unions . HM.elems) . flip HM.traverseWithKey files $
-            \sourceFile edecs ->
-                    fmap (HM.fromList . map (dec_name &&& id) . catMaybes)
-                        . forM edecs $ \case
-                Left err -> do
-                    -- TODO: use logging instead of trace
-                    traceM $ "Error parsing " ++ sourceFile
-                             ++ ": " ++ T.unpack err
-                    return Nothing
-                Right dec -> trace ("DEBUG: DEC CATS: " ++ show (Just dec)) $ return (Just dec)
+        Right decFilesOrErrors ->
+            flip HM.traverseWithKey decFilesOrErrors $ \sourceFile edecs ->
+                fmap (mkDecMap . catMaybes) . forM edecs $ \case
+                    Left err -> do
+                        traceM $ "Error parsing decisions in " ++ sourceFile
+                                 ++ ": " ++ T.unpack err
+                        return Nothing
+                    Right ddec -> return ddec
+                where mkDecMap :: [HOI4Decision] -> HashMap Text HOI4Decision
+                      mkDecMap = HM.fromList . map (dec_name &&& id)
 
 --parseHOI4Event :: MonadError Text m => FilePath -> GenericStatement -> PPT g m (Either Text (Maybe HOI4Event))
 
--- | Parse one file's decision scripts into decision data structures.
-parseHOI4DecisionGroup :: (IsGameData (GameData g),
-                          IsGameState (GameState g),
-                          Monad m) =>
-    GenericStatement -> PPT g (ExceptT Text m) [Either Text HOI4Decision]
+-- | Parse one file's decision groups scripts into decision data structures.
+parseHOI4DecisionGroup :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
+    GenericStatement -> PPT g (ExceptT Text m) [Either Text (Maybe HOI4Decision)]
+parseHOI4DecisionGroup stmt@(StatementBare _) = trace ("DEBUG: BARE: " ++ show stmt) $ return [(Right Nothing)]
 parseHOI4DecisionGroup [pdx| $left = @scr |]
-    | left `elem` ["country_decisions", "religion_decisions"]
-    = forM scr $ \stmt -> (Right <$> parseHOI4Decision stmt)
+    = forM scr $ \stmt -> (Right <$> parseHOI4Decision stmt left)
                             `catchError` (return . Left)
-    | otherwise = throwError "unrecognized form for decision block category (LHS)"
-parseHOI4DecisionGroup [pdx| $_ = %_ |]
-    = throwError "unrecognized form for decision block (RHS)"
-parseHOI4DecisionGroup _ = throwError "unrecognized form for decision block (LHS)"
+parseHOI4DecisionGroup [pdx| %check = %_ |] = case check of
+    AtLhs _ -> return [(Right Nothing)]
+    _-> throwError "unrecognized form for decision block (LHS)"
+parseHOI4DecisionGroup _ = withCurrentFile $ \file ->
+    throwError ("unrecognised form for decision in " <> T.pack file)
 
 -- | Parse one decision script into a decision data structure.
-parseHOI4Decision :: (IsGameData (GameData g),
-                     IsGameState (GameState g),
-                     Monad m) =>
-    GenericStatement -> PPT g (ExceptT Text m) HOI4Decision
-parseHOI4Decision [pdx| $decName = %rhs |] = case rhs of
+parseHOI4Decision :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
+    GenericStatement -> Text -> PPT g (ExceptT Text m) (Maybe HOI4Decision)
+parseHOI4Decision [pdx| $decName = %rhs |] category = case rhs of
     CompoundRhs parts -> do
-        decName_loc <- getGameL10n (decName <> "_title")
+        decName_loc <- getGameL10n decName
         decText <- getGameL10nIfPresent (decName <> "_desc")
         withCurrentFile $ \sourcePath ->
             foldM decisionAddSection
-                  newDecision { dec_name = decName
+                  (Just (newDecision { dec_name = decName
                               , dec_name_loc = decName_loc
-                              , dec_text = decText
-                              , dec_path = Just sourcePath }
+                              , dec_path = Just sourcePath
+                              , dec_cat = category}))
                   parts
     _ -> throwError "unrecognized form for decision (RHS)"
-parseHOI4Decision _ = throwError "unrecognized form for decision (LHS)"
+parseHOI4Decision [pdx| %check = %_ |] _ = case check of
+    AtLhs _ -> return Nothing
+    _-> throwError "unrecognized form for decision block (LHS)"
+parseHOI4Decision _ _ = throwError "unrecognized form for decision (LHS)"
 
 -- | Add a sub-clause of the decision script to the data structure.
-decisionAddSection :: (IsGameState (GameState g), Monad m) =>
-    HOI4Decision -> GenericStatement -> PPT g m HOI4Decision
-decisionAddSection dec [pdx| potential        = @scr |] = return dec { dec_potential = scr }
-decisionAddSection dec [pdx| allow            = @scr |] = return dec { dec_allow = scr }
-decisionAddSection dec [pdx| effect           = @scr |] = return dec { dec_effect = scr }
-decisionAddSection dec [pdx| ai_will_do       = @scr |] = return dec { dec_ai_will_do = Just (aiWillDo scr) }
-decisionAddSection dec [pdx| do_not_integrate = %_   |] = return dec -- maybe mention this in AI notes
-decisionAddSection dec [pdx| do_not_core      = %_   |] = return dec -- maybe mention this in AI notes
-decisionAddSection dec [pdx| major            = %_   |] = return dec -- currently no field in the template for this
-decisionAddSection dec [pdx| provinces_to_highlight = %_   |] = return dec -- not interesting
-decisionAddSection dec [pdx| ai_importance    = %_   |]
-            -- TODO: use logging instead of trace
-        = -- trace "notice: ai_importance not yet implemented" $ -- TODO: Ignored for now
-          return dec
-decisionAddSection dec stmt = withCurrentFile $ \file -> do
-    -- TODO: use logging instead of trace
-    traceM ("warning: unrecognized decision section in " ++ file ++ ": " ++ show stmt)
-    return dec
+decisionAddSection :: (IsGameData (GameData g),  MonadError Text m) =>
+    Maybe HOI4Decision -> GenericStatement -> PPT g m (Maybe HOI4Decision)
+decisionAddSection Nothing _ = return Nothing
+decisionAddSection dec stmt
+    = return $ (`decisionAddSection'` stmt) <$> dec
+    where -- the QQ pdx patternmatching takes to long to compile with this many patterns so using case of here
+        decisionAddSection' dec stmt@[pdx| $lhs = %rhs |] = case lhs of
+            "icon" -> case rhs of
+                GenericRhs txt _ -> dec { dec_icon = Just (HOI4DecisionIconSimple txt) }
+                CompoundRhs scr -> dec { dec_icon = Just (HOI4DecisionIconScript scr) }
+                _ -> trace ("DEBUG: bad decions icon") $ dec
+            "allowed" -> case rhs of
+                CompoundRhs scr -> dec { dec_allowed = Just scr }
+                _ -> dec
+            "complete_effect" -> case rhs of
+                CompoundRhs scr -> dec { dec_complete_effect = Just scr }
+                _ -> dec
+            "ai_will_do" -> case rhs of
+                CompoundRhs scr -> dec { dec_ai_will_do = Just (aiWillDo scr) }
+                _ -> dec
+            "target_root_trigger" -> case rhs of
+                _ -> dec
+            "visible" -> case rhs of
+                _ -> dec
+            "available" -> case rhs of
+                _ -> dec
+            "priority" -> case rhs of
+                _ -> dec
+            "highlight_states" -> case rhs of
+                _ -> dec
+            "days_re_enable" -> case rhs of
+                _ -> dec
+            "fire_only_once"  -> case rhs of --bool, standard false
+                _ -> dec
+            "cost" -> case rhs of --var or num
+                _ -> dec
+            "custom_cost_trigger" -> case rhs of
+                _ -> dec
+            "custom_cost_text" -> case rhs of
+                _ -> dec
+            "days_remove" -> case rhs of
+                _ -> dec
+            "remove_effect" -> case rhs of
+                CompoundRhs scr -> dec { dec_remove_effect = Just scr }
+                _ -> dec
+            "cancel_trigger" -> case rhs of
+                _ -> dec
+            "cancel_effect" -> case rhs of
+                CompoundRhs scr -> dec { dec_cancel_effect = Just scr }
+                _ -> dec
+            "war_with_on_remove" -> case rhs of
+                _ -> dec
+            "war_with_on_complete" -> case rhs of
+                _ -> dec
+            "fixed_random_seed" -> case rhs of --bool, standard True
+                _ -> dec
+            "days_mission_timeout" -> case rhs of
+                _ -> dec
+            "activation" -> case rhs of
+                _ -> dec
+            "selectable_mission" -> case rhs of --bool, standard false
+                _ -> dec
+            "timeout_effect" -> case rhs of
+                CompoundRhs scr -> dec { dec_timeout_effect = Just scr }
+                _ -> dec
+            "is_good" -> case rhs of --bool, standard false but not really
+                _ -> dec
+            "targets" -> case rhs of -- weirdo array
+                _ -> dec
+            "target_array" -> case rhs of -- weirdo array
+                _ -> dec
+            "targets_dynamic" -> case rhs of --bool, standard false
+                _ -> dec
+            "target_trigger" -> case rhs of
+                _ -> dec
+            "war_with_target_on_complete" -> case rhs of --bool, standard false
+                _ -> dec
+            "war_with_target_on_remove" -> case rhs of --bool, standard false
+                _ -> dec
+            "war_with_target_on_timeout" -> case rhs of --bool, standard false
+                _ -> dec
+            "state_target" -> case rhs of --bool, standard false
+                _ -> dec
+            "on_map_mode" -> case rhs of
+                _ -> dec
+            "modifier" -> case rhs of
+                _ -> dec
+            "targeted_modifier" -> case rhs of
+                _ -> dec
+            "cancel_if_not_visible" -> case rhs of
+                _ -> dec
+            "name" -> case rhs of
+                _ -> dec
+            "ai_hint_pp_cost" -> case rhs of
+                _ -> dec
+            "cosmetic_tag" -> case rhs of
+                _ -> dec
+            "cosmetic_ideology" -> case rhs of
+                _ -> dec
+            "remove_trigger" -> case rhs of
+                _ -> dec
+            "target_non_existing" -> case rhs of
+                _ -> dec
+            other -> trace ("unknown decision section: " ++ show other ++ "  " ++ show stmt) $ dec
+        decisionAddSection' dec stmt = trace ("unrecognised form for decision section") $ dec
 
 -- | Present the parsed decisions as wiki text and write them to the
 -- appropriate files.
@@ -218,13 +305,13 @@ writeHOI4Decisions = do
 pp_decision :: (HOI4Info g, Monad m) => HOI4Decision -> PPT g m Doc
 pp_decision dec = do
     version <- gets (gameVersion . getSettings)
-    pot_pp'd    <- scope HOI4Country (pp_script (dec_potential dec))
-    allow_pp'd  <- scope HOI4Country (pp_script (dec_allow dec))
-    effect_pp'd <- setIsInEffect True (scope HOI4Country (pp_script (dec_effect dec)))
-    mawd_pp'd   <- mapM ((imsg2doc =<<) . ppAiWillDo) (dec_ai_will_do dec)
+    dec_text_loc <- getGameL10nIfPresent ((dec_name dec) <> "_desc")
+--    allow_pp'd  <- scope HOI4Country (pp_script (dec_allowed dec))
+--    effect_pp'd <- setIsInEffect True (scope HOI4Country (pp_script (dec_complete_effect dec)))
+    mawd_pp'd   <- setIsInEffect True (scope HOI4Country (mapM ((imsg2doc =<<) . ppAiWillDo) (dec_ai_will_do dec)))
     let name = dec_name dec
         nameD = Doc.strictText name
-    name_loc <- getGameL10n (name <> "_title")
+    name_loc <- getGameL10n name
     return . mconcat $
         ["<section begin=", nameD, "/>"
         ,"{{Decision", PP.line
@@ -233,11 +320,10 @@ pp_decision dec = do
         ,"| decision_name = ", Doc.strictText name_loc, PP.line
         ,maybe mempty
                (\txt -> mconcat ["| decision_text = ", Doc.strictText txt, PP.line])
-               (dec_text dec)
-        ,"| potential = ", PP.line, pot_pp'd, PP.line
-        ,"| allow = ", PP.line, allow_pp'd, PP.line
-        ,"| effect = ", PP.line, effect_pp'd, PP.line
+               (dec_text_loc)
         ] ++
+--        (maybe [] (\app -> ["| allow = ", PP.line, app, PP.line]) allow_pp'd) ++
+--        (maybe [] (\epp -> ["| effect = ", PP.line, epp, PP.line]) effect_pp'd) ++
         flip (maybe []) mawd_pp'd (\awd_pp'd ->
             ["| comment = AI decision factors:", PP.line
             ,awd_pp'd, PP.line]) ++

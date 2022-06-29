@@ -44,7 +44,8 @@ only the files you want, and rebuild.
     * random_list handles only numbers for the weight OR only variables for the weight
     * ~~add_building_sconstruction doesn't handle the contents of province = {} well. needs manual editing~~
     * ~~script doesn't like improperly formatted localizations, doesn't handle a space in front of l_<language> at the top of file~~
-    * Decisions aren't parsed and checked for event triggers
+    * ~~Decisions aren't parsed and checked for event triggers~~
+    * Decisions aren't output into text files
     * Tags aren't localized to country names? Sometimes they are?
     * ~~Doesn't like some uses of ROOT and PREV etc. No clue how to fix it~~
     * Don't know if multiple RHS scopes work (e.g. PREV.PREV)
@@ -56,6 +57,7 @@ only the files you want, and rebuild.
 ## To do
 Feel extremely free to help with any of these or the issues, I honestly doubt I can do any of these except maybe the additonal formatting
 
+* Clean up code (probably never, cause I'm not good enough, but should still be done)
 * Add parser for national focuses
 * Have script look for triggers in national focuses
 * Add more formatting for various lines, best case scenarion minimal editing is needed to place it on the wiki

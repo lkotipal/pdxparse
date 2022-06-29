@@ -246,9 +246,12 @@ pp_opinion_modifer mod = do
         monthlyDecay _ _ = []
 
         duration :: Maybe Double -> Maybe Double -> Maybe Double -> [Doc]
-        duration (Just d) Nothing Nothing | d /= 0 = [fmt "Day" d]
-        duration Nothing (Just m) Nothing | m /= 0 = [fmt "Month" m]
-        duration Nothing Nothing (Just y) | y /= 0 = [fmt "Year" y]
+        duration (Just d) Nothing Nothing   | d /= 0 = [fmt "Day" d]
+        duration Nothing (Just m) Nothing   | m /= 0 = [fmt "Month" m]
+        duration Nothing Nothing (Just y)   | y /= 0 = [fmt "Year" y]
+        duration (Just d) (Just m) Nothing  | d /= 0 || m /= 0 = [mconcat [fmt "Month" m, " and ", fmt "Day" d]]
+        duration (Just d) Nothing (Just y)  | d /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", " and ", fmt "Day" d]]
+        duration Nothing (Just m) (Just y)  | m /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", fmt "Month" m]]
         duration (Just d) (Just m) (Just y) | d /= 0 || m /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", fmt "Month" m, " and ", fmt "Day" d]]
         duration _ _ _ = []
 

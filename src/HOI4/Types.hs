@@ -1,6 +1,6 @@
 {-|
 Module      : HOI4.Types
-Description : Types specific to Europa Universalis IV
+Description : Types specific to Hearts of Iron IV
 -}
 module HOI4.Types (
         -- * Parser state
@@ -9,7 +9,7 @@ module HOI4.Types (
         -- * Features
     ,   HOI4EvtTitle (..), HOI4EvtDesc (..), HOI4Event (..), HOI4Option (..)
     ,   HOI4EventSource (..), HOI4EventTriggers, HOI4EventWeight
-    ,   HOI4Decision (..),HOI4Decisioncat (..)
+    ,   HOI4Decision (..), HOI4DecisionCost(..), HOI4DecisionIcon(..), HOI4Decisioncat (..)
     ,   IdeaGroup (..), Idea (..), IdeaTable
 --    ,   HOI4Modifier (..)
     ,   HOI4OpinionModifier (..)
@@ -73,6 +73,7 @@ data HOI4Data = HOI4Data {
     ,   hoi4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsModifier :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
+    ,   hoi4nationalfocusScripts :: HashMap FilePath GenericScript
     -- etc.
     }
 
@@ -144,6 +145,7 @@ class (IsGame g,
     getExtraScriptsCountryScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
     getExtraScriptsProvinceScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
     getExtraScriptsModifier :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    getNationalFocusScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
 
 -------------------
 -- Feature types --
@@ -253,7 +255,7 @@ data HOI4Decisioncat = HOI4Decisioncat
     {   decc_name :: Text -- ^ Decision category ID
     ,   decc_name_loc :: Maybe Text -- ^ Localized decision category name
     ,   decc_desc_loc :: Maybe Text
-    ,   decc_icon :: Text
+    ,   decc_icon :: Maybe Text
     ,   decc_picture :: Maybe Text
     ,   decc_custom_icon :: Maybe GenericScript
     ,   decc_visible :: Maybe GenericScript
@@ -268,19 +270,59 @@ data HOI4Decisioncat = HOI4Decisioncat
     ,   decc_path :: FilePath -- ^ Source file
     } deriving (Show)
 
+data HOI4DecisionCost
+    = HOI4DecisionCostSimple Double
+    | HOI4DecisionCostVariable Text
+    deriving Show
+
+data HOI4DecisionIcon
+    = HOI4DecisionIconSimple Text
+    | HOI4DecisionIconScript GenericScript
+    deriving Show
+
 -- | Decision data.
 data HOI4Decision = HOI4Decision
     {   dec_name :: Text -- ^ Decision ID
     ,   dec_name_loc :: Text -- ^ Localized decision name
-    ,   dec_text :: Maybe Text -- ^ Descriptive text (shown on hover)
-    ,   dec_potential :: GenericScript -- ^ Conditions governing whether a
-                                       --   decision shows up in the list
-    ,   dec_allow :: GenericScript -- ^ Conditions that allow the player/AI to
-                                   --   take the decision
-    ,   dec_effect :: GenericScript -- ^ Effect on taking the decision
+    ,   dec_icon :: Maybe HOI4DecisionIcon -- ^ Icon for the decision
+    ,   dec_allowed :: Maybe GenericScript -- ^ Conditions that allow the player/AI to
+                                           --   take the decision
+    ,   dec_target_root_trigger :: Maybe GenericScript
+    ,   dec_visible :: Maybe GenericScript
+    ,   dec_available :: Maybe GenericScript
+    ,   dec_complete_effect :: Maybe GenericScript -- ^ the block of effects that gets executed immediately
+                                                   --   when the decision is selected (Starting the timer if it has one).
+    ,   dec_days_re_enable :: Maybe Double
+    ,   dec_fire_only_once :: Bool
+    ,   dec_cost :: Maybe HOI4DecisionCost
+    ,   dec_custom_cost_trigger  :: Maybe GenericScript
+    ,   dec_custom_cost_text :: Maybe Text
+    ,   dec_days_remove :: Maybe Double
+    ,   dec_remove_effect :: Maybe GenericScript
+    ,   dec_modifier :: Maybe GenericScript
+    ,   dec_cancel_trigger ::  Maybe GenericScript
+    ,   dec_cancel_effect ::  Maybe GenericScript
+    ,   dec_war_with_on_remove :: Maybe Text
+    ,   dec_war_with_on_complete :: Maybe Text
+
+    ,   dec_days_mission_timeout :: Maybe Double
+    ,   dec_activation :: Maybe GenericScript
+    ,   dec_timeout_effect :: Maybe GenericScript
+
+    ,   dec_targets :: Maybe GenericScript
+    ,   dec_target_array :: Maybe GenericScript
+    ,   dec_targets_dynamic :: Bool
+    ,   dec_target_trigger :: Maybe GenericScript
+    ,   dec_war_with_target_on_complete :: Bool
+    ,   dec_war_with_target_on_remove :: Bool
+    ,   dec_war_with_target_on_timeout :: Bool
+
+    ,   dec_state_target :: Bool
+    ,   dec_on_map_mode :: Maybe Text
     ,   dec_ai_will_do :: Maybe AIWillDo -- ^ Factors affecting whether an AI
                                          --   will take the decision when available
     ,   dec_path :: Maybe FilePath -- ^ Source file
+    ,   dec_cat :: Text -- ^ Category of the decision
     } deriving (Show)
 {-
 data HOI4Modifier = HOI4Modifier

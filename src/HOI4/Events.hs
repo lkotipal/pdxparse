@@ -1,6 +1,6 @@
 {-|
 Module      : HOI4.Events
-Description : Feature handler for Europa Universalis IV events
+Description : Feature handler for Hearts of Iron IV events
 -}
 module HOI4.Events (
         parseHOI4Events
@@ -689,7 +689,11 @@ findTriggeredEventsInDecisions :: HOI4EventTriggers -> [HOI4Decision] -> HOI4Eve
 findTriggeredEventsInDecisions hm ds = addEventTriggers hm (concatMap findInDecision ds)
     where
         findInDecision :: HOI4Decision -> [(Text, HOI4EventSource)]
-        findInDecision d = addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (findInStmts (dec_effect d))
+        findInDecision d =
+            (addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_complete_effect d))) ++
+            (addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_remove_effect d))) ++
+            (addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_cancel_effect d))) ++
+            (addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_timeout_effect d)))
 
 findTriggeredEventsInOnActions :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers
 findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr

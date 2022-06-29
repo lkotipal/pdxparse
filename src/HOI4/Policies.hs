@@ -1,6 +1,6 @@
 {-|
 Module      : HOI4.Policies
-Description : Feature handler for Europa Universalis IV policies
+Description : Feature handler for Hearts of Iron IV policies
 -}
 module HOI4.Policies where
 
