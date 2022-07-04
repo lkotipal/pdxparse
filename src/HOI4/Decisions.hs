@@ -24,6 +24,7 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Text.PrettyPrint.Leijen.Text (Doc)
 import qualified Text.PrettyPrint.Leijen.Text as PP
+import System.FilePath ((</>))
 
 import Abstract -- everything
 import qualified Doc
@@ -170,7 +171,7 @@ parseHOI4Decision [pdx| $decName = %rhs |] category = case rhs of
             foldM decisionAddSection
                   (Just (newDecision { dec_name = decName
                               , dec_name_loc = decName_loc
-                              , dec_path = Just sourcePath
+                              , dec_path = Just (sourcePath </> T.unpack category) -- so decision are divided into maps for the cateogry, should I loc or not?
                               , dec_cat = category}))
                   parts
     _ -> throwError "unrecognized form for decision (RHS)"

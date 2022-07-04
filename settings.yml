@@ -35,5 +35,5 @@ settings:
     #
     #mod_path:
 
-    # The name of the mod you're trying to parse eg. Kaiserreich
+    # The name of the mod you're trying to parse eg. "Kaiserreich"
     #mod_name:

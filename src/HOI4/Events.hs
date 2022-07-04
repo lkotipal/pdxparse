@@ -10,6 +10,7 @@ module HOI4.Events (
     ,   findTriggeredEventsInOnActions
 --    ,   findTriggeredEventsInDisasters
 --    ,   findTriggeredEventsInMissions
+    ,   findTriggeredEventsInNationalFocus
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -410,6 +411,15 @@ ppEventSource (HOI4EvtSrcMission missionId) = do
         , " mission"
         ]
 -}
+ppEventSource (HOI4EvtSrcNationalFocus id loc) = do
+    nfloc <- getGameL10n loc
+    return $ Doc.strictText $ mconcat ["Completing the national focus "
+        , "<!-- "
+        , id
+        , " -->"
+        , iquotes't nfloc
+        ]
+
 ppTriggeredBy :: (HOI4Info g, Monad m) => Text -> PPT g m Doc
 ppTriggeredBy eventId = do
     eventTriggers <- getEventTriggers
@@ -489,9 +499,8 @@ pp_event evt = case (hoi4evt_id evt
             -- mean_time_to_happen is only really mtth if it's *not*
             -- triggered only.
             (if isTriggeredOnly then [] else case mmtth_pp'd of
-                Nothing ->
-                    ["| triggered_only =", PP.line
-                    ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
+                Nothing -> ["| triggered_only =", PP.line
+                        ,"* Unknown (Missing MTTH and trigger and is_triggered_only)", PP.line]
                 Just mtth_pp'd ->
                     ["| mtth = ", PP.line
                     ,mtth_pp'd, PP.line]) ++
@@ -562,9 +571,8 @@ pp_event evt = case (hoi4evt_id evt
             -- mean_time_to_happen is only really mtth if it's *not*
             -- triggered only.
             (if isTriggeredOnly then [] else case mmtth_pp'd of
-                Nothing ->
-                    ["| triggered_only =", PP.line
-                    ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
+                Nothing -> ["| triggered_only =", PP.line
+                        ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
                 Just mtth_pp'd ->
                     ["| mtth = ", PP.line
                     ,mtth_pp'd, PP.line]) ++
@@ -633,6 +641,7 @@ findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "news_ev
             Just (Right t) -> Just t
             _ -> (trace $ "Invalid event id statement: " ++ show stmt) $ Nothing
         getId (_ : ss) = getId ss
+findInStmt stmt@[pdx| $lhs = $id |] | lhs == "country_event" || lhs == "news_event" || lhs == "unit_leader_event" || lhs == "state_event" || lhs == "operative_leader_event" = [(Nothing, id)]
 findInStmt [pdx| events = @scr |]  = catMaybes $ map extractEvent scr
     where
         extractEvent :: GenericStatement -> Maybe (HOI4EventWeight, Text)
@@ -650,7 +659,7 @@ findInStmt [pdx| random_events = @scr |] =
             Just (Right t) -> Just (fromIntegral weight, t)
             _ -> (trace $ "Invalid event id in random_events: " ++ show stmt) $ Nothing
         extractRandomEvent stmt = (trace $ "Unknown in random_events statement: " ++ show stmt) $ Nothing
-findInStmt [pdx| %_ = @scr |] = findInStmts scr
+findInStmt [pdx| %lhs = @scr |] = findInStmts scr
 findInStmt _ = []
 
 findInStmts :: [GenericStatement] -> [(HOI4EventWeight, Text)]
@@ -771,3 +780,10 @@ findTriggeredEventsInMissions hm mtbs = foldl' (\h -> \m -> foldl' findInMission
         findInMission :: HOI4EventTriggers -> HOI4Mission -> HOI4EventTriggers
         findInMission hm m = addEventTriggers hm $ addEventSource (const (HOI4EvtSrcMission (hoi4m_id m))) (findInStmts (hoi4m_effect m))
 -}
+findTriggeredEventsInNationalFocus :: HOI4EventTriggers -> [HOI4NationalFocus] -> HOI4EventTriggers
+findTriggeredEventsInNationalFocus hm nf = addEventTriggers hm (concatMap findInFocus nf)
+    where
+        findInFocus :: HOI4NationalFocus -> [(Text, HOI4EventSource)]
+        findInFocus f =
+            (addEventSource (const (HOI4EvtSrcNationalFocus (nf_id f) (nf_id_loc f))) (maybe [] findInStmts (nf_completion_reward f))) ++
+            (addEventSource (const (HOI4EvtSrcNationalFocus (nf_id f) (nf_id_loc f))) (maybe [] findInStmts (nf_select_effect f)))

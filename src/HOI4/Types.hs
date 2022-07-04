@@ -15,6 +15,7 @@ module HOI4.Types (
     ,   HOI4OpinionModifier (..)
 --    ,   HOI4MissionTreeBranch (..), HOI4Mission (..)
 --    ,   HOI4ScopeStateTriggeredModifier (..)
+    ,   HOI4NationalFocus (..)
         -- * Low level types
     ,   MonarchPower (..)
     ,   HOI4Scope (..)
@@ -224,6 +225,7 @@ data HOI4EventSource =
     | HOI4EvtSrcOnAction Text HOI4EventWeight         -- An effect from on_actions (args are the trigger and weight)
 --    | HOI4EvtSrcDisaster Text Text HOI4EventWeight    -- Effect of a disaster (args are id, trigger and weight)
 --    | HOI4EvtSrcMission Text                         -- Effect of completing a mission (arg is the mission id)
+    | HOI4EvtSrcNationalFocus Text Text
     deriving Show
 
 type HOI4EventTriggers = HashMap Text [HOI4EventSource]
@@ -378,6 +380,32 @@ data HOI4MissionTreeBranch = HOI4MissionTreeBranch
     ,   hoi4mtb_missions :: [HOI4Mission]
     } deriving (Show)
 -}
+data HOI4NationalFocus = HOI4NationalFocus
+    {   nf_id :: Text
+    ,   nf_id_loc :: Text
+    ,   nf_id_desc :: Maybe Text
+    ,   nf_icon :: Maybe Text
+    ,   nf_cost :: Double
+    ,   nf_allow_branch  :: Maybe Text
+    ,   nf_prerequisite  :: Maybe Text
+    ,   nf_mutually_exclusive :: Maybe Text
+    ,   nf_avaiable :: Maybe Text
+    ,   nf_bypass :: Maybe Text
+    ,   nf_cancel :: Maybe Text
+    ,   nf_cancelable :: Maybe Text
+    ,   nf_historical_ai :: Maybe Text
+    ,   nf_available_if_capitulated :: Maybe Text
+    ,   nf_cancel_if_invalid :: Maybe Text
+    ,   nf_continue_if_invalid :: Maybe Text
+    ,   nf_will_lead_to_war_with :: Maybe Text
+    ,   nf_search_filters :: Maybe Text
+    ,   nf_select_effect :: Maybe GenericScript
+    ,   nf_ai_will_do :: Maybe Text
+    ,   nf_completion_reward :: Maybe GenericScript
+    ,   nf_complete_tooltip :: Maybe Text
+    ,   nf_path :: Maybe FilePath -- ^ Source file
+    } deriving (Show)
+
 ------------------------------
 -- Shared lower level types --
 ------------------------------

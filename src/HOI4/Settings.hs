@@ -48,10 +48,12 @@ import HOI4.Modifiers (
 --                    , parseHOI4ProvTrigModifiers, writeHOI4ProvTrigModifiers
                     )
 --import HOI4.Missions (parseHOI4Missions , writeHOI4Missions)
+import HOI4.NationalFocus(parseHOI4NationalFocuss)
 import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
                    , findTriggeredEventsInOnActions
 --                 , findTriggeredEventsInDisasters  , findTriggeredEventsInMissions
+                   , findTriggeredEventsInNationalFocus
                    )
 import HOI4.Extra (writeHOI4Extra, writeHOI4ExtraCountryScope, writeHOI4ExtraProvinceScope, writeHOI4ExtraModifier)
 
@@ -387,11 +389,12 @@ parseHOI4Scripts = do
     events <- parseHOI4Events =<< getEventScripts
 --    missions <- parseHOI4Missions =<< getMissionScripts
     on_actions <- getOnActionsScripts
+    national_focus <- parseHOI4NationalFocuss =<< getNationalFocusScripts
 --    disasters <- getDisasterScripts
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
         te3 = findTriggeredEventsInOnActions te2 (concat (HM.elems on_actions))
---        te4 = findTriggeredEventsInNationalFocus te3 (concat (HM.elems national_focus)) -- not yet implemented
+        te4 = findTriggeredEventsInNationalFocus te3 (HM.elems national_focus)
 --        te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
 --        te5 = findTriggeredEventsInMissions te4 (HM.elems missions)
     --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))
@@ -403,7 +406,7 @@ parseHOI4Scripts = do
 --            ,   hoi4modifiers = modifiers
             ,   hoi4opmods = opinionModifiers
 --            ,   hoi4missions = missions
-            ,   hoi4eventTriggers = te3
+            ,   hoi4eventTriggers = te4
 --            ,   hoi4provtrigmodifiers = provTrigModifiers
             }
 

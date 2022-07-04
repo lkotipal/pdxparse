@@ -261,7 +261,8 @@ floatLit = Ap.signed Ap.double
             Nothing -> return () -- EOF, all good
             Just c -> if (c == '}' || c == '#' || isSpace c)
                         then return () -- space or comment follows
-                        else fail "intLit")
+                        else fail "floatLit")
+    <?> "float literal"
 
 -- | A date literal.
 --

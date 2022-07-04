@@ -47,6 +47,7 @@ executable pdxparse
                        HOI4.IdeaGroups,
                        HOI4.IO,
                        HOI4.Modifiers,
+                       HOI4.NationalFocus,
                        HOI4.Settings,
                        HOI4.Templates,
                        HOI4.Types,
