@@ -118,7 +118,7 @@ decisioncatAddSection ddeccat stmt
 -- | Empty decision. Starts off Nothing/empty everywhere, except id and name
 -- (which should get filled in immediately).
 newDecision :: HOI4Decision
-newDecision = HOI4Decision undefined undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing False False False False Nothing Nothing Nothing undefined
+newDecision = HOI4Decision undefined undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing False False False False Nothing Nothing Nothing undefined
 
 -- | Take the decisions scripts from game data and parse them into decision
 -- data structures.
@@ -166,11 +166,12 @@ parseHOI4Decision :: (IsGameData (GameData g), IsGameState (GameState g), Monad 
 parseHOI4Decision [pdx| $decName = %rhs |] category = case rhs of
     CompoundRhs parts -> do
         decName_loc <- getGameL10n decName
-        decText <- getGameL10nIfPresent (decName <> "_desc")
+        decDesc <- getGameL10nIfPresent (decName <> "_desc")
         withCurrentFile $ \sourcePath ->
             foldM decisionAddSection
                   (Just (newDecision { dec_name = decName
                               , dec_name_loc = decName_loc
+                              , dec_desc = decDesc
                               , dec_path = Just (sourcePath </> T.unpack category) -- so decision are divided into maps for the cateogry, should I loc or not?
                               , dec_cat = category}))
                   parts

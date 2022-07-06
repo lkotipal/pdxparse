@@ -312,12 +312,12 @@ iquotes't = Doc.doc2text . iquotes
 
 -- | Present an event's title block.
 ppTitles :: (HOI4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
-                                -> [HOI4EvtTitle] -> PPT g m Doc
-ppTitles _ [] = return "| event_name = (No title)"
-ppTitles False [HOI4EvtTitleSimple key] = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
-ppTitles True [HOI4EvtTitleSimple key] = ("| event_name = (Hidden) " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
-ppTitles True _ = return "| event_name = (This event is hidden and has no title.)"
-ppTitles _ titles = (("| cond_event_name = yes" <> PP.line <> "| cond_name = ") <>) . PP.vsep <$> mapM ppTitle titles where
+                                -> [HOI4EvtTitle] -> Text -> PPT g m Doc
+ppTitles _ [] eid = return "| event_name = (No title)"
+ppTitles False [HOI4EvtTitleSimple key] eid = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
+ppTitles True [HOI4EvtTitleSimple key]eid  = ("| event_name = (Hidden) " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
+ppTitles True _ eid = return "| event_name = (This event is hidden and has no title.)"
+ppTitles _ titles eid = (("| event_name = " <> Doc.strictText eid <> PP.line <>"| cond_event_name = yes" <> PP.line <> "| cond_name = ") <>) . PP.vsep <$> mapM ppTitle titles where
     ppTitle (HOI4EvtTitleSimple key) = ("Otherwise:<br>:" <>) <$> fmtTitle key
     ppTitle (HOI4EvtTitleConditional scr key) = mconcat <$> sequenceA
         [pure "The following title is used if:", pure PP.line
@@ -381,8 +381,29 @@ ppEventSource (HOI4EvtSrcImmediate eventId) = do
         , eventLoc
         , " event"
         ]
-ppEventSource (HOI4EvtSrcDecision id loc) = do
+ppEventSource (HOI4EvtSrcDecComplete id loc) = do
     return $ Doc.strictText $ mconcat ["Taking the decision "
+        , "<!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        ]
+ppEventSource (HOI4EvtSrcDecRemove id loc) = do
+    return $ Doc.strictText $ mconcat ["Finishing the decision "
+        , "<!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        ]
+ppEventSource (HOI4EvtSrcDecCancel id loc) = do
+    return $ Doc.strictText $ mconcat ["Triggering the cancel trigger on the decision "
+        , "<!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        ]
+ppEventSource (HOI4EvtSrcDecTimeout id loc) = do
+    return $ Doc.strictText $ mconcat ["Running out the timer on the decision "
         , "<!-- "
         , id
         , " -->"
@@ -411,7 +432,7 @@ ppEventSource (HOI4EvtSrcMission missionId) = do
         , " mission"
         ]
 -}
-ppEventSource (HOI4EvtSrcNationalFocus id loc) = do
+ppEventSource (HOI4EvtSrcNFComplete id loc) = do
     nfloc <- getGameL10n loc
     return $ Doc.strictText $ mconcat ["Completing the national focus "
         , "<!-- "
@@ -419,6 +440,15 @@ ppEventSource (HOI4EvtSrcNationalFocus id loc) = do
         , " -->"
         , iquotes't nfloc
         ]
+ppEventSource (HOI4EvtSrcNFSelect id loc) = do
+    nfloc <- getGameL10n loc
+    return $ Doc.strictText $ mconcat ["Selecting the national focus "
+        , "<!-- "
+        , id
+        , " -->"
+        , iquotes't nfloc
+        ]
+
 
 ppTriggeredBy :: (HOI4Info g, Monad m) => Text -> PPT g m Doc
 ppTriggeredBy eventId = do
@@ -439,16 +469,15 @@ ppTriggeredBy eventId = do
 -- throw an exception.
 pp_event :: forall g m. (HOI4Info g, MonadError Text m) =>
     HOI4Event -> PPT g m Doc
-pp_event evt = case (hoi4evt_id evt
---                    ,hoi4evt_title evt -- for title of event
-                    ,hoi4evt_options evt) of
-    (Just eid, Just options) -> setCurrentFile (hoi4evt_path evt) $ do
+pp_event evt = case hoi4evt_id evt of
+    Just eid -> setCurrentFile (hoi4evt_path evt) $ do
         -- Valid event
         version <- gets (gameVersion . getSettings)
-        (conditional, options_pp'd) <- pp_options (hoi4evt_hide_window evt) eid options
-        titleLoc <- ppTitles (hoi4evt_hide_window evt) (hoi4evt_title evt) -- get localisation of title
+        (conditional, options_pp'd) <- case hoi4evt_options evt of
+            Just opts -> pp_options (hoi4evt_hide_window evt) eid opts
+            _ -> fixForNoOptions eid  --BC: less ugly fix for having no options for an event
+        titleLoc <- ppTitles (hoi4evt_hide_window evt) (hoi4evt_title evt) eid -- get localisation of title
         descLoc <- ppDescs (hoi4evt_hide_window evt) (hoi4evt_desc evt)
-        after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> hoi4evt_after evt))
         let evtArg :: Text -> (HOI4Event -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
             evtArg fieldname field fmt
                 = maybe (return [])
@@ -469,9 +498,9 @@ pp_event evt = case (hoi4evt_id evt
         immediate_pp'd <- setIsInEffect True (evtArg "immediate" hoi4evt_immediate pp_script)
         triggered_pp <- ppTriggeredBy eid
         -- Keep track of incomplete events
-        when (not isTriggeredOnly && isNothing mmtth_pp'd) $
+        when (not isTriggeredOnly && isNothing mmtth_pp'd && length trigger_pp'd == 0) $
             -- TODO: use logging instead of trace
-            traceM ("warning: is_triggered_only and mean_time_to_happen missing for event id " ++ T.unpack eid)
+            traceM ("warning: is_triggered_only, trigger, and mean_time_to_happen missing for event id " ++ T.unpack eid)
         return . mconcat $
             ["<section begin=", evtId, "/>", PP.line
             ,"{{Event", PP.line
@@ -499,91 +528,26 @@ pp_event evt = case (hoi4evt_id evt
             -- mean_time_to_happen is only really mtth if it's *not*
             -- triggered only.
             (if isTriggeredOnly then [] else case mmtth_pp'd of
-                Nothing -> ["| triggered_only =", PP.line
-                        ,"* Unknown (Missing MTTH and trigger and is_triggered_only)", PP.line]
+                Nothing -> if length trigger_pp'd /= 0 then [] else ["| triggered_only =", PP.line
+                        ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
                 Just mtth_pp'd ->
                     ["| mtth = ", PP.line
                     ,mtth_pp'd, PP.line]) ++
             immediate_pp'd ++
             (if conditional then ["| option conditions = yes", PP.line] else []) ++
             -- option_conditions = no (not implemented yet)
-            (maybe [] (\app -> ["| after =", PP.line, app, PP.line]) after_pp'd) ++
-            ["| options = ", options_pp'd, PP.line
-            ,"| collapse = yes", PP.line
+            ["| options = ", options_pp'd, PP.line] ++
+            ["| collapse = yes", PP.line
             ,"}}", PP.line
             ,"<section end=", evtId, "/>", PP.line
             ]
 
-    (Nothing, _) -> throwError "hoi4evt_id missing"
-    (Just eid, Nothing) -> setCurrentFile (hoi4evt_path evt) $ do -- BC: Really ugly way to fix no options problem, I hate it but I;m a terrible coder
-        -- Valid event
-        version <- gets (gameVersion . getSettings)
-        titleLoc <- ppTitles (hoi4evt_hide_window evt) (hoi4evt_title evt) -- get localisation of title
-        descLoc <- ppDescs (hoi4evt_hide_window evt) (hoi4evt_desc evt)
-        after_pp'd <- setIsInEffect True (sequence ((imsg2doc <=< ppMany) <$> hoi4evt_after evt))
-        let evtArg :: Text -> (HOI4Event -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
-            evtArg fieldname field fmt
-                = maybe (return [])
-                    (\field_content -> do
-                        content_pp'd <- fmt field_content
-                        return
-                            ["| ", Doc.strictText fieldname, " = "
-                            ,PP.line
-                            ,content_pp'd
-                            ,PP.line])
-                    (field evt)
-            isTriggeredOnly = fromMaybe False $ hoi4evt_is_triggered_only evt
-            isFireOnlyOnce = hoi4evt_fire_only_once evt
-            isFireForSender = fromMaybe False $ hoi4evt_fire_for_sender evt
-            evtId = Doc.strictText eid
-        trigger_pp'd <- evtArg "trigger" hoi4evt_trigger pp_script
-        mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (hoi4evt_mean_time_to_happen evt)
-        immediate_pp'd <- setIsInEffect True (evtArg "immediate" hoi4evt_immediate pp_script)
-        triggered_pp <- ppTriggeredBy eid
-        -- Keep track of incomplete events
-        when (not isTriggeredOnly && isNothing mmtth_pp'd) $
-            -- TODO: use logging instead of trace
-            traceM ("warning: is_triggered_only and mean_time_to_happen missing for event id " ++ T.unpack eid)
-        return . mconcat $
-            ["<section begin=", evtId, "/>", PP.line
-            ,"{{Event", PP.line
-            ,"| version = ", Doc.strictText version, PP.line
-            ,"| event_id = ", evtId, PP.line
-            ,titleLoc, PP.line
-            ,descLoc, PP.line
-            ] ++
-            ( if isFireOnlyOnce then
-                ["| fire_only_once = yes", PP.line]
-            else []) ++
-            ( if isFireForSender then
-                ["| fire_for_sender = no", PP.line]
-            else []) ++
-            -- For triggered only events, mean_time_to_happen is not
-            -- really mtth but instead describes weight modifiers, for
-            -- scripts that trigger them with a probability based on a
-            -- weight (e.g. on_bi_yearly_pulse).
-            (if isTriggeredOnly then
-                ["| triggered only = ", triggered_pp, PP.line
-                ]
-                ++ maybe [] (:[PP.line]) mmtth_pp'd
-            else []) ++
-            trigger_pp'd ++
-            -- mean_time_to_happen is only really mtth if it's *not*
-            -- triggered only.
-            (if isTriggeredOnly then [] else case mmtth_pp'd of
-                Nothing -> ["| triggered_only =", PP.line
-                        ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
-                Just mtth_pp'd ->
-                    ["| mtth = ", PP.line
-                    ,mtth_pp'd, PP.line]) ++
-            immediate_pp'd ++
-            (maybe [] (\app -> ["| after =", PP.line, app, PP.line]) after_pp'd) ++
-            ["| options = ", PP.line
-            ,"| collapse = yes", PP.line
-            ,"}}", PP.line
-            ,"<section end=", evtId, "/>", PP.line
-            ]
+    Nothing -> throwError "hoi4evt_id missing"
 
+fixForNoOptions eid = do --BC: less ugly fix for having no options for an event
+    let evtId = Doc.strictText eid
+        message = mconcat $ ["(no options for event ", evtId, ")"]
+    return (False, message)
 -- | Present the options of an event.
 pp_options :: (HOI4Info g, MonadError Text m) =>
     Bool -> Text -> [HOI4Option] -> PPT g m (Bool, Doc)
@@ -699,10 +663,10 @@ findTriggeredEventsInDecisions hm ds = addEventTriggers hm (concatMap findInDeci
     where
         findInDecision :: HOI4Decision -> [(Text, HOI4EventSource)]
         findInDecision d =
-            (addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_complete_effect d))) ++
-            (addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_remove_effect d))) ++
-            (addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_cancel_effect d))) ++
-            (addEventSource (const (HOI4EvtSrcDecision (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_timeout_effect d)))
+            (addEventSource (const (HOI4EvtSrcDecComplete (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_complete_effect d))) ++
+            (addEventSource (const (HOI4EvtSrcDecRemove (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_remove_effect d))) ++
+            (addEventSource (const (HOI4EvtSrcDecCancel (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_cancel_effect d))) ++
+            (addEventSource (const (HOI4EvtSrcDecTimeout (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_timeout_effect d)))
 
 findTriggeredEventsInOnActions :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers
 findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
@@ -785,5 +749,5 @@ findTriggeredEventsInNationalFocus hm nf = addEventTriggers hm (concatMap findIn
     where
         findInFocus :: HOI4NationalFocus -> [(Text, HOI4EventSource)]
         findInFocus f =
-            (addEventSource (const (HOI4EvtSrcNationalFocus (nf_id f) (nf_id_loc f))) (maybe [] findInStmts (nf_completion_reward f))) ++
-            (addEventSource (const (HOI4EvtSrcNationalFocus (nf_id f) (nf_id_loc f))) (maybe [] findInStmts (nf_select_effect f)))
+            (addEventSource (const (HOI4EvtSrcNFComplete (nf_id f) (nf_name_loc f))) (maybe [] findInStmts (nf_completion_reward f))) ++
+            (addEventSource (const (HOI4EvtSrcNFSelect (nf_id f) (nf_name_loc f))) (maybe [] findInStmts (nf_select_effect f)))

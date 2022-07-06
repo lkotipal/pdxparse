@@ -15,7 +15,7 @@ import Control.Monad.State (MonadState (..), gets)
 import Control.Monad.Trans (MonadIO (..))
 
 import Data.Char (toLower)
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, fromMaybe)
 import Data.Monoid ((<>))
 
 import Data.HashMap.Strict (HashMap)
@@ -40,7 +40,7 @@ import HOI4.Common -- everything
 -- | Empty national focus. Starts off Nothing/empty everywhere, except id and name
 -- (which should get filled in immediately).
 newHOI4NationalFocus :: HOI4NationalFocus
-newHOI4NationalFocus = HOI4NationalFocus "(Unknown)" "(Unknown)" Nothing Nothing undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined
+newHOI4NationalFocus = HOI4NationalFocus "(Unknown)" "(Unknown)" Nothing Nothing Nothing undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined
 
 -- | Take the decisions scripts from game data and parse them into decision
 -- data structures.
@@ -84,17 +84,31 @@ parseHOI4NationalFocus [pdx| %left = %right |] = case right of
         IntLhs _ -> throwError "int lhs at top level"
         AtLhs _ -> return (Right Nothing)
         GenericLhs id [] ->
-            withCurrentFile $ \file -> do
-                nnf <- hoistErrors $ foldM nationalFocusAddSection
-                                            (Just newHOI4NationalFocus {nf_path = Just file})
-                                            parts
-                case nnf of
-                    Left err -> return (Left err)
-                    Right Nothing -> return (Right Nothing)
-                    Right (Just nf) -> withCurrentFile $ \file ->
-                        return (Right (Just nf ))
+            if id == "country" || id == "continuous_focus_position" then
+                return (Right Nothing)
+            else
+                withCurrentFile $ \file -> do
+                    nfNameLoc <- getGameL10n $ fromMaybe (getNFId parts) (getNFTxt parts)
+                    nfNameDesc <- getGameL10nIfPresent $ (fromMaybe (getNFId parts) (getNFTxt parts)) <> "_desc"
+                    nnf <- hoistErrors $ foldM nationalFocusAddSection
+                                                (Just newHOI4NationalFocus {nf_path = Just file
+                                                                            ,nf_name_loc = nfNameLoc
+                                                                            ,nf_name_desc = nfNameDesc})
+                                                parts
+                    case nnf of
+                        Left err -> return (Left err)
+                        Right Nothing -> return (Right Nothing)
+                        Right (Just nf) -> withCurrentFile $ \file ->
+                            return (Right (Just nf))
         _ -> throwError "unrecognized form for national focus (LHS)"
     _ -> return (Right Nothing)
+    where
+        getNFId ([pdx| id = $nfname|]:_) = nfname
+        getNFId (_:xs) = getNFId xs
+        getNFId [] = "(unknown)"
+        getNFTxt ([pdx| txt = $nfname|]:_) = Just nfname
+        getNFTxt (_:xs) = getNFTxt xs
+        getNFTxt [] = Nothing
 parseHOI4NationalFocus _ = withCurrentFile $ \file ->
     throwError ("unrecognised form for national focus in " <> T.pack file)
 
@@ -108,10 +122,10 @@ nationalFocusAddSection nf stmt
     where
         nationalFocusAddSection' nf stmt@[pdx| $lhs = %rhs |] = case T.map toLower lhs of
             "id" -> case rhs of
-                GenericRhs txt _ -> nf { nf_id = txt}
+                GenericRhs txt [] -> nf { nf_id = txt}
                 _-> trace ("bad nf id") nf
             "text" -> case rhs of
-                GenericRhs txt _ -> nf { nf_id_loc = txt}
+                GenericRhs txt [] -> nf { nf_text = Just txt}
                 _-> trace ("bad nf id") nf
             "completion_reward" -> case rhs of
                 CompoundRhs scr -> nf { nf_completion_reward = Just scr }

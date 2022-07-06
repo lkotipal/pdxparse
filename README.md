@@ -46,20 +46,22 @@ only the files you want, and rebuild.
     * ~~script doesn't like improperly formatted localizations, doesn't handle a space in front of l_<language> at the top of file~~
     * ~~Decisions aren't parsed and checked for event triggers~~
     * Decisions aren't output into text files
-    * Tags aren't localized to country names? Sometimes they are?
+    * Tags aren't localized to country names, requires loading history files
     * ~~Doesn't like some uses of ROOT and PREV etc. No clue how to fix it~~
-    * Don't know if multiple RHS scopes work (e.g. PREV.PREV)
-    * triggers for events aren't looked for in national focuses
+    * Multiple RHS scopes don't get parsed(e.g. PREV.PREV)
+    * ~~triggers for events aren't looked for in national focuses~~
     * Various lines don't have custom messages yet
     * ~~Localization files need to be directly in the localisation folder and not the localisation->english folder to work~~
     * ~~There are like 5 events where hidden and picture have the first letter capitilized making them fail to parse~~
+    * Fractions can be written as 0.15 or .15 the second case the parser sees it as text instead of a double
 
 ## To do
 Feel extremely free to help with any of these or the issues, I honestly doubt I can do any of these except maybe the additonal formatting
 
-* Clean up code (probably never, cause I'm not good enough, but should still be done)
-* Add parser for national focuses
-* Have script look for triggers in national focuses
+* Clean up/optimize code (probably never, cause I'm not good enough, but should still be done)
+* Add text output for national focuses
+* Have time for event to be triggered added to the triggered only part in events
+* ~~Have script look for triggers in national focuses~~
 * Add more formatting for various lines, best case scenarion minimal editing is needed to place it on the wiki
 * ~~Replace the files in the HoI4 folder with the edited EU4 files and properly remove mentions of EU4 stuff~~
 * Get rid of stuff only for EU4 in HoI4 stuff
@@ -68,6 +70,7 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * Make ~~add_Building_construction~~, random_list work properly
 * ~~Find propper solution for dealing whith opinion_modifier, on_action file formats~~
 * Make on_action also add the limits/trigger other than just the action
-* Rewrite parser for decison for HoI 4
-* Find none ugly solution for events that have no options
+* Rewrite text output for decison for HoI 4
+* ~~Find none ugly solution for events that have no options~~
+    * find less ugly solution?
 *  ~~random_list, ~~ai_chance~~ and possibly more needs to also handle "add" besides "factor" in their "modifier"~~

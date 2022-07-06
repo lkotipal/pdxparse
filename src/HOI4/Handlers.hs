@@ -148,6 +148,8 @@ module HOI4.Handlers (
     ,   hasIdeaGroup
     ,   killUnits
     ,   addBuildingConstruction
+    ,   addNamedThreat
+    ,   createWargoal
     ,   hasGovernmentReforTier
     -- testing
     ,   isPronoun
@@ -529,25 +531,25 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
         "root" -> do --ROOT
                 newscope <- getRootScope
                 return (newscope, case newscope of
-                    Just HOI4Country -> Just MsgROOTCountry
-                    Just HOI4ScopeState -> Just MsgROOTState
-                    Just HOI4UnitLeader -> Just MsgROOTUnitLeader
-                    Just HOI4Operative -> Just MsgROOTOperative
+                    Just HOI4Country -> Just MsgROOTSCOPECountry
+                    Just HOI4ScopeState -> Just MsgROOTSCOPEState
+                    Just HOI4UnitLeader -> Just MsgROOTSCOPEUnitLeader
+                    Just HOI4Operative -> Just MsgROOTSCOPEOperative
                     Just HOI4TradeNode -> Just MsgROOTTradeNode
                     Just HOI4Geographic -> Just MsgROOTGeographic
                     _ -> Nothing) -- warning printed below
         "prev" -> do --PREV
                 newscope <- getCurrentScope
                 return (newscope, case newscope of
-                    Just HOI4Country -> Just MsgPREVCountry
-                    Just HOI4ScopeState -> Just MsgPREVState
-                    Just HOI4Operative -> Just MsgPREVOperative
-                    Just HOI4UnitLeader -> Just MsgPREVUnitLeader
+                    Just HOI4Country -> Just MsgPREVSCOPECountry
+                    Just HOI4ScopeState -> Just MsgPREVSCOPEState
+                    Just HOI4Operative -> Just MsgPREVSCOPEOperative
+                    Just HOI4UnitLeader -> Just MsgPREVSCOPEUnitLeader
                     Just HOI4TradeNode -> Just MsgPREVTradeNode
                     Just HOI4Geographic -> Just MsgPREVGeographic
-                    Just HOI4From -> Just MsgFROM -- Roll with it
+                    Just HOI4From -> Just MsgFROMSCOPE -- Roll with it
                     _ -> Nothing) -- warning printed below
-        "from" -> return (Just HOI4From, Just MsgFROM) -- FROM / Should be some way to have different message depending on if it is event or decison, etc.
+        "from" -> return (Just HOI4From, Just MsgFROMSCOPE) -- FROM / Should be some way to have different message depending on if it is event or decison, etc.
         _ -> trace (f ++ ": compoundMessagePronoun: don't know how to handle head " ++ T.unpack head)
              $ return (Nothing, undefined)
     case params of
@@ -1593,7 +1595,7 @@ ppAiWillDo (AIWillDo mbase mods) = do
 -- | Extract the appropriate message(s) from a @modifier@ section within an
 -- @ai_will_do@ clause.
 ppAiMod :: (HOI4Info g, Monad m) => AIModifier -> PPT g m IndentedMessages
-ppAiMod (AIModifier Nothing (Just multiplier) triggers) = do
+ppAiMod (AIModifier (Just multiplier) Nothing triggers) = do
     triggers_pp'd <- ppMany triggers
     case triggers_pp'd of
         [(i, triggerMsg)] -> do
@@ -1602,7 +1604,7 @@ ppAiMod (AIModifier Nothing (Just multiplier) triggers) = do
         _ -> withCurrentIndentZero $ \i -> return $
             (i, MsgAIFactorHeader multiplier)
             : map (first succ) triggers_pp'd -- indent up
-ppAiMod (AIModifier (Just addition) Nothing triggers) = do
+ppAiMod (AIModifier Nothing (Just addition) triggers) = do
     triggers_pp'd <- ppMany triggers
     case triggers_pp'd of
         [(i, triggerMsg)] -> do
@@ -2042,6 +2044,24 @@ triggerEvent evtType stmt@[pdx| %_ = @scr |]
                         return $ MsgTriggerEventTime evtType_t msgid loc tottimer
                     else
                         return $ MsgTriggerEvent evtType_t msgid loc
+                _ -> return $ preMessage stmt
+triggerEvent evtType stmt@[pdx| %_ = ?!rid |]
+    = msgToPP =<< pp_trigger_event =<< addLine newTriggerEvent rid
+    where
+        addLine :: TriggerEvent -> Maybe (Either Int Text) -> PPT g m TriggerEvent
+        addLine evt eeid
+            | Just eid <- either (\n -> T.pack (show (n::Int))) id <$> eeid
+            = do
+                mevt_t <- getEventTitle eid
+                return evt { e_id = Just eid, e_title_loc = mevt_t }
+        addLine evt _ = return evt
+        pp_trigger_event :: TriggerEvent -> PPT g m ScriptMessage
+        pp_trigger_event evt = do
+            evtType_t <- messageText evtType
+            case e_id evt of
+                Just msgid -> do
+                    let loc = fromMaybe msgid (e_title_loc evt)
+                    return $ MsgTriggerEvent evtType_t msgid loc
                 _ -> return $ preMessage stmt
 triggerEvent _ stmt = preStatement stmt
 
@@ -4263,14 +4283,8 @@ newABC = HOI4AddBC "" Nothing False Nothing
 
 addBuildingConstruction :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 addBuildingConstruction stmt@[pdx| %_ = @scr |] =
---    let leveltype = foldl' levelCheck HOI4AddBC scr in
     msgToPP =<< pp_abc (foldl' addLine newABC scr)
     where
---        levelCheck :: HOI4AddBC -> GenericStatement -> HOI4ABCLevel
---        levelCheck lvl [pdx| level = !levelint |] = lvl HOI4ABCLevelSimple
---        levelCheck lvl [pdx| level = $levelvar |] = lvl HOI4ABCLevelVariable
---        levelcheck lvl stmt = lvl
-
         addLine :: HOI4AddBC -> GenericStatement -> HOI4AddBC
         addLine abc [pdx| type = $build |] = abc { addbc_type = build }
         addLine abc stmt@[pdx| level = %rhs |] =
@@ -4296,7 +4310,7 @@ addBuildingConstruction stmt@[pdx| %_ = @scr |] =
         pp_abc abc@HOI4AddBC{addbc_type = building, addbc_level = Just amountvar} = do
             buildingLoc <- getGameL10n building
             let provform = case addbc_province abc of
-                    Just (HOI4ABCProvSimple id) ->
+                    Just (HOI4ABCProvSimple id) -> -- plural (length id) "province" "provinces"
                         T.pack $ concat [" to the province (" , intercalate "), (" (map (show . round) id),")"]
                     Just (HOI4ABCProvAll all bord) -> " to all provinces on a border."
                     _ -> ""
@@ -4317,3 +4331,70 @@ hasGovernmentReforTier :: (HOI4Info g, Monad m) => StatementHandler g m
 hasGovernmentReforTier stmt@(Statement _ OpEq (CompoundRhs [Statement (GenericLhs tier []) OpEq (GenericRhs "yes" [])])) | T.isPrefixOf "tier_" tier =
     msgToPP $ MsgHasReformTier $ (read (T.unpack $ T.drop 5 tier) :: Double)
 hasGovernmentReforTier stmt = (trace $ "Not handled in hasGovernmentReforTier: " ++ show stmt) $ preStatement stmt
+
+----------------------------------
+-- Handler for add_named_threat --
+----------------------------------
+foldCompound "addNamedThreat" "NamedThreat" "nt"
+    []
+    [CompField "threat" [t|Double|] Nothing True
+    ,CompField "name" [t|Text|] Nothing True
+    ]
+    [|  do
+        threatLoc <- getGameL10n _name
+        tensionLoc <- getGameL10n "WORLD_TENSION_NAME"
+        return $ MsgAddNamedThreat tensionLoc _threat threatLoc
+    |]
+
+----------------------------------
+-- Handler for create_wargoal --
+----------------------------------
+data CreateWG = CreateWG
+    {   wg_type :: Maybe Text
+    ,   wg_type_loc :: Maybe Text
+    ,   wg_target_flag :: Maybe Text
+    ,   wg_expire :: Maybe Double
+    ,   wg_generator :: Maybe Text
+    ,   wg_generators :: Maybe Int
+    } deriving Show
+
+newCWG :: CreateWG
+newCWG = CreateWG Nothing Nothing Nothing Nothing Nothing Nothing
+
+createWargoal :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+createWargoal stmt@[pdx| %_ = @scr |] =
+    msgToPP . pp_create_wg =<< foldM addLine newCWG scr
+    where
+        addLine :: CreateWG -> GenericStatement -> PPT g m CreateWG
+        addLine cwg [pdx| type = $wargoal |]
+            = (\wgtype_loc -> cwg
+                   { wg_type = Just wargoal
+                   , wg_type_loc = Just wgtype_loc })
+              <$> getGameL10n wargoal
+        addLine cwg stmt@[pdx| target = $target |]
+            = (\target_loc -> cwg
+                  { wg_target_flag = target_loc })
+              <$> eflag (Just HOI4Country) (Left target)
+        addLine cwg [pdx| expire = %rhs |]
+            = return cwg { wg_expire = floatRhs rhs }
+--        addLine cwg stmts@[pdx| generator = $txt |]
+--            = return cwg { wg_generator = Just txt} --Need to deal with existing variables here
+--        addLine cwg stmts@[pdx| generator = @array |]
+--            = (\provs -> cwg
+--                  { wg_generators = Just provs})
+--              <$> (mapM provFromArray array)
+        addLine cwg _
+            = return cwg
+--        provFromArray (StatementBare (IntLhs e)) = e
+        pp_create_wg :: CreateWG -> ScriptMessage
+        pp_create_wg cwg =
+            case (wg_type cwg, wg_type_loc cwg,
+                     wg_target_flag cwg,
+                     wg_expire cwg) of
+                (Nothing, _, _, _) -> preMessage stmt -- need WG type
+                (_, _, Nothing, _) -> preMessage stmt -- need target
+                (_, Just wgtype_loc, Just target_flag, Just days) -> MsgCreateWGDuration wgtype_loc target_flag days
+                (Just wgtype, Nothing, Just target_flag, Just days) -> MsgCreateWGDuration wgtype target_flag days
+                (_, Just wgtype_loc, Just target_flag, Nothing) -> MsgCreateWG wgtype_loc target_flag
+                (Just wgtype, Nothing, Just target_flag, Nothing) -> MsgCreateWG wgtype target_flag
+createWargoal stmt = preStatement stmt

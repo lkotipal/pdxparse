@@ -25,7 +25,7 @@ module MessageTools (
     -- * Gain/lose
     -- | These functions hardcode their message fragments. They will have to
     -- be duplicated for languages other than English.
-    ,   gainOrLose, gainsOrLoses
+    ,   gainOrLose, gainsOrLoses, increasedOrDecreased
     -- * Advisor text helpers
     ,   advisorDiscountText
     -- * Time formatting
@@ -37,7 +37,7 @@ module MessageTools (
     -- * If-then-else
     ,   ifThenElse, ifThenElseT
     -- * General text formatting
-    ,   iquotes, quotes, bold, boldText
+    ,   iquotes, quotes, bold, boldText, italic, italicText
     -- * The 'ppNumSep' number formatting method
     ,   PPSep (..)
     ,   module Text.Shakespeare.I18N
@@ -229,6 +229,12 @@ gainsOrLoses :: (Ord n, Num n) => n -> Text
 gainsOrLoses n | n < 0     = "loses"
                | otherwise = "gains"
 
+-- | Say "increased" or "decreased" (with that capitalisation) depending on whether the
+-- numeric argument is positive or negative (respectively).
+increasedOrDecreased :: (Ord n, Num n) => n -> Text
+increasedOrDecreased n | n < 0     = "decreased"
+                       | otherwise = "increased"
+
 -- | Format advisor discount text (or empty if none)
 advisorDiscountText :: Double -> Doc
 advisorDiscountText 0 = ""
@@ -304,8 +310,11 @@ quotes :: Text -> Doc
 quotes = PP.enclose "" "" . Doc.strictText
 
 ---- Set doc in italics.
---italic :: Doc -> Doc
---italic = enclose "''" "''"
+italic :: Doc -> Doc
+italic = PP.enclose "''" "''"
+
+italicText :: Text -> Text
+italicText = Doc.doc2text . italic . Doc.strictText
 
 -- | Set doc in boldface. Take care: if the text passed to this begins or ends
 -- with an apostrophe, you may get incorrect results. Mixing with italics,

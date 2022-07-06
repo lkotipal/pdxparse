@@ -221,11 +221,15 @@ data HOI4EventSource =
       HOI4EvtSrcImmediate Text                       -- Immediate effect of an event (arg is event ID)
     | HOI4EvtSrcAfter Text                           -- After effect of an event (arg is event ID)
     | HOI4EvtSrcOption Text Text                     -- Effect of choosing an event option (args are event ID and option ID)
-    | HOI4EvtSrcDecision Text Text                   -- Effect of taking a decision (args are id and localized decision text)
+    | HOI4EvtSrcDecComplete Text Text                   -- Effect of completing a decision (args are id and localized decision text)
+    | HOI4EvtSrcDecRemove Text Text                   -- Effect of taking a timed decision and letting it finish (args are id and localized decision text)
+    | HOI4EvtSrcDecCancel Text Text                   -- Effect of taking a decision and it being canceled (args are id and localized decision text)
+    | HOI4EvtSrcDecTimeout Text Text                   -- Effect of taking a decision/mission and letting it timeout (args are id and localized decision text)
     | HOI4EvtSrcOnAction Text HOI4EventWeight         -- An effect from on_actions (args are the trigger and weight)
 --    | HOI4EvtSrcDisaster Text Text HOI4EventWeight    -- Effect of a disaster (args are id, trigger and weight)
 --    | HOI4EvtSrcMission Text                         -- Effect of completing a mission (arg is the mission id)
-    | HOI4EvtSrcNationalFocus Text Text
+    | HOI4EvtSrcNFComplete Text Text                -- Effect of completing a national focus
+    | HOI4EvtSrcNFSelect Text Text                  -- Effect of selecting a national focus
     deriving Show
 
 type HOI4EventTriggers = HashMap Text [HOI4EventSource]
@@ -286,6 +290,7 @@ data HOI4DecisionIcon
 data HOI4Decision = HOI4Decision
     {   dec_name :: Text -- ^ Decision ID
     ,   dec_name_loc :: Text -- ^ Localized decision name
+    ,   dec_desc :: Maybe Text -- ^ Descriptive text (shown on hover)
     ,   dec_icon :: Maybe HOI4DecisionIcon -- ^ Icon for the decision
     ,   dec_allowed :: Maybe GenericScript -- ^ Conditions that allow the player/AI to
                                            --   take the decision
@@ -382,8 +387,9 @@ data HOI4MissionTreeBranch = HOI4MissionTreeBranch
 -}
 data HOI4NationalFocus = HOI4NationalFocus
     {   nf_id :: Text
-    ,   nf_id_loc :: Text
-    ,   nf_id_desc :: Maybe Text
+    ,   nf_name_loc :: Text
+    ,   nf_name_desc :: Maybe Text
+    ,   nf_text :: Maybe Text
     ,   nf_icon :: Maybe Text
     ,   nf_cost :: Double
     ,   nf_allow_branch  :: Maybe Text
