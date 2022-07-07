@@ -49,7 +49,7 @@ import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import Abstract -- everything
 import qualified Doc
-import Messages -- everything
+import HOI4.Messages -- everything
 import MessageTools (plural)
 import QQ (pdx)
 import SettingsTypes -- everything
@@ -554,290 +554,81 @@ handlersNumericIcons = Tr.fromList
         ,("yearly_tribal_allegiance" , numericIcon "tribal allegiance" MsgTribalAllegianceBonus)
         ,("years_of_income"          , numericIcon "ducats" MsgYearsOfIncome)
         -- Used in ideas and other bonuses, omit "gain/lose" in l10n
-        ,("accepted_culture_threshold"        , numericIcon "accepted culture threshold" MsgAccCultureThreshold)
-        ,("adm_tech_cost_modifier"            , numericIcon "adm tech cost" MsgADMTechCost)
-        ,("advisor_cost"                      , numericIcon "advisor cost" MsgAdvisorCost)
-        ,("advisor_pool"                      , numericIcon "advisor pool" MsgPossibleAdvisors)
-        ,("ae_impact"                         , numericIcon "ae impact" MsgAEImpact)
-        ,("army_tradition_decay"              , numericIcon "army tradition decay" MsgArmyTraditionDecay)
-        ,("artillery_cost"                    , numericIcon "artillery cost" MsgArtilleryCost)
-        ,("artillery_power"                   , numericIcon "artillery power" MsgArtilleryCombatAbility)
-        ,("blockade_efficiency"               , numericIcon "blockade efficiency" MsgBlockadeEfficiency)
-        ,("build_cost"                        , numericIcon "construction cost" MsgBuildCost)
-        ,("caravan_power"                     , numericIcon "caravan power" MsgCaravanPower)
-        ,("cavalry_cost"                      , numericIcon "cavalry cost" MsgCavalryCost)
-        ,("cavalry_power"                     , numericIcon "cavalry power" MsgCavalryCombatAbility)
-        ,("church_power_modifier"             , numericIcon "church power" MsgChurchPowerModifier)
-        ,("colonists"                         , numericIcon "colonists" MsgColonists)
-        ,("core_creation"                     , numericIcon "core creation cost" MsgCoreCreationCost)
-        ,("culture_conversion_cost"           , numericIcon "culture conversion cost" MsgCultureConvCost)
-        ,("defensiveness"                     , numericIcon "defensiveness" MsgFortDefense)
-        ,("devotion"                          , numericIcon "devotion" MsgYearlyDevotion)
-        ,("diplomatic_annexation_cost"        , numericIcon "diplomatic annexation cost" MsgDiploAnnexCost)
-        ,("diplomatic_reputation"             , numericIcon "diplomatic reputation" MsgDiploRep)
-        ,("diplomatic_upkeep"                 , numericIcon "diplomatic upkeep" MsgDiploRelations)
-        ,("diplomats"                         , numericIcon "diplomats" MsgDiplomats)
-        ,("dip_tech_cost_modifier"            , numericIcon "dip tech cost" MsgDIPTechCost)
-        ,("discipline"                        , numericIcon "discipline" MsgDiscipline)
-        ,("discovered_relations_impact"       , numericIcon "discovered relations impact" MsgCovertActionRelationImpact)
-        ,("embargo_efficiency"                , numericIcon "embargo efficiency" MsgEmbargoEff)
-        ,("enemy_core_creation"               , numericIcon "enemy core creation" MsgHostileCoreCreation)
-        ,("envoy_travel_time"                 , numericIcon "envoy travel time" MsgEnvoyTravelTime)
-        ,("fabricate_claims_cost"             , numericIcon "cost to fabricate claims" MsgCostToFabricateClaims)
-        ,("fabricate_claims_time"             , numericIcon "time to fabricate claims" MsgTimeToFabricateClaims)
-        ,("fort_maintenance_modifier"         , numericIcon "fort maintenance" MsgFortMaintenance)
-        ,("free_leader_pool"                  , numericIcon "free leader pool" MsgLeadersWithoutUpkeep)
-        ,("galley_power"                      , numericIcon "galley power" MsgGalleyCombatAbility)
-        ,("garrison_size"                     , numericIcon "garrison size" MsgGarrisonSize)
-        ,("global_autonomy"                   , numericIcon "global autonomy" MsgGlobalAutonomy)
-        ,("global_colonial_growth"            , numericIcon "global settler increase" MsgGlobalSettlers)
-        ,("global_heretic_missionary_strength", numericIcon "global heretic missionary strength" MsgMissionaryStrengthVsHeretics)
-        ,("global_manpower_modifier"          , numericIcon "national manpower modifier" MsgNationalManpowerMod)
-        ,("global_missionary_strength"        , numericIcon "missionary strength" MsgMissionaryStrength)
-        ,("global_regiment_cost"              , numericIcon "regiment cost" MsgRegimentCost)
-        ,("global_regiment_recruit_speed" {-sic-}, numericIcon "global regiment recruit speed" MsgRecruitmentTime)
-        ,("global_ship_cost"                  , numericIcon "ship cost" MsgGlobalShipCost)
-        ,("global_ship_recruit_speed" {- sic -}, numericIcon "shipbuilding time" MsgShipbuildingTime)
-        ,("global_ship_repair"                , numericIcon "global ship repair" MsgGlobalShipRepair)
-        ,("global_spy_defence"                , numericIcon "global spy defence" MsgGlobalSpyDefence)
-        ,("global_tariffs"                    , numericIcon "global tariffs" MsgGlobalTariffs)
-        ,("global_tax_modifier"               , numericIcon "global tax modifier" MsgGlobalTaxModifier)
-        ,("global_trade_goods_size_modifier"  , numericIcon "goods produced modifier" MsgGoodsProducedMod)
-        ,("global_trade_power"                , numericIcon "global trade power" MsgGlobalTradePower)
-        ,("global_unrest"                     , numericIcon "national unrest" MsgNationalUnrest)
-        ,("heavy_ship_power"                  , numericIcon "heavy ship power" MsgHeavyShipCombatAbility)
-        ,("hostile_attrition"                 , numericIcon "attrition for enemies" MsgAttritionForEnemies)
-        ,("idea_cost"                         , numericIcon "idea cost" MsgIdeaCost)
-        ,("improve_relation_modifier"         , numericIcon "improve relations" MsgImproveRelations)
-        ,("infantry_cost"                     , numericIcon "infantry cost" MsgInfantryCost)
-        ,("infantry_power"                    , numericIcon "infantry power" MsgInfantryCombatAbility)
-        ,("inflation_action_cost"             , numericIcon "reduce inflation cost" MsgReduceInflationCost)
-        ,("inflation_reduction"               , numericIcon "inflation reduction" MsgYearlyInflationReduction)
-        ,("interest"                          , numericIcon "interest" MsgInterestPerAnnum)
-        ,("land_maintenance_modifier"         , numericIcon "land maintenance" MsgLandMaintenanceMod)
-        ,("land_attrition"                    , numericIcon "land attrition" MsgLandAttrition)
-        ,("land_forcelimit_modifier"          , numericIcon "land forcelimit modifier" MsgLandForcelimitMod)
-        ,("leader_land_fire"                  , numericIcon "land leader fire" MsgGainLandLeaderFire)
-        ,("leader_land_shock"                 , numericIcon "land leader shock" MsgGainLandLeaderShock)
-        ,("leader_land_manuever" {- sic -}    , numericIcon "land leader maneuver" MsgGainLandLeaderManeuver)
-        ,("leader_land_siege"                 , numericIcon "leader siege" MsgGainLandLeaderSiege)
-        ,("leader_naval_fire"                 , numericIcon "naval leader fire" MsgGainNavalLeaderFire)
-        ,("leader_naval_manuever" {- sic -}   , numericIcon "naval leader maneuver" MsgGainNavalLeaderManeuver)
-        ,("leader_naval_shock"                , numericIcon "naval leader shock" MsgGainNavalLeaderShock)
-        ,("light_ship_power"                  , numericIcon "light ship power" MsgLightShipCombatAbility)
-        ,("manpower_recovery_speed"           , numericIcon "manpower recovery speed" MsgManpowerRecoverySpeed)
-        ,("mercenary_cost"                    , numericIcon "mercenary cost" MsgMercCost)
-        ,("merc_maintenance_modifier"         , numericIcon "merc maintenance modifier" MsgMercMaintenance)
-        ,("merchants"                         , numericIcon "merchants" MsgMerchants)
-        ,("mil_tech_cost_modifier"            , numericIcon "mil tech cost" MsgMILTechCost)
-        ,("missionaries"                      , numericIcon "missionaries" MsgMissionaries)
-        ,("missionary_maintenance_cost"       , numericIcon "missionary maintenance cost" MsgMissionaryMaintenanceCost)
-        ,("monthly_fervor_increase"           , numericIcon "monthly fervor" MsgMonthlyFervor)
-        ,("movement_speed"                    , numericIcon "movement speed" MsgMovementSpeed)
-        ,("naval_attrition"                   , numericIcon "naval attrition" MsgNavalAttrition)
-        ,("naval_forcelimit_modifier"         , numericIcon "naval forcelimit" MsgNavalForcelimitMod)
-        ,("naval_maintenance_modifier"        , numericIcon "naval maintenance" MsgNavalMaintenanceMod)
-        ,("naval_morale"                      , numericIcon "morale of navies" MsgMoraleOfNavies)
-        ,("navy_tradition"                    , numericIcon "navy tradition" MsgYearlyNavyTradition)
-        ,("navy_tradition_decay"              , numericIcon "navy tradition decay" MsgNavyTraditionDecay)
-        ,("papal_influence"                   , numericIconBonus "papal influence" MsgPapalInfluence MsgYearlyPapalInfluence)
-        ,("possible_mercenaries"              , numericIcon "available mercenaries" MsgAvailableMercs)
-        ,("prestige"                          , numericIconBonusAllowTag "prestige" MsgPrestige MsgPrestigeAs MsgYearlyPrestige)
-        ,("prestige_decay"                    , numericIcon "prestige decay" MsgPrestigeDecay)
-        ,("prestige_from_land"                , numericIcon "prestige from land" MsgPrestigeFromLand)
-        ,("prestige_from_naval"               , numericIcon "prestige from naval" MsgPrestigeFromNaval)
-        ,("privateer_efficiency"              , numericIcon "privateer efficiency" MsgPrivateerEff)
-        ,("production_efficiency"             , numericIconBonusAllowTag "production efficiency" MsgProdEff MsgProdEffAs MsgProdEffBonus)
-        ,("prosperity"                        , numericIcon "prosperity" MsgProsperity)
-        ,("province_warscore_cost"            , numericIcon "province warscore cost" MsgProvinceWarscoreCost)
-        ,("rebel_support_efficiency"          , numericIcon "reform desire" MsgRebelSupportEff)
-        ,("recover_army_morale_speed"         , numericIcon "recover army morale speed" MsgRecoverArmyMoraleSpeed)
-        ,("reinforce_speed"                   , numericIcon "reinforce speed" MsgReinforceSpeed)
-        ,("relations_decay_of_me"             , numericIcon "better relations over time" MsgBetterRelationsOverTime)
-        ,("ship_durability"                   , numericIcon "ship durability" MsgShipDurability)
-        ,("siege_ability"                     , numericIcon "siege ability" MsgSiegeAbility)
-        ,("spy_offence"                       , numericIcon "spy offense" MsgSpyOffense) -- US spelling in game
-        ,("stability_cost_modifier"           , numericIcon "stability cost" MsgStabilityCost)
-        ,("technology_cost"                   , numericIcon "technology cost" MsgTechCost)
-        ,("tolerance_heathen"                 , numericIcon "tolerance heathen" MsgToleranceHeathen)
-        ,("tolerance_heretic"                 , numericIcon "tolerance heretic" MsgToleranceHeretic)
-        ,("tolerance_own"                     , numericIcon "tolerance own" MsgToleranceTrue)
-        ,("trade_range_modifier"              , numericIcon "trade range" MsgTradeRange)
-        ,("trade_steering"                    , numericIcon "trade steering" MsgTradeSteering)
-        ,("unjustified_demands"               , numericIcon "unjustified demands" MsgUnjustifiedDemands)
-        ,("vassal_forcelimit_bonus"           , numericIcon "vassal forcelimit bonus" MsgVassalForcelimitContribution)
-        ,("vassal_income"                     , numericIcon "income from vassals" MsgIncomeFromVassals)
-        ,("war_exhaustion_cost"               , numericIcon "war exhaustion cost" MsgWarExhaustionCost)
-        ,("years_of_nationalism"              , numericIcon "years of separatism" MsgYearsOfSeparatism)
-        ,("admiral_cost"                      , numericIcon "admiral cost" MsgAdmiralCost)
-        ,("allowed_marine_fraction"           , numericIcon "marines force limit" MsgAllowedMarineFraction)
-        ,("allowed_num_of_buildings"          , numericIcon "possible number of buildings" MsgAllowedNumOfBuildings)
-        ,("amount_of_banners"                 , numericIcon "possible manchu banners" MsgAmountOfBanners)
-        ,("appoint_cardinal_cost"             , numericIcon "appoint cardinal cost" MsgAppointCardinalCost)
-        ,("army_tradition_from_battle"        , numericIcon "army tradition from battles" MsgArmyTraditionFromBattle)
-        ,("artillery_fire"                    , numericIcon "artillery fire" MsgArtilleryFire)
-        ,("autonomy_change_time"              , numericIcon "autonomy change cooldown" MsgAutonomyChangeTime)
-        ,("backrow_artillery_damage"          , numericIcon "artillery damage from back row" MsgBackrowArtilleryDamage)
-        ,("brahmins_hindu_loyalty_modifier"   , numericIcon "brahmins loyalty" MsgBrahminsHinduLoyaltyModifier)
-        ,("brahmins_muslim_loyalty_modifier"  , numericIcon "brahmins loyalty" MsgBrahminsMuslimLoyaltyModifier)
-        ,("build_time"                        , numericIcon "construction time" MsgBuildTime)
-        ,("burghers_influence_modifier"       , numericIcon "burghers influence" MsgBurghersInfluenceModifier)
-        ,("burghers_loyalty_modifier"         , numericIcon "burghers loyalty" MsgBurghersLoyaltyModifier)
-        ,("capture_ship_chance"               , numericIcon "chance to capture enemy ships" MsgCaptureShipChance)
-        ,("cav_to_inf_ratio"                  , numericIcon "cavalry to infantry ratio" MsgCavToInfRatio)
-        ,("cavalry_flanking"                  , numericIcon "cavalry flanking ability" MsgCavalryFlanking)
-        ,("center_of_trade_upgrade_cost"      , numericIcon "center of trade upgrade cost" MsgCenterOfTradeUpgradeCost)
-        ,("church_loyalty_modifier"           , numericIcon "clergy loyalty" MsgChurchLoyaltyModifier)
-        ,("curia_treasury_contribution"       , numericIcon "curia treasury contribution" MsgCuriaTreasuryContribution)
-        ,("dhimmi_loyalty_modifier"           , numericIcon "dhimmi loyalty" MsgDhimmiLoyaltyModifier)
-        ,("disengagement_chance"              , numericIcon "ship disengagement chance" MsgDisengagementChance)
-        ,("drill_decay_modifier"              , numericIcon "regiment drill loss" MsgDrillDecayModifier)
-        ,("drill_gain_modifier"               , numericIcon "army drill gain modifier" MsgDrillGainMod)
-        ,("enforce_religion_cost"             , numericIcon "cost of enforcing religion through war" MsgEnforceReligionCost)
-        ,("expel_minorities_cost"             , numericIcon "expel minorities cost" MsgExpelMinoritiesCost)
-        ,("female_advisor_chance"             , numericIcon "female advisor chance" MsgFemaleAdvisorChance)
-        ,("fire_damage_received"              , numericIcon "fire damage received" MsgFireDamageReceived)
-        ,("flagship_cost"                     , numericIcon "flagship cost" MsgFlagshipCost)
-        ,("free_adm_policy"                   , numericIcon "administrative free policies" MsgFreeAdmPolicy)
-        ,("free_dip_policy"                   , numericIcon "diplomatic free policies" MsgFreeDipPolicy)
-        ,("free_mil_policy"                   , numericIcon "military free policies" MsgFreeMilPolicy)
-        ,("galley_cost"                       , numericIcon "galley cost" MsgGalleyCost)
-        ,("general_cost"                      , numericIcon "general cost" MsgGeneralCost)
-        ,("global_garrison_growth"            , numericIcon "national garrison growth" MsgGlobalGarrisonGrowth)
-        ,("global_naval_engagement_modifier"  , numericIcon "global naval engagement" MsgGlobalNavalEngagementModifier)
-        ,("global_religious_conversion_resistance", numericIcon "resistance to reformation" MsgGlobalReligiousConversionResistance)
-        ,("global_sailors_modifier"           , numericIcon "national sailors modifier" MsgGlobalSailorsModifier)
-        ,("global_ship_trade_power"           , numericIcon "ship trade power" MsgGlobalShipTradePower)
-        ,("global_supply_limit_modifier"      , numericIcon "supply limit modifier" MsgGlobalSupplyLimitModifier)
-        ,("governing_capacity_modifier"       , numericIcon "governing capacity modifier" MsgGoverningCapacityModifier)
-        ,("harsh_treatment_cost"              , numericIcon "harsh treatment cost" MsgHarshTreatmentCost)
-        ,("imperial_authority"                , numericIcon "imperial authority growth modifier" MsgImperialAuthorityGrowthModifier)
-        ,("imperial_authority_value"          , numericIcon "imperial authority modifier" MsgImperialAuthorityValue)
-        ,("innovativeness_gain"               , numericIcon "innovativeness gain" MsgInnovativenessGain)
-        ,("justify_trade_conflict_cost"       , numericIcon "cost to justify trade conflict" MsgJustifyTradeConflictCost)
-        ,("leader_siege"                      , numericIcon "leader siege" MsgLeaderSiege)
-        ,("legitimate_subject_elector"        , numericIcon "legitimate subject elector" MsgLegitimateSubjectElector)
-        ,("liberty_desire_from_subject_development", numericIcon "liberty desire from subjects development" MsgLibertyDesireFromSubjectDevelopment)
-        ,("light_ship_cost"                   , numericIcon "light ship cost" MsgLightShipCost)
-        ,("local_friendly_movement_speed"     , numericIcon "friendly movement speed" MsgLocalFriendlyMovementSpeed)
-        ,("local_missionary_maintenance_cost" , numericIcon "local missionary maintenance" MsgLocalMissionaryMaintenanceCost)
-        ,("local_regiment_cost"               , numericIcon "local regiment cost" MsgLocalRegimentCost)
-        ,("local_religious_conversion_resistance", numericIcon "resistance to reformation" MsgLocalReligiousConversionResistance)
-        ,("local_sailors_modifier"            , numericIcon "local sailors modifier" MsgLocalSailorsModifier)
-        ,("local_ship_cost"                   , numericIcon "local ship cost" MsgLocalShipCost)
-        ,("local_ship_repair"                 , numericIcon "local ship repair" MsgLocalShipRepair)
-        ,("loot_amount"                       , numericIcon "looting speed" MsgLootAmount)
-        ,("max_revolutionary_zeal"            , numericIcon "maximum revolutionary zeal" MsgMaxRevolutionaryZeal)
-        ,("mercenary_manpower"                , numericIcon "mercenary manpower" MsgMercenaryManpower)
-        ,("migration_cooldown"                , numericIcon "migration cooldown" MsgMigrationCooldown)
-        ,("min_autonomy_in_territories"       , numericIcon "minimum autonomy in territories" MsgMinAutonomyInTerritories)
-        ,("monarch_diplomatic_power"          , numericIcon "monarch diplomatic skill" MsgMonarchDiplomaticPower)
-        ,("monarch_military_power"            , numericIcon "monarch military skill" MsgMonarchMilitaryPower)
-        ,("monthly_piety"                     , numericIcon "monthly piety" MsgMonthlyPiety)
-        ,("mr_guilds_influence"               , numericIcon "guilds influence" MsgMrGuildsInfluence)
-        ,("mr_traders_influence"              , numericIcon "traders influence" MsgMrTradersInfluence)
-        ,("native_assimilation"               , numericIcon "native assimilation" MsgNativeAssimilation)
-        ,("native_uprising_chance"            , numericIcon "native uprising chance" MsgNativeUprisingChance)
-        ,("naval_tradition_from_battle"       , numericIcon "naval tradition from battles" MsgNavalTraditionFromBattle)
-        ,("naval_tradition_from_trade"        , numericIcon "naval tradition from protecting trade" MsgNavalTraditionFromTrade)
-        ,("nobles_influence_modifier"         , numericIcon "nobility influence" MsgNoblesInfluenceModifier)
-        ,("nobles_loyalty_modifier"           , numericIcon "nobility loyalty" MsgNoblesLoyaltyModifier)
-        ,("own_coast_naval_combat_bonus"      , numericIcon "naval combat bonus off owned coast" MsgOwnCoastNavalCombatBonus)
-        ,("placed_merchant_power"             , numericIcon "merchant trade power" MsgPlacedMerchantPower)
-        ,("possible_adm_policy"               , numericIcon "administrative possible policies" MsgPossibleAdmPolicy)
-        ,("possible_dip_policy"               , numericIcon "diplomatic possible policies" MsgPossibleDipPolicy)
-        ,("possible_mil_policy"               , numericIcon "military possible policies" MsgPossibleMilPolicy)
-        ,("possible_policy"                   , numericIcon "possible policies" MsgPossiblePolicy)
-        ,("power_projection_from_insults"     , numericIcon "power projection from insults" MsgPowerProjectionFromInsults)
-        ,("pr_captains_influence"             , numericIcon "captains influence" MsgPrCaptainsInfluence)
-        ,("province_has_center_of_trade_of_level" , numericIcon "center of trade" MsgProviceHasCenterOfTrade)
-        ,("reelection_cost"                   , numericIcon "reelection cost" MsgReelectionCost)
-        ,("reform_progress_growth"            , numericIcon "reform progress growth" MsgReformProgressGrowth)
-        ,("reinforce_cost_modifier"           , numericIcon "reinforce cost" MsgReinforceCostModifier)
-        ,("rival_border_fort_maintenance"     , numericIcon "fort maintenance on border with rival" MsgRivalBorderFortMaintenance)
-        ,("sailor_maintenance_modifer"        , numericIcon "sailor maintenance" MsgSailorMaintenanceModifer)
-        ,("sailors_recovery_speed"            , numericIcon "sailor recovery speed" MsgSailorsRecoverySpeed)
-        ,("same_culture_advisor_cost"         , numericIcon "cost of advisors with ruler's culture" MsgSameCultureAdvisorCost)
-        ,("shock_damage_received"             , numericIcon "shock damage received" MsgShockDamageReceived)
-        ,("siege_blockade_progress"           , numericIcon "blockade impact on siege" MsgSiegeBlockadeProgress)
-        ,("special_unit_forcelimit"           , numericIcon "special unit force limit" MsgSpecialUnitForcelimit)
-        ,("sunk_ship_morale_hit_recieved"     , numericIcon "morale hit when losing a ship" MsgSunkShipMoraleHitRecieved)
-        ,("trade_company_investment_cost"     , numericIcon "trade company investment cost" MsgTradeCompanyInvestmentCost)
-        ,("transport_cost"                    , numericIcon "transport cost" MsgTransportCost)
-        ,("treasure_fleet_income"             , numericIcon "treasure fleet income" MsgTreasureFleetIncome)
-        ,("vaisyas_loyalty_modifier"          , numericIcon "vaishyas loyalty" MsgVaisyasLoyaltyModifier)
-        ,("warscore_cost_vs_other_religion"   , numericIcon "war score cost vs other religions" MsgWarscoreCostVsOtherReligion)
-        ,("yearly_harmony"                    , numericIcon "yearly harmony increase" MsgYearlyHarmony)
-        ,("yearly_revolutionary_zeal"         , numericIcon "revolutionary zeal" MsgYearlyRevolutionaryZeal)
-        ,("accept_vassalization_reasons"      , numericIcon "vassalizatation acceptance" MsgAcceptVassalizationReasons)
-        ,("adm_advisor_cost"                  , numericIcon "administrative advisor cost" MsgAdmAdvisorCost)
-        ,("all_power_cost"                    , numericIcon "all power costs" MsgAllPowerCost)
-        ,("available_province_loot"           , numericIcon "available loot" MsgAvailableProvinceLoot)
-        ,("cavalry_fire"                      , numericIcon "cavalry fire" MsgCavalryFire)
-        ,("church_influence_modifier"         , numericIcon "clergy influence" MsgChurchInfluenceModifier)
-        ,("country_admin_power"               , numericIcon "monthly administrative power" MsgCountryAdminPower)
-        ,("curia_powers_cost"                 , numericIcon "curia powers cost" MsgCuriaPowersCost)
-        ,("dip_advisor_cost"                  , numericIcon "diplomatic advisor cost" MsgDipAdvisorCost)
-        ,("expand_administration_cost"        , numericIcon "expand administration cost" MsgExpandAdministrationCost)
-        ,("garrison_growth"                   , numericIcon "garrison growth" MsgGarrisonGrowth)
-        ,("governing_capacity"                , numericIcon "governing capacity" MsgGoverningCapacity)
-        ,("great_project_upgrade_cost"        , numericIcon "great project upgrade cost" MsgGreatProjectUpgradeCost)
-        ,("harmonization_speed"               , numericIcon "religious harmonization speed" MsgHarmonizationSpeed)
-        ,("infantry_shock"                    , numericIcon "infantry shock" MsgInfantryShock)
-        ,("institution_spread_from_true_faith", numericIcon "institution spread in true faith provinces" MsgInstitutionSpreadFromTrueFaith)
-        ,("jains_loyalty_modifier"            , numericIcon "jains loyalty" MsgJainsLoyaltyModifier)
-        ,("land_forcelimit"                   , numericIconBonus "land force limit" MsgLandForcelimit MsgLandForcelimitIncrease)
-        ,("leader_cost"                       , numericIcon "leader cost" MsgLeaderCost)
-        ,("local_build_time"                  , numericIcon "local construction time" MsgLocalBuildTime)
-        ,("local_core_creation"               , numericIcon "local core-creation cost" MsgLocalCoreCreation)
-        ,("local_sailors"                     , numericIcon "sailor increase" MsgLocalSailors)
-        ,("mercantilism_cost"                 , numericIcon "cost to promote mercantilism" MsgMercantilismCost)
-        ,("migration_cost"                    , numericIcon "migration cost" MsgMigrationCost)
-        ,("monarch_admin_power"               , numericIcon "monarch administrative skill" MsgMonarchAdminPower)
-        ,("monthly_federation_favor_growth"   , numericIcon "monthly federation favor growth" MsgMonthlyFederationFavorGrowth)
-        ,("monthly_karma"                     , numericIcon "monthly karma" MsgMonthlyKarma)
-        ,("monthly_militarized_society"       , numericIcon "militarization of state" MsgMonthlyMilitarizedSociety)
-        ,("monthly_reform_progress_modifier"  , numericIcon "monthly reform progress modifier" MsgMonthlyReformProgressModifier)
-        ,("monthly_splendor"                  , numericIcon "monthly splendor" MsgMonthlySplendor)
-        ,("patriarch_authority"               , numericIcon "patriarch authority" MsgPatriarchAuthority)
-        ,("promote_culture_cost"              , numericIcon "promote culture cost" MsgPromoteCultureCost)
-        ,("reduced_liberty_desire_on_same_continent", numericIcon "liberty desire in same continent subjects" MsgReducedLibertyDesireOnSameContinent)
-        ,("rival_change_cost"                 , numericIcon "change rival cost" MsgRivalChangeCost)
-        ,("ship_power_propagation"            , numericIcon "ship tradepower propagation" MsgShipPowerPropagation)
-        ,("stability_cost_to_declare_war"     , numericIcon "stability hit to declare war" MsgStabilityCostToDeclareWar)
-        ,("supply_limit_modifier"             , numericIcon "supply limit modifier" MsgSupplyLimitModifier)
-        ,("trade_value"                       , numericIcon "trade value" MsgTradeValue)
-        ,("tribal_development_growth"         , numericIcon "tribal development growth" MsgTribalDevelopmentGrowth)
-        ,("war_taxes_cost_modifier"           , numericIcon "war taxes cost" MsgWarTaxesCostModifier)
-        ,("yearly_patriarch_authority"        , numericIcon "yearly patriarch authority" MsgYearlyPatriarchAuthority)
-        ,("yearly_karma_decay"                , numericIcon "yearly karma decay" MsgYearlyKarmaDecay)
-        ,("heir_claim"                        , numericIcon "legitimacy" MsgHeirClaim)
-        ,("global_heathen_missionary_strength", numericIcon "missionary strength vs heathens" MsgGlobalHeathenMissionaryStrength)
-        ,("manpower_in_true_faith_provinces"  , numericIcon "manpower in true faith provinces" MsgManpowerInTrueFaithProvinces)
-        ,("blockade_force_required"           , numericIcon "blockade force required" MsgBlockadeForceRequired)
-        ,("free_city_imperial_authority"      , numericIcon "imperial authority from free cities" MsgFreeCityImperialAuthority)
-        ,("hostile_disembark_speed"           , numericIcon "hostile disembark time" MsgHostileDisembarkSpeed)
-        ,("local_religious_unity_contribution", numericIcon "local religious unity contribution" MsgLocalReligiousUnityContribution)
-        ,("all_estate_loyalty_equilibrium"    , numericIcon "all estates loyalty equilibrium" MsgAllEstateLoyaltyEquilibrium)
-        ,("global_manpower"                   , numericIcon "manpower" MsgGlobalManpower)
-        ,("global_prosperity_growth"          , numericIcon "global prosperity growth" MsgGlobalProsperityGrowth)
-        ,("hostile_fleet_attrition"           , numericIcon "hostile fleet attrition" MsgHostileFleetAttrition)
-        ,("local_gold_depletion_chance_modifier", numericIcon "local gold depletion chance modifier" MsgLocalGoldDepletionChanceModifier)
-        ,("local_great_project_upgrade_cost"  , numericIcon "great project upgrade cost" MsgLocalGreatProjectUpgradeCost)
-        ,("local_hostile_attrition"           , numericIcon "attrition for enemies" MsgLocalHostileAttrition)
-        ,("local_manpower"                    , numericIcon "local manpower" MsgLocalManpower)
-        ,("local_prosperity_growth"           , numericIcon "local prosperity growth" MsgLocalProsperityGrowth)
-        ,("local_years_of_nationalism"        , numericIcon "years of separatism" MsgLocalYearsOfNationalism)
-        ,("min_local_autonomy"                , numericIcon "minimum local autonomy" MsgMinLocalAutonomy)
-        ,("monthly_gold_inflation_modifier"   , numericIcon "monthly gold inflation modifier" MsgMonthlyGoldInflationModifier)
-        ,("monthly_heir_claim_increase"       , numericIcon "monthly heir claim increase" MsgMonthlyHeirClaimIncrease)
-        ,("move_capital_cost_modifier"        , numericIcon "move capital cost modifier" MsgMoveCapitalCostModifier)
-        ,("prestige_per_development_from_conversion", numericIcon "prestige per development from missionary" MsgPrestigePerDevelopmentFromConversion)
-        ,("state_governing_cost"              , numericIcon "state governing cost" MsgStateGoverningCost)
-        ,("tolerance_of_heathens_capacity"    , numericIcon "maximum tolerance of heathens" MsgToleranceOfHeathensCapacity)
-        ,("yearly_authority"                  , numericIcon "yearly authority" MsgYearlyAuthority)
-        ,("monthly_piety_accelerator"         , numericIcon "monthly piety accelerator" MsgMonthlyPietyAccelerator)
-        ,("movement_speed_in_fleet_modifier"  , numericIcon "fleet movement speed" MsgMovementSpeedInFleetModifier)
+        --general modifiers
+        ,("monthly_population"       , numericLoc "MODIFIER_MONTHLY_POPULATION" MsgModifier) -- % neutral?
+        ,("nuclear_production_factor" , numericLoc "MODIFIER_NUCLEAR_PRODUCTION_FACTOR" MsgModifier) -- % pos
+        ,("research_sharing_per_country_bonus" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS" MsgModifier) -- flat pos
+        ,("research_sharing_per_country_bonus_factor" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS_FACTOR" MsgModifier) -- % pos
+        ,("research_speed_factor"    , numericLoc "MODIFIER_RESEARCH_SPEED_FACTOR" MsgModifier) -- % pos
+        ,("local_resources_factor"   , numericLoc "MODIFIER_LOCAL_RESOURCES_FACTOR" MsgModifier) -- % pos
+        -- Politics modifiers
+        ,("min_export"               , numericLoc "MODIFIER_MIN_EXPORT_FACTOR" MsgModifier) -- flat neutral?
+        ,("trade_opinion_factor"     , numericLoc "MODIFIER_" MsgModifier) -- % pos
+        ,("party_popularity_stability_factor" , numericLoc " MODIFIER_STABILITY_POPULARITY_FACTOR" MsgModifier) -- % pos
+        ,("political_power_cost"     , numericLoc "MODIFIER_POLITICAL_POWER_COST" MsgModifier) -- flat neg
+        ,("political_power_gain"     , numericLoc "MODIFIER_POLITICAL_POWER_GAIN" MsgModifier) -- flat pos
+        ,("political_power_factor"   , numericLoc "MODIFIER_POLITICAL_POWER_FACTOR" MsgModifier) -- % pos
+        ,("stability_factor"         , numericLoc "MODIFIER_STABILITY_FACTOR" MsgModifier) -- flat pos
+        ,("stability_weekly"         , numericLoc "MODIFIER_STABILITY_WEEKLY" MsgModifier) -- flat pos
+        ,("stability_weekly_factor"  , numericLoc "MODIFIER_STABILITY_WEEKLY_FACTOR" MsgModifier) -- flat pos
+        ,("war_support_weekly"       , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY" MsgModifier) -- flat pos
+        ,("war_support_weekly_factor" , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY_FACTOR" MsgModifier) -- % pos
+        ,("drift_defence_factor"     , numericLoc "MODIFIER_DRIFT_DEFENCE_FACTOR" MsgModifier) -- % pos
+        -- Diplomacy
+        ,("generate_wargoal_tension" , numericLoc "MODIFIER_GENERATE_WARGOAL_TENSION_LIMIT" MsgModifier) -- flat neg
+        ,("guarantee_cost"           , numericLoc "MODIFIER_GUARANTEE_COST" MsgModifier) -- % neg
+        ,("guarantee_tension"        , numericLoc "MODIFIER_GUARANTEE_TENSION_LIMIT" MsgModifier) -- flat neg
+        ,("join_faction_tension"     , numericLoc "MODIFIER_JOIN_FACTION_TENSION_LIMIT" MsgModifier) -- flat neg
+        ,("justify_war_goal_time"    , numericLoc "MODIFIER_JUSTIFY_WAR_GOAL_TIME" MsgModifier) -- % neg
+        ,("lend_lease_tension"       , numericLoc " MODIFIER_LEND_LEASE_TENSION_LIMIT" MsgModifier) -- flat neg
+        ,("opinion_gain_monthly"     , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY" MsgModifier) -- flat pos
+        ,("request_lease_tension"    , numericLoc "MODIFIER_REQUEST_LEASE_TENSION_LIMIT" MsgModifier) -- % neg
+        ,("surrender_limit"          , numericLoc "MODIFIER_SURRENDER_LIMIT" MsgModifier) -- % neutr?
+        -- Equipment
+        ,("equipment_conversion_speed" , numericLoc "EQUIPMENT_CONVERSION_SPEED_MODIFIERS" MsgModifier) -- % neg
+        ,("equipment_upgrade_xp_cost" , numericLoc "MODIFIER_EQUIPMENT_UPGRADE_XP_COST" MsgModifier) -- % neg
+        ,("production_factory_efficiency_gain_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_EFFICIENCY_GAIN_FACTOR" MsgModifier) -- % pos
+        ,("production_factory_max_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_MAX_EFFICIENCY_FACTOR" MsgModifier) -- % pos
+        ,("production_factory_start_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_START_EFFICIENCY_FACTOR" MsgModifier) -- % pos
+        -- Military outside of combat
+        ,("command_power_gain"       , numericLoc "MODIFIER_COMMAND_POWER_GAIN" MsgModifier) -- flat pos
+        ,("command_power_gain_mult"  , numericLoc "MODIFIER_COMMAND_POWER_GAIN_MULT" MsgModifier) -- % neg
+        ,("conscription"             , numericLoc "MODIFIER_CONSCRIPTION_FACTOR" MsgModifier) -- flat neut
+        ,("conscription_factor"      , numericLoc "MODIFIER_CONSCRIPTION_TOTAL_FACTOR" MsgModifier) -- % pos
+        ,("max_command_power"        , numericLoc "MODIFIER_MAX_COMMAND_POWER" MsgModifier) -- flat pos
+        ,("max_command_power_mult"   , numericLoc "MODIFIER_MAX_COMMAND_POWER_MULT" MsgModifier)  -- % pos
+        ,("weekly_manpower"          , numericLoc "MODIFIER_WEEKLY_MANPOWER" MsgModifier) -- flat pos
+        -- Fuel
+        ,("base_fuel_gain"           , numericLoc "MODIFIER_BASE_FUEL_GAIN_ADD" MsgModifier) -- flat neutr?
+        ,("base_fuel_gain_factor"    , numericLoc "MODIFIER_BASE_FUEL_GAIN_FACTOR" MsgModifier) -- % pos
+        ,("fuel_cost"                , numericLoc "MODIFIER_FUEL_COST" MsgModifier) -- flat neg
+        ,("fuel_gain"                , numericLoc "MODIFIER_FUEL_GAIN_ADD" MsgModifier) -- flat pos
+        ,("fuel_gain_factor"         , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifier) -- flat pos
+        ,("max_fuel"                 , numericLoc "MODIFIER_MAX_FUEL_ADD" MsgModifier) -- flat
+        ,("max_fuel_factor"          , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifier) -- % pos
+        -- buildings
+        ,("civilian_factory_use"     , numericLoc "MODIFIER_CIVILIAN_FACTORY_USE" MsgModifier) -- flat neut
+        ,("consumer_goods_factor"    , numericLoc "MODIFIER_CONSUMER_GOODS_FACTOR" MsgModifier) -- flat percentage? neutr
+        ,("conversion_cost_civ_to_mil_factor" , numericLoc "MODIFIER_CONVERSION_COST_CIV_TO_MIL_FACTOR" MsgModifier) -- % neutr
+        ,("conversion_cost_mil_to_civ_factor" , numericLoc "MODIFIER_CONVERSION_COST_MIL_TO_CIV_FACTOR" MsgModifier) -- % neutr
+        ,("global_building_slots"    , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS" MsgModifier) -- flat
+        ,("global_building_slots_factor" , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS_FACTOR" MsgModifier) -- %
+        ,("industrial_capacity_dockyard" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_DOCKYARD_FACTOR" MsgModifier) -- %
+        ,("industrial_capacity_factory" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_FACTOR" MsgModifier) -- %
+        ,("industry_repair_factor"   , numericLoc "MODIFIER_INDUSTRY_REPAIR_FACTOR" MsgModifier) -- %
+        ,("line_change_production_efficiency_factor" , numericLoc "MODIFIER_LINE_CHANGE_PRODUCTION_EFFICIENCY_FACTOR" MsgModifier) -- %
+        ,("production_oil_factor"    , numericLoc "MODIFIER_PRODUCTION_OIL_FACTOR" MsgModifier) -- %
+        ,("production_speed_buildings_factor" , numericLoc "MODIFIER_PRODUCTION_SPEED_BUILDINGS_FACTOR" MsgModifier) -- %
+        -- resistance and compliance
+        ,("civilian_intel_to_others" , numericLoc "MODIFIER_CIVILIAN_INTEL_TO_OTHERS" MsgModifier) -- flat neg
+        -- AI
+        -- General Combat
+        ,("offence"                  , numericLoc "MODIFIER_OFFENCE" MsgModifier) -- % pos
+        ,("defence"                  , numericLoc "MODIFIER_DEFENCE" MsgModifier) -- % pos
+        -- Land Combat
+        ,("army_attack_factor"       , numericLoc "MODIFIERS_ARMY_ATTACK_FACTOR" MsgModifier) -- % pos
+        -- Naval combat
+        -- Air combat
         ]
 {-
 -- | Handlers for statements pertaining to modifiers
@@ -1038,6 +829,7 @@ handlersProvince = Tr.fromList
         ,("owns_or_vassal_of" , withProvince MsgOwnsOrVassal)
         ,("province_id"       , withProvince MsgProvinceIs)
         ,("set_capital"       , withProvince MsgSetCapital)
+        ,("transfer_state"    , withProvince MsgTransferState)
         ]
 
 -- | Handlers for statements whose RHS is a flag OR a province ID
@@ -1602,11 +1394,13 @@ handlersSpecialComplex = Tr.fromList
         ,("add_estate_influence_modifier", estateInfluenceModifier MsgEstateInfluenceModifier)
         ,("add_mutual_opinion_modifier_effect", opinion MsgMutualOpinion MsgMutualOpinionDur)
         ,("add_named_threat"             , addNamedThreat)
-        ,("add_opinion"                  , opinion MsgAddOpinion MsgAddOpinionDur)
+        ,("add_opinion_modifier"         , opinion MsgAddOpinion MsgAddOpinionDur)
         ,("add_unit_construction"        , addUnitConstruction)
+        ,("add_tech_bonus"               , addTechBonus)
         ,("add_trust"                    , trust)
         ,("ai_attitude"                  , aiAttitude MsgAiAttitude)
-        ,("reverse_add_opinion"          , opinion MsgReverseAddOpinion MsgReverseAddOpinionDur)
+        ,("annex_country"                , annexCountry)
+        ,("reverse_add_opinion_modifier" , opinion MsgReverseAddOpinion MsgReverseAddOpinionDur)
         ,("area"                         , area)
         ,("change_price"                 , changePrice)
         ,("create_admiral"               , createMilitaryLeader "admiral" True MsgCreateAdmiral MsgDefineAdmiral)
@@ -1639,6 +1433,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_great_project"            , hasGreatProject)
         ,("has_opinion"                  , hasOpinion MsgHasOpinionHOI4)
         ,("has_opinion_modifier"         , opinion MsgHasOpinionMod (\modid what who _years -> MsgHasOpinionMod modid what who))
+        ,("add_opinion_modifier"         , opinion MsgAddOpinion (\modid what who _years -> MsgAddOpinion modid what who))
         ,("has_reached_government_reform_tier" , hasGovernmentReforTier)
         ,("has_trade_company_investment_in_area", hasTradeCompanyInvestment)
         ,("is_in_war"                    , isInWar)
@@ -1647,7 +1442,7 @@ handlersSpecialComplex = Tr.fromList
         ,("privateer_power"              , privateerPower)
         ,("province_event"               , scope HOI4ScopeState . triggerEvent MsgProvinceEvent)
         ,("region"                       , region)
-        ,("remove_opinion"               , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
+        ,("remove_opinion_modifier"      , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
 --        ,("reverse_has_opinion"          , hasOpinion MsgReverseHasOpinion)
         ,("reverse_has_opinion_modifier" , opinion MsgReverseHasOpinionMod (\modid what who _years -> MsgReverseHasOpinionMod modid what who))
         ,("reverse_remove_opinion"       , opinion MsgReverseRemoveOpinionMod (\modid what who _years -> MsgReverseRemoveOpinionMod modid what who))

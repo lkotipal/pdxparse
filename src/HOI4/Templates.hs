@@ -14,7 +14,7 @@ import Data.List (unzip5)
 import Data.Maybe (isJust)
 
 import Abstract
-import Messages
+import HOI4.Messages
 import QQ
 import SettingsTypes
 

@@ -8,7 +8,7 @@ module HOI4.Common (
 
 import Abstract (GenericScript, GenericStatement)
 import Doc (Doc)
-import Messages (IndentedMessages, StatementHandler)
+import HOI4.Messages (IndentedMessages, StatementHandler)
 import SettingsTypes (PPT)
 import HOI4.Types (HOI4Info)
 import Data.Text (Text)

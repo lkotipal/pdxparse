@@ -40,7 +40,7 @@ import Abstract -- everything
 import qualified Doc
 import HOI4.Common -- everything
 import FileIO (Feature (..), writeFeatures)
-import Messages -- everything
+import HOI4.Messages -- everything
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..), Game (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)

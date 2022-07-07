@@ -28,7 +28,7 @@ import qualified Text.PrettyPrint.Leijen.Text as PP
 import Abstract -- everything
 import qualified Doc
 import FileIO (Feature (..), writeFeatures)
-import Messages -- everything
+import HOI4.Messages -- everything
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..), Game (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
@@ -178,6 +178,6 @@ nationalFocusAddSection nf stmt
                 _-> nf
             "dynamic" -> case rhs of
                 _-> nf
-            other -> trace ("unknown national focus section: " ++ show other) nf
+            other -> trace ("unknown national focus section: " ++ show other ++ " for " ++ show stmt) nf
         nationalFocusAddSection' nf _
             = trace ("unrecognised form for national focus section") nf

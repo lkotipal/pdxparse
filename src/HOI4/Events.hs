@@ -38,7 +38,7 @@ import Abstract -- everything
 import qualified Doc
 import HOI4.Common -- everything
 import FileIO (Feature (..), writeFeatures)
-import Messages (imsg2doc)
+import HOI4.Messages (imsg2doc)
 import MessageTools (iquotes)
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..), Game (..)

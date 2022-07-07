@@ -41,6 +41,7 @@ module HOI4.Handlers (
     ,   withTagOrNumber
     ,   numericIcon
     ,   numericIconLoc
+    ,   numericLoc
     ,   numericIconBonus
     ,   numericIconBonusAllowTag
     ,   boolIconLoc
@@ -153,6 +154,8 @@ module HOI4.Handlers (
     ,   declareWarOn
     ,   modifyCountryFlag
     ,   hasGovernmentReforTier
+    ,   annexCountry
+    ,   addTechBonus
     -- testing
     ,   isPronoun
     ,   flag
@@ -188,7 +191,7 @@ import Data.Monoid ((<>))
 import Abstract -- everything
 import Doc (Doc)
 import qualified Doc -- everything
-import Messages -- everything
+import HOI4.Messages -- everything
 import MessageTools (plural, iquotes, plainNumSign, formatDays, formatHours)
 import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
@@ -1336,6 +1339,16 @@ numericIconLoc the_icon what msg [pdx| %_ = !amt |]
          msgToPP $ msg (iconText the_icon) whatloc amt
 numericIconLoc _ _ _ stmt = plainMsg $ pre_statement' stmt
 
+-- | Handler for statements that have a number and a localizable atom.
+numericLoc :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
+    Text
+        -> (Text -> Double -> ScriptMessage)
+        -> StatementHandler g m
+numericLoc what msg [pdx| %_ = !amt |]
+    = do whatloc <- getGameL10n what
+         msgToPP $ msg whatloc amt
+numericLoc _ _  stmt = plainMsg $ pre_statement' stmt
+
 -- | Handler for statements that have a number and an icon, whose meaning
 -- differs depending on what scope it's in.
 numericIconBonus :: (HOI4Info g, Monad m) =>
@@ -1825,8 +1838,8 @@ opinion msgIndef msgDur stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_add_opinion (foldl' addLine newAddOpinion scr)
     where
         addLine :: AddOpinion -> GenericStatement -> AddOpinion
-        addLine op [pdx| who           = $tag         |] = op { op_who = Just (Left tag) }
-        addLine op [pdx| who           = $vartag:$var |] = op { op_who = Just (Right (vartag, var)) }
+        addLine op [pdx| target        = $tag         |] = op { op_who = Just (Left tag) }
+        addLine op [pdx| target        = $vartag:$var |] = op { op_who = Just (Right (vartag, var)) }
         addLine op [pdx| modifier      = ?label       |] = op { op_modifier = Just label }
         addLine op [pdx| years         = !n           |] = op { op_years = Just n }
         -- following two for add_mutual_opinion_modifier_effect
@@ -4352,10 +4365,11 @@ data CreateWG = CreateWG
     ,   wg_target_flag :: Maybe Text
     ,   wg_expire :: Maybe Double
     ,   wg_generator :: Maybe WGGenerator
+    ,   wg_states :: [Text]
     } deriving Show
 
 newCWG :: CreateWG
-newCWG = CreateWG Nothing Nothing Nothing Nothing Nothing
+newCWG = CreateWG Nothing Nothing Nothing Nothing Nothing undefined
 
 createWargoal :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 createWargoal stmt@[pdx| %_ = @scr |] =
@@ -4378,9 +4392,11 @@ createWargoal stmt@[pdx| %_ = @scr |] =
         addLine cwg [pdx| expire = %rhs |]
             = return cwg { wg_expire = floatRhs rhs }
         addLine cwg stmts@[pdx| generator = %state |] = case state of
-            CompoundRhs array ->
-                let states = mapMaybe stateFromArray array in
-                return cwg { wg_generator = Just (WGGeneratorArr states)}
+            CompoundRhs array ->do
+                let states = mapMaybe stateFromArray array
+                statesloc <- traverse getStateLoc states
+                return cwg { wg_generator = Just (WGGeneratorArr states)
+                            ,wg_states = statesloc }
             GenericRhs vartag [vstate] ->
                 return cwg { wg_generator = Just (WGGeneratorVar vstate)} --Need to deal with existing variables here
             GenericRhs vstate _ ->
@@ -4394,7 +4410,7 @@ createWargoal stmt@[pdx| %_ = @scr |] =
         pp_create_wg :: CreateWG -> ScriptMessage
         pp_create_wg cwg =
             let states = case wg_generator cwg of
-                    Just (WGGeneratorArr arr) -> T.pack $ concat [" for the ", T.unpack $ plural (length arr) "state " "states " , intercalate ", " $ map show arr]
+                    Just (WGGeneratorArr arr) -> T.pack $ concat [" for the ", T.unpack $ plural (length arr) "state " "states " , intercalate ", " $ map T.unpack (wg_states cwg)]
                     Just (WGGeneratorVar var) -> T.pack $ concat [" for" , T.unpack var]
                     _ -> ""
             in case (wg_type cwg, wg_type_loc cwg,
@@ -4422,10 +4438,11 @@ data DeclareWarOn = DeclareWarOn
     ,   dw_type_loc :: Maybe Text
     ,   dw_target_flag :: Maybe Text
     ,   dw_generator :: Maybe DWOGenerator
+    ,   dw_states :: [Text]
     } deriving Show
 
 newDWO :: DeclareWarOn
-newDWO = DeclareWarOn Nothing Nothing Nothing Nothing
+newDWO = DeclareWarOn Nothing Nothing Nothing Nothing []
 
 declareWarOn :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 declareWarOn stmt@[pdx| %_ = @scr |] =
@@ -4446,9 +4463,11 @@ declareWarOn stmt@[pdx| %_ = @scr |] =
                   { dw_target_flag = target_loc })
               <$> eflag (Just HOI4Country) (Right (vartag, var))
         addLine dwo stmts@[pdx| generator = %state |] = case state of
-            CompoundRhs array ->
-                let states = mapMaybe stateFromArray array in
-                return dwo { dw_generator = Just (DWOGeneratorArr states)}
+            CompoundRhs array ->do
+                let states = mapMaybe stateFromArray array
+                statesloc <- traverse getStateLoc states
+                return dwo { dw_generator = Just (DWOGeneratorArr states)
+                            ,dw_states = statesloc }
             GenericRhs vartag [vstate] ->
                 return dwo { dw_generator = Just (DWOGeneratorVar vstate)} --Need to deal with existing variables here
             GenericRhs vstate _ ->
@@ -4462,8 +4481,8 @@ declareWarOn stmt@[pdx| %_ = @scr |] =
         pp_create_dw :: DeclareWarOn -> ScriptMessage
         pp_create_dw dwo =
             let states = case dw_generator dwo of
-                    Just (DWOGeneratorArr arr) -> T.pack $ concat ["for the ", T.unpack $ plural (length arr) "state " "states " , intercalate ", " $ map show arr]
-                    Just (DWOGeneratorVar var) -> T.pack $ concat ["for" , T.unpack var]
+                    Just (DWOGeneratorArr arr) -> T.pack $ concat ["for the ", T.unpack $ plural (length arr) "state " "states " , intercalate ", " $ map T.unpack (dw_states dwo)]
+                    Just (DWOGeneratorVar var) -> T.pack $ concat ["for " , T.unpack var]
                     _ -> ""
             in case (dw_type dwo, dw_type_loc dwo,
                      dw_target_flag dwo) of
@@ -4473,9 +4492,9 @@ declareWarOn stmt@[pdx| %_ = @scr |] =
                 (Just dwtype, Nothing, Just target_flag) -> MsgDeclareWarOn target_flag dwtype states
 declareWarOn stmt = preStatement stmt
 
------------
+-------------------------
 -- modify_country_flag --
------------
+-------------------------
 
 data ModifyCountryFlag = ModifyCountryFlag
         {   mf_flag :: Maybe Text
@@ -4501,3 +4520,71 @@ modifyCountryFlag stmt@[pdx| %_ = @scr |]
               = return $ MsgModifyCountryFlag flag value
             | otherwise = return (preMessage stmt)
 modifyCountryFlag stmt = preStatement stmt
+
+----------------------------------
+-- Handler for annex_country --
+----------------------------------
+foldCompound "annexCountry" "AnnexCountry" "an"
+    []
+    [CompField "target" [t|Text|] Nothing True
+    ,CompField "transfer_troops" [t|Text|] Nothing False
+    ]
+    [|  do
+        let transferTroops = case _transfer_troops of
+                Just "yes" -> " (troops transferred)"
+                Just "no" -> " (troops not transferred)"
+                _ -> ""
+        targetTag <- flagText (Just HOI4Country) _target
+        return $ MsgAnnexCountry targetTag transferTroops
+    |]
+
+--------------------
+-- add_tech_boost --
+--------------------
+
+data AddTechBonus = AddTechBonus
+        {   tb_name :: Text
+        ,   tb_bonus :: Maybe Double
+        ,   tb_uses :: Maybe Double
+        ,   tb_ahead_reduction :: Maybe Double
+        ,   tb_category :: [Text]
+        ,   tb_technology :: [Text]
+        }
+newATB :: AddTechBonus
+newATB = AddTechBonus undefined Nothing Nothing Nothing [] []
+addTechBonus :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+addTechBonus stmt@[pdx| %_ = @scr |]
+    = msgToPP . pp_atb =<< foldM addLine newATB scr
+    where
+        addLine :: AddTechBonus -> GenericStatement -> PPT g m AddTechBonus
+        addLine atb [pdx| name = $name |] = do
+            nameloc <- getGameL10n name
+            return atb { tb_name = nameloc }
+        addLine atb [pdx| bonus = !amt |] =
+            return atb { tb_bonus = Just amt }
+        addLine atb [pdx| ahead_reduction = !amt |] =
+            return atb { tb_ahead_reduction = Just amt }
+        addLine atb [pdx| uses = !amt  |]
+            = return atb { tb_uses = Just amt }
+        addLine atb [pdx| category = $cat |] = do
+            let oldcat = tb_category atb
+            catloc <- getGameL10n cat
+            return atb { tb_category = oldcat ++ [catloc] }
+        addLine atb [pdx| technology = $tech |] = do
+            let oldtech = tb_technology atb
+            techloc <- getGameL10n tech
+            return atb { tb_technology = oldtech ++ [techloc] }
+        addLine atb _ = return atb
+        pp_atb :: AddTechBonus -> ScriptMessage
+        pp_atb atb =
+            let techcat = T.pack $ concat [intercalate ", " $ map T.unpack (tb_category atb), if length (tb_technology atb) /= 0 then " and " else "", intercalate ", " $ map T.unpack (tb_technology atb)]
+            in case (tb_name atb, tb_bonus atb,
+                     tb_uses atb, tb_ahead_reduction atb) of
+                (name, Just bonus, Just uses, Just ahead) -> MsgAddTechBonusAheadBoth bonus ahead name uses techcat
+                (name, Just bonus, Just uses, _) -> MsgAddTechBonus bonus name uses techcat
+                (name, Just bonus, _, Just ahead) -> MsgAddTechBonusAheadBoth bonus ahead name 1 techcat
+                (name, _, Just uses, Just ahead) -> MsgAddTechBonusAhead ahead name uses techcat
+                (name, _, _, Just ahead) -> MsgAddTechBonusAhead ahead name 1 techcat
+                (name, Just bonus, _, _) -> MsgAddTechBonus  bonus name 1 techcat
+                _ -> trace ("issues in add_technology_bonus: " ++ show stmt ) $ preMessage stmt
+addTechBonus stmt = preStatement stmt

@@ -38,7 +38,7 @@ import FileIO (Feature (..), writeFeatures)
 import Text.PrettyPrint.Leijen.Text (Doc)
 import qualified Text.PrettyPrint.Leijen.Text as PP
 import qualified Doc
-import Messages
+import HOI4.Messages
 import MessageTools
 
 import Debug.Trace (trace, traceM)
@@ -192,7 +192,7 @@ pp_opinion_modifers :: (HOI4Info g, Monad m) => [HOI4OpinionModifier] -> PPT g m
 pp_opinion_modifers modifiers = do
     version <- gets (gameVersion . getSettings)
     modifiers_pp'd <- mapM pp_opinion_modifer (sortOn omodName modifiers)
-    return . mconcat $ ["<includeonly>{{#switch:{{lc:{{{1}}} }}", PP.line]
+    return . mconcat $ ["<includeonly>{{#switch:{{ lc:{{{1}}} }}", PP.line]
         ++ modifiers_pp'd ++
         ["}}</includeonly><noinclude>{{Version|", Doc.strictText version, "}}"
         , PP.line
@@ -211,7 +211,10 @@ pp_opinion_modifer mod = do
     locName <- getGameL10n (omodName mod)
     return . mconcat $
         [ "| "
-        , Doc.strictText (omodName mod)
+        , Doc.strictText $ T.toLower locName
+        , PP.line
+        , "| "
+        , Doc.strictText $ T.toLower (omodName mod)
         , " = "
         , iquotes locName
         , " {{#ifeq:{{{2|}}}|0|| ("

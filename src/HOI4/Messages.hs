@@ -24,7 +24,7 @@ Functions used in 'ScriptMessage''s instance of the localization method
 Template Haskell version of this module required them to be in a separate
 module due to TH stage restrictions.
 -}
-module Messages (
+module HOI4.Messages (
         ScriptMessage (..)
     ,   StatementHandler
     ,   template, templateDoc
@@ -498,6 +498,9 @@ data ScriptMessage
     | MsgMutualOpinion {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgMutualOpinionDur {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageDays :: Double}
     | MsgAddNamedThreat {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageWhom :: Text}
+    | MsgAddTechBonus {scriptMessageAmt :: Double, scriptMessageName :: Text, scriptMessageUses :: Double, scriptMessageCattech :: Text}
+    | MsgAddTechBonusAhead {scriptMessageAmt :: Double, scriptMessageName :: Text, scriptMessageUses :: Double, scriptMessageCattech :: Text}
+    | MsgAddTechBonusAheadBoth {scriptMessageBonus :: Double, scriptMessageYearahead :: Double, scriptMessageName :: Text, scriptMessageUses :: Double, scriptMessageCattech :: Text}
     | MsgCreateWG {scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageStates :: Text}
     | MsgCreateWGDuration {scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double, scriptMessageStates :: Text}
     | MsgHasOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
@@ -754,6 +757,7 @@ data ScriptMessage
     | MsgGoldIncomePercentage {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgIsTribal {scriptMessageYn :: Bool}
     | MsgSetCapital {scriptMessageWhat :: Text}
+    | MsgTransferState {scriptMessageWhat :: Text}
     | MsgChangePrimaryCulture {scriptMessageWhat :: Text}
     | MsgColonialRegion {scriptMessageWhere :: Text}
     | MsgJuniorUnionWith {scriptMessageWhom :: Text}
@@ -5761,6 +5765,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Change capital to "
                 , _what
                 ]
+        MsgTransferState {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Current scope becomes owner and controller of "
+                , _what
+                ]
         MsgChangePrimaryCulture {scriptMessageWhat = _what}
             -> mconcat
                 [ "Change primary culture to "
@@ -7022,6 +7031,52 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNumSign False _amt)
                 , " ("
                 , toMessage (italicText _whom)
+                , ")"
+                ]
+        MsgAddTechBonus {scriptMessageAmt = _amt, scriptMessageName = _name, scriptMessageUses = _uses, scriptMessageCattech = _cat}
+            -> mconcat
+                [ "Gain "
+                , toMessage (colourPcSign True _amt)
+                , " research bonus ("
+                , toMessage (italicText _name)
+                , ") towards: "
+                , _cat
+                , " ("
+                , toMessage (colourNum True  _uses)
+                , " "
+                , plural _uses "use" "uses"
+                , ")"
+                ]
+        MsgAddTechBonusAhead {scriptMessageAmt = _amt, scriptMessageName = _name, scriptMessageUses = _uses, scriptMessageCattech = _cat}
+            -> mconcat
+                [ "Gain "
+                , toMessage (colourNum True _amt)
+                , plural _amt " year" " years"
+                , " ahead of time penalty reduction ("
+                , toMessage (italicText _name)
+                , ") towards: "
+                , _cat
+                , " ("
+                , toMessage (colourNum True  _uses)
+                , " "
+                , plural _uses "use" "uses"
+                , ")"
+                ]
+        MsgAddTechBonusAheadBoth {scriptMessageBonus = _bonus, scriptMessageYearahead = _year, scriptMessageName = _name, scriptMessageUses = _uses, scriptMessageCattech = _cat}
+            -> mconcat
+                [ "Gain "
+                , toMessage (colourPcSign True _bonus)
+                , " research bonus or "
+                , toMessage (colourNum True _year)
+                , plural _year " year" " years"
+                , " ahead of time penalty reduction ("
+                , toMessage (italicText _name)
+                , ") towards: "
+                , _cat
+                , " ("
+                , toMessage (colourNum True  _uses)
+                , " "
+                , plural _uses "use" "uses"
                 , ")"
                 ]
         MsgCreateWG {scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageStates = _state}

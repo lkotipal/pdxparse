@@ -21,7 +21,7 @@ import Abstract
 import HOI4.Common
 import HOI4.Handlers (plainMsg')
 import FileIO (Feature (..), writeFeatures)
-import Messages (imsg2doc, IndentedMessages)
+import HOI4.Messages (imsg2doc, IndentedMessages)
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..), Game (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
