@@ -299,6 +299,7 @@ data ScriptMessage
     | MsgHasFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text}
     | MsgSetFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text}
     | MsgHadFlag {scriptMessageCategory :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
+    | MsgModifyCountryFlag {scriptMessageFlag :: Text, scriptMessageAmtText :: Text}
     | MsgCountryFlag
     | MsgProvinceFlag
     | MsgRulerFlag
@@ -497,8 +498,8 @@ data ScriptMessage
     | MsgMutualOpinion {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgMutualOpinionDur {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageDays :: Double}
     | MsgAddNamedThreat {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageWhom :: Text}
-    | MsgCreateWG {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
-    | MsgCreateWGDuration {scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgCreateWG {scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageStates :: Text}
+    | MsgCreateWGDuration {scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double, scriptMessageStates :: Text}
     | MsgHasOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgReverseHasOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgRemoveOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
@@ -524,6 +525,7 @@ data ScriptMessage
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgTriggerEventTime {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageTime :: Text}
     | MsgDeclareWarWithCB {scriptMessageWhom :: Text, scriptMessageCb :: Text}
+    | MsgDeclareWarOn {scriptMessageWhom :: Text, scriptMessageWg :: Text, scriptMessageStates :: Text}
     | MsgGainAdvisor {scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
     | MsgGainAdvisorLoc {scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
     | MsgGainAdvisorName {scriptMessageName :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
@@ -1301,6 +1303,7 @@ data ScriptMessage
     | MsgConvertHeirGeneral { scriptMessageYn :: Bool, scriptMessageAmt :: Double }
     | MsgHeirRemoved
     | MsgIsHeirLeader { scriptMessageYn :: Bool }
+    | MsgIsHistoricalFocusOn { scriptMessageYn :: Bool }
     | MsgAtWarWithReligiousEnemy { scriptMessageYn :: Bool }
     | MsgHasAdvisorCategory { scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
     | MsgHasAdvisorCategoryLevel { scriptMessageAmt :: Double, scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
@@ -2230,7 +2233,7 @@ instance RenderMessage Script ScriptMessage where
                 , " <!-- "
                 , _modid
                 , " --> for "
-                , if (_days < 0)
+                , if _days < 0
                     then if _type == "ruler"
                         then "the duration of the current ruler's reign"
                         else "the rest of the game"
@@ -2853,6 +2856,13 @@ instance RenderMessage Script ScriptMessage where
                 , _name
                 , " for "
                 , toMessage (formatDays _days)
+                ]
+        MsgModifyCountryFlag {scriptMessageFlag = _flag, scriptMessageAmtText = _amttext}
+            -> mconcat
+                [ "Modify country flag <tt>"
+                , _flag
+                , "</tt> by "
+                , _amttext
                 ]
         MsgCountryFlag
             -> "country"
@@ -4265,13 +4275,22 @@ instance RenderMessage Script ScriptMessage where
                 , " --> in "
                 , _time
                 ]
-        MsgDeclareWarWithCB {scriptMessageWhom = _whom, scriptMessageCb = _cbtype}
+        MsgDeclareWarWithCB {scriptMessageWhom = _whom, scriptMessageCb = _wgtype}
             -> mconcat
                 [ "Declare war on "
                 , _whom
                 , " using "
-                , _cbtype
+                , _wgtype
                 , " casus belli"
+                ]
+        MsgDeclareWarOn {scriptMessageWhom = _whom, scriptMessageWg = _war, scriptMessageStates = _states}
+            -> mconcat
+                [ "Declare a "
+                , toMessage (italicText _war)
+                , " war "
+                , _states
+                , " against "
+                , _whom
                 ]
         MsgGainAdvisor {scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
             -> mconcat
@@ -6997,18 +7016,22 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (italicText _whom)
                 , ")"
                 ]
-        MsgCreateWG {scriptMessageWhat = _what, scriptMessageWhom = _whom}
+        MsgCreateWG {scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageStates = _state}
             -> mconcat
                 [ "Get a "
                 , toMessage (italicText _what)
-                , " wargoal against "
+                , " wargoal"
+                , _state
+                , " against "
                 , _whom
                 ]
-        MsgCreateWGDuration {scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+        MsgCreateWGDuration {scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageAmt = _amt, scriptMessageStates = _state}
             -> mconcat
                 [ "Get a "
                 , toMessage (italicText _what)
-                , " wargoal against "
+                , " wargoal "
+                , _state
+                , " against "
                 , _whom
                 , " for "
                 , toMessage (plainNum _amt)
@@ -9125,6 +9148,11 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " a general"
                 ]
+        MsgIsHistoricalFocusOn { scriptMessageYn = _yn }
+            -> mconcat
+                [ "Historical Focus is "
+                , toMessage (ifThenElseT _yn "'''on'''" "'''off'''")
+                ]
         MsgAtWarWithReligiousEnemy { scriptMessageYn = _yn }
             -> mconcat
                 [ "Is"
@@ -9484,7 +9512,7 @@ instance RenderMessage Script ScriptMessage where
         MsgCrownlandShare {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
-                , toMessage $ (plainPc _amt)
+                , toMessage (plainPc _amt)
                 , " [[crown land]] ownership"
                 ]
         MsgNumEstatePrivileges {scriptMessageIcon = _icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}

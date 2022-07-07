@@ -54,6 +54,7 @@ only the files you want, and rebuild.
     * ~~Localization files need to be directly in the localisation folder and not the localisation->english folder to work~~
     * ~~There are like 5 events where hidden and picture have the first letter capitilized making them fail to parse~~
     * Fractions can be written as 0.15 or .15 the second case the parser sees it as text instead of a double
+    * create_wargoal and declare_war_on don't localize the states for them (aaaaaaargh)
 
 ## To do
 Feel extremely free to help with any of these or the issues, I honestly doubt I can do any of these except maybe the additonal formatting

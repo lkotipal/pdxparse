@@ -150,6 +150,8 @@ module HOI4.Handlers (
     ,   addBuildingConstruction
     ,   addNamedThreat
     ,   createWargoal
+    ,   declareWarOn
+    ,   modifyCountryFlag
     ,   hasGovernmentReforTier
     -- testing
     ,   isPronoun
@@ -187,7 +189,7 @@ import Abstract -- everything
 import Doc (Doc)
 import qualified Doc -- everything
 import Messages -- everything
-import MessageTools (plural, iquotes, formatDays, formatHours)
+import MessageTools (plural, iquotes, plainNumSign, formatDays, formatHours)
 import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, indentDown, withCurrentIndent, withCurrentIndentZero, alsoIndent, alsoIndent'
@@ -2801,24 +2803,13 @@ hasDlc [pdx| %_ = ?dlc |]
     = msgToPP $ MsgHasDLC dlc_icon dlc
     where
         mdlc_key = HM.lookup dlc . HM.fromList $
-            [("Conquest of Paradise", "cop")
-            ,("Wealth of Nations", "won")
-            ,("Res Publica", "rp")
-            ,("Art of War", "aow")
-            ,("El Dorado", "ed")
-            ,("Common Sense", "cs")
-            ,("The Cossacks", "cos")
-            ,("Mare Nostrum", "mn")
-            ,("Rights of Man", "rom")
-            ,("Mandate of Heaven", "moh")
-            ,("Third Rome", "tr")
-            ,("Cradle of Civilization", "coc")
-            ,("Rule Britannia", "rb")
-            ,("Golden Century", "goc")
-            ,("Dharma", "dhr")
-            ,("Emperor", "emp")
-            ,("Leviathan", "lev")
-            ,("Origins", "org")
+            [("Together for Victory", "tfv")
+            ,("Death ir Dishonor", "dod")
+            ,("Waking the Tiger ", "wtt")
+            ,("Man the Guns", "mtg")
+            ,("La Résistance ", "lar")
+            ,("Battle for the Bosporus", "bftb")
+            ,("No Step Back", "nsb")
             ]
         dlc_icon = maybe "" iconText mdlc_key
 hasDlc stmt = preStatement stmt
@@ -4349,17 +4340,22 @@ foldCompound "addNamedThreat" "NamedThreat" "nt"
 ----------------------------------
 -- Handler for create_wargoal --
 ----------------------------------
+data WGGenerator
+    = WGGeneratorArr [Int]  -- province = key
+    | WGGeneratorVar Text
+            -- province = { id = key id = key }
+            -- province = { all_provinces = yes	limit_to_border = yes}
+    deriving Show
 data CreateWG = CreateWG
     {   wg_type :: Maybe Text
     ,   wg_type_loc :: Maybe Text
     ,   wg_target_flag :: Maybe Text
     ,   wg_expire :: Maybe Double
-    ,   wg_generator :: Maybe Text
-    ,   wg_generators :: Maybe Int
+    ,   wg_generator :: Maybe WGGenerator
     } deriving Show
 
 newCWG :: CreateWG
-newCWG = CreateWG Nothing Nothing Nothing Nothing Nothing Nothing
+newCWG = CreateWG Nothing Nothing Nothing Nothing Nothing
 
 createWargoal :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 createWargoal stmt@[pdx| %_ = @scr |] =
@@ -4375,26 +4371,133 @@ createWargoal stmt@[pdx| %_ = @scr |] =
             = (\target_loc -> cwg
                   { wg_target_flag = target_loc })
               <$> eflag (Just HOI4Country) (Left target)
+        addLine cwg [pdx| target = $vartag:$var |]
+            = (\target_loc -> cwg
+                  { wg_target_flag = target_loc })
+              <$> eflag (Just HOI4Country) (Right (vartag, var))
         addLine cwg [pdx| expire = %rhs |]
             = return cwg { wg_expire = floatRhs rhs }
---        addLine cwg stmts@[pdx| generator = $txt |]
---            = return cwg { wg_generator = Just txt} --Need to deal with existing variables here
---        addLine cwg stmts@[pdx| generator = @array |]
---            = (\provs -> cwg
---                  { wg_generators = Just provs})
---              <$> (mapM provFromArray array)
-        addLine cwg _
-            = return cwg
---        provFromArray (StatementBare (IntLhs e)) = e
+        addLine cwg stmts@[pdx| generator = %state |] = case state of
+            CompoundRhs array ->
+                let states = mapMaybe stateFromArray array in
+                return cwg { wg_generator = Just (WGGeneratorArr states)}
+            GenericRhs vartag [vstate] ->
+                return cwg { wg_generator = Just (WGGeneratorVar vstate)} --Need to deal with existing variables here
+            GenericRhs vstate _ ->
+                return cwg { wg_generator = Just (WGGeneratorVar vstate)} --Need to deal with existing variables here
+            _ -> (trace $ "Unknown generator statement in create_wargoal: " ++ show stmts) $ return cwg
+        addLine cwg stmt
+            = trace ("unknown section in create_wargoal: " ++ show stmt) $ return cwg
+        stateFromArray :: GenericStatement -> Maybe Int
+        stateFromArray (StatementBare (IntLhs e)) = Just e
+        stateFromArray stmt = (trace $ "Unknown in generator array statement: " ++ show stmt) $ Nothing
         pp_create_wg :: CreateWG -> ScriptMessage
         pp_create_wg cwg =
-            case (wg_type cwg, wg_type_loc cwg,
+            let states = case wg_generator cwg of
+                    Just (WGGeneratorArr arr) -> T.pack $ concat [" for the ", T.unpack $ plural (length arr) "state " "states " , intercalate ", " $ map show arr]
+                    Just (WGGeneratorVar var) -> T.pack $ concat [" for" , T.unpack var]
+                    _ -> ""
+            in case (wg_type cwg, wg_type_loc cwg,
                      wg_target_flag cwg,
                      wg_expire cwg) of
                 (Nothing, _, _, _) -> preMessage stmt -- need WG type
                 (_, _, Nothing, _) -> preMessage stmt -- need target
-                (_, Just wgtype_loc, Just target_flag, Just days) -> MsgCreateWGDuration wgtype_loc target_flag days
-                (Just wgtype, Nothing, Just target_flag, Just days) -> MsgCreateWGDuration wgtype target_flag days
-                (_, Just wgtype_loc, Just target_flag, Nothing) -> MsgCreateWG wgtype_loc target_flag
-                (Just wgtype, Nothing, Just target_flag, Nothing) -> MsgCreateWG wgtype target_flag
+                (_, Just wgtype_loc, Just target_flag, Just days) -> MsgCreateWGDuration wgtype_loc target_flag days states
+                (Just wgtype, Nothing, Just target_flag, Just days) -> MsgCreateWGDuration wgtype target_flag days states
+                (_, Just wgtype_loc, Just target_flag, Nothing) -> MsgCreateWG wgtype_loc target_flag states
+                (Just wgtype, Nothing, Just target_flag, Nothing) -> MsgCreateWG wgtype target_flag states
 createWargoal stmt = preStatement stmt
+
+----------------------------------
+-- Handler for declare_war_on --
+----------------------------------
+data DWOGenerator
+    = DWOGeneratorArr [Int]  -- province = key
+    | DWOGeneratorVar Text
+            -- province = { id = key id = key }
+            -- province = { all_provinces = yes	limit_to_border = yes}
+    deriving Show
+data DeclareWarOn = DeclareWarOn
+    {   dw_type :: Maybe Text
+    ,   dw_type_loc :: Maybe Text
+    ,   dw_target_flag :: Maybe Text
+    ,   dw_generator :: Maybe DWOGenerator
+    } deriving Show
+
+newDWO :: DeclareWarOn
+newDWO = DeclareWarOn Nothing Nothing Nothing Nothing
+
+declareWarOn :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+declareWarOn stmt@[pdx| %_ = @scr |] =
+    msgToPP . pp_create_dw =<< foldM addLine newDWO scr
+    where
+        addLine :: DeclareWarOn -> GenericStatement -> PPT g m DeclareWarOn
+        addLine dwo [pdx| type = $wargoal |]
+            = (\dwtype_loc -> dwo
+                   { dw_type = Just wargoal
+                   , dw_type_loc = Just dwtype_loc })
+              <$> getGameL10n wargoal
+        addLine dwo stmt@[pdx| target = $target |]
+            = (\target_loc -> dwo
+                  { dw_target_flag = target_loc })
+              <$> eflag (Just HOI4Country) (Left target)
+        addLine dwo [pdx| target = $vartag:$var |]
+            = (\target_loc -> dwo
+                  { dw_target_flag = target_loc })
+              <$> eflag (Just HOI4Country) (Right (vartag, var))
+        addLine dwo stmts@[pdx| generator = %state |] = case state of
+            CompoundRhs array ->
+                let states = mapMaybe stateFromArray array in
+                return dwo { dw_generator = Just (DWOGeneratorArr states)}
+            GenericRhs vartag [vstate] ->
+                return dwo { dw_generator = Just (DWOGeneratorVar vstate)} --Need to deal with existing variables here
+            GenericRhs vstate _ ->
+                return dwo { dw_generator = Just (DWOGeneratorVar vstate)} --Need to deal with existing variables here
+            _ -> (trace $ "Unknown generator statement in declare_war_on: " ++ show stmts) $ return dwo
+        addLine dwo stmt
+            = trace ("unknown section in declare_war_on: " ++ show stmt) $ return dwo
+        stateFromArray :: GenericStatement -> Maybe Int
+        stateFromArray (StatementBare (IntLhs e)) = Just e
+        stateFromArray stmt = (trace $ "Unknown in generator array statement: " ++ show stmt) $ Nothing
+        pp_create_dw :: DeclareWarOn -> ScriptMessage
+        pp_create_dw dwo =
+            let states = case dw_generator dwo of
+                    Just (DWOGeneratorArr arr) -> T.pack $ concat ["for the ", T.unpack $ plural (length arr) "state " "states " , intercalate ", " $ map show arr]
+                    Just (DWOGeneratorVar var) -> T.pack $ concat ["for" , T.unpack var]
+                    _ -> ""
+            in case (dw_type dwo, dw_type_loc dwo,
+                     dw_target_flag dwo) of
+                (Nothing, _, _) -> preMessage stmt -- need DW type
+                (_, _, Nothing) -> preMessage stmt -- need target
+                (_, Just dwtype_loc, Just target_flag) -> MsgDeclareWarOn  target_flag dwtype_loc states
+                (Just dwtype, Nothing, Just target_flag) -> MsgDeclareWarOn target_flag dwtype states
+declareWarOn stmt = preStatement stmt
+
+-----------
+-- modify_country_flag --
+-----------
+
+data ModifyCountryFlag = ModifyCountryFlag
+        {   mf_flag :: Maybe Text
+        ,   mf_value :: Maybe Text
+        }
+newMCF :: ModifyCountryFlag
+newMCF = ModifyCountryFlag undefined undefined
+modifyCountryFlag :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+modifyCountryFlag stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_mcf =<< foldM addLine newMCF scr
+    where
+        addLine :: ModifyCountryFlag -> GenericStatement -> PPT g m ModifyCountryFlag
+        addLine mcf [pdx| flag = $flag |] =
+            return mcf { mf_flag = Just flag }
+        addLine mcf [pdx| value = !amt |] =
+            let amt' = Doc.doc2text $ plainNumSign amt in
+            return mcf { mf_value = Just amt' }
+        addLine mcf [pdx| value = $amt  |]
+            = return mcf { mf_value = Just amt }
+        addLine mcf _ = return mcf
+        pp_mcf mcf
+            | (Just flag, Just value) <- (mf_flag mcf, mf_value mcf)
+              = return $ MsgModifyCountryFlag flag value
+            | otherwise = return (preMessage stmt)
+modifyCountryFlag stmt = preStatement stmt
