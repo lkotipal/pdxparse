@@ -40,24 +40,22 @@ import Yaml (L10n, LocEntry (..), parseLocFile, mergeLangs, mergeLangList)
 -- true YAML localisation, which, as far as I know, no PDS game uses any more.
 readL10n :: Settings -> IO L10n
 readL10n settings = do
-    let dir           = gamePath settings 
+    let dir           = gamePath settings
                         </> languageFolder settings
-        dirifYAMLmod  = gamePath settings 
-                        </> "localisation" 
+        dirmod        = gameModPath settings
+                        </> languageFolder settings
+        dirifYAMLmod  = gameModPath settings
+                        </> "localisation"
                         </> "replace"
                         </> justLanguage settings
-        dirgameifmod  = steamDir settings 
-                        </> steamApps settings
-                        </> gameFolder settings
-                        </> languageFolder settings
     replaceexist <- doesDirectoryExist dirifYAMLmod
-    let dirs = addlistdir(addlistdir 
-                [dir] 
-                (gameFolder settings /= gameOrModFolder settings && l10nScheme settings == L10nQYAML && replaceexist)
-                [dirifYAMLmod])
+    let dirs = addlistdir
+                [dir]
                 (gameFolder settings /= gameOrModFolder settings)
-                [dirgameifmod]
-        
+                [dirmod]
+                (gameFolder settings /= gameOrModFolder settings && l10nScheme settings == L10nQYAML && replaceexist)
+                [dirifYAMLmod]
+
     files <- mconcat (map (readL10nDirs settings) dirs)
     case l10nScheme settings of
         L10nCSV ->
@@ -109,9 +107,9 @@ readL10nDirs settings dirs = filterM doesFileExist
                     -- don't care about.
                     L10nQYAML -> filter (T.unpack (language settings) `isInfixOf`))
                     =<< getDirectoryContents dirs
-addlistdir :: [FilePath] -> Bool -> [FilePath] ->[FilePath]
-addlistdir dir1 check dir2 = 
-    if check then
-        dir1 ++ dir2
-    else
-        dir1
+addlistdir :: [FilePath] -> Bool -> [FilePath] -> Bool -> [FilePath] -> [FilePath]
+addlistdir dirgame checkmod dirmod checkmodreplace dirmodreplace =
+    case (checkmod, checkmodreplace) of
+        (True, True) -> dirmodreplace ++ dirgame ++ dirmod
+        (True, False) -> dirgame ++ dirmod
+        _ -> dirgame

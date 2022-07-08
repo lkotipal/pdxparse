@@ -84,7 +84,7 @@ parseHOI4NationalFocus [pdx| %left = %right |] = case right of
         IntLhs _ -> throwError "int lhs at top level"
         AtLhs _ -> return (Right Nothing)
         GenericLhs id [] ->
-            if id == "country" || id == "continuous_focus_position" then
+            if not (id == "focus" || id == "shared_focus") then
                 return (Right Nothing)
             else
                 withCurrentFile $ \file -> do

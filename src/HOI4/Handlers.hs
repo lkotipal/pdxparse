@@ -31,6 +31,7 @@ module HOI4.Handlers (
     ,   tagOrProvince
     ,   tagOrProvinceIcon
     ,   numeric
+    ,   numericCompare
     ,   numericOrTag
     ,   numericOrTagIcon
     ,   numericIconChange
@@ -47,6 +48,7 @@ module HOI4.Handlers (
     ,   boolIconLoc
     ,   tryLoc
     ,   tryLocAndIcon
+    ,   tryNoLocText
     ,   tryLocAndLocMod
     ,   textValue
     ,   textAtom
@@ -152,10 +154,10 @@ module HOI4.Handlers (
     ,   addNamedThreat
     ,   createWargoal
     ,   declareWarOn
-    ,   modifyCountryFlag
     ,   hasGovernmentReforTier
     ,   annexCountry
     ,   addTechBonus
+    ,   setCountryFlag
     -- testing
     ,   isPronoun
     ,   flag
@@ -192,7 +194,7 @@ import Abstract -- everything
 import Doc (Doc)
 import qualified Doc -- everything
 import HOI4.Messages -- everything
-import MessageTools (plural, iquotes, plainNumSign, formatDays, formatHours)
+import MessageTools (plural, iquotes, italicText, plainNumSign, formatDays, formatHours)
 import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, indentDown, withCurrentIndent, withCurrentIndentZero, alsoIndent, alsoIndent'
@@ -1215,6 +1217,15 @@ numeric :: (IsGameState (GameState g), Monad m) =>
 numeric msg [pdx| %_ = !n |] = msgToPP $ msg n
 numeric _ stmt = plainMsg $ pre_statement' stmt
 
+-- | Handler for numeric compare statements.
+numericCompare :: (IsGameState (GameState g), Monad m) =>
+    (Double -> Text -> ScriptMessage)
+        -> StatementHandler g m
+numericCompare msg stmt@[pdx| %_ = !n |] = msgToPP $ msg n "equal to or more than"
+numericCompare msg stmt@[pdx| %_ > !n |] = msgToPP $ msg n "more than"
+numericCompare msg stmt@[pdx| %_ < !n |] = msgToPP $ msg n "less than"
+numericCompare _ stmt = plainMsg $ pre_statement' stmt
+
 -- | Handler for statements where the RHS is either a number or a tag.
 numericOrTag :: (HOI4Info g, Monad m) =>
     (Double -> ScriptMessage)
@@ -1443,6 +1454,13 @@ tryLocAndIcon atom = do
     loc <- tryLoc atom
     return (maybe mempty id (Just (iconText atom)),
             maybe ("<tt>" <> atom <> "</tt>") id loc)
+
+-- | Get localization for the text given. Return @mempty@ if there is
+-- no loc, and wrapped in @<tt>@ tags if there is no localization.
+tryNoLocText :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
+tryNoLocText atom =
+    return (atom,
+            "")
 
 -- | Same as tryLocAndIcon but for global modifiers
 tryLocAndLocMod :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
@@ -1861,21 +1879,21 @@ opinion _ _ stmt = preStatement stmt
 data HasOpinion = HasOpinion
         {   hop_target :: Maybe Text
         ,   hop_value :: Maybe Double
-        ,   hop_ltgt :: Bool
+        ,   hop_ltgt :: Text
         }
 newHasOpinion :: HasOpinion
-newHasOpinion = HasOpinion Nothing Nothing True
+newHasOpinion = HasOpinion Nothing Nothing undefined
 hasOpinion :: forall g m. (HOI4Info g, Monad m) =>
-    (Double -> Text -> Bool -> ScriptMessage) ->
+    (Double -> Text -> Text -> ScriptMessage) ->
     StatementHandler g m
 hasOpinion msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_hasOpinion (foldl' addLine newHasOpinion scr)
     where
         addLine :: HasOpinion -> GenericStatement -> HasOpinion
         addLine hop [pdx| target = ?target |] = hop { hop_target = Just target }
-        addLine hop [pdx| value = !val |] = hop { hop_value = Just val, hop_ltgt = True } -- at least
-        addLine hop [pdx| value > !val |] = hop { hop_value = Just val, hop_ltgt = True } -- at least
-        addLine hop [pdx| value < !val |] = hop { hop_value = Just val, hop_ltgt = False } -- less than
+        addLine hop [pdx| value = !val |] = hop { hop_value = Just val, hop_ltgt = "equal to or more than" } -- at least
+        addLine hop [pdx| value > !val |] = hop { hop_value = Just val, hop_ltgt = "more than" } -- at least
+        addLine hop [pdx| value < !val |] = hop { hop_value = Just val, hop_ltgt = "less than" } -- less than
         addLine hop _ = trace "warning: unrecognized has_opinion clause" hop
         pp_hasOpinion :: HasOpinion -> PPT g m ScriptMessage
         pp_hasOpinion hop = case (hop_target hop, hop_value hop, hop_ltgt hop) of
@@ -4492,35 +4510,6 @@ declareWarOn stmt@[pdx| %_ = @scr |] =
                 (Just dwtype, Nothing, Just target_flag) -> MsgDeclareWarOn target_flag dwtype states
 declareWarOn stmt = preStatement stmt
 
--------------------------
--- modify_country_flag --
--------------------------
-
-data ModifyCountryFlag = ModifyCountryFlag
-        {   mf_flag :: Maybe Text
-        ,   mf_value :: Maybe Text
-        }
-newMCF :: ModifyCountryFlag
-newMCF = ModifyCountryFlag undefined undefined
-modifyCountryFlag :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-modifyCountryFlag stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_mcf =<< foldM addLine newMCF scr
-    where
-        addLine :: ModifyCountryFlag -> GenericStatement -> PPT g m ModifyCountryFlag
-        addLine mcf [pdx| flag = $flag |] =
-            return mcf { mf_flag = Just flag }
-        addLine mcf [pdx| value = !amt |] =
-            let amt' = Doc.doc2text $ plainNumSign amt in
-            return mcf { mf_value = Just amt' }
-        addLine mcf [pdx| value = $amt  |]
-            = return mcf { mf_value = Just amt }
-        addLine mcf _ = return mcf
-        pp_mcf mcf
-            | (Just flag, Just value) <- (mf_flag mcf, mf_value mcf)
-              = return $ MsgModifyCountryFlag flag value
-            | otherwise = return (preMessage stmt)
-modifyCountryFlag stmt = preStatement stmt
-
 ----------------------------------
 -- Handler for annex_country --
 ----------------------------------
@@ -4543,7 +4532,7 @@ foldCompound "annexCountry" "AnnexCountry" "an"
 --------------------
 
 data AddTechBonus = AddTechBonus
-        {   tb_name :: Text
+        {   tb_name :: Maybe Text
         ,   tb_bonus :: Maybe Double
         ,   tb_uses :: Maybe Double
         ,   tb_ahead_reduction :: Maybe Double
@@ -4551,7 +4540,7 @@ data AddTechBonus = AddTechBonus
         ,   tb_technology :: [Text]
         }
 newATB :: AddTechBonus
-newATB = AddTechBonus undefined Nothing Nothing Nothing [] []
+newATB = AddTechBonus Nothing Nothing Nothing Nothing [] []
 addTechBonus :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 addTechBonus stmt@[pdx| %_ = @scr |]
     = msgToPP . pp_atb =<< foldM addLine newATB scr
@@ -4559,7 +4548,7 @@ addTechBonus stmt@[pdx| %_ = @scr |]
         addLine :: AddTechBonus -> GenericStatement -> PPT g m AddTechBonus
         addLine atb [pdx| name = $name |] = do
             nameloc <- getGameL10n name
-            return atb { tb_name = nameloc }
+            return atb { tb_name = Just nameloc }
         addLine atb [pdx| bonus = !amt |] =
             return atb { tb_bonus = Just amt }
         addLine atb [pdx| ahead_reduction = !amt |] =
@@ -4577,14 +4566,20 @@ addTechBonus stmt@[pdx| %_ = @scr |]
         addLine atb _ = return atb
         pp_atb :: AddTechBonus -> ScriptMessage
         pp_atb atb =
-            let techcat = T.pack $ concat [intercalate ", " $ map T.unpack (tb_category atb), if length (tb_technology atb) /= 0 then " and " else "", intercalate ", " $ map T.unpack (tb_technology atb)]
-            in case (tb_name atb, tb_bonus atb,
-                     tb_uses atb, tb_ahead_reduction atb) of
-                (name, Just bonus, Just uses, Just ahead) -> MsgAddTechBonusAheadBoth bonus ahead name uses techcat
-                (name, Just bonus, Just uses, _) -> MsgAddTechBonus bonus name uses techcat
-                (name, Just bonus, _, Just ahead) -> MsgAddTechBonusAheadBoth bonus ahead name 1 techcat
-                (name, _, Just uses, Just ahead) -> MsgAddTechBonusAhead ahead name uses techcat
-                (name, _, _, Just ahead) -> MsgAddTechBonusAhead ahead name 1 techcat
-                (name, Just bonus, _, _) -> MsgAddTechBonus  bonus name 1 techcat
+            let techcat = T.pack $ concat [intercalate ", " $ map T.unpack (tb_category atb), if not (null (tb_technology atb)) then " and " else "", intercalate ", " $ map T.unpack (tb_technology atb)]
+                ifname = case tb_name atb of
+                    Just name -> "(" <> italicText name <> ") "
+                    _ -> ""
+            in case (tb_bonus atb, tb_uses atb, tb_ahead_reduction atb) of
+                (Just bonus, Just uses, Just ahead) -> MsgAddTechBonusAheadBoth bonus ahead ifname uses techcat
+                (Just bonus, Just uses, _) -> MsgAddTechBonus bonus ifname uses techcat
+                (Just bonus, _, Just ahead) -> MsgAddTechBonusAheadBoth bonus ahead ifname 1 techcat
+                (_, Just uses, Just ahead) -> MsgAddTechBonusAhead ahead ifname uses techcat
+                (_, _, Just ahead) -> MsgAddTechBonusAhead ahead ifname 1 techcat
+                (Just bonus, _, _) -> MsgAddTechBonus bonus ifname 1 techcat
                 _ -> trace ("issues in add_technology_bonus: " ++ show stmt ) $ preMessage stmt
 addTechBonus stmt = preStatement stmt
+
+setCountryFlag :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+setCountryFlag stmt@[pdx| %_ = $flag |] = withNonlocAtom2 MsgCountryFlag MsgSetFlag stmt
+setCountryFlag stmt = preStatement stmt

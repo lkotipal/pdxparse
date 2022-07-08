@@ -203,7 +203,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_advisor_adm_effect", rhsAlwaysYes MsgRemoveAdvisorAdmEffect) -- "The currently employed administrative advisor leaves the country's court."
         ,("remove_cardinal"          , rhsAlwaysYes MsgLoseCardinal)
         ,("remove_consort"           , rhsAlwaysYes MsgRemoveConsort)
-        ,("remove_heir"              , rhsAlwaysEmptyCompound MsgHeirRemoved)
+        ,("remove_current_leader"    , rhsAlwaysYes MsgRemoveCurrentLeader)
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("same_govt_as_root_trigger" , rhsAlwaysYes MsgSameGovtAsRoot)
         ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
@@ -313,6 +313,7 @@ handlersNumeric = Tr.fromList
         ,("reform_level"                     , numeric MsgReformLevel)
         ,("revolt_percentage"                , numeric MsgRevoltPercentage)
         ,("ruler_age"                        , numeric MsgRulerAge)
+        ,("surrender_progress"               , numericCompare MsgSurrenderProgress)
         ,("tech_difference"                  , numeric MsgTechDifference)
         ,("trade_company_size"               , numeric MsgTradeCompanySize)
         ,("trade_income_percentage"          , numeric MsgTradeIncomePercentage)
@@ -792,6 +793,7 @@ handlersLocRhs = Tr.fromList
         ,("has_idea"              , withLocAtom MsgHasIdea)
         ,("has_leader"            , withLocAtom MsgHasLeader) -- will usually fail localization
         ,("has_mission"           , withLocAtomTitle MsgHasMission)
+        ,("has_opinion_modifier"  , withLocAtom MsgHasOpinionMod)
         ,("has_reform"            , withLocAtom MsgHasReform)
         ,("has_terrain"           , withLocAtom MsgHasTerrain)
         ,("has_winter"            , withLocAtom MsgHasWinter)
@@ -878,7 +880,7 @@ handlersTypewriter = Tr.fromList
         ,("clr_country_flag" , withNonlocAtom2 MsgCountryFlag MsgClearFlag)
         ,("clr_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgClearFlag)
         ,("clr_heir_flag"    , withNonlocAtom2 MsgHeirFlag MsgClearFlag)
-        ,("clr_province_flag", withNonlocAtom2 MsgProvinceFlag MsgClearFlag)
+        ,("clr_state_flag", withNonlocAtom2 MsgStateFlag MsgClearFlag)
         ,("clr_ruler_flag"   , withNonlocAtom2 MsgRulerFlag MsgClearFlag)
         ,("clear_exiled_ruler" , withNonlocAtom MsgClearExiledRuler)
         ,("clear_saved_name" , withNonlocAtom MsgClearSavedName)
@@ -889,16 +891,16 @@ handlersTypewriter = Tr.fromList
         ,("has_country_flag" , withNonlocAtom2 MsgCountryFlag MsgHasFlag)
         ,("has_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgHasFlag)
         ,("has_heir_flag"    , withNonlocAtom2 MsgHeirFlag MsgHasFlag)
-        ,("has_province_flag", withNonlocAtom2 MsgProvinceFlag MsgHasFlag)
+        ,("has_state_flag", withNonlocAtom2 MsgStateFlag MsgHasFlag)
         ,("has_ruler"        , withNonlocAtom MsgHasRuler)
         ,("has_ruler_flag"   , withNonlocAtom2 MsgRulerFlag MsgHasFlag)
         ,("has_saved_event_target", withNonlocAtom MsgHasSavedEventTarget)
         ,("save_event_target_as", withNonlocAtom MsgSaveEventTargetAs)
         ,("save_global_event_target_as", withNonlocAtom MsgSaveGlobalEventTargetAs)
         ,("set_consort_flag" , withNonlocAtom2 MsgConsortFlag MsgSetFlag)
-        ,("set_country_flag" , withNonlocAtom2 MsgCountryFlag MsgSetFlag)
+        ,("set_cosmetic_tag" , withNonlocAtom MsgSetCosmeticTag)
         ,("set_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgSetFlag)
-        ,("set_province_flag", withNonlocAtom2 MsgProvinceFlag MsgSetFlag)
+        ,("set_State_flag", withNonlocAtom2 MsgStateFlag MsgSetFlag)
         ,("set_heir"         , withNonlocAtom MsgSetHeir)
         ,("set_heir_flag"    , withNonlocAtom2 MsgHeirFlag MsgSetFlag)
         ,("set_ruler"        , withNonlocAtom MsgSetRuler)
@@ -957,7 +959,7 @@ handlersSimpleIcon = Tr.fromList
         ,("unlock_cult"             , withLocAtomIcon MsgUnlockCult)
         ]
 
--- | Handlers for simple statements with a flag
+-- | Handlers for simple statements with a flag or pronoun
 handlersSimpleFlag :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSimpleFlag = Tr.fromList
         [("add_claim"               , withFlag MsgGainClaim)
@@ -971,7 +973,7 @@ handlersSimpleFlag = Tr.fromList
         ,("change_controller"       , withFlag MsgChangeController)
         ,("change_tag"              , withFlag MsgChangeTag)
         ,("clear_estate_agenda_cache" , withFlag MsgClearEstateAgendaCache)
-        ,("controlled_by"           , withFlag MsgControlledBy)
+        ,("is_controlled_by"        , withFlag MsgIsControlledBy)
         ,("country_exists"          , withFlag MsgCountryExists)
         ,("country_or_non_sovereign_subject_holds" , withFlag MsgCountryOrNonSovereignSubjectHolds)
         ,("country_or_subject_holds" , withFlag MsgCountryOrSubjectHolds)
@@ -1036,9 +1038,9 @@ handlersSimpleFlag = Tr.fromList
         ,("trade_embargo_by"        , withFlag MsgEmbargoedBy)
         ,("truce_with"              , withFlag MsgTruceWith)
         ,("vassal_of"               , withFlag MsgVassalOf)
-        ,("vassalize"               , withFlag MsgVassalize)
-        ,("war_with"                , withFlag MsgAtWarWith)
-        ,("was_tag"                 , withFlag MsgWasTag)
+        ,("puppet"                  , withFlag MsgPuppet)
+        ,("has_war_with"            , withFlag MsgAtWarWith)
+        ,("original_tag"            , withFlag MsgOrignalTag)
         ,("white_peace"             , withFlag MsgMakeWhitePeace)
         ]
 
@@ -1093,7 +1095,7 @@ handlersTagOrProvince = Tr.fromList
 -- | Handlers for yes/no statements
 handlersYesNo :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersYesNo = Tr.fromList
-        [("ai"                          , withBool MsgIsAIControlled)
+        [("is_ai"                       , withBool MsgIsAIControlled)
         ,("allows_female_emperor"       , withBool MsgFemaleEmperorAllowed)
         ,("always"                      , withBool MsgAlways)
         ,("at_war_with_religious_enemy" , withBool MsgAtWarWithReligiousEnemy)
@@ -1372,6 +1374,7 @@ handlersTextValue = Tr.fromList
         ,("trust"                       , textValue "who" "value" MsgTrust MsgTrust flagTextMaybe)
         ,("war_score_against"           , textValue "who" "value" MsgWarscoreAgainst MsgWarscoreAgainst flagTextMaybe)
         ,("years_in_union_under"        , textValue "who" "years" MsgYearsInUnionUnder MsgYearsInUnionUnder flagTextMaybe)
+        ,("modify_country_flag"         , textValue "flag" "value" MsgModifyCountryFlag MsgModifyCountryFlag tryNoLocText) -- Localization/icon ignored
         ]
 
 -- | Handlers for text/atom pairs
@@ -1379,6 +1382,7 @@ handlersTextAtom :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextAtom = Tr.fromList
         [("create_flagship"      , taDescAtomIcon "name" "type" MsgCreateNamedShip)
         ,("create_named_ship"    , taDescAtomIcon "name" "type" MsgCreateFlagShip)
+        ,("has_game_rule"    , textAtom "rule" "option" MsgHasRule tryLoc)
         ,("pick_random_estate_if_present" , textAtom "flag" "estate_action" MsgPickRandomEstateIfPresent tryLoc) -- Localization/icon ignored
         ,("religious_school"     , textAtom "school" "group" MsgReligiousSchool tryLoc)
         ,("set_religious_school" , textAtom "school" "group" MsgSetReligiousSchool tryLoc)
@@ -1431,14 +1435,12 @@ handlersSpecialComplex = Tr.fromList
         ,("has_estate_influence_modifier", hasEstateModifier MsgEstateHasInfluenceModifier)
         ,("has_estate_loyalty_modifier"  , hasEstateModifier MsgEstateHasLoyaltyModifier)
         ,("has_great_project"            , hasGreatProject)
-        ,("has_opinion"                  , hasOpinion MsgHasOpinionHOI4)
-        ,("has_opinion_modifier"         , opinion MsgHasOpinionMod (\modid what who _years -> MsgHasOpinionMod modid what who))
+        ,("has_opinion"                  , hasOpinion MsgHasOpinion)
         ,("add_opinion_modifier"         , opinion MsgAddOpinion (\modid what who _years -> MsgAddOpinion modid what who))
         ,("has_reached_government_reform_tier" , hasGovernmentReforTier)
         ,("has_trade_company_investment_in_area", hasTradeCompanyInvestment)
         ,("is_in_war"                    , isInWar)
         ,("news_event"                   , scope HOI4Country . triggerEvent MsgNewsEvent)
-        ,("modify_country_flag"          , modifyCountryFlag)
         ,("privateer_power"              , privateerPower)
         ,("province_event"               , scope HOI4ScopeState . triggerEvent MsgProvinceEvent)
         ,("region"                       , region)
@@ -1448,6 +1450,7 @@ handlersSpecialComplex = Tr.fromList
         ,("reverse_remove_opinion"       , opinion MsgReverseRemoveOpinionMod (\modid what who _years -> MsgReverseRemoveOpinionMod modid what who))
         ,("religion_years"               , religionYears)
         ,("set_ai_attitude"              , aiAttitude MsgSetAiAttitude)
+        ,("set_country_flag"             , setCountryFlag)
         ,("state_event"                  , scope HOI4ScopeState . triggerEvent MsgStateEvent)
         ,("reverse_add_casus_belli"      , addCB False)
         ,("trading_bonus"                , tradingBonus)
@@ -1647,6 +1650,88 @@ handlersIgnored = Tr.fromList
 -- may produce many lines (via 'ppMany'), since some statements are compound.
 ppOne :: (HOI4Info g, Monad m) => StatementHandler g m
 ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
+    GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
+        Just handler -> handler stmt
+        -- default
+        Nothing -> if isTag label
+             then case rhs of
+                CompoundRhs scr ->
+                    withCurrentIndent $ \_ -> do -- force indent level at least 1
+                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just HOI4Country) label
+                        scriptMsgs <- scope HOI4Country $ ppMany scr
+                        return (lflag : scriptMsgs)
+                _ -> preStatement stmt
+             else do
+                geoData <- getGeoData
+                mloc <- getGameL10nIfPresent label
+                case mloc of
+                    -- Check for localizable atoms, e.g. regions
+                    Just loc -> case rhs of
+                        CompoundRhs scr -> ppMaybeGeo label loc scr
+                        _ -> compound loc stmt
+                    Nothing -> preStatement stmt
+    AtLhs _ -> return [] -- don't know how to handle these
+    IntLhs n -> do -- Treat as a province tag
+        tradeNodes <- getTradeNodes
+        case rhs of
+            CompoundRhs scr ->
+                -- Check if this is the main province of a trade node in which case we need
+                -- to see if that needs to be displayed instead
+                case HM.lookup n tradeNodes of
+                    Just node | isTradeNodeQuery scr -> do
+                        nodeLoc <- getGameL10n node
+                        header <- msgToPP (MsgTradeNode nodeLoc)
+                        scriptMsgs <- scope HOI4TradeNode $ ppMany scr
+                        return (header ++ scriptMsgs)
+                    _ -> do
+                        state_loc <- getStateLoc n
+                        header <- msgToPP (MsgState state_loc)
+                        scriptMsgs <- scope HOI4ScopeState $ ppMany scr
+                        return (header ++ scriptMsgs)
+            _ -> preStatement stmt
+    CustomLhs _ -> preStatement stmt
+ppOne stmt@[pdx| %lhs > %rhs |] = case lhs of
+    GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
+        Just handler -> handler stmt
+        -- default
+        Nothing -> if isTag label
+             then case rhs of
+                CompoundRhs scr ->
+                    withCurrentIndent $ \_ -> do -- force indent level at least 1
+                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just HOI4Country) label
+                        scriptMsgs <- scope HOI4Country $ ppMany scr
+                        return (lflag : scriptMsgs)
+                _ -> preStatement stmt
+             else do
+                geoData <- getGeoData
+                mloc <- getGameL10nIfPresent label
+                case mloc of
+                    -- Check for localizable atoms, e.g. regions
+                    Just loc -> case rhs of
+                        CompoundRhs scr -> ppMaybeGeo label loc scr
+                        _ -> compound loc stmt
+                    Nothing -> preStatement stmt
+    AtLhs _ -> return [] -- don't know how to handle these
+    IntLhs n -> do -- Treat as a province tag
+        tradeNodes <- getTradeNodes
+        case rhs of
+            CompoundRhs scr ->
+                -- Check if this is the main province of a trade node in which case we need
+                -- to see if that needs to be displayed instead
+                case HM.lookup n tradeNodes of
+                    Just node | isTradeNodeQuery scr -> do
+                        nodeLoc <- getGameL10n node
+                        header <- msgToPP (MsgTradeNode nodeLoc)
+                        scriptMsgs <- scope HOI4TradeNode $ ppMany scr
+                        return (header ++ scriptMsgs)
+                    _ -> do
+                        state_loc <- getStateLoc n
+                        header <- msgToPP (MsgState state_loc)
+                        scriptMsgs <- scope HOI4ScopeState $ ppMany scr
+                        return (header ++ scriptMsgs)
+            _ -> preStatement stmt
+    CustomLhs _ -> preStatement stmt
+ppOne stmt@[pdx| %lhs < %rhs |] = case lhs of
     GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
         Just handler -> handler stmt
         -- default

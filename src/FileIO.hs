@@ -65,7 +65,11 @@ readFileRetry path = do
 --  buildPath settings "events/FlavorENG.txt" = "C:\Program Files (x86)\Steam\steamapps\common\Europa Universalis IV\events\FlavorENG.txt"
 -- @
 buildPath :: Settings -> FilePath -> FilePath
-buildPath settings path = gamePath settings </> path
+buildPath settings path =
+    if gameOrModFolder settings == gameFolder settings then
+        gamePath settings </> path
+    else
+        gameModPath settings </> path
 
 -------------------------------
 -- Reading scripts from file --

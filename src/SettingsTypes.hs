@@ -237,6 +237,7 @@ data Settings = Settings {
                                 --   game files.  Usually the same as the
                                 --   game's name, e.g. "Hearts of Iron IV".
     ,   gameOrModFolder  :: String
+    ,   gameModPath  :: FilePath
     ,   gamePath    :: FilePath -- ^ Full path to game directory.
     ,   justLanguage :: String
     ,   language    :: Text     -- ^ Localization language code (e.g. \"en\")

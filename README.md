@@ -54,6 +54,7 @@ only the files you want, and rebuild.
     * ~~Localization files need to be directly in the localisation folder and not the localisation->english folder to work~~
     * ~~There are like 5 events where hidden and picture have the first letter capitilized making them fail to parse~~
     * Fractions can be written as 0.15 or .15 the second case the parser sees it as text instead of a double
+    * add_country_leader isn't processed. it can get it's name from the scope it is in which aren't handled (probably never will)
 
 ## To do
 Feel extremely free to help with any of these or the issues, I honestly doubt I can do any of these except maybe the additonal formatting
@@ -75,3 +76,5 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
     * find less ugly solution?
 *  ~~random_list, ~~ai_chance~~ and possibly more needs to also handle "add" besides "factor" in their "modifier"~~
 * pretty up add_tech_bonus
+* orignal_tag also add {{flag}} ?
+* find none ugly solution for ppOne for [pdx| %lhs = %rhs |], [pdx| %lhs > %rhs |], [pdx| %lhs < %rhs |]

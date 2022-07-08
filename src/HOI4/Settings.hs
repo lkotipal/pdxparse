@@ -57,7 +57,7 @@ import HOI4.Events (parseHOI4Events, writeHOI4Events
                    )
 import HOI4.Extra (writeHOI4Extra, writeHOI4ExtraCountryScope, writeHOI4ExtraProvinceScope, writeHOI4ExtraModifier)
 
--- | Temporary (?) fix for HAW and UHW both localizing to "Hawai'i'"
+-- | Temporary (?) fix for CHI and PRC both localizing to "China"
 -- Can be extended/removed as necessary
 fixLocalization :: Settings -> Settings
 fixLocalization s =
@@ -66,15 +66,15 @@ fixLocalization s =
         l10n = gameL10n s
         l10nForLan = HM.findWithDefault HM.empty lan l10n
         findKey key = content $ HM.findWithDefault (LocEntry 0 key) key l10nForLan
-        hawLoc = findKey "HAW"
-        newHavLoc = hawLoc <> " (HAW)"
-        newL10n = HM.insert "HAW" (LocEntry 0 newHavLoc) l10nForLan
+        chiLoc = findKey "CHI"
+        newHavLoc = chiLoc <> " (CHI)"
+        newL10n = HM.insert "CHI" (LocEntry 0 newHavLoc) l10nForLan
     in
-        if hawLoc == findKey "UHW" then
-            (trace $ "Note: Applying localization fix for HAW/UHW: " ++ (show hawLoc) ++ " -> " ++ (show newHavLoc)) $
+        if chiLoc == findKey "PRC" then
+            (trace $ "Note: Applying localization fix for CHI/PRC: " ++ (show chiLoc) ++ " -> " ++ (show newHavLoc)) $
                 s { gameL10n = HM.insert lan newL10n l10n }
         else
-            (trace "Warning: fixLocalization hack for HAW/UHW in HOI4/Settings.hs no longer needed!") $ s
+            (trace "Warning: fixLocalization hack for CHI/PRC in HOI4/Settings.hs no longer needed!") $ s
 
 -- | HOI4 game type. This is only interesting for its instances.
 data HOI4 = HOI4

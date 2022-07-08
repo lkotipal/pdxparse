@@ -450,8 +450,8 @@ ppEventSource (HOI4EvtSrcNFSelect id loc) = do
         ]
 
 
-ppTriggeredBy :: (HOI4Info g, Monad m) => Text -> PPT g m Doc
-ppTriggeredBy eventId = do
+ppTriggeredBy :: (HOI4Info g, Monad m) => Text -> [Doc] -> PPT g m Doc
+ppTriggeredBy eventId trig = do
     eventTriggers <- getEventTriggers
     let mtriggers = HM.lookup eventId eventTriggers
     case mtriggers of
@@ -463,7 +463,7 @@ ppTriggeredBy eventId = do
                 else
                     map (\d -> Doc.strictText $ "* " <> (Doc.doc2text d)) ts
             return $ mconcat $ [PP.line] ++ (intersperse PP.line ts')
-        _ -> return $ Doc.strictText "(please describe trigger here)"
+        _ -> if null trig then return $ Doc.strictText "(No triggers)" else return $ Doc.strictText "(Triggers in event)"
 
 -- | Pretty-print an event. If some essential parts are missing from the data,
 -- throw an exception.
@@ -496,11 +496,14 @@ pp_event evt = case hoi4evt_id evt of
         trigger_pp'd <- evtArg "trigger" hoi4evt_trigger pp_script
         mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (hoi4evt_mean_time_to_happen evt)
         immediate_pp'd <- setIsInEffect True (evtArg "immediate" hoi4evt_immediate pp_script)
-        triggered_pp <- ppTriggeredBy eid
+        triggered_pp <- ppTriggeredBy eid trigger_pp'd
         -- Keep track of incomplete events
-        when (not isTriggeredOnly && isNothing mmtth_pp'd && length trigger_pp'd == 0) $
+        when (not isTriggeredOnly && isNothing mmtth_pp'd && null trigger_pp'd) $
             -- TODO: use logging instead of trace
             traceM ("warning: is_triggered_only, trigger, and mean_time_to_happen missing for event id " ++ T.unpack eid)
+        when (isTriggeredOnly && Doc.doc2text triggered_pp == "(No triggers)" && isNothing mmtth_pp'd && null trigger_pp'd) $
+            -- TODO: use logging instead of trace
+            traceM ("warning: Event is is_triggered_only but no triggers or mean_time_to_hapen found for event id " ++ T.unpack eid)
         return . mconcat $
             ["<section begin=", evtId, "/>", PP.line
             ,"{{Event", PP.line
@@ -528,7 +531,7 @@ pp_event evt = case hoi4evt_id evt of
             -- mean_time_to_happen is only really mtth if it's *not*
             -- triggered only.
             (if isTriggeredOnly then [] else case mmtth_pp'd of
-                Nothing -> if length trigger_pp'd /= 0 then [] else ["| triggered_only =", PP.line
+                Nothing -> if not $ null trigger_pp'd then [] else ["| triggered_only =", PP.line
                         ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
                 Just mtth_pp'd ->
                     ["| mtth = ", PP.line

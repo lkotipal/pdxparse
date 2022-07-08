@@ -65,7 +65,7 @@ instance FromJSON SettingsInput where
                             <*> (o' .: "language")
                             <*> liftM T.unpack (o' .: "version")
                             <*> liftM (fmap T.unpack) (o' .:? "mod_name")
-                            <*> liftM (fmap T.unpack) (o' .:? "mod_path") 
+                            <*> liftM (fmap T.unpack) (o' .:? "mod_path")
             _ -> fail "bad settings file"
     parseJSON _ = fail "bad settings file"
 
@@ -149,7 +149,7 @@ readSettings = do
                 lang = languageI settingsIn
                 gamefolder = gameFolderI settingsIn
                 modfolder = fromMaybe "" (modNameI settingsIn)
-                modlocation = fromMaybe "" (modDirI settingsIn)
+                modlocation = fromMaybe "C:/thisgoesnowhere" (modDirI settingsIn)
 
             game <- case gamefolder of
                 "Europa Universalis IV" -> return $ Game EU4
@@ -164,10 +164,6 @@ readSettings = do
                 "Hearts of Iron IV" -> return $ "localisation" </> T.unpack lang
                 other -> return "localisation"
 
-            gameormodpath <- case modNameI settingsIn of
-                Just mname -> return modlocation
-                _ -> return $ steamDirCanonicalized </> steamAppsCanonicalized </> gamefolder
-            
             gameormodfolder <- case modNameI settingsIn of
                 Just mname -> return modfolder
                 _ -> return gamefolder
@@ -179,7 +175,8 @@ readSettings = do
                             , game = game
                             , gameFolder = gamefolder
                             , gameOrModFolder = gameormodfolder
-                            , gamePath = gameormodpath
+                            , gameModPath = modlocation
+                            , gamePath = steamDirCanonicalized </> steamAppsCanonicalized </> gamefolder
                             , justLanguage = (T.unpack lang)
                             , language = "l_" <> lang
                             , languageFolder = langFolder
