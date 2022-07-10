@@ -47,8 +47,9 @@ data LocEntry = LocEntry {
 
 -- | Pick from two localizations based on their version number: highest is
 -- best. If they're equal, use the first argument.
+-- Changed to always take the first. seems version number ahs no bearing in game.
 latest :: LocEntry -> LocEntry -> LocEntry
-latest a b = if version a >= version b then a else b
+latest a b = a
 
 -- | Merge localizations for two languages (using 'latest' to resolve
 -- duplicates).
@@ -148,8 +149,8 @@ stringLit = T.init . T.dropWhileEnd (/='"') . T.pack <$> (Ap.char '"' *> many st
 -- newlines and tabs).
 stringChar :: Parser Char
 stringChar = Ap.satisfy (not . \c -> Ap.inClass "\\" c || Ap.isEndOfLine c)
-         <|> Ap.char '\\' 
-            *> (    Ap.char '\'' 
+         <|> Ap.char '\\'
+            *> (    Ap.char '\''
                 <|> (Ap.char 'n' *> pure '\n')
                 <|> (Ap.char 't' *> pure '\t')
                 <|> Ap.anyChar

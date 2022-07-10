@@ -45,7 +45,7 @@ import HOI4.IdeaGroups (parseHOI4IdeaGroups, writeHOI4IdeaGroups)
 import HOI4.Modifiers (
 --                    parseHOI4Modifiers, writeHOI4Modifiers,
                       parseHOI4OpinionModifiers, writeHOI4OpinionModifiers
---                    , parseHOI4ProvTrigModifiers, writeHOI4ProvTrigModifiers
+                    , parseHOI4DynamicModifiers, writeHOI4DynamicModifiers
                     )
 --import HOI4.Missions (parseHOI4Missions , writeHOI4Missions)
 import HOI4.NationalFocus(parseHOI4NationalFocuss)
@@ -56,6 +56,7 @@ import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInNationalFocus
                    )
 import HOI4.Extra (writeHOI4Extra, writeHOI4ExtraCountryScope, writeHOI4ExtraProvinceScope, writeHOI4ExtraModifier)
+import HOI4.Misc (parseHOI4CountryHistory)
 
 -- | Temporary (?) fix for CHI and PRC both localizing to "China"
 -- Can be extended/removed as necessary
@@ -107,8 +108,10 @@ instance IsGame HOI4 where
                 ,   hoi4onactionsScripts = HM.empty
 --                ,   hoi4disasterScripts = HM.empty
                 ,   hoi4geoData = HM.empty
---                ,   hoi4provtrigmodifiers = HM.empty
---                ,   hoi4provtrigmodifierScripts = HM.empty
+                ,   hoi4dynamicmodifiers = HM.empty
+                ,   hoi4dynamicmodifierScripts = HM.empty
+                ,   hoi4countryHistory = HM.empty
+                ,   hoi4countryHistoryScripts = HM.empty
                 ,   hoi4tradeNodes = HM.empty
                 ,   hoi4extraScripts = HM.empty
                 ,   hoi4extraScriptsCountryScope = HM.empty
@@ -200,12 +203,18 @@ instance HOI4Info HOI4 where
     getGeoData = do
         HOI4D ed <- get
         return (hoi4geoData ed)
---    getProvinceTriggeredModifierScripts = do
---        HOI4D ed <- get
---        return (hoi4provtrigmodifierScripts ed)
---    getProvinceTriggeredModifiers = do
---        HOI4D ed <- get
---        return (hoi4provtrigmodifiers ed)
+    getDynamicModifierScripts = do
+        HOI4D ed <- get
+        return (hoi4dynamicmodifierScripts ed)
+    getDynamicModifiers = do
+        HOI4D ed <- get
+        return (hoi4dynamicmodifiers ed)
+    getCountryHistoryScripts = do
+        HOI4D ed <- get
+        return (hoi4countryHistoryScripts ed)
+    getCountryHistory = do
+        HOI4D ed <- get
+        return (hoi4countryHistory ed)
     getTradeNodes = do
         HOI4D ed <- get
         return (hoi4tradeNodes ed)
@@ -267,8 +276,9 @@ readHOI4Scripts = do
 --                    "disasters" -> "common" </> "disasters"
 --                    "tradenodes" -> "common" </> "tradenodes"
 --                    "trade_companies" -> "common" </> "trade_companies"
+                    "country_history" -> "history" </> "countries"
                     "colonial_regions" -> "common" </> "colonial_regions"
---                    "province_triggered_modifiers" -> "common" </> "province_triggered_modifiers"
+                    "dynamic_modifiers" -> "common" </> "dynamic_modifiers"
                     "decisions" -> "common" </> "decisions"
                     "decisioncats" -> "common" </> "decisions" </> "categories"
                     "national_focus" -> "common" </> "national_focus"
@@ -279,11 +289,11 @@ readHOI4Scripts = do
                                      =<< getDirectoryContents sourceDir)
             results <- forM files $ \filename -> readOneScript category (sourceSubdir </> filename)
             return $ foldl (flip (uncurry HM.insert)) HM.empty results
-
+{-
         getOnlyLhs :: GenericStatement -> Maybe Text
         getOnlyLhs (Statement (GenericLhs lhs _) _ _) = Just (toLower lhs)
-        getOnlyLhs stmt = (trace $ "Unsupported statement: " ++ (show stmt)) $ Nothing
-{-
+        getOnlyLhs stmt = trace $ "Unsupported statement: " ++ show stmt $ Nothing
+
         toHashMap :: HOI4GeoType -> [Text] -> HashMap Text HOI4GeoType
         toHashMap gt l = foldr (\t -> HM.insert t gt) HM.empty l
 
@@ -332,8 +342,9 @@ readHOI4Scripts = do
 --    missions <- readHOI4Script "missions"
     on_actions <- readHOI4Script "on_actions"
 --    disasters <- readHOI4Script "disasters"
---    provTrigModifiers <- readHOI4Script "province_triggered_modifiers"
+    dynamic_modifiers <- readHOI4Script "dynamic_modifiers"
     national_focus <- readHOI4Script "national_focus"
+    country_history <- readHOI4Script "country_history"
 
 --    extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
 --    extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
@@ -365,7 +376,8 @@ readHOI4Scripts = do
         ,   hoi4onactionsScripts = on_actions
 --        ,   hoi4disasterScripts = disasters
 --        ,   hoi4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
---        ,   hoi4provtrigmodifierScripts = provTrigModifiers
+        ,   hoi4dynamicmodifierScripts = dynamic_modifiers
+        ,   hoi4countryHistoryScripts = country_history
 --        ,   hoi4tradeNodes = HM.fromList (catMaybes (map processTradeNode (concatMap snd (HM.toList tradeNodeScripts))))
 --        ,   hoi4extraScripts = foldl (flip (uncurry HM.insert)) HM.empty extra
 --        ,   hoi4extraScriptsCountryScope = foldl (flip (uncurry HM.insert)) HM.empty extraCountryScope
@@ -383,13 +395,14 @@ parseHOI4Scripts = do
 --    modifiers <- parseHOI4Modifiers =<< getModifierScripts
 
     opinionModifiers <- parseHOI4OpinionModifiers =<< getOpinionModifierScripts
---    provTrigModifiers <- parseHOI4ProvTrigModifiers =<< getProvinceTriggeredModifierScripts
+    dynamicModifiers <- parseHOI4DynamicModifiers =<< getDynamicModifierScripts
     decisioncats <- parseHOI4Decisioncats =<< getDecisioncatScripts
     decisions <- parseHOI4Decisions =<< getDecisionScripts
     events <- parseHOI4Events =<< getEventScripts
 --    missions <- parseHOI4Missions =<< getMissionScripts
     on_actions <- getOnActionsScripts
     national_focus <- parseHOI4NationalFocuss =<< getNationalFocusScripts
+    countryHistory <- parseHOI4CountryHistory =<< getCountryHistoryScripts
 --    disasters <- getDisasterScripts
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
@@ -407,7 +420,8 @@ parseHOI4Scripts = do
             ,   hoi4opmods = opinionModifiers
 --            ,   hoi4missions = missions
             ,   hoi4eventTriggers = te4
---            ,   hoi4provtrigmodifiers = provTrigModifiers
+            ,   hoi4dynamicmodifiers = dynamicModifiers
+            ,   hoi4countryHistory = countryHistory
             }
 
 -- | Output the game data as wiki text.
@@ -420,7 +434,7 @@ writeHOI4Scripts = do
         writeHOI4Decisions
 --        writeHOI4Missions
         writeHOI4OpinionModifiers
---        writeHOI4ProvTrigModifiers
+        writeHOI4DynamicModifiers
     writeHOI4Extra
     writeHOI4ExtraCountryScope
     writeHOI4ExtraProvinceScope

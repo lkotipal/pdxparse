@@ -110,6 +110,6 @@ readL10nDirs settings dirs = filterM doesFileExist
 addlistdir :: [FilePath] -> Bool -> [FilePath] -> Bool -> [FilePath] -> [FilePath]
 addlistdir dirgame checkmod dirmod checkmodreplace dirmodreplace =
     case (checkmod, checkmodreplace) of
-        (True, True) -> dirmodreplace ++ dirgame ++ dirmod
-        (True, False) -> dirgame ++ dirmod
+        (True, True) -> dirmodreplace ++ dirmod ++ dirgame
+        (True, False) -> dirmod ++ dirgame
         _ -> dirgame

@@ -32,6 +32,7 @@ module MessageTools (
     , formatHours
     , formatDays
     , formatMonths
+    , formatYears
     -- * Wiki markup
     ,   template, templateDoc
     -- * If-then-else

@@ -14,8 +14,9 @@ module HOI4.Types (
 --    ,   HOI4Modifier (..)
     ,   HOI4OpinionModifier (..)
 --    ,   HOI4MissionTreeBranch (..), HOI4Mission (..)
---    ,   HOI4ScopeStateTriggeredModifier (..)
+    ,   HOI4DynamicModifier (..)
     ,   HOI4NationalFocus (..)
+    ,   HOI4CountryHistory (..)
         -- * Low level types
     ,   MonarchPower (..)
     ,   HOI4Scope (..)
@@ -58,7 +59,8 @@ data HOI4Data = HOI4Data {
 --    ,   hoi4missions :: HashMap Text HOI4MissionTreeBranch
     ,   hoi4eventTriggers :: HOI4EventTriggers
     ,   hoi4geoData :: HashMap Text HOI4GeoType
---    ,   hoi4provtrigmodifiers :: HashMap Text HOI4ScopeStateTriggeredModifier
+    ,   hoi4dynamicmodifiers :: HashMap Text HOI4DynamicModifier
+    ,   hoi4countryHistory :: HashMap Text HOI4CountryHistory
     ,   hoi4eventScripts :: HashMap FilePath GenericScript
     ,   hoi4decisioncatScripts :: HashMap FilePath GenericScript
     ,   hoi4decisionScripts :: HashMap FilePath GenericScript
@@ -68,7 +70,8 @@ data HOI4Data = HOI4Data {
 --    ,   hoi4missionScripts :: HashMap FilePath GenericScript
     ,   hoi4onactionsScripts :: HashMap FilePath GenericScript
 --    ,   hoi4disasterScripts :: HashMap FilePath GenericScript
---    ,   hoi4provtrigmodifierScripts :: HashMap FilePath GenericScript
+    ,   hoi4dynamicmodifierScripts :: HashMap FilePath GenericScript
+    ,   hoi4countryHistoryScripts :: HashMap FilePath GenericScript -- Country Tag -> country tag + ideology
     ,   hoi4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
     ,   hoi4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -135,10 +138,14 @@ class (IsGame g,
 --    getDisasterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed geographic data
     getGeoData :: Monad m => PPT g m (HashMap Text HOI4GeoType)
-    -- | Get the contents of all province triggered modifier script files.
---    getProvinceTriggeredModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | Get the parsed province triggered modifiers table (keyed on modifier ID).
---    getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text HOI4ScopeStateTriggeredModifier)
+    -- | Get the contents of all dynamic modifier script files.
+    getDynamicModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed dynamic modifiers table (keyed on modifier ID).
+    getDynamicModifiers :: Monad m => PPT g m (HashMap Text HOI4DynamicModifier)
+    -- | Get the country history
+    getCountryHistory :: Monad m => PPT g m (HashMap Text HOI4CountryHistory)
+    -- | Get the country history parsed
+    getCountryHistoryScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the trade nodes
     getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
     -- | Get extra scripts parsed from command line arguments
@@ -339,18 +346,17 @@ data HOI4Modifier = HOI4Modifier
     ,   modReligious :: Bool
     ,   modEffects :: GenericScript
     } deriving (Show)
-
-data HOI4ScopeStateTriggeredModifier = HOI4ScopeStateTriggeredModifier
-    {   ptmodName :: Text
-    ,   ptmodLocName :: Maybe Text
-    ,   ptmodPath :: FilePath
-    ,   ptmodEffects :: GenericScript        -- The modifier to apply when the triggered modifier is active
-    ,   ptmodPotential :: GenericScript      -- Whether the triggered modifier is visible in the Province view window
-    ,   ptmodTrigger :: GenericScript        -- Whether the triggered modifier is active
-    ,   ptmodOnActivation :: GenericScript   -- Effects to execute when the triggered modifiers switches to active (province scope)
-    ,   ptmodOnDeactivation :: GenericScript -- Effects to execute when the triggered modifiers switches to inactive
-    } deriving (Show)
 -}
+data HOI4DynamicModifier = HOI4DynamicModifier
+    {   dmodName :: Text
+    ,   dmodLocName :: Maybe Text
+    ,   dmodPath :: FilePath
+    ,   dmodIcon :: Maybe Text
+    ,   dmodEffects :: GenericScript        -- The modifier to apply when the triggered modifier is active
+    ,   dmodEnable :: GenericScript      -- Whether the triggered modifier is active
+    ,   dmodRemoveTrigger :: Maybe GenericScript        -- Whether the triggered modifier is removed
+    } deriving (Show)
+
 data HOI4OpinionModifier = HOI4OpinionModifier
     {   omodName :: Text
     ,   omodLocName :: Maybe Text
@@ -410,6 +416,11 @@ data HOI4NationalFocus = HOI4NationalFocus
     ,   nf_completion_reward :: Maybe GenericScript
     ,   nf_complete_tooltip :: Maybe Text
     ,   nf_path :: Maybe FilePath -- ^ Source file
+    } deriving (Show)
+
+data HOI4CountryHistory = HOI4CountryHistory
+    { chTag :: Text
+    , chRulingTag :: Text
     } deriving (Show)
 
 ------------------------------

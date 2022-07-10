@@ -123,18 +123,19 @@ nationalFocusAddSection nf stmt
         nationalFocusAddSection' nf stmt@[pdx| $lhs = %rhs |] = case T.map toLower lhs of
             "id" -> case rhs of
                 GenericRhs txt [] -> nf { nf_id = txt}
-                _-> trace ("bad nf id") nf
+                _-> trace ("bad nf id in: " ++ show stmt) nf
             "text" -> case rhs of
                 GenericRhs txt [] -> nf { nf_text = Just txt}
-                _-> trace ("bad nf id") nf
+                _-> trace ("bad nf id in: " ++ show stmt) nf
             "completion_reward" -> case rhs of
                 CompoundRhs scr -> nf { nf_completion_reward = Just scr }
                 _-> trace ("bad nf completion_reward") nf
             "icon" -> case rhs of
-                _-> nf
+                GenericRhs txt [] -> nf { nf_icon = Just txt}
+                _-> trace ("bad nf icon in: " ++ show stmt) nf
             "cost" -> case rhs of
                 (floatRhs -> Just num) -> nf {nf_cost = num}
-                _ -> trace ("bad nf cost") nf
+                _ -> trace ("bad nf cost in: " ++ show stmt) nf
             "allow_branch" -> case rhs of
                 _-> nf
             "x" -> case rhs of
@@ -167,7 +168,7 @@ nationalFocusAddSection nf stmt
                 _-> nf
             "select_effect" -> case rhs of
                 CompoundRhs scr -> nf {nf_select_effect = Just scr}
-                _-> trace ("bad nf select_effect") nf
+                _-> trace ("bad nf select_effect in: " ++ show stmt) nf
             "ai_will_do" -> case rhs of --Do we want to deal with aistuff with focus' ?
                 _-> nf
             "complete_tooltip" -> case rhs of

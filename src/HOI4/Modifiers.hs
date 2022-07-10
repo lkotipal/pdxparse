@@ -5,7 +5,7 @@ Description : Country, ruler, province and opinion modifiers
 module HOI4.Modifiers (
 --        parseHOI4Modifiers, writeHOI4Modifiers,
         parseHOI4OpinionModifiers, writeHOI4OpinionModifiers
---    ,   parseHOI4ProvTrigModifiers, writeHOI4ProvTrigModifiers
+    ,   parseHOI4DynamicModifiers, writeHOI4DynamicModifiers
     ) where
 
 import Control.Arrow ((&&&))
@@ -249,91 +249,88 @@ pp_opinion_modifer mod = do
         monthlyDecay _ _ = []
 
         duration :: Maybe Double -> Maybe Double -> Maybe Double -> [Doc]
-        duration (Just d) Nothing Nothing   | d /= 0 = [fmt "Day" d]
-        duration Nothing (Just m) Nothing   | m /= 0 = [fmt "Month" m]
-        duration Nothing Nothing (Just y)   | y /= 0 = [fmt "Year" y]
+        duration (Just d) Nothing Nothing   | d /= 0 = [Doc.strictText $ formatDays d]
+        duration Nothing (Just m) Nothing   | m /= 0 = [Doc.strictText $ formatMonths m]
+        duration Nothing Nothing (Just y)   | y /= 0 = [Doc.strictText $ formatYears $ floor y]
         duration (Just d) (Just m) Nothing  | d /= 0 || m /= 0 = [mconcat [fmt "Month" m, " and ", fmt "Day" d]]
-        duration (Just d) Nothing (Just y)  | d /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", " and ", fmt "Day" d]]
-        duration Nothing (Just m) (Just y)  | m /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", fmt "Month" m]]
+        duration (Just d) Nothing (Just y)  | d /= 0 || y /= 0 = [Doc.strictText $ formatDays (y*356+d)]
+        duration Nothing (Just m) (Just y)  | m /= 0 || y /= 0 = [Doc.strictText $ formatMonths (y*12+m)]
         duration (Just d) (Just m) (Just y) | d /= 0 || m /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", fmt "Month" m, " and ", fmt "Day" d]]
         duration _ _ _ = []
 
         fmt :: Text -> Double -> Doc
         fmt t v = mconcat [ plainNum v, " ", Doc.strictText $ t <> (if v == 1.0 then "" else "s") ]
-{-
-parseHOI4ProvTrigModifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
-    HashMap String GenericScript -> PPT g m (HashMap Text HOI4ScopeStateTriggeredModifier)
-parseHOI4ProvTrigModifiers scripts = HM.unions . HM.elems <$> do
+
+parseHOI4DynamicModifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4DynamicModifier)
+parseHOI4DynamicModifiers scripts = HM.unions . HM.elems <$> do
     tryParse <- hoistExceptions $
         HM.traverseWithKey
             (\sourceFile scr ->
-                setCurrentFile sourceFile $ mapM parseHOI4ProvTrigModifier scr)
+                setCurrentFile sourceFile $ mapM parseHOI4DynamicModifier scr)
             scripts
     case tryParse of
         Left err -> do
-            traceM $ "Completely failed parsing province triggered modifiers: " ++ T.unpack err
+            traceM $ "Completely failed parsing dynamic modifiers: " ++ T.unpack err
             return HM.empty
         Right modifiersFilesOrErrors ->
             flip HM.traverseWithKey modifiersFilesOrErrors $ \sourceFile emods ->
                 fmap (mkModMap . catMaybes) . forM emods $ \case
                     Left err -> do
-                        traceM $ "Error parsing province triggered modifiers in " ++ sourceFile
+                        traceM $ "Error parsing dynamic modifiers in " ++ sourceFile
                                  ++ ": " ++ T.unpack err
                         return Nothing
                     Right mmod -> return mmod
-                where mkModMap :: [HOI4ScopeStateTriggeredModifier] -> HashMap Text HOI4ScopeStateTriggeredModifier
-                      mkModMap = HM.fromList . map (ptmodName &&& id)
+                where mkModMap :: [HOI4DynamicModifier] -> HashMap Text HOI4DynamicModifier
+                      mkModMap = HM.fromList . map (dmodName &&& id)
 
-parseHOI4ProvTrigModifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
-    GenericStatement -> PPT g m (Either Text (Maybe HOI4ScopeStateTriggeredModifier))
-parseHOI4ProvTrigModifier [pdx| $modid = @effects |]
+parseHOI4DynamicModifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe HOI4DynamicModifier))
+parseHOI4DynamicModifier [pdx| $modid = @effects |]
     = withCurrentFile $ \file -> do
         mlocid <- getGameL10nIfPresent modid
-        let ptm = foldl' addSection (HOI4ScopeStateTriggeredModifier {
-                ptmodName = modid
-            ,   ptmodLocName = mlocid
-            ,   ptmodPath = file
-            ,   ptmodEffects = []
-            ,   ptmodPotential = []
-            ,   ptmodTrigger = []
-            ,   ptmodOnActivation = []
-            ,   ptmodOnDeactivation = []
+        let dmd = foldl' addSection (HOI4DynamicModifier {
+                dmodName = modid
+            ,   dmodLocName = mlocid
+            ,   dmodPath = file
+            ,   dmodIcon = Nothing
+            ,   dmodEffects = []
+            ,   dmodEnable = []
+            ,   dmodRemoveTrigger = Nothing
             }) effects
-        return $ Right (Just ptm)
+        return $ Right (Just dmd)
     where
-        addSection :: HOI4ScopeStateTriggeredModifier -> GenericStatement -> HOI4ScopeStateTriggeredModifier
-        addSection ptm stmt@[pdx| $lhs = @scr |] = case lhs of
-            "potential"       -> ptm { ptmodPotential = scr }
-            "trigger"         -> ptm { ptmodTrigger = scr }
-            "on_activation"   -> ptm { ptmodOnActivation = scr }
-            "on_deactivation" -> ptm { ptmodOnDeactivation = scr }
-            _ -> (trace $ "Urecognized statement in province triggered modifier: " ++ show stmt) $ ptm
+        addSection :: HOI4DynamicModifier -> GenericStatement -> HOI4DynamicModifier
+        addSection dmd stmt@[pdx| $lhs = @scr |] = case lhs of
+            "enable"       -> dmd { dmodEnable = scr }
+            "remove_trigger" -> dmd { dmodRemoveTrigger = Just scr }
+            _ -> (trace $ "Urecognized statement in dynamic modifier: " ++ show stmt) $ dmd
+        addSection dmd stmt@[pdx| icon = $txt |] = dmd  { dmodIcon = Just txt }
          -- Must be an effect
-        addSection ptm stmt = ptm { ptmodEffects = (ptmodEffects ptm) ++ [stmt] }
-parseHOI4ProvTrigModifier stmt = (trace $ show stmt) $ withCurrentFile $ \file ->
-    throwError ("unrecognised form for province triggered modifier in " <> T.pack file)
+        addSection dmd stmt = dmd { dmodEffects = (dmodEffects dmd) ++ [stmt] }
+parseHOI4DynamicModifier stmt = (trace $ show stmt) $ withCurrentFile $ \file ->
+    throwError ("unrecognised form for dynamic modifier in " <> T.pack file)
 
-writeHOI4ProvTrigModifiers :: (HOI4Info g, MonadIO m) => PPT g m ()
-writeHOI4ProvTrigModifiers = do
-    provTrigModifiers <- getProvinceTriggeredModifiers
-    writeFeatures "province_triggered_modifiers"
+writeHOI4DynamicModifiers :: (HOI4Info g, MonadIO m) => PPT g m ()
+writeHOI4DynamicModifiers = do
+    dynamicModifiers <- getDynamicModifiers
+    writeFeatures "dynamic_modifiers"
                   [Feature { featurePath = Just "tables"
-                           , featureId = Just "province_triggered_modifiers.txt"
-                           , theFeature = Right (HM.elems provTrigModifiers)
+                           , featureId = Just "dynamic_modifiers.txt"
+                           , theFeature = Right (HM.elems dynamicModifiers)
                            }]
-                  pp_prov_trig_modifiers
+                  pp_dynamic_modifiers
     where
-        pp_prov_trig_modifiers :: (HOI4Info g, Monad m) => [HOI4ScopeStateTriggeredModifier] -> PPT g m Doc
-        pp_prov_trig_modifiers mods = do
+        pp_dynamic_modifiers :: (HOI4Info g, Monad m) => [HOI4DynamicModifier] -> PPT g m Doc
+        pp_dynamic_modifiers mods = do
             version <- gets (gameVersion . getSettings)
-            modDoc <- mapM pp_prov_trig_modifier (sortOn (sortName . ptmodLocName) mods)
+            modDoc <- mapM pp_dynamic_modifier (sortOn (sortName . dmodLocName) mods)
             return $ mconcat $
                 [ "{{Version|", Doc.strictText version, "}}", PP.line
                 , "{| class=\"mildtable\"", PP.line
                 , "! style=\"min-width:260px; text-align:center\" | Name", PP.line
                 , "! style=\"text-align:center\" | Requirements", PP.line
                 , "! style=\"min-width:260px; text-align:center\" | Effects", PP.line
-                , "! | Additional effects", PP.line
                 ] ++ modDoc ++
                 [ "|}", PP.line
                 ]
@@ -344,22 +341,19 @@ writeHOI4ProvTrigModifiers = do
             in fromMaybe ln nn
         sortName _ = ""
 
-        pp_prov_trig_modifier :: (HOI4Info g, Monad m) => HOI4ScopeStateTriggeredModifier -> PPT g m Doc
-        pp_prov_trig_modifier mod = do
-            req <- imsg2doc =<< ppMany ((ptmodPotential mod) ++ (ptmodTrigger mod))
-            eff <- imsg2doc =<< ppMany (ptmodEffects mod)
-            act <- withHeader "When activated:" (ptmodOnActivation mod)
-            dea <- withHeader "When deactivated:" (ptmodOnDeactivation mod)
+        pp_dynamic_modifier :: (HOI4Info g, Monad m) => HOI4DynamicModifier -> PPT g m Doc
+        pp_dynamic_modifier mod = do
+            req <- imsg2doc =<< ppMany (dmodEnable mod)
+            eff <- imsg2doc =<< ppMany (dmodEffects mod)
             return $ mconcat
                 [ "|- style=\"vertical-align:top;\"", PP.line
-                , "|" , PP.line
-                , "==== ", Doc.strictText $ fromMaybe (ptmodName mod) (ptmodLocName mod) , " ====", PP.line
-                , "| <!-- ", Doc.strictText (ptmodName mod), " -->", PP.line
+                , "| ", PP.line
+                , "==== ", Doc.strictText $ fromMaybe (dmodName mod) (dmodLocName mod) , " ===="
+                , " <!-- ", Doc.strictText (dmodName mod), " -->", PP.line
+                , "| ", PP.line
                 , req , PP.line
                 , "|", PP.line
                 , eff, PP.line
-                , "|", PP.line
-                , act, dea, PP.line
                 ]
 
         withHeader :: (HOI4Info g, Monad m) => Text -> GenericScript -> PPT g m Doc
@@ -370,5 +364,3 @@ writeHOI4ProvTrigModifiers = do
                 [ Doc.strictText hdr, PP.line
                 , stpp'd, PP.line
                 ]
-
--}

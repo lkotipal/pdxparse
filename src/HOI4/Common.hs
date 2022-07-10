@@ -83,7 +83,7 @@ ppHandlers = foldl' Tr.unionL Tr.empty
     [ handlersRhsIrrelevant
     , handlersNumeric
     , handlersNumericIcons
---    , handlersModifiers
+    , handlersModifiers
     , handlersCompound
     , handlersLocRhs
     , handlersProvince
@@ -138,18 +138,19 @@ handlersRhsIrrelevant = Tr.fromList
         ,("boost_temples_effect", rhsAlwaysYes MsgBoostTemplesEffect)
         ,("boost_temples_large_effect", rhsAlwaysYes MsgBoostTemplesLargeEffect)
         ,("can_have_center_of_reformation_trigger" , const $ msgToPP MsgCanHaveCenterOfReformation)
-        ,("cancel_construction"    , rhsAlwaysYes MsgCancelConstruction) -- Canals
-        ,("cb_on_overseas"         , rhsAlwaysYes MsgGainOverseasCB) -- Full Expansion
-        ,("cb_on_primitives"       , rhsAlwaysYes MsgGainPrimitivesCB) -- Full Exploration
-        ,("cb_on_religious_enemies", rhsAlwaysYes MsgGainReligiousCB) -- Deus Vult
+        ,("cancel_construction"     , rhsAlwaysYes MsgCancelConstruction) -- Canals
+        ,("cb_on_overseas"          , rhsAlwaysYes MsgGainOverseasCB) -- Full Expansion
+        ,("cb_on_primitives"        , rhsAlwaysYes MsgGainPrimitivesCB) -- Full Exploration
+        ,("cb_on_religious_enemies" , rhsAlwaysYes MsgGainReligiousCB) -- Deus Vult
         ,("change_government_to_monarchy"  , rhsAlwaysYes $ MsgChangeGovernment "monarchy")
         ,("change_government_to_republic"  , rhsAlwaysYes $ MsgChangeGovernment "republic")
         ,("change_government_to_theocracy" , rhsAlwaysYes $ MsgChangeGovernment "theocracy")
         ,("check_if_non_state_advisor_effect", const $ msgToPP MsgCheckIfNonStateAdvisorEffect) -- Ignore actual percentages
         ,("clear_previous_primary_cults" , rhsAlwaysYes $ MsgClearPreviousPrimaryCults)
-        ,("clear_rebels"           , rhsAlwaysYes MsgClearRebels)
-        ,("divorce_consort_effect", rhsAlwaysYes MsgDivorceConsortEffect)
-        ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)
+        ,("clear_rebels"            , rhsAlwaysYes MsgClearRebels)
+        ,("divorce_consort_effect"  , rhsAlwaysYes MsgDivorceConsortEffect)
+        ,("drop_cosmetic_tag"       , rhsAlwaysYes MsgDropCosmeticTag)
+        ,("enable_hre_leagues"      , rhsAlwaysYes MsgEnableHRELeagues)
         ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
         ,("grant_independence"      , rhsAlwaysYes MsgGrantIndependence)
         ,("has_holy_order_trigger"  , rhsAlwaysYes MsgHasAnyHolyOrder)
@@ -250,6 +251,7 @@ handlersNumeric = Tr.fromList
         ,("add_isolationism"                 , numeric MsgAddIsolationism)
         ,("add_next_institution_embracement" , numeric MsgAddNextInstitutionEmbracement)
         ,("add_nationalism"                  , numeric MsgGainYearsOfSeparatism)
+        ,("add_threat"                       , numeric MsgAddThreat)
         ,("add_trade_node_income"            , numeric MsgAddTradeNodeIcome)
         ,("army_size_percentage"             , numeric MsgArmySizePc) -- Inti?
         ,("authority"                        , numeric MsgAuth) -- Inti?
@@ -264,11 +266,13 @@ handlersNumeric = Tr.fromList
         ,("crown_land_share"                 , numeric MsgCrownlandShare)
         ,("curia_treasury_income"            , numeric MsgCuriaTreasuryIncome)
         ,("curia_treasury_size"              , numeric MsgCuriaTreasurySize)
+        ,("enemies_strength_ratio"           , numericCompare MsgEnemiesStrengthRatio)
         ,("extend_regency"                   , numeric MsgExtendRegency)
         ,("estate_led_regency_influence"     , numeric MsgEstateLedRegencyInfluence)
         ,("estate_led_regency_loyalty"       , numeric MsgEstateLedRegencyLoyalty)
         ,("federation_size"                  , numeric MsgFederationSize)
         ,("had_recent_war"                   , numeric MsgWasAtWar)
+        ,("has_manpower"                     , numericCompare MsgHasManpower)
         ,("hegemon_strength"                 , numeric MsgHegemonStrength)
         ,("heir_age"                         , numeric MsgHeirAge)
         ,("hre_size"                         , numeric (\s -> if s == 1 then MsgHREExists else MsgHRESize s))
@@ -315,6 +319,7 @@ handlersNumeric = Tr.fromList
         ,("ruler_age"                        , numeric MsgRulerAge)
         ,("surrender_progress"               , numericCompare MsgSurrenderProgress)
         ,("tech_difference"                  , numeric MsgTechDifference)
+        ,("threat"                           , numericCompare MsgThreat)
         ,("trade_company_size"               , numeric MsgTradeCompanySize)
         ,("trade_income_percentage"          , numeric MsgTradeIncomePercentage)
         ,("tributary_state"                  , numeric MsgNumTributaryStates)
@@ -631,25 +636,25 @@ handlersNumericIcons = Tr.fromList
         -- Naval combat
         -- Air combat
         ]
-{-
+
 -- | Handlers for statements pertaining to modifiers
 handlersModifiers :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersModifiers = Tr.fromList
-        [("add_country_modifier"           , addModifier MsgCountryMod)
-        ,("add_disaster_modifier"          , addModifier MsgDisasterMod)
-        ,("add_permanent_province_modifier", addModifier MsgPermanentProvMod)
-        ,("add_province_modifier"          , addModifier MsgProvMod)
-        ,("add_ruler_modifier"             , addModifier MsgRulerMod)
-        ,("add_trade_modifier"             , addModifier MsgTradeMod)
-        ,("add_province_triggered_modifier", addProvinceTriggeredModifier)
-        ,("has_country_modifier"           , withLocAtom2 MsgCountryMod MsgHasModifier)
-        ,("has_province_modifier"          , withLocAtom2 MsgProvMod MsgHasModifier)
-        ,("has_ruler_modifier"             , withLocAtom2 MsgRulerMod MsgHasModifier)
-        ,("has_trade_modifier"             , tradeMod)
-        ,("remove_country_modifier"        , withLocAtom2 MsgCountryMod MsgRemoveModifier)
-        ,("remove_province_modifier"       , withLocAtom2 MsgProvMod MsgRemoveModifier)
+        [--("add_country_modifier"           , addModifier MsgCountryMod)
+--        ,("add_disaster_modifier"          , addModifier MsgDisasterMod)
+--        ,("add_permanent_province_modifier", addModifier MsgPermanentProvMod)
+--        ,("add_province_modifier"          , addModifier MsgProvMod)
+--        ,("add_ruler_modifier"             , addModifier MsgRulerMod)
+--        ,("add_trade_modifier"             , addModifier MsgTradeMod)
+         ("add_dynamic_modifier"           , addDynamicModifier)
+--        ,("has_country_modifier"           , withLocAtom2 MsgCountryMod MsgHasModifier)
+--        ,("has_province_modifier"          , withLocAtom2 MsgProvMod MsgHasModifier)
+--        ,("has_ruler_modifier"             , withLocAtom2 MsgRulerMod MsgHasModifier)
+--        ,("has_trade_modifier"             , tradeMod)
+--        ,("remove_country_modifier"        , withLocAtom2 MsgCountryMod MsgRemoveModifier)
+--        ,("remove_province_modifier"       , withLocAtom2 MsgProvMod MsgRemoveModifier)
         ]
--}
+
 -- | Handlers for simple compound statements
 handlersCompound :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersCompound = Tr.fromList
@@ -722,7 +727,7 @@ handlersCompound = Tr.fromList
         ,("every_neighbor_country"  , scope HOI4Country   . compoundMessage MsgEveryNeighborCountry)
         ,("every_neighbor_province" , scope HOI4ScopeState  . compoundMessage MsgEveryNeighborProvince)
         ,("every_owned_province"    , scope HOI4ScopeState  . compoundMessage MsgEveryOwnedProvince)
-        ,("every_province"          , scope HOI4ScopeState  . compoundMessage MsgEveryProvince)
+        ,("every_State"             , scope HOI4ScopeState  . compoundMessage MsgEveryState)
         ,("every_rival_country"     , scope HOI4Country   . compoundMessage MsgEveryRival)
         ,("every_subject_country"   , scope HOI4Country   . compoundMessage MsgEverySubject)
         ,("every_trade_node_member_country" , scope HOI4Country . compoundMessage MsgEveryTradeNodeMemberCountry)
@@ -775,7 +780,8 @@ handlersLocRhs = Tr.fromList
         ,("add_government_reform" , withLocAtom MsgAddGovernmentReform)
         ,("can_be_overlord"       , withLocAtom MsgCanBeOverlord)
         ,("change_government"     , withLocAtom MsgChangeGovernment)
-        ,("change_province_name"  , withLocAtom MsgChangeProvinceName) -- will usually fail localization
+        ,("set_state_name"        , withLocAtom MsgSetStateName)
+        ,("set_state_category"    , withLocAtom MsgSetStateCategory)
         ,("colonial_region"       , withLocAtom MsgColonialRegion)
         ,("complete_mission"      , withLocAtomTitle MsgCompleteMission)
         ,("council_position"      , withLocAtom MsgCouncilPosition)
@@ -785,6 +791,7 @@ handlersLocRhs = Tr.fromList
         ,("government"            , withLocAtom MsgGovernmentIs)
         ,("has_advisor"           , withLocAtom MsgHasAdvisor)
         ,("has_active_policy"     , withLocAtom MsgHasActivePolicy)
+        ,("has_completed_focus"   , withLocAtom MsgHasCompletedFocus) -- might work on gettin icons at some point
         ,("has_construction"      , withLocAtom MsgConstructing)
         ,("has_church_aspect"     , withLocAtom MsgHasChurchAspect)
 --        ,("has_disaster"          , withLocAtom MsgDisasterOngoing)
@@ -821,8 +828,9 @@ handlersLocRhs = Tr.fromList
 -- | Handlers for statements whose RHS is a province ID
 handlersProvince :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersProvince = Tr.fromList
-        [("capital"           , withProvince MsgCapitalIs)
-        ,("controls"          , withProvince MsgControls)
+        [("add_state_core"    , withProvince MsgAddStateCore)
+        ,("capital"           , withProvince MsgCapitalIs)
+        ,("controls_state"    , withProvince MsgControlsState)
         ,("discover_province" , withProvince MsgDiscoverProvince)
         ,("higher_development_than" , withProvince MsgHigherDevelopmentThan)
         ,("owns"              , withProvince MsgOwns)
@@ -839,7 +847,7 @@ handlersProvince = Tr.fromList
 handlersFlagOrProvince :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersFlagOrProvince = Tr.fromList
         [("add_claim"          , withFlagOrProvince MsgAddClaimFor MsgAddClaimOn)
-        ,("add_core"           , withFlagOrProvince MsgGainCore MsgGainCoreProvince)
+--        ,("add_core"           , withFlagOrProvince MsgGainCore MsgGainCoreProvince)
         ,("add_permanent_claim", withFlagOrProvince MsgGainPermanentClaimCountry MsgGainPermanentClaimProvince)
         ,("cavalry"            , withFlagOrProvince MsgCavalrySpawnsCountry MsgCavalrySpawnsProvince)
         ,("infantry"           , withFlagOrProvince MsgInfantrySpawnsCountry MsgInfantrySpawnsProvince)
@@ -932,6 +940,7 @@ handlersSimpleIcon = Tr.fromList
         ,("enable_religion"         , withLocAtomIcon MsgEnableReligion)
         ,("full_idea_group"         , withLocAtomIcon MsgFullIdeaGroup)
         ,("has_adopted_cult"        , withLocAtomIcon MsgHasAdoptedCult)
+        ,("has_autonomy_state"      , withLocAtomIcon MsgHasAutonomyState)
         ,("has_building"            , withLocAtomIconBuilding MsgHasBuilding)
         ,("has_climate"             , withLocAtomIcon MsgHasClimate)
         ,("has_estate"              , withLocAtomIconHOI4Scope MsgEstateExists MsgHasEstate)
@@ -946,7 +955,6 @@ handlersSimpleIcon = Tr.fromList
         ,("is_institution_enabled"  , withLocAtomIcon MsgInstitutionEnabled)
         ,("is_monarch_leader"       , withLocAtomAndIcon "ruler general" MsgRulerIsGeneral)
         ,("is_religion_enabled"     , withLocAtomIcon MsgReligionEnabled)
-        ,("remove_building"         , withLocAtomIconBuilding MsgRemoveBuilding)
         ,("remove_estate"           , withLocAtomIcon MsgRemoveFromEstate )
         ,("remove_ruler_personality"  , withLocAtomIcon (MsgRemoveRulerPersonality False))
         ,("ruler_has_personality"   , withLocAtomIcon (MsgRulerHasPersonality False))
@@ -963,15 +971,17 @@ handlersSimpleIcon = Tr.fromList
 handlersSimpleFlag :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSimpleFlag = Tr.fromList
         [("add_claim"               , withFlag MsgGainClaim)
+        ,("add_core_of"             , withFlag MsgAddCoreOf)
         ,("add_historical_friend"   , withFlag MsgAddHistoricalFriend)
         ,("add_historical_rival"    , withFlag MsgAddHistoricalRival)
+        ,("add_to_faction"          , withFlag MsgAddToFaction)
         ,("add_truce_with"          , withFlag MsgAddTruceWith)
         ,("adopt_reform_progress"   , withFlag MsgAdoptReformProgress)
         ,("alliance_with"           , withFlag MsgAlliedWith)
         ,("break_union"             , withFlag MsgBreakUnion)
         ,("cede_province"           , withFlag MsgCedeProvinceTo)
         ,("change_controller"       , withFlag MsgChangeController)
-        ,("change_tag"              , withFlag MsgChangeTag)
+        ,("change_tag_from"         , withFlag MsgChangeTagFrom)
         ,("clear_estate_agenda_cache" , withFlag MsgClearEstateAgendaCache)
         ,("is_controlled_by"        , withFlag MsgIsControlledBy)
         ,("country_exists"          , withFlag MsgCountryExists)
@@ -984,12 +994,13 @@ handlersSimpleFlag = Tr.fromList
         ,("create_marriage"         , withFlag MsgCreateMarriage)
         ,("create_union"            , withFlag MsgCreateUnion)
         ,("create_vassal"           , withFlag MsgCreateVassal)
-        ,("defensive_war_with"      , withFlag MsgDefensiveWarAgainst)
+        ,("has_defensive_war_with"      , withFlag MsgHasDefensiveWarWith)
         ,("discover_country"        , withFlag MsgDiscoverCountry)
         ,("excommunicate"           , withFlag MsgExcommunicate)
         ,("form_coalition_against"  , withFlag MsgFormCoalitionAgainst)
         ,("free_vassal"             , withFlag MsgFreeVassal)
         ,("galley"                  , withFlag MsgGalley)
+        ,("give_military_access"    , withFlag MsgGiveMilitaryAccess)
         ,("guaranteed_by"           , withFlag MsgGuaranteedBy)
         ,("has_guaranteed"          , withFlag MsgHasGuaranteed)
         ,("has_merchant"            , withFlag MsgHasMerchant)
@@ -1004,14 +1015,15 @@ handlersSimpleFlag = Tr.fromList
         ,("humiliated_by"           , withFlag MsgHumiliatedBy)
         ,("is_capital_of"           , withFlag MsgIsCapitalOf)
         ,("is_enemy"                , scope HOI4Country . withFlag MsgIsEnemy)
-        ,("is_in_trade_league_with" , withFlag MsgIsInTradeLeagueWith)
+--        ,("is_in_trade_league_with" , withFlag MsgIsInTradeLeagueWith)
+        ,("is_in_faction_with"      , withFlag MsgIsInFactionWith)
         ,("is_league_enemy"         , withFlag MsgIsLeagueEnemy)
         ,("is_league_friend"        , withFlag MsgIsLeagueFriend)
         ,("is_neighbor_of"          , withFlag MsgNeighbors)
         ,("is_origin_of_consort"    , withFlag MsgIsOriginOfConsort)
         ,("is_rival"                , withFlag MsgIsRival)
         ,("is_supporting_independence_of" , withFlag MsgIsSupportingIndependenceOf)
-        ,("is_state_core"           , withFlag MsgIsStateCore)
+        ,("is_core_of"              , withFlag MsgIsStateCore)
         ,("is_strongest_trade_power", withFlag MsgIsStrongestTradePower)
         ,("is_subject_of"           , withFlag MsgIsSubjectOf)
         ,("is_threat"               , withFlag MsgIsThreat)
@@ -1019,13 +1031,14 @@ handlersSimpleFlag = Tr.fromList
         ,("knows_country"           , withFlag MsgKnowsCountry)
         ,("light_ship"              , withFlag MsgLightShip)
         ,("marriage_with"           , withFlag MsgRoyalMarriageWith)
-        ,("offensive_war_with"      , withFlag MsgOffensiveWarAgainst)
+        ,("has_offensive_war"       , withFlag MsgHasOffensiveWar)
         ,("overlord_of"             , withFlag MsgOverlordOf)
-        ,("owned_by"                , withFlag MsgOwnedBy)
+        ,("is_owned_by"             , withFlag MsgIsOwnedBy)
         ,("preferred_emperor"       , withFlag MsgPreferredEmperor)
         ,("provinces_on_capital_continent_of" , withFlag MsgProvincesOnCapitalContinentOf)
         ,("release"                 , withFlag MsgReleaseVassal)
         ,("remove_claim"            , withFlag MsgRemoveClaim)
+        ,("remove_from_faction"     , withFlag MsgRemoveFromFaction)
         ,("remove_historical_friend" , withFlag MsgRemoveHistoricalFriend)
         ,("remove_historical_rival" , withFlag MsgRemoveHistoricalRival)
         ,("senior_union_with"       , withFlag MsgSeniorUnionWith)
@@ -1039,7 +1052,8 @@ handlersSimpleFlag = Tr.fromList
         ,("truce_with"              , withFlag MsgTruceWith)
         ,("vassal_of"               , withFlag MsgVassalOf)
         ,("puppet"                  , withFlag MsgPuppet)
-        ,("has_war_with"            , withFlag MsgAtWarWith)
+        ,("has_war_with"            , withFlag MsgHasWarWith)
+        ,("has_war_together_with"   , withFlag MsgHasWarTogetherWith)
         ,("original_tag"            , withFlag MsgOrignalTag)
         ,("white_peace"             , withFlag MsgMakeWhitePeace)
         ]
@@ -1154,7 +1168,7 @@ handlersYesNo = Tr.fromList
         ,("hre_religion_treaty"         , withBool MsgHREWestphalia)
         ,("in_golden_age"               , withBool MsgInGoldenAge)
         ,("is_all_concessions_in_council_taken" , withBool MsgAllConcesssionsTaken)
-        ,("is_at_war"                   , withBool MsgAtWar)
+        ,("has_war"                     , withBool MsgHasWar)
         ,("is_backing_current_issue"    , withBool MsgIsBackingCurrentIssue)
         ,("is_bankrupt"                 , withBool MsgIsBankrupt)
         ,("is_blockaded"                , withBool MsgIsBlockaded)
@@ -1191,6 +1205,7 @@ handlersYesNo = Tr.fromList
         ,("is_lesser_in_union"          , withBool MsgIsLesserInUnion)
         ,("is_looted"                   , withBool MsgIsLooted)
         ,("is_march"                    , withBool MsgIsMarch)
+        ,("is_major"                    , withBool MsgIsMajor)
         ,("is_node_in_trade_company_region" , withBool MsgTradeNodeIsInTCRegion)
         ,("is_nomad"                    , withBool MsgIsNomad)
         ,("is_orangists_in_power"       , withBool MsgIsOrangistsInPower)
@@ -1340,6 +1355,7 @@ handlersTextValue = Tr.fromList
 --        ,("add_disaster_progress"       , textValue "disaster" "value" MsgAddDisasterProgress MsgAddDisasterProgress tryLocAndIcon)
         ,("add_estate_loyalty"          , textValue "estate" "loyalty" MsgAddEstateLoyalty MsgAddEstateLoyalty tryLocAndIcon)
         ,("add_named_unrest"            , textValue "name" "value" MsgAddNamedUnrest MsgAddNamedUnrest tryLocAndIcon)
+        ,("add_popularity"              , textValue "ideology" "popularity" MsgAddPopularity MsgAddPopularity tryLocAndIcon)
         ,("add_power_projection"        , textValue "type" "amount" MsgAddPowerProjection MsgAddPowerProjection tryLocAndIcon)
         ,("add_spy_network_from"        , textValue "who" "value" MsgAddSpyNetworkFrom MsgAddSpyNetworkFrom flagTextMaybe)
         ,("add_spy_network_in"          , textValue "who" "value" MsgAddSpyNetworkIn MsgAddSpyNetworkIn flagTextMaybe)
@@ -1367,6 +1383,8 @@ handlersTextValue = Tr.fromList
         ,("province_distance"           , textValue "who" "distance" MsgProvinceDistance MsgProvinceDistance flagTextMaybe)
         ,("school_opinion"              , textValue "who" "opinion" MsgSchoolOpinion MsgSchoolOpinion flagTextMaybe)
         ,("set_school_opinion"          , textValue "who" "opinion" MsgSetSchoolOpinion MsgSetSchoolOpinion flagTextMaybe)
+        ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPoints)
+        ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuilding tryLocAndIcon)
         ,("remove_loot"                 , textValue "who" "amount" MsgRemoveLoot MsgRemoveLoot flagTextMaybe)
         ,("trade_goods_produced_amount" , textValue "trade_goods" "amount" MsgTradeGoodsProduced MsgTradeGoodsProduced tryLocAndIcon)
         ,("trading_part"                , textValue "trade_goods" "value" MsgTradingPart MsgTradingPart tryLocAndIcon)
@@ -1374,7 +1392,7 @@ handlersTextValue = Tr.fromList
         ,("trust"                       , textValue "who" "value" MsgTrust MsgTrust flagTextMaybe)
         ,("war_score_against"           , textValue "who" "value" MsgWarscoreAgainst MsgWarscoreAgainst flagTextMaybe)
         ,("years_in_union_under"        , textValue "who" "years" MsgYearsInUnionUnder MsgYearsInUnionUnder flagTextMaybe)
-        ,("modify_country_flag"         , textValue "flag" "value" MsgModifyCountryFlag MsgModifyCountryFlag tryNoLocText) -- Localization/icon ignored
+        ,("modify_country_flag"         , withNonlocTextValue2 "flag" "value" MsgCountryFlag MsgModifyFlag) -- Localization/icon ignored
         ]
 
 -- | Handlers for text/atom pairs
@@ -1401,6 +1419,7 @@ handlersSpecialComplex = Tr.fromList
         ,("add_opinion_modifier"         , opinion MsgAddOpinion MsgAddOpinionDur)
         ,("add_unit_construction"        , addUnitConstruction)
         ,("add_tech_bonus"               , addTechBonus)
+        ,("add_to_war"                   , addToWar)
         ,("add_trust"                    , trust)
         ,("ai_attitude"                  , aiAttitude MsgAiAttitude)
         ,("annex_country"                , annexCountry)
@@ -1450,7 +1469,9 @@ handlersSpecialComplex = Tr.fromList
         ,("reverse_remove_opinion"       , opinion MsgReverseRemoveOpinionMod (\modid what who _years -> MsgReverseRemoveOpinionMod modid what who))
         ,("religion_years"               , religionYears)
         ,("set_ai_attitude"              , aiAttitude MsgSetAiAttitude)
+        ,("set_autonomy"                 , setAutonomy)
         ,("set_country_flag"             , setCountryFlag)
+        ,("set_politics"                 , setPolitics)
         ,("state_event"                  , scope HOI4ScopeState . triggerEvent MsgStateEvent)
         ,("reverse_add_casus_belli"      , addCB False)
         ,("trading_bonus"                , tradingBonus)
@@ -1540,7 +1561,6 @@ handlersMisc = Tr.fromList
         ,("random_list", randomList)
         -- Special
         ,("add_estate_loyalty_modifier" , addEstateLoyaltyModifier)
-        ,("add_core"            , addCore)
 --        ,("add_manpower"        , gainMen)
 --        ,("add_sailors"         , gainMen)
         ,("calc_true_if"        , calcTrueIf)
@@ -1638,6 +1658,7 @@ handlersMisc = Tr.fromList
 handlersIgnored :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersIgnored = Tr.fromList
         [("custom_tooltip", return $ return [])
+        ,("effect_tooltip", return $ return []) -- shows the effects but doesn't execute them, don't know if I want it to show up in the parser
         ,("goto"          , return $ return [])
         ,("log"           , return $ return [])
         ,("tooltip"       , return $ return [])

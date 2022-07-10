@@ -24,6 +24,7 @@ module HOI4.Handlers (
     ,   withProvince
     ,   withNonlocAtom
     ,   withNonlocAtom2
+    ,   withNonlocTextValue2
     ,   iconKey
     ,   iconFile
     ,   iconFileB
@@ -51,6 +52,7 @@ module HOI4.Handlers (
     ,   tryNoLocText
     ,   tryLocAndLocMod
     ,   textValue
+    ,   valueValue
     ,   textAtom
     ,   taDescAtomIcon
     ,   taTypeFlag
@@ -61,7 +63,6 @@ module HOI4.Handlers (
     ,   factionInfluence
     ,   factionInPower
 --    ,   addModifier
-    ,   addCore
     ,   opinion
     ,   hasOpinion
     ,   spawnRebels
@@ -144,7 +145,7 @@ module HOI4.Handlers (
     ,   createSuccessionCrisis
     ,   hasBuildingTrigger
     ,   productionLeader
---    ,   addProvinceTriggeredModifier
+    ,   addDynamicModifier
     ,   hasHeir
     ,   killHeir
 --    ,   createColonyMissionReward
@@ -158,6 +159,9 @@ module HOI4.Handlers (
     ,   annexCountry
     ,   addTechBonus
     ,   setCountryFlag
+    ,   addToWar
+    ,   setAutonomy
+    ,   setPolitics
     -- testing
     ,   isPronoun
     ,   flag
@@ -1514,6 +1518,55 @@ textValue whatlabel vallabel smallmsg bigmsg loc stmt@[pdx| %_ = @scr |]
             _ -> return $ preMessage stmt
 textValue _ _ _ _ _ stmt = preStatement stmt
 
+withNonlocTextValue2 :: forall g m. (HOI4Info g, Monad m) =>
+    Text                                             -- ^ Label for "what"
+        -> Text                                      -- ^ Label for "how much"
+        -> ScriptMessage                             -- ^ submessage to send
+        -> (Text -> Text -> Double -> ScriptMessage) -- ^ Message constructor
+        -> StatementHandler g m
+withNonlocTextValue2 whatlabel vallabel submsg msg stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_tv (parseTV whatlabel vallabel scr)
+    where
+        pp_tv :: TextValue -> PPT g m ScriptMessage
+        pp_tv tv = case (tv_what tv, tv_value tv) of
+            (Just what, Just value) -> do
+                extratext <- messageText submsg
+                return $ msg extratext what value
+            _ -> return $ preMessage stmt
+withNonlocTextValue2 _ _ _ _ stmt = preStatement stmt
+
+data ValueValue = ValueValue
+        {   vv_what :: Maybe Double
+        ,   vv_value :: Maybe Double
+        }
+newVV :: ValueValue
+newVV = ValueValue Nothing Nothing
+
+parseVV whatlabel vallabel scr = foldl' addLine newVV scr
+    where
+        addLine :: ValueValue -> GenericStatement -> ValueValue
+        addLine vv [pdx| $label = !what |] | label == whatlabel
+            = vv { vv_what = Just what }
+        addLine vv [pdx| $label = !val |] | label == vallabel
+            = vv { vv_value = Just val }
+        addLine nor _ = nor
+
+valueValue :: forall g m. (HOI4Info g, Monad m) =>
+    Text                                             -- ^ Label for "what"
+        -> Text                                      -- ^ Label for "how much"
+        -> (Double -> Double -> ScriptMessage) -- ^ Message constructor, if abs value < 1
+        -> (Double -> Double -> ScriptMessage) -- ^ Message constructor, if abs value >= 1
+        -> StatementHandler g m
+valueValue whatlabel vallabel smallmsg bigmsg stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_vv (parseVV whatlabel vallabel scr)
+    where
+        pp_vv :: ValueValue -> PPT g m ScriptMessage
+        pp_vv vv = case (vv_what vv, vv_value vv) of
+            (Just what, Just value) ->
+                return $ (if abs value < 1 then smallmsg else bigmsg) what value
+            _ -> return $ preMessage stmt
+valueValue _ _ _ _ stmt = preStatement stmt
+
 -- | Statements of the form
 -- @
 --      has_trade_modifier = {
@@ -1821,21 +1874,6 @@ addModifier kind stmt@(Statement _ OpEq (CompoundRhs scr)) =
     else preStatement stmt
 addModifier _ stmt = preStatement stmt
 -}
--- Add core
-
--- "add_core = <n>" in country scope means "Gain core on <localize PROVn>"
--- "add_core = <tag>" in province scope means "<localize tag> gains core"
-addCore :: (HOI4Info g, Monad m) =>
-    StatementHandler g m
-addCore [pdx| %_ = $tag |]
-  = msgToPP =<< do -- tag
-    tagflag <- flagText (Just HOI4Country) tag
-    return $ MsgTagGainsCore tagflag
-addCore [pdx| %_ = !num |]
-  = msgToPP =<< do -- province
-    state <- getStateLoc num
-    return $ MsgGainCoreOnProvince state
-addCore stmt = preStatement stmt
 
 -- Opinions
 
@@ -4174,23 +4212,41 @@ foldCompound "productionLeader" "ProductionLeader" "pl"
         tgLoc <- getGameL10n _trade_goods
         return $ MsgIsProductionLeader (iconText _trade_goods) tgLoc
     |]
-{-
+
 -------------------------------------------------
--- Handler for add_province_triggered_modifier --
+-- Handler for add_dynamic_modifier --
 -------------------------------------------------
-addProvinceTriggeredModifier :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-addProvinceTriggeredModifier stmt@[pdx| %_ = $id |] = do
-    mmod <- HM.lookup id <$> getProvinceTriggeredModifiers
-    case mmod of
-        Just mod -> withCurrentIndent $ \i -> do
-            effect <- scope HOI4Bonus $ ppMany (ptmodEffects mod)
-            trigger <- indentUp $ scope HOI4ScopeState $ ppMany (ptmodTrigger mod)
-            let name = ptmodLocName mod
-                locName = maybe ("<tt>" <> id <> "</tt>") (Doc.doc2text . iquotes) name
-            return $ ((i, MsgAddProvinceTriggeredModifier locName) : effect) ++ (if null trigger then [] else ((i+1, MsgLimit) : trigger))
-        _ -> (trace $ "add_province_triggered_modifier: Modifier " ++ T.unpack id ++ " not found") $ preStatement stmt
-addProvinceTriggeredModifier stmt = (trace $ "Not handled in addProvinceTriggeredModifier: " ++ show stmt) $ preStatement stmt
--}
+data AddDynamicModifier = AddDynamicModifier
+    { adm_modifier :: Text
+    , adm_scope :: Text
+    , adm_days :: Maybe Double
+    }
+newADM :: AddDynamicModifier
+newADM = AddDynamicModifier undefined "our country" Nothing
+addDynamicModifier :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+addDynamicModifier stmt@[pdx| %_ = @scr |] =
+    pp_adm (foldl' addLine newADM scr)
+    where
+        addLine adm [pdx| modifier = $mod |] = adm { adm_modifier = mod }
+        addLine adm [pdx| scope = $tag |] = adm { adm_scope = tag }
+        addLine adm [pdx| days = !amt |] = adm { adm_days = Just amt }
+        addLine adm stmt = (trace $ "Unknown in add_dynamic_modifier: " ++ show stmt) $ adm
+        pp_adm adm = do
+            let days = case adm_days adm of
+                    Just time -> formatDays time
+                    _ -> ""
+            mmod <- HM.lookup (adm_modifier adm) <$> getDynamicModifiers
+            dynflag <- flagText (Just HOI4Country) $ adm_scope adm
+            case mmod of
+                Just mod -> withCurrentIndent $ \i -> do
+                    effect <- scope HOI4Bonus $ ppMany (dmodEffects mod)
+                    trigger <- indentUp $ ppMany (dmodEnable mod)
+                    let name = dmodLocName mod
+                        locName = maybe ("<tt>" <> (adm_modifier adm) <> "</tt>") (Doc.doc2text . iquotes) name
+                    return $ ((i, MsgAddDynamicModifier locName dynflag days) : effect) ++ (if null trigger then [] else ((i+1, MsgLimit) : trigger))
+                _ -> (trace $ "add_dynamic_modifier: Modifier " ++ T.unpack (adm_modifier adm) ++ " not found") $ preStatement stmt
+addDynamicModifier stmt = (trace $ "Not handled in addDynamicModifier: " ++ show stmt) $ preStatement stmt
+
 --------------------------
 -- Handler for has_heir --
 --------------------------
@@ -4261,26 +4317,6 @@ foldCompound "killUnits" "KillUnits" "ku"
 -------------------------------------------
 -- Handler for add_building_construction --
 -------------------------------------------
-{-
-foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
-    []
-    [CompField "type" [t|Text|] Nothing True
-    ,CompField "level" [t|Double|] Nothing True
-    ,CompField "instant_build" [t|Text|] Nothing False]
-    [|  do
-        buildingLoc <- getGameL10n _type
-        return $ (case _type of
-            "industrial_complex" -> MsgAddBuildingConstruction (iconText "cic")
-            "arms_factory" -> MsgAddBuildingConstruction (iconText "mic")
-            "dockyard" -> MsgAddBuildingConstruction (iconText "nic")
-            "bunker" -> MsgAddBuildingConstruction (iconText "land fort")
-            "supply_node" -> MsgAddBuildingConstruction (iconText "supply hub")
-            _ -> MsgAddBuildingConstruction (iconText _type)
-         ) buildingLoc _level "" "check files if bunker"
-    |]
--}
---------------------------------------------------------------
-
 data HOI4ABCProv
     = HOI4ABCProvSimple [Double]  -- province = key
     | HOI4ABCProvAll { prov_all_provinces :: Bool, prov_limit_to_border :: Bool }
@@ -4580,6 +4616,100 @@ addTechBonus stmt@[pdx| %_ = @scr |]
                 _ -> trace ("issues in add_technology_bonus: " ++ show stmt ) $ preMessage stmt
 addTechBonus stmt = preStatement stmt
 
+data SetCountryFlag = SetCountryFlag
+        {   scf_flag :: Text
+        ,   scf_value :: Maybe Double
+        ,   scf_days :: Maybe Double
+        }
+
+newSCF :: SetCountryFlag
+newSCF = SetCountryFlag undefined Nothing Nothing
 setCountryFlag :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 setCountryFlag stmt@[pdx| %_ = $flag |] = withNonlocAtom2 MsgCountryFlag MsgSetFlag stmt
+setCountryFlag stmt@[pdx| %_ = @scr |]
+    = msgToPP . pp_scf =<< foldM addLine newSCF scr
+    where
+        addLine :: SetCountryFlag -> GenericStatement -> PPT g m SetCountryFlag
+        addLine scf [pdx| flag = $flag |] =
+            return scf { scf_flag = flag }
+        addLine scf [pdx| value = !amt |] =
+            return scf { scf_value = Just amt }
+        addLine scf [pdx| days = !amt |] =
+            return scf { scf_days = Just amt }
+        addLine scf stmt
+            = trace ("unknown section in set_country_flag: " ++ show stmt) $ return scf
+        pp_scf scf =
+            let value = case scf_value scf of
+                    Just num -> T.pack $ concat [" to " , show $ round num]
+                    _ -> ""
+                days = case scf_days scf of
+                    Just day -> " for " <> formatDays day
+                    _ -> ""
+            in MsgSetCountryFlag (scf_flag scf) value days
 setCountryFlag stmt = preStatement stmt
+
+----------------------------------
+-- Handler for add_to_war --
+----------------------------------
+foldCompound "addToWar" "AddToWar" "atw"
+    []
+    [CompField "targeted_alliance" [t|Text|] Nothing True
+    ,CompField "enemy" [t|Text|] Nothing True
+    ,CompField "hostility_reason" [t|Text|] Nothing False -- guarantee, asked_to_join, war, ally
+    ]
+    [|  do
+        let reason = case _hostility_reason of
+                Just "guarantee" -> ""
+                Just "asked_to_join" -> ""
+                Just "war" -> ""
+                Just "ally" -> ""
+                _ -> ""
+        ally <- flagText (Just HOI4Country) _targeted_alliance
+        enemy <- flagText (Just HOI4Country) _enemy
+        return $ MsgAddToWar ally enemy reason
+    |]
+
+------------------------------
+-- Handler for set_autonomy --
+------------------------------
+foldCompound "setAutonomy" "SetAutonomy" "sat"
+    []
+    [CompField "target" [t|Text|] Nothing True
+    ,CompField "autonomy_state" [t|Text|] Nothing True
+    ,CompField "freedom_level" [t|Double|] Nothing False
+    ,CompField "end_wars" [t|Text|] Nothing False
+    ,CompField "end_civil_wars" [t|Text|] Nothing False
+    ]
+    [|  do
+        let endwar = case (_end_wars, _end_civil_wars) of
+                (Just yw, Just yc) -> T.pack " and end wars and civil wars for puppet"
+                (Just yw, _) -> T.pack " and end wars for puppet"
+                (_, Just yc) -> T.pack " and end civil wars for puppet"
+                _ -> ""
+            freedom = case _freedom_level of
+                Just num -> num
+                _ -> 0
+        target <- flagText (Just HOI4Country) _target
+        autonomy <- getGameL10n _autonomy_state
+        return $ MsgSetAutonomy target (iconText autonomy) autonomy freedom endwar
+    |]
+
+------------------------------
+-- Handler for set_politics --
+------------------------------
+foldCompound "setPolitics" "SetPolitics" "sp"
+    []
+    [CompField "ruling_party" [t|Text|] Nothing True
+    ,CompField "elections_allowed" [t|Text|] Nothing False
+    ,CompField "last_election" [t|Text|] Nothing False
+    ,CompField "election_frequency" [t|Double|] Nothing False
+    ,CompField "long_name" [t|Text|] Nothing False
+    ,CompField "name" [t|Text|] Nothing False
+    ]
+    [|  do
+        let freq = case _election_frequency of
+                Just mnths -> mnths
+                _ -> 0
+        party <- getGameL10n _ruling_party
+        return $ MsgSetPolitics (iconText party) party freq
+    |]
