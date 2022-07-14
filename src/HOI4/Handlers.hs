@@ -302,8 +302,20 @@ allowPronoun expectedScope getLoc name =
 -- it's a pronoun.
 flag :: (HOI4Info g, Monad m) =>
     Maybe HOI4Scope -> Text -> PPT g m Doc
-flag expectscope = allowPronoun expectscope $ \name ->
-                    template "flag" . (:[]) <$> getGameL10n name
+flag expectscope = allowPronoun expectscope $ \name -> do
+                    nameIdeo <- getCoHi name
+                    template "flag" . (:[]) <$> getGameL10n nameIdeo
+
+getCoHi name = do
+    chistories <- getCountryHistory
+    let mchistories = HM.lookup name chistories
+    case mchistories of
+        Nothing -> return name
+        Just chistory -> do
+            rulLoc <- getGameL10nIfPresent (chRulingTag chistory)
+            case rulLoc of
+                Just rulingTag -> return $ chRulingTag chistory
+                Nothing -> return name
 
 getScopeForPronoun :: (HOI4Info g, Monad m) =>
     Text -> PPT g m (Maybe HOI4Scope)
@@ -2231,8 +2243,9 @@ randomList stmt@[pdx| %_ = @scr |] = if or (map chk scr) then -- Ugly solution f
         chk _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list check")
         entry [pdx| !weight = @scr |] = (fromIntegral weight, scr)
         entry _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list, possibly vars?")
-        entryv [pdx| $var = @scr |] = trace ("DEBUG: random_list " ++ show var) $ (var, scr)
-        entryv [pdx| $_:$var = @scr |] = trace ("DEBUG: random_list " ++ show var) $ (var, scr)
+        entryv [pdx| $var = @scr |] = (var, scr)
+        entryv [pdx| $_:$var = @scr |] = (var, scr)
+        entryv [pdx| !weight = @scr |] = ((T.pack (show weight)), scr)
         entryv _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list, possibly ints?")
         fmtRandomList entries = withCurrentIndent $ \i ->
             let total = sum (map fst entries)

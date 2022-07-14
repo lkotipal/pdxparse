@@ -6,6 +6,7 @@ module FileIO (
         readFileRetry
     ,   buildPath
     ,   readScript
+    ,   readSpecificScript
     ,   Feature (..)
     ,   writeFeatures
     ) where
@@ -89,6 +90,16 @@ readScript settings file = do
             putStrLn $ "Couldn't parse " ++ file ++ ": " ++ err
             return []
 
+readSpecificScript :: Settings -> FilePath -> IO GenericScript
+readSpecificScript settings filepath = do
+    contents <- readFileRetry filepath
+    case Ap.parseOnly (Ap.option undefined (Ap.char '\xFEFF') -- BOM
+                        *> skipSpace
+                        *> genericScript) contents of
+        Right result -> return result
+        Left err -> do
+            putStrLn $ "Couldn't parse " ++ filepath ++ ": " ++ err
+            return []
 ------------------------------
 -- Writing features to file --
 ------------------------------

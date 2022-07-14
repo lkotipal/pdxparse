@@ -8,10 +8,11 @@ import Control.Monad (join)
 import Control.Monad.Reader (MonadReader (..), runReaderT)
 import Control.Monad.State (MonadState (..), gets, evalStateT)
 import Control.Monad.Trans (MonadIO (..))
+import Control.Exception
 
 import System.Directory (createDirectoryIfMissing)
-import System.Exit (exitFailure)
-import System.IO (hPutStrLn, stderr)
+import System.Exit
+import System.IO
 
 import Data.Text (Text, unpack)
 
@@ -20,10 +21,11 @@ import Settings (readSettings)
 import SettingsTypes ( Settings (..), Game (..), IsGame (..)
                      , readScripts, parseScripts, writeScripts
                      , hoistExceptions)
+import HOI4.Settings
 
 -- | Entry point for the program.
 main :: IO ()
-main = do
+main = withExitOnInput $ do
     -- Do platform-specific initialization
     initPlatform
 
@@ -49,3 +51,25 @@ main = do
             -- 3) Output the result of parsing and/or report errors
             writeScripts
 
+withExitOnInput :: IO () -> IO ()
+withExitOnInput theMain = do
+  exitCode <- run `catch` onError
+  exitOnInput exitCode
+ where
+  exitOnInput exitCode = do
+    putStrLn "Press any key to exit."
+    hSetBuffering stdin NoBuffering
+    hSetEcho stdin False
+    getChar
+    exitWith exitCode
+
+  run = do
+    theMain
+    pure ExitSuccess
+
+  onError :: SomeException -> IO ExitCode
+  onError e = case fromException e of
+    Nothing -> do
+      putStrLn $ "\nException: " ++ show e ++ "\n"
+      pure (ExitFailure 1)
+    Just (SomeAsyncException ae) -> throwIO ae

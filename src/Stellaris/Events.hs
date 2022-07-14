@@ -203,30 +203,30 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
                 newStellarisOptions <- addStellarisOption (stevt_options evt) option
                 return evt { stevt_options = newStellarisOptions }
             _ -> throwError "bad option"
-    eventAddSection' evt stmt@[pdx| fire_only_once = %_ |] =
-        return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| major = %_ |] =
-        return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| is_mtth_scaled_to_size = %_ |] =
-        return evt -- do nothing (XXX)
     eventAddSection' evt stmt@[pdx| hide_window = %rhs |]
         | GenericRhs "yes" [] <- rhs = return evt { stevt_hide_window = True }
         | GenericRhs "no"  [] <- rhs = return evt { stevt_hide_window = False }
-    eventAddSection' evt stmt@[pdx| show_sound = %_ |] =
-        return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| location = %rhs |] =
-        return evt -- TODO: show this, and add support on the wiki
-    eventAddSection' evt stmt@[pdx| auto_opens = %_ |] =
-        return evt -- I have no idea what this means
-    eventAddSection' evt stmt@[pdx| is_advisor_event = %_ |] =
-        return evt -- probably not important to note
-    eventAddSection' evt stmt@[pdx| diplomatic = %_ |] =
-        return evt -- probably not important to note
-    eventAddSection' evt stmt@[pdx| picture_event_data = %_ |] =
-        return evt -- probably not important to note
-    eventAddSection' evt stmt@[pdx| $label = %_ |] =
-        withCurrentFile $ \file ->
-            throwError $ "unrecognized event section in " <> T.pack file <> ": " <> label
+    eventAddSection' evt stmt@[pdx| $label = %_ |] = case label of
+        "fire_only_once" ->
+            return evt -- do nothing
+        "major" ->
+            return evt -- do nothing
+        "is_mtth_scaled_to_size" ->
+            return evt -- do nothing (XXX)
+        "show_sound" ->
+            return evt -- do nothing
+        "location" ->
+            return evt -- TODO: show this, and add support on the wiki
+        "auto_opens" ->
+            return evt -- I have no idea what this means
+        "is_advisor_event" ->
+            return evt -- probably not important to note
+        "diplomatic" ->
+            return evt -- probably not important to note
+        "picture_event_data" ->
+            return evt -- probably not important to note
+        _ -> withCurrentFile $ \file ->
+                throwError $ "unrecognized event section in " <> T.pack file <> ": " <> label
     eventAddSection' evt _ = return evt
 
 addStellarisOption :: Monad m => [StellarisOption] -> GenericScript -> PPT g m [StellarisOption]

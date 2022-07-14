@@ -9397,7 +9397,7 @@ instance RenderMessage Script ScriptMessage where
                 , _comp
                 , " "
                 , toMessage (reducedNum plainPc _amt)
-                , " compared to ours"
+                , " compared to the current scope"
                 ]
         MsgChangeInnovativeness {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

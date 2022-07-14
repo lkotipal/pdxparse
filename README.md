@@ -41,12 +41,12 @@ only the files you want, and rebuild.
 
 * HoI4
     * ~~random_list with variables won't properly show the variable name currently being fed a straight number to make it work. needs manual checking gf files for editing~~
-    * random_list handles only numbers for the weight OR only variables for the weight
+    * ~~random_list handles only numbers for the weight OR only variables for the weight~~
     * ~~add_building_sconstruction doesn't handle the contents of province = {} well. needs manual editing~~
     * ~~script doesn't like improperly formatted localizations, doesn't handle a space in front of l_<language> at the top of file~~
     * ~~Decisions aren't parsed and checked for event triggers~~
     * Decisions aren't output into text files
-    * Tags aren't localized to country names, requires loading history files?
+    * ~~Tags aren't localized to country names, requires loading history files?~~
     * ~~Doesn't like some uses of ROOT and PREV etc. No clue how to fix it~~
     * Multiple RHS scopes don't get parsed(e.g. PREV.PREV)
     * ~~triggers for events aren't looked for in national focuses~~
@@ -77,7 +77,7 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 *  ~~random_list, ~~ai_chance~~ and possibly more needs to also handle "add" besides "factor" in their "modifier"~~
 * pretty up add_tech_bonus
 * original_tag also add {{flag}} ?
-* find none ugly solution for ppOne for [pdx| %lhs = %rhs |], [pdx| %lhs > %rhs |], [pdx| %lhs < %rhs |]
+* ~~find none ugly solution for ppOne for [pdx| %lhs = %rhs |], [pdx| %lhs > %rhs |], [pdx| %lhs < %rhs |]~~
 * Find out how hostility_reason affects add_to_war
 * In localization automatically change color of words, add icons, get nested localization etc.
 * make set_politics more elaborate maybe?

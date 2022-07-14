@@ -192,7 +192,8 @@ pp_opinion_modifers :: (HOI4Info g, Monad m) => [HOI4OpinionModifier] -> PPT g m
 pp_opinion_modifers modifiers = do
     version <- gets (gameVersion . getSettings)
     modifiers_pp'd <- mapM pp_opinion_modifer (sortOn omodName modifiers)
-    return . mconcat $ ["<includeonly>{{#switch:{{ lc:{{{1}}} }}", PP.line]
+    return . mconcat $ ["<includeonly>{{#switch:{{ lc:{{{1}}} }}", PP.line
+        ,"| #default = <span style=\"color: red; font-size: 11px;\">(unrecognized string \"{{{1}}}\" for [[Template:Opinion_modifier]])</span>[[Category:Pages with unrecognized opinion modifier strings]]", PP.line]
         ++ modifiers_pp'd ++
         ["}}</includeonly><noinclude>{{Version|", Doc.strictText version, "}}"
         , PP.line

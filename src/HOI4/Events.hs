@@ -49,7 +49,7 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
 newHOI4Event :: HOI4Scope -> FilePath -> HOI4Event
-newHOI4Event escope path = HOI4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing Nothing path
+newHOI4Event escope path = HOI4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing path
 -- | Empty event option vaule. Starts off Nothing everywhere.
 newHOI4Option :: HOI4Option
 newHOI4Option = HOI4Option Nothing Nothing Nothing Nothing
@@ -275,7 +275,6 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
         GenericRhs "yes" [] -> return evt { hoi4evt_fire_for_sender = Just False }
         GenericRhs "no" [] -> return evt { hoi4evt_fire_for_sender = Just True }
         _ -> throwError "bad fire_for_sender"
-    eventAddSection' evt stmt@[pdx| after = @scr |] = return evt { hoi4evt_after = Just scr }
     eventAddSection' evt stmt@[pdx| $label = %_ |] =
         withCurrentFile $ \file ->
             throwError $ "unrecognized event section in " <> T.pack file <> ": " <> label
@@ -369,12 +368,6 @@ ppEventSource (HOI4EvtSrcOption eventId optionId) = do
         , " option "
         , iquotes't optLoc
         ]
-ppEventSource (HOI4EvtSrcAfter eventId) = do
-    eventLoc <- ppEventLoc eventId
-    return $ Doc.strictText $ mconcat [ "After choosing an option an option in the "
-        , eventLoc
-        , " event"
-        ]
 ppEventSource (HOI4EvtSrcImmediate eventId) = do
     eventLoc <- ppEventLoc eventId
     return $ Doc.strictText $ mconcat [ "As an immediate effect of the "
@@ -411,27 +404,6 @@ ppEventSource (HOI4EvtSrcDecTimeout id loc) = do
         ]
 ppEventSource (HOI4EvtSrcOnAction act weight) = do
     return $ Doc.strictText $ act <> formatWeight weight
-{-
-ppEventSource (HOI4EvtSrcDisaster id trig weight) = do
-    idLoc <- getGameL10n id
-    return $ Doc.strictText $ mconcat [trig
-        , " of the <!-- "
-        , id
-        , " -->"
-        , iquotes't idLoc
-        , " disaster"
-        , formatWeight weight
-        ]
-
-ppEventSource (HOI4EvtSrcMission missionId) = do
-    title <- getGameL10n (missionId <> "_title")
-    return $ Doc.strictText $ mconcat ["Completing the <!-- "
-        , missionId
-        , " -->"
-        , iquotes't title
-        , " mission"
-        ]
--}
 ppEventSource (HOI4EvtSrcNFComplete id loc) = do
     nfloc <- getGameL10n loc
     return $ Doc.strictText $ mconcat ["Completing the national focus "
@@ -657,8 +629,7 @@ findTriggeredEventsInEvents hm evts = addEventTriggers hm (concatMap findInEvent
             (case hoi4evt_options evt of
                 Just opts -> findInOptions eventId opts
                 _ -> []) ++
-            (addEventSource (const (HOI4EvtSrcImmediate eventId)) (maybe [] findInStmts (hoi4evt_immediate evt))) ++
-            (addEventSource (const (HOI4EvtSrcAfter eventId)) (maybe [] findInStmts (hoi4evt_after evt)))
+            (addEventSource (const (HOI4EvtSrcImmediate eventId)) (maybe [] findInStmts (hoi4evt_immediate evt)))
         findInEvent _ = []
 
 findTriggeredEventsInDecisions :: HOI4EventTriggers -> [HOI4Decision] -> HOI4EventTriggers
@@ -672,7 +643,7 @@ findTriggeredEventsInDecisions hm ds = addEventTriggers hm (concatMap findInDeci
             (addEventSource (const (HOI4EvtSrcDecTimeout (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_timeout_effect d)))
 
 findTriggeredEventsInOnActions :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers
-findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
+findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr -- needs editing
     where
         findInAction :: HOI4EventTriggers -> GenericStatement -> HOI4EventTriggers
         findInAction hm [pdx|on_actions = @stmts |] = foldl' findInAction hm stmts

@@ -23,12 +23,12 @@ import Data.Text (Text, toLower)
 import Data.Monoid ((<>))
 
 import System.Directory (getDirectoryContents, doesFileExist)
-import System.FilePath ((</>))
+import System.FilePath ((</>), isExtensionOf)
 import System.IO (hPutStrLn, stderr)
 
 import Abstract -- everything
 import QQ (pdx)
-import FileIO (buildPath, readScript)
+import FileIO (buildPath, readScript, readSpecificScript)
 import SettingsTypes ( PPT, Settings (..), Game (..), L10nScheme (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10nIfPresent
@@ -39,24 +39,22 @@ import HOI4.Types -- everything
 import Yaml (LocEntry (..))
 
 -- Handlers
-import HOI4.Decisions (parseHOI4Decisioncats
-                      ,parseHOI4Decisions, writeHOI4Decisions)
+import HOI4.Decisions (parseHOI4Decisioncats, writeHOI4DecisionCats
+                      ,parseHOI4Decisions, writeHOI4Decisions
+                      ,findActivatedDecisionsInEvents, findActivatedDecisionsInDecisions
+                      ,findActivatedDecisionsInOnActions, findActivatedDecisionsInNationalFocus)
 import HOI4.IdeaGroups (parseHOI4IdeaGroups, writeHOI4IdeaGroups)
 import HOI4.Modifiers (
 --                    parseHOI4Modifiers, writeHOI4Modifiers,
                       parseHOI4OpinionModifiers, writeHOI4OpinionModifiers
-                    , parseHOI4DynamicModifiers, writeHOI4DynamicModifiers
-                    )
+                    , parseHOI4DynamicModifiers, writeHOI4DynamicModifiers)
 --import HOI4.Missions (parseHOI4Missions , writeHOI4Missions)
 import HOI4.NationalFocus(parseHOI4NationalFocuss)
 import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
-                   , findTriggeredEventsInOnActions
---                 , findTriggeredEventsInDisasters  , findTriggeredEventsInMissions
-                   , findTriggeredEventsInNationalFocus
-                   )
+                   , findTriggeredEventsInOnActions, findTriggeredEventsInNationalFocus)
 import HOI4.Extra (writeHOI4Extra, writeHOI4ExtraCountryScope, writeHOI4ExtraProvinceScope, writeHOI4ExtraModifier)
-import HOI4.Misc (parseHOI4CountryHistory)
+import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface)
 
 -- | Temporary (?) fix for CHI and PRC both localizing to "China"
 -- Can be extended/removed as necessary
@@ -105,6 +103,7 @@ instance IsGame HOI4 where
 --                ,   hoi4missionScripts = HM.empty
 --                ,   hoi4missions = HM.empty
                 ,   hoi4eventTriggers = HM.empty
+                ,   hoi4decisionTriggers = HM.empty
                 ,   hoi4onactionsScripts = HM.empty
 --                ,   hoi4disasterScripts = HM.empty
                 ,   hoi4geoData = HM.empty
@@ -118,6 +117,9 @@ instance IsGame HOI4 where
                 ,   hoi4extraScriptsProvinceScope = HM.empty
                 ,   hoi4extraScriptsModifier = HM.empty
                 ,   hoi4nationalfocusScripts = HM.empty
+                ,   hoi4interfacegfxScripts = HM.empty
+                ,   hoi4interfacegfx = HM.empty
+
                 }))
                 (HOI4S $ HOI4State {
                     hoi4currentFile = Nothing
@@ -194,6 +196,9 @@ instance HOI4Info HOI4 where
     getEventTriggers = do
         HOI4D ed <- get
         return (hoi4eventTriggers ed)
+    getDecisionTriggers = do
+        HOI4D ed <- get
+        return (hoi4decisionTriggers ed)
     getOnActionsScripts = do
         HOI4D ed <- get
         return (hoi4onactionsScripts ed)
@@ -233,6 +238,13 @@ instance HOI4Info HOI4 where
     getNationalFocusScripts = do
         HOI4D ed <- get
         return (hoi4nationalfocusScripts ed)
+    getInterfaceGFXScripts = do
+        HOI4D ed <- get
+        return (hoi4interfacegfxScripts ed)
+    getInterfaceGFX = do
+        HOI4D ed <- get
+        return (hoi4interfacegfx ed)
+
 
 instance IsGameData (GameData HOI4) where
     getSettings (HOI4D ed) = hoi4settings ed
@@ -254,9 +266,9 @@ instance IsGameState (GameState HOI4) where
 readHOI4Scripts :: forall m. MonadIO m => PPT HOI4 m ()
 readHOI4Scripts = do
     settings <- gets getSettings
-    let readOneScript :: String -> String -> PPT HOI4 m (String, GenericScript)
-        readOneScript category target = do
-            content <- liftIO $ readScript settings target
+    let readOneScript :: Bool -> String -> String -> PPT HOI4 m (String, GenericScript)
+        readOneScript specific category target = do
+            content <- if specific then liftIO $ readScript settings target else liftIO $ readSpecificScript settings target
             traceM (show target)
             when (null content) $
                 liftIO $ hPutStrLn stderr $
@@ -286,9 +298,33 @@ readHOI4Scripts = do
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
+                                    =<< filterM (pure . isExtensionOf ".txt")
                                      =<< getDirectoryContents sourceDir)
-            results <- forM files $ \filename -> readOneScript category (sourceSubdir </> filename)
+            results <- forM files $ \filename -> readOneScript True category (sourceSubdir </> filename)
             return $ foldl (flip (uncurry HM.insert)) HM.empty results
+
+        readHOI4SpecificScript :: String -> PPT HOI4 m (HashMap String GenericScript)
+        readHOI4SpecificScript category = do
+            settings <- gets getSettings
+            let sourceSubdir = case category of
+                    "interfacegfx" -> "interface"
+                    _          -> category
+                sourceDirReplace = gameModPath settings </> sourceSubdir </> "replace"
+                sourceDirModgameModPath = gameModPath settings </> sourceSubdir
+                sourceDir = gamePath settings </> sourceSubdir
+            filesReplace <- buildCompletePath sourceDirReplace
+            filesMod <- buildCompletePath sourceDirModgameModPath
+            filesSource <- buildCompletePath sourceDir
+            let filesPathReplace = map (sourceDirReplace </>) filesReplace
+                filesPathMod = map (sourceDirModgameModPath </>) filesMod
+                filesPath = map (sourceDir </>) filesSource
+                files = filesPathReplace ++ filesPathMod ++ filesPath
+            results <- forM files $ \filename -> readOneScript False category filename
+            return $ foldl (flip (uncurry HM.insert)) HM.empty results
+
+        buildCompletePath path = liftIO (filterM (doesFileExist . (path </>))
+                                    =<< filterM (pure . isExtensionOf ".gfx")
+                                     =<< getDirectoryContents path)
 {-
         getOnlyLhs :: GenericStatement -> Maybe Text
         getOnlyLhs (Statement (GenericLhs lhs _) _ _) = Just (toLower lhs)
@@ -345,6 +381,7 @@ readHOI4Scripts = do
     dynamic_modifiers <- readHOI4Script "dynamic_modifiers"
     national_focus <- readHOI4Script "national_focus"
     country_history <- readHOI4Script "country_history"
+    interface_gfx <- readHOI4SpecificScript "interfacegfx"
 
 --    extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
 --    extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
@@ -384,6 +421,7 @@ readHOI4Scripts = do
 --        ,   hoi4extraScriptsProvinceScope = foldl (flip (uncurry HM.insert)) HM.empty extraProvinceScope
 --        ,   hoi4extraScriptsModifier = foldl (flip (uncurry HM.insert)) HM.empty extraModifier
         ,   hoi4nationalfocusScripts = national_focus
+        ,   hoi4interfacegfxScripts = interface_gfx
         }
 
 
@@ -410,7 +448,11 @@ parseHOI4Scripts = do
         te4 = findTriggeredEventsInNationalFocus te3 (HM.elems national_focus)
 --        te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
 --        te5 = findTriggeredEventsInMissions te4 (HM.elems missions)
-    --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))
+    let td1 = findActivatedDecisionsInEvents HM.empty (HM.elems events)
+        td2 = findActivatedDecisionsInDecisions td1 (HM.elems decisions)
+        td3 = findActivatedDecisionsInOnActions td2 (concat (HM.elems on_actions))
+        td4 = findActivatedDecisionsInNationalFocus td3 (HM.elems national_focus)
+    interfaceGFX <- parseHOI4Interface =<< getInterfaceGFXScripts
     modify $ \(HOI4D s) -> HOI4D $
             s { hoi4events = events
             ,   hoi4decisioncats = decisioncats
@@ -420,8 +462,10 @@ parseHOI4Scripts = do
             ,   hoi4opmods = opinionModifiers
 --            ,   hoi4missions = missions
             ,   hoi4eventTriggers = te4
+            ,   hoi4decisionTriggers = td4
             ,   hoi4dynamicmodifiers = dynamicModifiers
             ,   hoi4countryHistory = countryHistory
+            ,   hoi4interfacegfx = interfaceGFX
             }
 
 -- | Output the game data as wiki text.
@@ -431,6 +475,7 @@ writeHOI4Scripts = do
     unless (Onlyextra `elem` (clargs settings)) $ do
         writeHOI4IdeaGroups
         writeHOI4Events
+        writeHOI4DecisionCats
         writeHOI4Decisions
 --        writeHOI4Missions
         writeHOI4OpinionModifiers

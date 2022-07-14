@@ -1670,130 +1670,51 @@ handlersIgnored = Tr.fromList
 -- | Extract the appropriate message(s) from a single statement. Note that this
 -- may produce many lines (via 'ppMany'), since some statements are compound.
 ppOne :: (HOI4Info g, Monad m) => StatementHandler g m
-ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
-    GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
-        Just handler -> handler stmt
-        -- default
-        Nothing -> if isTag label
-             then case rhs of
-                CompoundRhs scr ->
-                    withCurrentIndent $ \_ -> do -- force indent level at least 1
-                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just HOI4Country) label
-                        scriptMsgs <- scope HOI4Country $ ppMany scr
-                        return (lflag : scriptMsgs)
-                _ -> preStatement stmt
-             else do
-                geoData <- getGeoData
-                mloc <- getGameL10nIfPresent label
-                case mloc of
-                    -- Check for localizable atoms, e.g. regions
-                    Just loc -> case rhs of
-                        CompoundRhs scr -> ppMaybeGeo label loc scr
-                        _ -> compound loc stmt
-                    Nothing -> preStatement stmt
-    AtLhs _ -> return [] -- don't know how to handle these
-    IntLhs n -> do -- Treat as a province tag
-        tradeNodes <- getTradeNodes
-        case rhs of
-            CompoundRhs scr ->
-                -- Check if this is the main province of a trade node in which case we need
-                -- to see if that needs to be displayed instead
-                case HM.lookup n tradeNodes of
-                    Just node | isTradeNodeQuery scr -> do
-                        nodeLoc <- getGameL10n node
-                        header <- msgToPP (MsgTradeNode nodeLoc)
-                        scriptMsgs <- scope HOI4TradeNode $ ppMany scr
-                        return (header ++ scriptMsgs)
-                    _ -> do
-                        state_loc <- getStateLoc n
-                        header <- msgToPP (MsgState state_loc)
-                        scriptMsgs <- scope HOI4ScopeState $ ppMany scr
-                        return (header ++ scriptMsgs)
-            _ -> preStatement stmt
-    CustomLhs _ -> preStatement stmt
-ppOne stmt@[pdx| %lhs > %rhs |] = case lhs of
-    GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
-        Just handler -> handler stmt
-        -- default
-        Nothing -> if isTag label
-             then case rhs of
-                CompoundRhs scr ->
-                    withCurrentIndent $ \_ -> do -- force indent level at least 1
-                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just HOI4Country) label
-                        scriptMsgs <- scope HOI4Country $ ppMany scr
-                        return (lflag : scriptMsgs)
-                _ -> preStatement stmt
-             else do
-                geoData <- getGeoData
-                mloc <- getGameL10nIfPresent label
-                case mloc of
-                    -- Check for localizable atoms, e.g. regions
-                    Just loc -> case rhs of
-                        CompoundRhs scr -> ppMaybeGeo label loc scr
-                        _ -> compound loc stmt
-                    Nothing -> preStatement stmt
-    AtLhs _ -> return [] -- don't know how to handle these
-    IntLhs n -> do -- Treat as a province tag
-        tradeNodes <- getTradeNodes
-        case rhs of
-            CompoundRhs scr ->
-                -- Check if this is the main province of a trade node in which case we need
-                -- to see if that needs to be displayed instead
-                case HM.lookup n tradeNodes of
-                    Just node | isTradeNodeQuery scr -> do
-                        nodeLoc <- getGameL10n node
-                        header <- msgToPP (MsgTradeNode nodeLoc)
-                        scriptMsgs <- scope HOI4TradeNode $ ppMany scr
-                        return (header ++ scriptMsgs)
-                    _ -> do
-                        state_loc <- getStateLoc n
-                        header <- msgToPP (MsgState state_loc)
-                        scriptMsgs <- scope HOI4ScopeState $ ppMany scr
-                        return (header ++ scriptMsgs)
-            _ -> preStatement stmt
-    CustomLhs _ -> preStatement stmt
-ppOne stmt@[pdx| %lhs < %rhs |] = case lhs of
-    GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
-        Just handler -> handler stmt
-        -- default
-        Nothing -> if isTag label
-             then case rhs of
-                CompoundRhs scr ->
-                    withCurrentIndent $ \_ -> do -- force indent level at least 1
-                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just HOI4Country) label
-                        scriptMsgs <- scope HOI4Country $ ppMany scr
-                        return (lflag : scriptMsgs)
-                _ -> preStatement stmt
-             else do
-                geoData <- getGeoData
-                mloc <- getGameL10nIfPresent label
-                case mloc of
-                    -- Check for localizable atoms, e.g. regions
-                    Just loc -> case rhs of
-                        CompoundRhs scr -> ppMaybeGeo label loc scr
-                        _ -> compound loc stmt
-                    Nothing -> preStatement stmt
-    AtLhs _ -> return [] -- don't know how to handle these
-    IntLhs n -> do -- Treat as a province tag
-        tradeNodes <- getTradeNodes
-        case rhs of
-            CompoundRhs scr ->
-                -- Check if this is the main province of a trade node in which case we need
-                -- to see if that needs to be displayed instead
-                case HM.lookup n tradeNodes of
-                    Just node | isTradeNodeQuery scr -> do
-                        nodeLoc <- getGameL10n node
-                        header <- msgToPP (MsgTradeNode nodeLoc)
-                        scriptMsgs <- scope HOI4TradeNode $ ppMany scr
-                        return (header ++ scriptMsgs)
-                    _ -> do
-                        state_loc <- getStateLoc n
-                        header <- msgToPP (MsgState state_loc)
-                        scriptMsgs <- scope HOI4ScopeState $ ppMany scr
-                        return (header ++ scriptMsgs)
-            _ -> preStatement stmt
-    CustomLhs _ -> preStatement stmt
+ppOne stmt@[pdx| %lhs = %rhs |] = ppOne' stmt lhs rhs
+ppOne stmt@[pdx| %lhs > %rhs |] = ppOne' stmt lhs rhs
+ppOne stmt@[pdx| %lhs < %rhs |] = ppOne' stmt lhs rhs
 ppOne stmt = preStatement stmt
+ppOne' stmt lhs rhs = case lhs of
+    GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
+        Just handler -> handler stmt
+        -- default
+        Nothing -> if isTag label
+             then case rhs of
+                CompoundRhs scr ->
+                    withCurrentIndent $ \_ -> do -- force indent level at least 1
+                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just HOI4Country) label
+                        scriptMsgs <- scope HOI4Country $ ppMany scr
+                        return (lflag : scriptMsgs)
+                _ -> preStatement stmt
+             else do
+                geoData <- getGeoData
+                mloc <- getGameL10nIfPresent label
+                case mloc of
+                    -- Check for localizable atoms, e.g. regions
+                    Just loc -> case rhs of
+                        CompoundRhs scr -> ppMaybeGeo label loc scr
+                        _ -> compound loc stmt
+                    Nothing -> preStatement stmt
+    AtLhs _ -> return [] -- don't know how to handle these
+    IntLhs n -> do -- Treat as a province tag
+        tradeNodes <- getTradeNodes
+        case rhs of
+            CompoundRhs scr ->
+                -- Check if this is the main province of a trade node in which case we need
+                -- to see if that needs to be displayed instead
+                case HM.lookup n tradeNodes of
+                    Just node | isTradeNodeQuery scr -> do
+                        nodeLoc <- getGameL10n node
+                        header <- msgToPP (MsgTradeNode nodeLoc)
+                        scriptMsgs <- scope HOI4TradeNode $ ppMany scr
+                        return (header ++ scriptMsgs)
+                    _ -> do
+                        state_loc <- getStateLoc n
+                        header <- msgToPP (MsgState state_loc)
+                        scriptMsgs <- scope HOI4ScopeState $ ppMany scr
+                        return (header ++ scriptMsgs)
+            _ -> preStatement stmt
+    CustomLhs _ -> preStatement stmt
 
 isTradeNodeQuery :: GenericScript -> Bool
 isTradeNodeQuery scr = any isTradeNodeQuery' scr

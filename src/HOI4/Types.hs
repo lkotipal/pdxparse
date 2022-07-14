@@ -10,6 +10,7 @@ module HOI4.Types (
     ,   HOI4EvtTitle (..), HOI4EvtDesc (..), HOI4Event (..), HOI4Option (..)
     ,   HOI4EventSource (..), HOI4EventTriggers, HOI4EventWeight
     ,   HOI4Decision (..), HOI4DecisionCost(..), HOI4DecisionIcon(..), HOI4Decisioncat (..)
+    ,   HOI4DecisionSource (..), HOI4DecisionTriggers, HOI4DecisionWeight
     ,   IdeaGroup (..), Idea (..), IdeaTable
 --    ,   HOI4Modifier (..)
     ,   HOI4OpinionModifier (..)
@@ -58,6 +59,7 @@ data HOI4Data = HOI4Data {
     ,   hoi4opmods :: HashMap Text HOI4OpinionModifier
 --    ,   hoi4missions :: HashMap Text HOI4MissionTreeBranch
     ,   hoi4eventTriggers :: HOI4EventTriggers
+    ,   hoi4decisionTriggers :: HOI4DecisionTriggers
     ,   hoi4geoData :: HashMap Text HOI4GeoType
     ,   hoi4dynamicmodifiers :: HashMap Text HOI4DynamicModifier
     ,   hoi4countryHistory :: HashMap Text HOI4CountryHistory
@@ -78,6 +80,9 @@ data HOI4Data = HOI4Data {
     ,   hoi4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsModifier :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4nationalfocusScripts :: HashMap FilePath GenericScript
+
+    ,   hoi4interfacegfxScripts :: HashMap FilePath GenericScript
+    ,   hoi4interfacegfx :: HashMap Text Text
     -- etc.
     }
 
@@ -132,6 +137,8 @@ class (IsGame g,
 --    getMissions :: Monad m => PPT g m (HashMap Text HOI4MissionTreeBranch)
     -- | Get the (known) event triggers
     getEventTriggers :: Monad m => PPT g m HOI4EventTriggers
+    -- | Get the (known) event triggers
+    getDecisionTriggers :: Monad m => PPT g m HOI4DecisionTriggers
     -- | Get the on actions script files
     getOnActionsScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the on disaster script files
@@ -148,12 +155,16 @@ class (IsGame g,
     getCountryHistoryScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the trade nodes
     getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
+    -- | Get the content of all national focus files
+    getNationalFocusScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get extra scripts parsed from command line arguments
     getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     getExtraScriptsCountryScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
     getExtraScriptsProvinceScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
     getExtraScriptsModifier :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    getNationalFocusScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+
+    getInterfaceGFXScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    getInterfaceGFX :: Monad m => PPT g m (HashMap Text Text)
 
 -------------------
 -- Feature types --
@@ -209,8 +220,6 @@ data HOI4Event = HOI4Event {
     ,   hoi4evt_options :: Maybe [HOI4Option]
     -- | If the event show to sender
     ,   hoi4evt_fire_for_sender :: Maybe Bool
-    -- | Effects that take place after any option is selected.
-    ,   hoi4evt_after :: Maybe GenericScript
     -- | The event's source file.
     ,   hoi4evt_path :: FilePath
     } deriving (Show)
@@ -226,20 +235,33 @@ type HOI4EventWeight = Maybe (Integer, Integer) -- Rational reduces the number, 
 
 data HOI4EventSource =
       HOI4EvtSrcImmediate Text                       -- Immediate effect of an event (arg is event ID)
-    | HOI4EvtSrcAfter Text                           -- After effect of an event (arg is event ID)
     | HOI4EvtSrcOption Text Text                     -- Effect of choosing an event option (args are event ID and option ID)
     | HOI4EvtSrcDecComplete Text Text                   -- Effect of completing a decision (args are id and localized decision text)
     | HOI4EvtSrcDecRemove Text Text                   -- Effect of taking a timed decision and letting it finish (args are id and localized decision text)
     | HOI4EvtSrcDecCancel Text Text                   -- Effect of taking a decision and it being canceled (args are id and localized decision text)
     | HOI4EvtSrcDecTimeout Text Text                   -- Effect of taking a decision/mission and letting it timeout (args are id and localized decision text)
     | HOI4EvtSrcOnAction Text HOI4EventWeight         -- An effect from on_actions (args are the trigger and weight)
---    | HOI4EvtSrcDisaster Text Text HOI4EventWeight    -- Effect of a disaster (args are id, trigger and weight)
---    | HOI4EvtSrcMission Text                         -- Effect of completing a mission (arg is the mission id)
     | HOI4EvtSrcNFComplete Text Text                -- Effect of completing a national focus
     | HOI4EvtSrcNFSelect Text Text                  -- Effect of selecting a national focus
     deriving Show
 
 type HOI4EventTriggers = HashMap Text [HOI4EventSource]
+
+type HOI4DecisionWeight = Maybe (Integer, Integer) -- Rational reduces the number, which we don't want
+
+data HOI4DecisionSource =
+      HOI4DecSrcImmediate Text                       -- Immediate effect of an decision (arg is decision ID)
+    | HOI4DecSrcOption Text Text                     -- Effect of choosing an decision option (args are decision ID and option ID)
+    | HOI4DecSrcDecComplete Text Text                   -- Effect of completing a decision (args are id and localized decision text)
+    | HOI4DecSrcDecRemove Text Text                   -- Effect of taking a timed decision and letting it finish (args are id and localized decision text)
+    | HOI4DecSrcDecCancel Text Text                   -- Effect of taking a decision and it being canceled (args are id and localized decision text)
+    | HOI4DecSrcDecTimeout Text Text                   -- Effect of taking a decision/mission and letting it timeout (args are id and localized decision text)
+    | HOI4DecSrcOnAction Text HOI4DecisionWeight         -- An effect from on_actions (args are the trigger and weight)
+    | HOI4DecSrcNFComplete Text Text                -- Effect of completing a national focus
+    | HOI4DecSrcNFSelect Text Text                  -- Effect of selecting a national focus
+    deriving Show
+
+type HOI4DecisionTriggers = HashMap Text [HOI4DecisionSource]
 
 -- | Table of idea groups, keyed by ID (e.g. @administrative_ideas@).
 type IdeaTable = HashMap Text IdeaGroup
@@ -313,26 +335,22 @@ data HOI4Decision = HOI4Decision
     ,   dec_custom_cost_text :: Maybe Text
     ,   dec_days_remove :: Maybe Double
     ,   dec_remove_effect :: Maybe GenericScript
+    ,   dec_remove_trigger :: Maybe GenericScript
     ,   dec_modifier :: Maybe GenericScript
     ,   dec_cancel_trigger ::  Maybe GenericScript
     ,   dec_cancel_effect ::  Maybe GenericScript
-    ,   dec_war_with_on_remove :: Maybe Text
-    ,   dec_war_with_on_complete :: Maybe Text
 
     ,   dec_days_mission_timeout :: Maybe Double
     ,   dec_activation :: Maybe GenericScript
     ,   dec_timeout_effect :: Maybe GenericScript
+    ,   dec_cancel_if_not_visible :: Bool
 
     ,   dec_targets :: Maybe GenericScript
-    ,   dec_target_array :: Maybe GenericScript
+    ,   dec_target_array :: Maybe Text
     ,   dec_targets_dynamic :: Bool
     ,   dec_target_trigger :: Maybe GenericScript
-    ,   dec_war_with_target_on_complete :: Bool
-    ,   dec_war_with_target_on_remove :: Bool
-    ,   dec_war_with_target_on_timeout :: Bool
-
+    ,   dec_targeted_modifier :: Maybe GenericScript
     ,   dec_state_target :: Bool
-    ,   dec_on_map_mode :: Maybe Text
     ,   dec_ai_will_do :: Maybe AIWillDo -- ^ Factors affecting whether an AI
                                          --   will take the decision when available
     ,   dec_path :: Maybe FilePath -- ^ Source file
