@@ -40,7 +40,7 @@ import HOI4.Common -- everything
 -- | Empty national focus. Starts off Nothing/empty everywhere, except id and name
 -- (which should get filled in immediately).
 newHOI4NationalFocus :: HOI4NationalFocus
-newHOI4NationalFocus = HOI4NationalFocus "(Unknown)" "(Unknown)" Nothing Nothing Nothing undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined
+newHOI4NationalFocus = HOI4NationalFocus "(Unknown)" "(Unknown)" Nothing Nothing "GFX_goal_unknown" undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined
 
 -- | Take the decisions scripts from game data and parse them into decision
 -- data structures.
@@ -131,7 +131,9 @@ nationalFocusAddSection nf stmt
                 CompoundRhs scr -> nf { nf_completion_reward = Just scr }
                 _-> trace ("bad nf completion_reward") nf
             "icon" -> case rhs of
-                GenericRhs txt [] -> nf { nf_icon = Just txt}
+                GenericRhs txt [] ->
+                    let txtd = if "GFX_" `T.isPrefixOf` txt then txt else "GFX_" <> txt in
+                    nf { nf_icon = txtd}
                 _-> trace ("bad nf icon in: " ++ show stmt) nf
             "cost" -> case rhs of
                 (floatRhs -> Just num) -> nf {nf_cost = num}

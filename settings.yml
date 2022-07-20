@@ -26,7 +26,7 @@ settings:
     language: "english" #required
 
     # Game version (major patch number) (or mod version). Only used to add version templates.
-    version: "1.9.2" #required
+    version: "1.12.11" #required
 
     # All Platforms where mod files are kept
     #   Windows: C:\Users\<Username>\Documents\Paradox Interactive\Hearts of Iron IV\mod\nameofmod

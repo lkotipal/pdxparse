@@ -54,7 +54,8 @@ only the files you want, and rebuild.
     * ~~Localization files need to be directly in the localisation folder and not the localisation->english folder to work~~
     * ~~There are like 5 events where hidden and picture have the first letter capitilized making them fail to parse~~
     * Fractions can be written as 0.15 or .15 the second case the parser sees it as text instead of a double
-    * add_country_leader, set_nationality aren't processed. it can get it's name from the scope it is in which aren't handled (probably never will)
+    * add_country_leader, set_nationality, promote_character aren't processed. Would probably need to load common/characters for it to be properly handled.
+    * add_ideas, remove_ideas can have multiple days in an array, but they aren't handled (no clue how to do it)
 
 ## To do
 Feel extremely free to help with any of these or the issues, I honestly doubt I can do any of these except maybe the additonal formatting
@@ -81,3 +82,6 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * Find out how hostility_reason affects add_to_war
 * In localization automatically change color of words, add icons, get nested localization etc.
 * make set_politics more elaborate maybe?
+* maybe load scripted_effects, scripted_triggers for parsing?
+* maybe load characters for parsing?
+* deal with add_ideas, remove_ideas having multiple ideas in them

@@ -11,7 +11,7 @@ module HOI4.Types (
     ,   HOI4EventSource (..), HOI4EventTriggers, HOI4EventWeight
     ,   HOI4Decision (..), HOI4DecisionCost(..), HOI4DecisionIcon(..), HOI4Decisioncat (..)
     ,   HOI4DecisionSource (..), HOI4DecisionTriggers, HOI4DecisionWeight
-    ,   IdeaGroup (..), Idea (..), IdeaTable
+    ,   HOI4Idea (..)
 --    ,   HOI4Modifier (..)
     ,   HOI4OpinionModifier (..)
 --    ,   HOI4MissionTreeBranch (..), HOI4Mission (..)
@@ -54,7 +54,7 @@ data HOI4Data = HOI4Data {
     ,   hoi4events :: HashMap Text HOI4Event
     ,   hoi4decisioncats :: HashMap Text HOI4Decisioncat
     ,   hoi4decisions :: HashMap Text HOI4Decision
-    ,   hoi4ideaGroups :: IdeaTable
+    ,   hoi4ideas :: HashMap Text HOI4Idea
 --    ,   hoi4modifiers :: HashMap Text HOI4Modifier
     ,   hoi4opmods :: HashMap Text HOI4OpinionModifier
 --    ,   hoi4missions :: HashMap Text HOI4MissionTreeBranch
@@ -62,11 +62,13 @@ data HOI4Data = HOI4Data {
     ,   hoi4decisionTriggers :: HOI4DecisionTriggers
     ,   hoi4geoData :: HashMap Text HOI4GeoType
     ,   hoi4dynamicmodifiers :: HashMap Text HOI4DynamicModifier
+    ,   hoi4nationalfocusScripts :: HashMap FilePath GenericScript
+    ,   hoi4nationalfocus :: HashMap Text HOI4NationalFocus
     ,   hoi4countryHistory :: HashMap Text HOI4CountryHistory
     ,   hoi4eventScripts :: HashMap FilePath GenericScript
     ,   hoi4decisioncatScripts :: HashMap FilePath GenericScript
     ,   hoi4decisionScripts :: HashMap FilePath GenericScript
-    ,   hoi4ideaGroupScripts :: HashMap FilePath GenericScript
+    ,   hoi4ideaScripts :: HashMap FilePath GenericScript
 --    ,   hoi4modifierScripts :: HashMap FilePath GenericScript
     ,   hoi4opmodScripts :: HashMap FilePath GenericScript
 --    ,   hoi4missionScripts :: HashMap FilePath GenericScript
@@ -79,7 +81,6 @@ data HOI4Data = HOI4Data {
     ,   hoi4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsModifier :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
-    ,   hoi4nationalfocusScripts :: HashMap FilePath GenericScript
 
     ,   hoi4interfacegfxScripts :: HashMap FilePath GenericScript
     ,   hoi4interfacegfx :: HashMap Text Text
@@ -112,9 +113,9 @@ class (IsGame g,
     -- | Get the parsed events table (keyed on event ID).
     getEvents :: Monad m => PPT g m (HashMap Text HOI4Event)
     -- | Get the contents of all idea groups files.
-    getIdeaGroupScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    getIdeaScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed idea groups table (keyed on idea group ID).
-    getIdeaGroups :: Monad m => PPT g m IdeaTable
+    getIdeas :: Monad m => PPT g m (HashMap Text HOI4Idea)
     -- | Get the contents of all modifier script files.
 --    getModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed modifiers table (keyed on modifier ID).
@@ -149,14 +150,16 @@ class (IsGame g,
     getDynamicModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed dynamic modifiers table (keyed on modifier ID).
     getDynamicModifiers :: Monad m => PPT g m (HashMap Text HOI4DynamicModifier)
-    -- | Get the country history
+    -- | Get the content of all national focus files
+    getNationalFocusScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get extra scripts parsed from command line arguments
+    getNationalFocus :: Monad m => PPT g m (HashMap Text HOI4NationalFocus)
+    -- | Get extra scripts parsed from command line arguments
     getCountryHistory :: Monad m => PPT g m (HashMap Text HOI4CountryHistory)
     -- | Get the country history parsed
     getCountryHistoryScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the trade nodes
     getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
-    -- | Get the content of all national focus files
-    getNationalFocusScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get extra scripts parsed from command line arguments
     getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     getExtraScriptsCountryScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
@@ -234,15 +237,15 @@ data HOI4Option = HOI4Option
 type HOI4EventWeight = Maybe (Integer, Integer) -- Rational reduces the number, which we don't want
 
 data HOI4EventSource =
-      HOI4EvtSrcImmediate Text                       -- Immediate effect of an event (arg is event ID)
-    | HOI4EvtSrcOption Text Text                     -- Effect of choosing an event option (args are event ID and option ID)
-    | HOI4EvtSrcDecComplete Text Text                   -- Effect of completing a decision (args are id and localized decision text)
-    | HOI4EvtSrcDecRemove Text Text                   -- Effect of taking a timed decision and letting it finish (args are id and localized decision text)
-    | HOI4EvtSrcDecCancel Text Text                   -- Effect of taking a decision and it being canceled (args are id and localized decision text)
-    | HOI4EvtSrcDecTimeout Text Text                   -- Effect of taking a decision/mission and letting it timeout (args are id and localized decision text)
-    | HOI4EvtSrcOnAction Text HOI4EventWeight         -- An effect from on_actions (args are the trigger and weight)
-    | HOI4EvtSrcNFComplete Text Text                -- Effect of completing a national focus
-    | HOI4EvtSrcNFSelect Text Text                  -- Effect of selecting a national focus
+      HOI4EvtSrcImmediate Text                      -- Immediate effect of an event (arg is event ID)
+    | HOI4EvtSrcOption Text Text                    -- Effect of choosing an event option (args are event ID and option ID)
+    | HOI4EvtSrcDecComplete Text Text               -- Effect of completing a decision (args are id and localized decision text)
+    | HOI4EvtSrcDecRemove Text Text                 -- Effect of taking a timed decision and letting it finish (args are id and localized decision text)
+    | HOI4EvtSrcDecCancel Text Text                 -- Effect of taking a decision and it being canceled (args are id and localized decision text)
+    | HOI4EvtSrcDecTimeout Text Text                -- Effect of taking a decision/mission and letting it timeout (args are id and localized decision text)
+    | HOI4EvtSrcOnAction Text HOI4EventWeight       -- An effect from on_actions (args are the trigger and weight)
+    | HOI4EvtSrcNFComplete Text Text Text           -- Effect of completing a national focus
+    | HOI4EvtSrcNFSelect Text Text Text             -- Effect of selecting a national focus
     deriving Show
 
 type HOI4EventTriggers = HashMap Text [HOI4EventSource]
@@ -263,26 +266,28 @@ data HOI4DecisionSource =
 
 type HOI4DecisionTriggers = HashMap Text [HOI4DecisionSource]
 
--- | Table of idea groups, keyed by ID (e.g. @administrative_ideas@).
-type IdeaTable = HashMap Text IdeaGroup
--- | Idea group data.
-data IdeaGroup = IdeaGroup
-    {   ig_name :: Text -- ^ Name of the idea group
-    ,   ig_name_loc :: Text -- ^ Localized name of the idea group (in the best language)
-    ,   ig_category :: Maybe MonarchPower -- ^ Which type of monarch power is used to buy these ideas
-    ,   ig_start :: Maybe GenericScript -- ^ Traditions for a country idea group
-    ,   ig_bonus :: Maybe GenericScript -- ^ Finisher / ambitions
-    ,   ig_trigger :: Maybe GenericScript -- ^ Availability conditions if any
-    ,   ig_free :: Bool -- ^ Whether this is a country idea group
-    ,   ig_ideas :: [Idea] -- ^ List of ideas (there should always be 7)
-    ,   ig_ai_will_do :: Maybe AIWillDo -- ^ Factors affecting whether AI will choose this group
-    ,   ig_path :: Maybe FilePath -- ^ Source file
-    } deriving (Show)
 -- | Idea data.
-data Idea = Idea
-    {   idea_name :: Text -- ^ Idea ID
-    ,   idea_name_loc :: Text -- ^ Localized idea name
-    ,   idea_effects :: GenericScript -- ^ Idea effects (bonus scope)
+data HOI4Idea = HOI4Idea
+    {   id_id :: Text -- ^ Idea ID
+    ,   id_name :: Text -- ^ idea name
+    ,   id_name_loc :: Maybe Text -- ^ Localized idea name
+    ,   id_desc_loc :: Maybe Text
+    ,   id_picture :: Text -- ^ uses idea ID unless filled in
+    ,   id_allowed :: Maybe GenericScript
+    ,   id_visible :: Maybe GenericScript
+    ,   id_available :: Maybe GenericScript
+    ,   id_modifier :: Maybe GenericScript
+    ,   id_targeted_modifier :: Maybe GenericScript
+    ,   id_research_bonus :: Maybe GenericScript
+    ,   id_equipment_bonus :: Maybe GenericScript
+    ,   id_rule :: Maybe GenericScript
+    ,   id_on_add :: Maybe GenericScript  -- ^ effects when the idea is added
+    ,   id_on_remove :: Maybe GenericScript  -- ^ effects when the idea is removed
+    ,   id_cancel :: Maybe GenericScript -- ^ tirggers for removing the idea
+    ,   id_do_effect :: Maybe GenericScript -- ^ requirements for the idea's modifiers to work
+    ,   id_allowed_civil_war :: Maybe GenericScript
+    ,   id_category :: Text
+    ,   id_path :: FilePath -- ^ Source file
     } deriving (Show)
 
 -- | Decision data.
@@ -296,7 +301,6 @@ data HOI4Decisioncat = HOI4Decisioncat
     ,   decc_visible :: Maybe GenericScript
     ,   decc_available :: Maybe GenericScript
     ,   decc_visiblity_type :: Maybe Text
-    ,   decc_priority :: Maybe Text -- ^ Determines place on the list
     ,   decc_allowed :: Maybe GenericScript -- ^ Conditions that allow the category to appear
     ,   decc_visible_when_empty :: Maybe Text
     ,   decc_scripted_gui :: Maybe Text
@@ -414,7 +418,7 @@ data HOI4NationalFocus = HOI4NationalFocus
     ,   nf_name_loc :: Text
     ,   nf_name_desc :: Maybe Text
     ,   nf_text :: Maybe Text
-    ,   nf_icon :: Maybe Text
+    ,   nf_icon :: Text
     ,   nf_cost :: Double
     ,   nf_allow_branch  :: Maybe Text
     ,   nf_prerequisite  :: Maybe Text
@@ -462,7 +466,7 @@ data HOI4Scope
     | HOI4Bonus
     | HOI4UnitLeader
     | HOI4Operative
-    | HOI4DualScope
+    | HOI4Character
     | HOI4From -- ^ Usually country or province, varies by context
     deriving (Show, Eq, Ord, Enum, Bounded)
 

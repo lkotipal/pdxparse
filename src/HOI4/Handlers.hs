@@ -82,7 +82,6 @@ module HOI4.Handlers (
     ,   defineConsort
     ,   buildToForcelimit
     ,   addUnitConstruction
-    ,   hasLeaders
     ,   declareWarWithCB
     ,   hasDlc
     ,   hasEstateModifier
@@ -105,7 +104,11 @@ module HOI4.Handlers (
     ,   customTriggerTooltip
     ,   piety
     ,   dynasty
-    ,   hasIdea
+    ,   handleIdeas
+    ,   handleTimedIdeas
+    ,   handleSwapIdeas
+    ,   hasFocus
+    ,   focusProgress
     ,   trust
     ,   governmentPower
     ,   employedAdvisor
@@ -149,7 +152,7 @@ module HOI4.Handlers (
     ,   hasHeir
     ,   killHeir
 --    ,   createColonyMissionReward
-    ,   hasIdeaGroup
+--    ,   hasIdeaGroup
     ,   killUnits
     ,   addBuildingConstruction
     ,   addNamedThreat
@@ -159,9 +162,13 @@ module HOI4.Handlers (
     ,   annexCountry
     ,   addTechBonus
     ,   setCountryFlag
+    ,   hasCountryFlag
     ,   addToWar
     ,   setAutonomy
     ,   setPolitics
+    ,   hasCountryLeader
+    ,   setPartyName
+    ,   loadFocusTree
     -- testing
     ,   isPronoun
     ,   flag
@@ -198,7 +205,9 @@ import Abstract -- everything
 import Doc (Doc)
 import qualified Doc -- everything
 import HOI4.Messages -- everything
-import MessageTools (plural, iquotes, italicText, plainNumSign, formatDays, formatHours)
+import MessageTools (plural, iquotes, italicText
+                    , colourNumSign, plainNumSign, plainPc, reducedNum
+                    , formatDays, formatHours)
 import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, indentDown, withCurrentIndent, withCurrentIndentZero, alsoIndent, alsoIndent'
@@ -346,12 +355,7 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
         Just HOI4ScopeState
             | expectedScope `matchScope` HOI4ScopeState -> message MsgROOTState
             | expectedScope `matchScope` HOI4Country -> message MsgROOTProvinceOwner
-            | expectedScope `matchScope` HOI4TradeNode -> message MsgROOTTradeNode
             | otherwise                             -> message MsgROOTProvinceAsOther
-        -- No synecdoche possible
-        Just HOI4TradeNode -> message MsgROOTTradeNode
-        -- No synecdoche possible
-        Just HOI4Geographic -> message MsgROOTGeographic
         _ -> return "ROOT"
     "prev" -> --do
 --      ss <- getScopeStack
@@ -364,8 +368,6 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
                 | expectedScope `matchScope` HOI4ScopeState -> message MsgPREVState
                 | expectedScope `matchScope` HOI4Country -> message MsgPREVProvinceOwner
                 | otherwise                             -> message MsgPREVProvinceAsOther
-            Just HOI4TradeNode -> message MsgPREVTradeNode
-            Just HOI4Geographic -> message MsgPREVGeographic
             _ -> return "PREV"
     "this" -> getCurrentScope >>= \case -- will need editing
         Just HOI4Country
@@ -377,8 +379,6 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
             | expectedScope `matchScope` HOI4UnitLeader -> message MsgTHISUnitLeader
             | expectedScope `matchScope` HOI4Country -> message MsgTHISProvinceOwner
             | otherwise                             -> message MsgTHISProvinceAsOther
-        Just HOI4TradeNode -> message MsgTHISTradeNode
-        Just HOI4Geographic -> message MsgTHISGeographic
         _ -> return "PREV"
     "controller" -> message MsgController
     "emperor" -> message MsgEmperor
@@ -558,8 +558,7 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
                     Just HOI4ScopeState -> Just MsgROOTSCOPEState
                     Just HOI4UnitLeader -> Just MsgROOTSCOPEUnitLeader
                     Just HOI4Operative -> Just MsgROOTSCOPEOperative
-                    Just HOI4TradeNode -> Just MsgROOTTradeNode
-                    Just HOI4Geographic -> Just MsgROOTGeographic
+                    Just HOI4Character -> Just MsgROOTSCOPECharacter
                     _ -> Nothing) -- warning printed below
         "prev" -> do --PREV
                 newscope <- getCurrentScope
@@ -568,8 +567,7 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
                     Just HOI4ScopeState -> Just MsgPREVSCOPEState
                     Just HOI4Operative -> Just MsgPREVSCOPEOperative
                     Just HOI4UnitLeader -> Just MsgPREVSCOPEUnitLeader
-                    Just HOI4TradeNode -> Just MsgPREVTradeNode
-                    Just HOI4Geographic -> Just MsgPREVGeographic
+                    Just HOI4Character -> Just MsgPREVSCOPECharacter
                     Just HOI4From -> Just MsgFROMSCOPE -- Roll with it
                     _ -> Nothing) -- warning printed below
         "from" -> return (Just HOI4From, Just MsgFROMSCOPE) -- FROM / Should be some way to have different message depending on if it is event or decison, etc.
@@ -1929,12 +1927,13 @@ opinion _ _ stmt = preStatement stmt
 data HasOpinion = HasOpinion
         {   hop_target :: Maybe Text
         ,   hop_value :: Maybe Double
+        ,   hop_valuevar :: Maybe Text
         ,   hop_ltgt :: Text
         }
 newHasOpinion :: HasOpinion
-newHasOpinion = HasOpinion Nothing Nothing undefined
+newHasOpinion = HasOpinion Nothing Nothing Nothing undefined
 hasOpinion :: forall g m. (HOI4Info g, Monad m) =>
-    (Double -> Text -> Text -> ScriptMessage) ->
+    (Text -> Text -> Text -> ScriptMessage) ->
     StatementHandler g m
 hasOpinion msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_hasOpinion (foldl' addLine newHasOpinion scr)
@@ -1944,12 +1943,19 @@ hasOpinion msg stmt@[pdx| %_ = @scr |]
         addLine hop [pdx| value = !val |] = hop { hop_value = Just val, hop_ltgt = "equal to or more than" } -- at least
         addLine hop [pdx| value > !val |] = hop { hop_value = Just val, hop_ltgt = "more than" } -- at least
         addLine hop [pdx| value < !val |] = hop { hop_value = Just val, hop_ltgt = "less than" } -- less than
-        addLine hop _ = trace "warning: unrecognized has_opinion clause" hop
+        addLine hop [pdx| value = $val |] = hop { hop_valuevar = Just val, hop_ltgt = "equal to or more than" } -- at least
+        addLine hop [pdx| value > $val |] = hop { hop_valuevar = Just val, hop_ltgt = "more than" } -- at least
+        addLine hop [pdx| value < $val |] = hop { hop_valuevar = Just val, hop_ltgt = "less than" } -- less than
+        addLine hop _ = trace ("warning: unrecognized has_opinion clause in : " ++ show stmt) hop
         pp_hasOpinion :: HasOpinion -> PPT g m ScriptMessage
-        pp_hasOpinion hop = case (hop_target hop, hop_value hop, hop_ltgt hop) of
-            (Just target, Just value, ltgt) -> do
-                target_flag <- flag (Just HOI4Country) target
-                return (msg value (Doc.doc2text target_flag) ltgt)
+        pp_hasOpinion hop = case (hop_target hop, hop_value hop, hop_valuevar hop, hop_ltgt hop) of
+            (Just target, Just value, _, ltgt) -> do
+                target_flag <- flagText (Just HOI4Country) target
+                let valuet = Doc.doc2text (colourNumSign True value)
+                return (msg valuet target_flag ltgt)
+            (Just target, _, Just valuet, ltgt) -> do
+                target_flag <- flagText (Just HOI4Country) target
+                return (msg valuet target_flag ltgt)
             _ -> return (preMessage stmt)
 hasOpinion _ stmt = preStatement stmt
 
@@ -2803,23 +2809,6 @@ foldCompound "addUnitConstruction" "UnitConstruction" "uc"
        ) _amount _speed _cost
     |]
 
-foldCompound "hasLeaders" "HasLeaders" "hl"
-    []
-    [CompField "value" [t|Double|] Nothing True
-    ,CompField "type" [t|Text|] Nothing True
-    ,CompField "include_monarch" [t|Text|] Nothing True
-    ,CompField "include_heir" [t|Text|] Nothing True]
-    [| do
-        -- XXX: Should allow localization of description
-        typeLoc <- getGameL10n _type
-        return $ MsgHasLeaders (iconText _type) typeLoc (case (T.toLower _include_monarch, T.toLower _include_heir) of
-                ("yes", "yes") -> " (rulers and heirs count)"
-                ("yes", _) -> " (rulers count)"
-                (_, "yes") -> " (heirs count)"
-                _ -> "")
-            _value
-    |]
-
 foldCompound "numOfReligion" "NumOfReligion" "nr"
     []
     [CompField "religion" [t|Text|] Nothing False
@@ -3222,25 +3211,133 @@ dynasty stmt@[pdx| %_ = ?str |] = do
         msgToPP $ MsgRulerIsDynasty str
 dynasty stmt = (trace (show stmt)) $ preStatement stmt
 
-----------------------
--- Idea group ideas --
-----------------------
+-----------------
+-- handle idea --
+-----------------
 
-hasIdea :: (HOI4Info g, Monad m) =>
-    (Text -> Int -> ScriptMessage)
+handleSwapIdeas :: forall g m. (HOI4Info g, Monad m) =>
+        StatementHandler g m
+handleSwapIdeas  stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_si (parseTA "add_idea" "remove_idea" scr)
+    where
+        pp_si :: TextAtom -> PPT g m ScriptMessage
+        pp_si ta = case (ta_what ta, ta_atom ta) of
+            (Just what, Just atom) -> do
+                add_loc <- handleIdea what
+                remove_loc <- handleIdea atom
+                case (add_loc, remove_loc) of
+                    (Just (addcategory, addideaIcon, addideaKey, addidea_loc), Just (category, ideaIcon, ideaKey, idea_loc)) ->
+                        if addidea_loc == idea_loc then
+                            return $ MsgModifyIdea category ideaIcon ideaKey idea_loc addcategory addideaIcon addideaKey addidea_loc
+                        else
+                            return $ MsgReplaceIdea category ideaIcon ideaKey idea_loc addcategory addideaIcon addideaKey addidea_loc
+                    _ -> return $ preMessage stmt
+            _ -> return $ preMessage stmt
+handleSwapIdeas stmt = preStatement stmt
+
+handleTimedIdeas :: forall g m. (HOI4Info g, Monad m) =>
+        (Text -> Text -> Text -> Text -> Double -> ScriptMessage) -- ^ Message constructor, if abs value >= 1
         -> StatementHandler g m
-hasIdea msg stmt@[pdx| $lhs = !n |] | n >= 1, n <= 7 = do
-    groupTable <- getIdeaGroups
-    let mideagroup = HM.lookup lhs groupTable
-    case mideagroup of
-        Nothing -> preStatement stmt -- unknown idea group
-        Just grp -> do
-            let idea = ig_ideas grp !! (n - 1)
-                ideaKey = idea_name idea
-            idea_loc <- getGameL10n ideaKey
-            msgToPP (msg idea_loc n)
-hasIdea _ stmt = preStatement stmt
+handleTimedIdeas msg stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_idda (parseTV "idea" "days" scr)
+    where
+        pp_idda :: TextValue -> PPT g m ScriptMessage
+        pp_idda tv = case (tv_what tv, tv_value tv) of
+            (Just what, Just value) -> do
+                ideashandled <- handleIdea what
+                case ideashandled of
+                    Just (category, ideaIcon, ideaKey, idea_loc) -> return $ msg category ideaIcon ideaKey idea_loc value
+                    Nothing -> return $ preMessage stmt
+            _ -> return $ preMessage stmt
+handleTimedIdeas _ stmt = preStatement stmt
 
+handleIdeas :: (HOI4Info g, Monad m) =>
+    (Text -> Text -> Text -> Text -> ScriptMessage)
+        -> StatementHandler g m
+handleIdeas msg stmt@[pdx| $lhs = %idea |] = case idea of
+    CompoundRhs ideas -> if length ideas == 1 then do
+                ideashandled <- handleIdea (mconcat $ map getbareidea ideas)
+                case ideashandled of
+                    Just (category, ideaIcon, ideaKey, idea_loc) -> msgToPP $ msg category ideaIcon ideaKey idea_loc
+                    Nothing -> preStatement stmt
+            else preStatement stmt
+    GenericRhs txt [] -> do
+        ideashandled <- handleIdea txt
+        case ideashandled of
+            Just (category, ideaIcon, ideaKey, idea_loc) -> msgToPP $ msg category ideaIcon ideaKey idea_loc
+            Nothing -> preStatement stmt
+    _ -> preStatement stmt
+handleIdeas _ stmt = preStatement stmt
+
+getbareidea (StatementBare (GenericLhs e [])) = e
+getbareidea _ = "<!-- Check Script -->"
+
+handleIdea ide = do
+    ides <- getIdeas
+    gfx <- getInterfaceGFX
+    let midea = HM.lookup ide ides
+    case midea of
+        Nothing -> return Nothing -- unknown idea
+        Just iidea -> do
+            let ideaKey = id_name iidea
+                ideaIcon = HM.findWithDefault "GFX_idea_unknown" (id_picture iidea) gfx
+            idea_loc <- getGameL10n ideaKey
+            category <- if id_category iidea == "country" then getGameL10n "FE_COUNTRY_SPIRIT" else getGameL10n $ id_category iidea
+            return $ Just (category, ideaIcon, ideaKey, idea_loc)
+
+---------------
+-- has focus --
+---------------
+
+focusProgress :: (HOI4Info g, Monad m) =>
+    (Text -> Text -> Text -> Text -> ScriptMessage)
+        -> StatementHandler g m
+focusProgress msg stmt@[pdx| $lhs = @compa |] = do
+    let nf = case getfoc compa of
+            Just nfr -> nfr
+            _-> "<!-- Check Script -->"
+        compare = case getcomp compa of
+            Just compr -> compr
+            _-> "<!-- Check Script -->"
+    nfs <- getNationalFocus
+    gfx <- getInterfaceGFX
+    let mnf = HM.lookup nf nfs
+    case mnf of
+        Nothing -> preStatement stmt -- unknown national focus
+        Just nnf -> do
+            let nfKey = nf_id nnf
+                nfIcon = HM.findWithDefault "GFX_goal_unknown" (nf_icon nnf) gfx
+            nf_loc <- getGameL10n nfKey
+            msgToPP (msg nfIcon nfKey nf_loc compare)
+    where
+        getfoc :: [GenericStatement] -> Maybe Text
+        getfoc [] = Nothing
+        getfoc (stmt@[pdx| focus = $id |] : _) = Just id
+        getfoc (_ : ss) = getfoc ss
+        getcomp :: [GenericStatement] -> Maybe Text
+        getcomp [] = Nothing
+        getcomp (stmt@[pdx| progress > !num |] : _)
+            = Just $ "more than" <> Doc.doc2text (reducedNum plainPc num)
+        getcomp (stmt@[pdx| progress < !num |] : _)
+            = Just $ "less than" <> Doc.doc2text (reducedNum plainPc num)
+        getcomp (_ : ss) = getcomp ss
+focusProgress _ stmt = preStatement stmt
+
+hasFocus :: (HOI4Info g, Monad m) =>
+    (Text -> Text -> Text -> ScriptMessage)
+        -> StatementHandler g m
+hasFocus msg stmt@[pdx| $lhs = $nf |] = do
+    nfs <- getNationalFocus
+    gfx <- getInterfaceGFX
+    let mnf = HM.lookup nf nfs
+    case mnf of
+        Nothing -> preStatement stmt -- unknown national focus
+        Just nnf -> do
+            let nfKey = nf_id nnf
+                nfIcon = HM.findWithDefault "GFX_goal_unknown" (nf_icon nnf) gfx
+            nf_loc <- getGameL10n nfKey
+            msgToPP (msg nfIcon nfKey nf_loc)
+hasFocus _ stmt = preStatement stmt
 -----------
 -- Trust --
 -----------
@@ -3435,7 +3532,7 @@ setVariable msgWW msgWV stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_sv (foldl' addLine newSV scr)
     where
         addLine :: SetVariable -> GenericStatement -> SetVariable
-        addLine sv [pdx| which = ?val |]
+        addLine sv [pdx| var = $val |]
             = if isNothing (sv_which sv) then
                 sv { sv_which = Just val }
               else
@@ -4295,6 +4392,7 @@ createColonyMissionReward stmt =
 --------------------------------
 -- Handler for has_idea_group --
 --------------------------------
+{-
 hasIdeaGroup :: (HOI4Info g, Monad m) => StatementHandler g m
 hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
     -- TODO: Improve
@@ -4312,7 +4410,7 @@ hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
         else
             msgToPP $ MsgHasIdeaGroup (iconText ig) textLoc
 hasIdeaGroup stmt = (trace $ "Not handled in hasIdeaGroup: " ++ show stmt) $ preStatement stmt
-
+-}
 ----------------------------
 -- Handler for kill_units --
 ----------------------------
@@ -4629,14 +4727,19 @@ addTechBonus stmt@[pdx| %_ = @scr |]
                 _ -> trace ("issues in add_technology_bonus: " ++ show stmt ) $ preMessage stmt
 addTechBonus stmt = preStatement stmt
 
+----------------------
+-- set_country_flag --
+----------------------
+
 data SetCountryFlag = SetCountryFlag
         {   scf_flag :: Text
         ,   scf_value :: Maybe Double
         ,   scf_days :: Maybe Double
+        ,   scf_dayst :: Maybe Text
         }
 
 newSCF :: SetCountryFlag
-newSCF = SetCountryFlag undefined Nothing Nothing
+newSCF = SetCountryFlag undefined Nothing Nothing Nothing
 setCountryFlag :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 setCountryFlag stmt@[pdx| %_ = $flag |] = withNonlocAtom2 MsgCountryFlag MsgSetFlag stmt
 setCountryFlag stmt@[pdx| %_ = @scr |]
@@ -4649,17 +4752,65 @@ setCountryFlag stmt@[pdx| %_ = @scr |]
             return scf { scf_value = Just amt }
         addLine scf [pdx| days = !amt |] =
             return scf { scf_days = Just amt }
+        addLine scf [pdx| days = $amt |] =
+            return scf { scf_dayst = Just amt }
         addLine scf stmt
             = trace ("unknown section in set_country_flag: " ++ show stmt) $ return scf
         pp_scf scf =
             let value = case scf_value scf of
                     Just num -> T.pack $ concat [" to " , show $ round num]
                     _ -> ""
-                days = case scf_days scf of
-                    Just day -> " for " <> formatDays day
+                days = case (scf_days scf, scf_dayst scf) of
+                    (Just day, _) -> " for " <> formatDays day
+                    (_, Just day) -> " for " <> day <> " days"
                     _ -> ""
             in MsgSetCountryFlag (scf_flag scf) value days
 setCountryFlag stmt = preStatement stmt
+
+data HasCountryFlag = HasCountryFlag
+        {   hcf_flag :: Text
+        ,   hcf_value :: Text
+        ,   hcf_days :: Text
+        ,   hcf_date :: Text
+        }
+
+newHCF :: HasCountryFlag
+newHCF = HasCountryFlag undefined "" "" ""
+hasCountryFlag :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
+hasCountryFlag msgft stmt@[pdx| %_ = $flag |] = withNonlocAtom2 msgft MsgHasFlag stmt
+hasCountryFlag msgft stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_hcf =<< foldM addLine newHCF scr
+    where
+        addLine :: HasCountryFlag -> GenericStatement -> PPT g m HasCountryFlag
+        addLine hcf [pdx| flag = $flag |] =
+            return hcf { hcf_flag = flag }
+        addLine hcf [pdx| value = !amt |] =
+            let amtd = " equal to or more than " <> (show (amt :: Int)) in
+            return hcf { hcf_value = T.pack amtd }
+        addLine hcf [pdx| value < !amt |] =
+            let amtd = " to less than " <> (show (amt :: Int)) in
+            return hcf { hcf_value = T.pack amtd }
+        addLine hcf [pdx| value > !amt |] =
+            let amtd = " to more than " <> (show (amt :: Int)) in
+            return hcf { hcf_value = T.pack amtd }
+        addLine hcf [pdx| days < !amt |] =
+            let amtd = " for less than " <> (show (amt :: Int)) <> " days" in
+            return hcf { hcf_days = T.pack amtd }
+        addLine hcf [pdx| days > !amt |] =
+            let amtd = " for more than " <> (show (amt :: Int)) <> " days" in
+            return hcf { hcf_days = T.pack amtd }
+        addLine hcf [pdx| date > %amt |] =
+            let amtd = " later than " <> (show amt) in
+            return hcf { hcf_date = T.pack amtd }
+        addLine hcf [pdx| date < %amt |] =
+            let amtd = " earlier than " <> (show amt) in
+            return hcf { hcf_date = T.pack amtd }
+        addLine hcf stmt
+            = trace ("unknown section in has_country_flag: " ++ show stmt) $ return hcf
+        pp_hcf hcf = do
+            msgfts <- messageText msgft
+            return $ MsgHasFlagFor msgfts (hcf_flag hcf) (hcf_value hcf) (hcf_days hcf) (hcf_date hcf)
+hasCountryFlag _ stmt = preStatement stmt
 
 ----------------------------------
 -- Handler for add_to_war --
@@ -4688,7 +4839,8 @@ foldCompound "addToWar" "AddToWar" "atw"
 foldCompound "setAutonomy" "SetAutonomy" "sat"
     []
     [CompField "target" [t|Text|] Nothing True
-    ,CompField "autonomy_state" [t|Text|] Nothing True
+    ,CompField "autonomy_state" [t|Text|] Nothing False
+    ,CompField "autonomous_state" [t|Text|] Nothing False
     ,CompField "freedom_level" [t|Double|] Nothing False
     ,CompField "end_wars" [t|Text|] Nothing False
     ,CompField "end_civil_wars" [t|Text|] Nothing False
@@ -4699,11 +4851,15 @@ foldCompound "setAutonomy" "SetAutonomy" "sat"
                 (Just yw, _) -> T.pack " and end wars for puppet"
                 (_, Just yc) -> T.pack " and end civil wars for puppet"
                 _ -> ""
+            autonomy_state = case (_autonomy_state, _autonomous_state) of
+                (Just autonomy_state, _) -> autonomy_state
+                (_, Just autonomous_state) -> autonomous_state
+                _-> "<!-- Check Script -->"
             freedom = case _freedom_level of
                 Just num -> num
                 _ -> 0
         target <- flagText (Just HOI4Country) _target
-        autonomy <- getGameL10n _autonomy_state
+        autonomy <- getGameL10n autonomy_state
         return $ MsgSetAutonomy target (iconText autonomy) autonomy freedom endwar
     |]
 
@@ -4726,3 +4882,46 @@ foldCompound "setPolitics" "SetPolitics" "sp"
         party <- getGameL10n _ruling_party
         return $ MsgSetPolitics (iconText party) party freq
     |]
+
+------------------------------------
+-- Handler for has_country_leader --
+------------------------------------
+foldCompound "hasCountryLeader" "HasLeader" "hcl"
+    []
+    [CompField "character" [t|Text|] Nothing False
+    ,CompField "ruling_only" [t|Text|] Nothing False
+    ,CompField "name" [t|Text|] Nothing False
+    ,CompField "id" [t|Double|] Nothing False
+    ]
+    [|  do
+        let charjust = case (_character, _name, _id) of
+                (Just character, _, _) -> character
+                (_, Just name, _) -> name
+                (_, _, Just id)-> T.pack $ show $ floor id
+                _ -> "<!-- Check Script -->"
+        charloc <- getGameL10n charjust
+        return $ MsgHasCountryLeader charloc
+    |]
+
+------------------------------------
+-- Handler for has_country_leader --
+------------------------------------
+foldCompound "setPartyName" "SetPartyName" "spn"
+    []
+    [CompField "ideology" [t|Text|] Nothing True
+    ,CompField "long_name" [t|Text|] Nothing False
+    ,CompField "name" [t|Text|] Nothing True
+    ]
+    [|  do
+        let long_name = case _long_name of
+                Just long_name -> long_name
+                _-> ""
+        ideo_loc <- getGameL10n _ideology
+        long_loc <- getGameL10n long_name
+        short_loc <- getGameL10n _name
+        return $ MsgSetPartyName ideo_loc short_loc long_loc
+    |]
+
+loadFocusTree stmt@[pdx| %_ = $txt |] = withLocAtom MsgLoadFocusTree stmt
+loadFocusTree stmt@[pdx| %_ = @scr |] = textAtom "tree" "keep_completed" MsgLoadFocusTreeKeep tryLoc stmt
+loadFocusTree stmt = preStatement stmt

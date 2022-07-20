@@ -47,7 +47,7 @@ import HOI4.Common -- everything
 
 -- | Empty decision category. Starts off Nothing/empty everywhere, except id and name
 -- (which should get filled in immediately).
-newDecisionCat id locid locdesc path = HOI4Decisioncat id locid locdesc Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing path
+newDecisionCat id locid locdesc path = HOI4Decisioncat id locid locdesc Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing path
 
 -- | Take the decisions categories scripts from game data and parse them into decision
 -- data structures.
@@ -206,8 +206,6 @@ parseHOI4Decisions scripts = HM.unions . HM.elems <$> do
                     Right ddec -> return ddec
                 where mkDecMap :: [HOI4Decision] -> HashMap Text HOI4Decision
                       mkDecMap = HM.fromList . map (dec_name &&& id)
-
---parseHOI4Event :: MonadError Text m => FilePath -> GenericStatement -> PPT g m (Either Text (Maybe HOI4Event))
 
 -- | Parse one file's decision groups scripts into decision data structures.
 parseHOI4DecisionGroup :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
@@ -534,6 +532,7 @@ pp_decision dec gfx = do
         extractTargets (StatementBare (GenericLhs e [])) = Just e
         extractTargets stmt = (trace $ "Unknown in targets array statement: " ++ show stmt) $ Nothing
         extractTargetsStates (StatementBare (IntLhs e)) = Just e
+        extractTargetsStates stmt@[pdx| state = !e |] = Just e
         extractTargetsStates stmt = (trace $ "Unknown in targets array statement: " ++ show stmt) $ Nothing
 
 
@@ -637,7 +636,7 @@ findInStmts :: [GenericStatement] -> [(HOI4DecisionWeight, Text)]
 findInStmts stmts = concatMap findInStmt stmts
 
 addDecisionSource :: (HOI4DecisionWeight -> HOI4DecisionSource) -> [(HOI4DecisionWeight, Text)] -> [(Text, HOI4DecisionSource)]
-addDecisionSource es l = map (\t -> (snd t, es (fst t))) l
+addDecisionSource ds l = map (\t -> (snd t, ds (fst t))) l
 
 findInOptions :: Text -> [HOI4Option] -> [(Text, HOI4DecisionSource)]
 findInOptions decisionId opts = concatMap (\o -> case hoi4opt_name o of

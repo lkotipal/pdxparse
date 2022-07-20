@@ -221,7 +221,7 @@ restOfLine = (Ap.many1' Ap.endOfLine >> return "")
 -- a number (or an @ in weird cases?) (and dots in case of floats) and continue with letters, numbers, underscores, at-signs, dashes, question marks (for variables) and full stops.
 ident :: Parser Text
 ident = do
-        res <- (<>) <$> (T.singleton <$> (Ap.satisfy (\c -> c `elem` ['@','_','.'] || isAlphaNum c)))
+        res <- (<>) <$> (T.singleton <$> (Ap.satisfy (\c -> c `elem` ['@','_','.','-'] || isAlphaNum c)))
                     <*> Ap.takeWhile (\c -> c `elem` ['_','.','@','-','?','^','/'] || isAlphaNum c)
         if T.all isDigit res
             then fail "ident: numeric identifier"
@@ -339,8 +339,8 @@ script customLhs customRhs = statement customLhs customRhs `Ap.sepBy` skipSpace
 lhs :: Parser lhs -> Parser (Lhs lhs)
 lhs custom = CustomLhs <$> custom
          <|> AtLhs <$> ("@" *> ident) -- guessing at the syntax here...
-         <|> AtLhs <$> stringLit -- in case of a literal string lhs, ugly solution
          <|> GenericLhs <$> ident <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")
+         <|> GenericLhs <$> stringLit <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")-- in case of a literal string lhs, ugly solution
          <|> IntLhs <$> Ap.decimal
     <?> "statement LHS"
 

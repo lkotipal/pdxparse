@@ -404,18 +404,28 @@ ppEventSource (HOI4EvtSrcDecTimeout id loc) = do
         ]
 ppEventSource (HOI4EvtSrcOnAction act weight) = do
     return $ Doc.strictText $ act <> formatWeight weight
-ppEventSource (HOI4EvtSrcNFComplete id loc) = do
+ppEventSource (HOI4EvtSrcNFComplete id loc icon) = do
+    gfx <- getInterfaceGFX
+    iconnf <-
+        let iconname = HM.findWithDefault icon icon gfx in
+        return $ "[[File:" <> iconname <> ".png|28px]]"
     nfloc <- getGameL10n loc
     return $ Doc.strictText $ mconcat ["Completing the national focus "
-        , "<!-- "
+        , iconnf
+        , " <!-- "
         , id
         , " -->"
         , iquotes't nfloc
         ]
-ppEventSource (HOI4EvtSrcNFSelect id loc) = do
+ppEventSource (HOI4EvtSrcNFSelect id loc icon) = do
+    gfx <- getInterfaceGFX
+    iconnf <-
+        let iconname = HM.findWithDefault icon icon gfx in
+        return $ "[[File:" <> iconname <> ".png|28px]]"
     nfloc <- getGameL10n loc
     return $ Doc.strictText $ mconcat ["Selecting the national focus "
-        , "<!-- "
+        , iconnf
+        , " <!-- "
         , id
         , " -->"
         , iquotes't nfloc
@@ -651,7 +661,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr -- needs edit
         findInAction hm stmt = (trace $ "Unknown on_actions statement: " ++ show stmt) $ hm
 
         actionName :: Text -> Text
-        actionName n = HM.lookupDefault ("<pre>" <> n <> "</pre>") n actionNameTable
+        actionName n = HM.findWithDefault ("<pre>" <> n <> "</pre>") n actionNameTable
 
 
         -- TODO: deal with on_weekly_<TAG> on_daily_<TAG> etc.
@@ -723,5 +733,5 @@ findTriggeredEventsInNationalFocus hm nf = addEventTriggers hm (concatMap findIn
     where
         findInFocus :: HOI4NationalFocus -> [(Text, HOI4EventSource)]
         findInFocus f =
-            (addEventSource (const (HOI4EvtSrcNFComplete (nf_id f) (nf_name_loc f))) (maybe [] findInStmts (nf_completion_reward f))) ++
-            (addEventSource (const (HOI4EvtSrcNFSelect (nf_id f) (nf_name_loc f))) (maybe [] findInStmts (nf_select_effect f)))
+            (addEventSource (const (HOI4EvtSrcNFComplete (nf_id f) (nf_name_loc f) (nf_icon f))) (maybe [] findInStmts (nf_completion_reward f))) ++
+            (addEventSource (const (HOI4EvtSrcNFSelect (nf_id f) (nf_name_loc f) (nf_icon f))) (maybe [] findInStmts (nf_select_effect f)))

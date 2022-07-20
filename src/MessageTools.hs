@@ -25,7 +25,8 @@ module MessageTools (
     -- * Gain/lose
     -- | These functions hardcode their message fragments. They will have to
     -- be duplicated for languages other than English.
-    ,   gainOrLose, gainsOrLoses, increasedOrDecreased
+    ,   gainOrLose, gainsOrLoses
+    ,   increasedOrDecreased, increaseOrDecrease
     -- * Advisor text helpers
     ,   advisorDiscountText
     -- * Time formatting
@@ -235,6 +236,12 @@ gainsOrLoses n | n < 0     = "loses"
 increasedOrDecreased :: (Ord n, Num n) => n -> Text
 increasedOrDecreased n | n < 0     = "decreased"
                        | otherwise = "increased"
+
+-- | Say "Increased" or "Decreased" (with that capitalisation) depending on whether the
+-- numeric argument is positive or negative (respectively).
+increaseOrDecrease :: (Ord n, Num n) => n -> Text
+increaseOrDecrease n | n < 0     = "Decrease"
+                       | otherwise = "Increase"
 
 -- | Format advisor discount text (or empty if none)
 advisorDiscountText :: Double -> Doc
