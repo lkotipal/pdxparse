@@ -180,7 +180,7 @@ pp_decisioncat decc gfx = do
 -- | Empty decision. Starts off Nothing/empty everywhere, except id and name
 -- (which should get filled in immediately).
 newDecision :: HOI4Decision
-newDecision = HOI4Decision undefined undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing False Nothing Nothing False Nothing Nothing undefined
+newDecision = HOI4Decision undefined undefined Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing False Nothing Nothing False Nothing Nothing False Nothing undefined undefined
 
 -- | Take the decisions scripts from game data and parse them into decision
 -- data structures.
@@ -232,7 +232,7 @@ parseHOI4Decision [pdx| $decName = %rhs |] category = case rhs of
                   (Just (newDecision { dec_name = decName
                               , dec_name_loc = decName_loc
                               , dec_desc = decDesc
-                              , dec_path = Just (sourcePath </> T.unpack category) -- so decision are divided into maps for the cateogry, should I loc or not?
+                              , dec_path = sourcePath </> T.unpack category -- so decision are divided into maps for the cateogry, should I loc or not?
                               , dec_cat = category}))
                   parts
     _ -> throwError "unrecognized form for decision (RHS)"
@@ -389,7 +389,7 @@ writeHOI4Decisions = do
     interface <- getInterfaceGFX
     let pathedDecisions :: [Feature HOI4Decision]
         pathedDecisions = map (\dec -> Feature {
-                                        featurePath = dec_path dec
+                                        featurePath = Just $ dec_path dec
                                     ,   featureId = Just (dec_name dec) <> Just ".txt"
                                     ,   theFeature = Right dec })
                               (HM.elems decisions)

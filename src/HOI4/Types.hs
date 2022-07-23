@@ -357,7 +357,7 @@ data HOI4Decision = HOI4Decision
     ,   dec_state_target :: Bool
     ,   dec_ai_will_do :: Maybe AIWillDo -- ^ Factors affecting whether an AI
                                          --   will take the decision when available
-    ,   dec_path :: Maybe FilePath -- ^ Source file
+    ,   dec_path :: FilePath -- ^ Source file
     ,   dec_cat :: Text -- ^ Category of the decision
     } deriving (Show)
 {-
@@ -421,11 +421,11 @@ data HOI4NationalFocus = HOI4NationalFocus
     ,   nf_icon :: Text
     ,   nf_cost :: Double
     ,   nf_allow_branch  :: Maybe Text
-    ,   nf_prerequisite  :: Maybe Text
-    ,   nf_mutually_exclusive :: Maybe Text
-    ,   nf_avaiable :: Maybe Text
-    ,   nf_bypass :: Maybe Text
-    ,   nf_cancel :: Maybe Text
+    ,   nf_prerequisite  :: [Maybe GenericScript]
+    ,   nf_mutually_exclusive :: Maybe GenericScript
+    ,   nf_available :: Maybe GenericScript
+    ,   nf_bypass :: Maybe GenericScript
+    ,   nf_cancel :: Maybe GenericScript
     ,   nf_cancelable :: Maybe Text
     ,   nf_historical_ai :: Maybe Text
     ,   nf_available_if_capitulated :: Maybe Text
@@ -437,7 +437,7 @@ data HOI4NationalFocus = HOI4NationalFocus
     ,   nf_ai_will_do :: Maybe Text
     ,   nf_completion_reward :: Maybe GenericScript
     ,   nf_complete_tooltip :: Maybe Text
-    ,   nf_path :: Maybe FilePath -- ^ Source file
+    ,   nf_path :: FilePath -- ^ Source file
     } deriving (Show)
 
 data HOI4CountryHistory = HOI4CountryHistory
@@ -467,7 +467,7 @@ data HOI4Scope
     | HOI4UnitLeader
     | HOI4Operative
     | HOI4Character
-    | HOI4From -- ^ Usually country or province, varies by context
+    | HOI4From -- ^ Usually country or state, varies by context
     deriving (Show, Eq, Ord, Enum, Bounded)
 
 data HOI4GeoType

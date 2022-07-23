@@ -87,8 +87,8 @@ ppHandlers = foldl' Tr.unionL Tr.empty
     , handlersModifiers
     , handlersCompound
     , handlersLocRhs
-    , handlersProvince
-    , handlersFlagOrProvince
+    , handlersState
+    , handlersFlagOrstate
     , handlersNumericOrFlag
     , handlersAdvisorId
     , handlersTypewriter
@@ -96,11 +96,10 @@ ppHandlers = foldl' Tr.unionL Tr.empty
     , handlersSimpleFlag
     , handlersFlagOrYesNo
     , handlersIconFlagOrPronoun
-    , handlersTagOrProvince -- merge?
     , handlersYesNo
     , handlersNumericOrTag
     , handlersSignedNumeric
-    , handlersNumProvinces
+    , handlersNumStates
     , handlersTextValue
     , handlersTextAtom
     , handlersSpecialComplex
@@ -113,8 +112,7 @@ ppHandlers = foldl' Tr.unionL Tr.empty
 -- | Handlers for statements where RHS is irrelevant (usually "yes")
 handlersRhsIrrelevant :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersRhsIrrelevant = Tr.fromList
-        [("active_imperial_incident" , rhsAlways "any" MsgAnyActiveTradeNode)
-        ,("add_cardinal"             , rhsAlwaysYes MsgAddCardinal)
+        [("add_cardinal"             , rhsAlwaysYes MsgAddCardinal)
         ,("add_estate_burghers_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_burghers_loyalty_effect"))
         ,("add_estate_church_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_church_loyalty_effect"))
         ,("add_estate_cossacks_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|cossacks"))
@@ -150,6 +148,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("clear_previous_primary_cults" , rhsAlwaysYes $ MsgClearPreviousPrimaryCults)
         ,("clear_rebels"            , rhsAlwaysYes MsgClearRebels)
         ,("divorce_consort_effect"  , rhsAlwaysYes MsgDivorceConsortEffect)
+        ,("dismantle_faction"       , rhsAlwaysYes MsgDismantleFaction)
         ,("drop_cosmetic_tag"       , rhsAlwaysYes MsgDropCosmeticTag)
         ,("enable_hre_leagues"      , rhsAlwaysYes MsgEnableHRELeagues)
         ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
@@ -173,6 +172,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("is_rajput_modifier"     , rhsAlwaysYes MsgIsRajputMod)
         ,("is_subject_other_than_tributary_trigger" , rhsAlwaysYes MsgIsSubjectOtherThanTributary)
         ,("kill_ruler"             , rhsAlwaysYes MsgRulerDies)
+        ,("kill_country_leader"    , rhsAlwaysYes MsgKillCountryLeader)
         ,("may_agitate_for_liberty", rhsAlwaysYes MsgMayAgitateForLiberty) -- Espionage: Destabilizing Efforts
         ,("may_explore"            , rhsAlwaysYes MsgMayExplore) -- Exploration: Quest for the New World
         ,("may_infiltrate_administration", rhsAlwaysYes MsgMayInfiltrateAdministration) -- Espionage: Espionage
@@ -316,7 +316,9 @@ handlersNumeric = Tr.fromList
         ,("percentage_backing_issue"         , numeric MsgPctBackingParliamentIssue)
         ,("reform_level"                     , numeric MsgReformLevel)
         ,("revolt_percentage"                , numeric MsgRevoltPercentage)
+        ,("reset_province_name"              , numeric MsgResetProvinceName)
         ,("ruler_age"                        , numeric MsgRulerAge)
+        ,("set_compliance"                   , numeric MsgSetCompliance)
         ,("tech_difference"                  , numeric MsgTechDifference)
         ,("trade_company_size"               , numeric MsgTradeCompanySize)
         ,("trade_income_percentage"          , numeric MsgTradeIncomePercentage)
@@ -331,8 +333,10 @@ handlersNumeric = Tr.fromList
 -- | Handlers for numeric statements that compare
 handlersNumericCompare :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericCompare = Tr.fromList
-        [("enemies_strength_ratio"           , numericCompare MsgEnemiesStrengthRatio)
+        [("any_war_score"                    , numericCompare MsgAnyWarScore)
+        ,("enemies_strength_ratio"           , numericCompare MsgEnemiesStrengthRatio)
         ,("has_manpower"                     , numericCompare MsgHasManpower)
+        ,("has_stability"                    , numericCompare MsgHasStability)
         ,("surrender_progress"               , numericCompare MsgSurrenderProgress)
         ,("threat"                           , numericCompare MsgThreat)
         ,("fascism"                          , numericCompare MsgFascismCompare)
@@ -670,145 +674,113 @@ handlersModifiers = Tr.fromList
 handlersCompound :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersCompound = Tr.fromList
         -- Note that "any" can mean "all" or "one or more" depending on context.
-        [("and" , compoundMessage MsgAllOf) --AND
-        ,("root", compoundMessagePronoun) --ROOT
-        ,("from", compoundMessagePronoun) --FROM
-        ,("prev", compoundMessagePronoun) --PREV
-        -- no THIS, not used on LHS
-        ,("not" , compoundMessage MsgNoneOf) --NOT
-        ,("or"  , compoundMessage MsgAtLeastOneOf) --OR
-        -- Tagged blocks
-        ,("event_target", compoundMessageTagged MsgEventTarget (Just HOI4From))
-        -- There is a semantic distinction between "all" and "every",
+        [        -- There is a semantic distinction between "all" and "every",
         -- namely that the former means "this is true for all <type>" while
         -- the latter means "do this for every <type>."
-        -- triggerscopes
-        ,("all_allied_country" {- sic -}, scope HOI4Country     . compoundMessage MsgAllAlliedCountries)
-        ,("all_army_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAllArmyLeaders)
-        ,("all_character"               , scope HOI4Character   . compoundMessage MsgAllCharacters)
-        ,("all_controlled_state"        , scope HOI4ScopeState  . compoundMessage MsgAllControlledStates)
-        ,("all_core_state"              , scope HOI4ScopeState  . compoundMessage MsgAllCoreStates)
-        ,("all_country"        {- sic -}, scope HOI4Country     . compoundMessage MsgAllCountries)
-        ,("all_enemy_country"           , scope HOI4Country     . compoundMessage MsgAllEnemyCountries)
-        ,("all_guaranteed_country"      , scope HOI4Country     . compoundMessage MsgAllGuaranteedCountries)
-        ,("all_navy_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAllNavyLeaders)
-        ,("all_neighbor_country"        , scope HOI4Country     . compoundMessage MsgAllNeighborCountries)
-        ,("all_neighbor_state"          , scope HOI4ScopeState  . compoundMessage MsgAllNeighborStates)
-        ,("all_occupied_country"        , scope HOI4Country     . compoundMessage MsgAllOccupiedCountries)
-        ,("all_operative_leader"        , scope HOI4Operative   . compoundMessage MsgAllOperativeLeaders)
-        ,("all_other_country"           , scope HOI4Country     . compoundMessage MsgAllOtherCountries)
-        ,("all_owned_state"             , scope HOI4ScopeState  . compoundMessage MsgAllOwnedStates)
-        ,("all_state"                   , scope HOI4ScopeState  . compoundMessage MsgAllStates)
-        ,("all_subject_countries"       , scope HOI4Country     . compoundMessage MsgAllSubjectCountries)
-        ,("all_unit_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAllUnitLeaders)
---        ,("any_allied_country
---        ,("any_army_leader
---        ,("any_character
---        ,("any_controlled_state
---        ,("any_core_state
---        ,("any_country
---        ,("any_country_with_original_tag
---        ,("any_enemy_country
---        ,("any_guaranteed_country
---        ,("any_home_area_neighbor_country
---        ,("any_navy_leader
---        ,("any_neighbor_country
---        ,("any_neighbor_state
---        ,("any_occupied_country
---        ,("any_operative_leader
---        ,("any_other_country
---        ,("any_owned_state
---        ,("any_state
---        ,("any_subject_country
---        ,("any_unit_leader
-
-        ,("any_active_trade_node"   , scope HOI4TradeNode . compoundMessage MsgAnyActiveTradeNode)
-        ,("any_ally"                , scope HOI4Country   . compoundMessage MsgAnyAlly)
-        ,("any_army"                ,                      compoundMessage MsgAnyArmy)
-        ,("any_core_country"        , scope HOI4Country   . compoundMessage MsgAnyCoreCountry) -- used in province scope
-        ,("any_core_province"       , scope HOI4ScopeState  . compoundMessage MsgAnyCoreProvince)
-        ,("any_country"             , scope HOI4Country   . compoundMessage MsgAnyCountry)
-        ,("any_country_active_in_node" , scope HOI4Country . compoundMessage MsgAnyCountryActiveInNode)
-        ,("any_empty_neighbor_province", scope HOI4ScopeState  . compoundMessage MsgAnyEmptyNeighborProvince)
-        ,("any_enemy_country"       , scope HOI4Country   . compoundMessage MsgAnyEnemyCountry)
-        ,("any_heretic_province"    , scope HOI4ScopeState  . compoundMessage MsgAnyHereticProvince)
-        ,("any_hired_mercenary_company" ,                  compoundMessage MsgAnyHiredMercenaryCompany) -- TOOD: Need unit scope?
-        ,("any_known_country"       , scope HOI4Country   . compoundMessage MsgAnyKnownCountry)
-        ,("any_neighbor_country"    , scope HOI4Country   . compoundMessage MsgAnyNeighborCountry)
-        ,("any_neighbor_province"   , scope HOI4ScopeState  . compoundMessage MsgAnyNeighborProvince)
-        ,("any_owned_province"      , scope HOI4ScopeState  . compoundMessage MsgAnyOwnedProvince)
-        ,("any_privateering_country", scope HOI4TradeNode . compoundMessage MsgAnyPrivateeringCountry)
-        ,("any_province"            , scope HOI4ScopeState  . compoundMessage MsgAnyProvince)
-        ,("any_province_in_state"   , scope HOI4ScopeState  . compoundMessage MsgAnyProvinceInState)
-        ,("any_rival_country"       , scope HOI4Country   . compoundMessage MsgAnyRival)
-        ,("any_subject_country"     , scope HOI4Country   . compoundMessage MsgAnySubject)
-        ,("any_trade_node"          , scope HOI4TradeNode . compoundMessage MsgAnyTradeNode)
-        ,("any_trade_node_member_country" , scope HOI4Country . compoundMessage MsgAnyTradeNodeCountry)
-        ,("any_trade_node_member_province" , scope HOI4ScopeState . compoundMessage MsgAnyTradeNodeProvince)
-        ,("area_for_scope_province" , scope HOI4ScopeState  . scopeProvince MsgAreaOfProvince MsgAreaOfProvinceAll)
-
-        ,("capital_scope"           , scope HOI4ScopeState  . compoundMessage MsgCapital)
-        ,("colonial_parent"         , scope HOI4Country   . compoundMessage MsgColonialParent)
-        ,("controller"              , scope HOI4Country   . compoundMessage MsgController)
+        -- trigger scopes
+         ("all_allied_country" {- sic -}, scope HOI4Country     . compoundMessage MsgAllAlliedCountry)
+        ,("all_army_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAllArmyLeader)
+        ,("all_character"               , scope HOI4Character   . compoundMessage MsgAllCharacter)
+        ,("all_controlled_state"        , scope HOI4ScopeState  . compoundMessage MsgAllControlledState)
+        ,("all_core_state"              , scope HOI4ScopeState  . compoundMessage MsgAllCoreState)
+        ,("all_country"                 , scope HOI4Country     . compoundMessage MsgAllCountry)
+        ,("all_country_with_original_tag", scope HOI4Country    . compoundMessageExtract "original_tag_to_check" MsgAllCountryWithOriginalTag)
+        ,("all_enemy_country"           , scope HOI4Country     . compoundMessage MsgAllEnemyCountry)
+        ,("all_guaranteed_country"      , scope HOI4Country     . compoundMessage MsgAllGuaranteedCountry)
+        ,("all_navy_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAllNavyLeader)
+        ,("all_neighbor_country"        , scope HOI4Country     . compoundMessage MsgAllNeighborCountry)
+        ,("all_neighbor_state"          , scope HOI4ScopeState  . compoundMessage MsgAllNeighborState)
+        ,("all_occupied_country"        , scope HOI4Country     . compoundMessage MsgAllOccupiedCountry)
+        ,("all_operative_leader"        , scope HOI4Operative   . compoundMessage MsgAllOperativeLeader)
+        ,("all_other_country"           , scope HOI4Country     . compoundMessage MsgAllOtherCountry)
+        ,("all_owned_state"             , scope HOI4ScopeState  . compoundMessage MsgAllOwnedState)
+        ,("all_state"                   , scope HOI4ScopeState  . compoundMessage MsgAllState)
+        ,("all_subject_countries"{- sic -}, scope HOI4Country    . compoundMessage MsgAllSubjectCountries)
+        ,("all_unit_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAllUnitLeader)
+        ,("any_allied_country"          , scope HOI4Country     . compoundMessage MsgAnyAlliedCountry)
+        ,("any_army_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAnyArmyLeader)
+        ,("any_character"               , scope HOI4Character   . compoundMessage MsgAnyCharacter)
+        ,("any_controlled_state"        , scope HOI4ScopeState  . compoundMessage MsgAnyControlledState)
+        ,("any_core_state"              , scope HOI4ScopeState  . compoundMessage MsgAnyCoreState)
+        ,("any_country"                 , scope HOI4Country     . compoundMessage MsgAnyCountry)
+        ,("any_country_with_original_tag", scope HOI4Country    . compoundMessageExtract "original_tag_to_check" MsgAnyCountryWithOriginalTag)
+        ,("any_enemy_country"           , scope HOI4Country     . compoundMessage MsgAnyEnemyCountry)
+        ,("any_guaranteed_country"      , scope HOI4Country     . compoundMessage MsgAnyGuaranteedCountry)
+        ,("any_home_area_neighbor_country", scope HOI4Country    . compoundMessage MsgAnyHomeAreaNeighborCountry)
+        ,("any_navy_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAnyNavyLeader)
+        ,("any_neighbor_country"        , scope HOI4Country     . compoundMessage MsgAnyNeighborCountry)
+        ,("any_neighbor_state"          , scope HOI4ScopeState  . compoundMessage MsgAnyNeighborState)
+        ,("any_occupied_country"        , scope HOI4Country     . compoundMessage MsgAnyOccupiedCountry)
+        ,("any_operative_leader"        , scope HOI4Operative   . compoundMessage MsgAnyOperativeLeader)
+        ,("any_other_country"           , scope HOI4Country     . compoundMessage MsgAnyOtherCountry)
+        ,("any_owned_state"             , scope HOI4ScopeState  . compoundMessage MsgAnyOwnedState)
+        ,("any_state"                   , scope HOI4ScopeState  . compoundMessage MsgAnyState)
+        ,("any_subject_country"         , scope HOI4Country     . compoundMessage MsgAnySubjectCountry)
+        ,("any_unit_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAnyUnitLeader)
+        -- effect scopes
+        ,("every_army_leader"           , scope HOI4UnitLeader  . compoundMessage MsgEveryArmyLeader)
+        ,("every_character"             , scope HOI4Character   . compoundMessage MsgEveryCharacter)
+        ,("every_controlled_state"      , scope HOI4ScopeState  . compoundMessage MsgEveryControlledState)
+        ,("every_core_state"            , scope HOI4ScopeState  . compoundMessage MsgEveryCoreState)
+        ,("every_country"               , scope HOI4Country     . compoundMessage MsgEveryCountry)
+        ,("every_country_with_original_tag", scope HOI4Country  . compoundMessageExtract "original_tag_to_check" MsgEveryCountryWithOriginalTag)
+        ,("every_enemy_country"         , scope HOI4Country     . compoundMessage MsgEveryEnemyCountry)
+        ,("every_navy_leader"           , scope HOI4UnitLeader  . compoundMessage MsgEveryNavyLeader)
+        ,("every_neighbor_country"      , scope HOI4Country     . compoundMessage MsgEveryNeighborCountry)
+        ,("every_neighbor_state"        , scope HOI4ScopeState  . compoundMessage MsgEveryNeighborState)
+        ,("every_occupied_country"      , scope HOI4Country     . compoundMessage MsgEveryOccupiedCountry)
+        ,("every_operative"             , scope HOI4Operative   . compoundMessage MsgEveryOperative)
+        ,("every_other_country"         , scope HOI4Country     . compoundMessage MsgEveryOtherCountry)
+        ,("every_owned_state"           , scope HOI4ScopeState  . compoundMessage MsgEveryOwnedState)
+        ,("every_state"                 , scope HOI4ScopeState  . compoundMessage MsgEveryState)
+        ,("every_subject_country"       , scope HOI4Country     . compoundMessage MsgEverySubjectCountry)
+        ,("every_unit_leader"           , scope HOI4UnitLeader  . compoundMessage MsgEveryUnitLeader)
+        ,("global_every_army_leader"    , scope HOI4UnitLeader  . compoundMessage MsgGlobalEveryArmyLeader)
+        ,("random_army_leader"          , scope HOI4UnitLeader  . compoundMessage MsgRandomArmyLeader)
+        ,("random_character"            , scope HOI4Character   . compoundMessage MsgRandomCharacter)
+        ,("random_controlled_state"     , scope HOI4ScopeState  . compoundMessage MsgRandomControlledState)
+        ,("random_core_state"           , scope HOI4ScopeState  . compoundMessage MsgRandomCoreState)
+        ,("random_country"              , scope HOI4Country     . compoundMessage MsgRandomCountry)
+        ,("random_country_with_original_tag", scope HOI4Country . compoundMessageExtract "original_tag_to_check" MsgRandomCountryWithOriginalTag)
+        ,("random_enemy_country"        , scope HOI4Country     . compoundMessage MsgRandomEnemyCountry)
+        ,("random_navy_leader"          , scope HOI4UnitLeader  . compoundMessage MsgRandomNavyLeader)
+        ,("random_neighbor_country"     , scope HOI4Country     . compoundMessage MsgRandomNeighborCountry)
+        ,("random_neighbor_state"       , scope HOI4ScopeState  . compoundMessage MsgRandomNeighborState)
+        ,("random_occupied_country"     , scope HOI4Country     . compoundMessage MsgRandomOccupiedCountry)
+        ,("random_operative"            , scope HOI4Operative   . compoundMessage MsgRandomOperative)
+        ,("random_other_country"        , scope HOI4Country     . compoundMessage MsgRandomOtherCountry)
+        ,("random_owned_controlled_state", scope HOI4Country     . compoundMessage MsgRandomOwnedControlledState)
+        ,("random_owned_state"          , scope HOI4ScopeState  . compoundMessage MsgRandomOwnedState)
+        ,("random_state"                , scope HOI4ScopeState  . compoundMessage MsgRandomState)
+        ,("random_subject_country"      , scope HOI4Country     . compoundMessage MsgRandomSubjectCountry)
+        ,("random_unit_leader"          , scope HOI4UnitLeader  . compoundMessage MsgRandomUnitLeader)
+        -- dual scopes
+        ,("root"                        , compoundMessagePronoun) --ROOT
+        ,("prev"                        , compoundMessagePronoun) --PREV
+        ,("from"                        , compoundMessagePronoun) --FROM
+        -- no THIS, not used on LHS
+        ,("overlord"                    , scope HOI4Country   . compoundMessage MsgOverlord)
+        ,("owner"                       , scope HOI4Country   . compoundMessage MsgOwner)
+        ,("controller"                  , scope HOI4Country   . compoundMessage MsgController)
+        ,("capital_scope"               , scope HOI4ScopeState  . compoundMessage MsgCapital)
+        ,("event_target"        , compoundMessageTagged MsgSCOPEEventTarget (Just HOI4From)) -- Tagged blocks
+        ,("var"                 , compoundMessageTagged MsgSCOPEVariable (Just HOI4From)) -- Tagged blocks
+        -- flow control
+        ,("and"                         , compoundMessage MsgAnd) --AND
+        ,("not"                         , compoundMessage MsgNot) --NOT
+        ,("or"                          , compoundMessage MsgOr) --OR
+        ,("count_triggers"          ,                      compoundMessage MsgCountTriggers)
+        ,("hidden_trigger"          ,                      compoundMessage MsgHiddenTriggers)
+        ,("custom_trigger_tooltip"  ,                      compoundMessage MsgCustomTriggerTooltip)
+        ,("hidden_effect"           ,                      compoundMessage MsgHiddenEffect)
         ,("else"                    ,                      compoundMessage MsgElse)
         ,("else_if"                 ,                      compoundMessage MsgElseIf)
-        ,("emperor"                 , scope HOI4Country   . compoundMessage MsgEmperor)
-        ,("every_active_trade_node" , scope HOI4TradeNode . compoundMessage MsgEveryActiveTradeNode)
-        ,("every_ally"              , scope HOI4TradeNode . compoundMessage MsgEveryAlly)
-        ,("every_core_country"      , scope HOI4Country   . compoundMessage MsgEveryCoreCountry) -- used in province scope
-        ,("every_core_province"     , scope HOI4ScopeState  . compoundMessage MsgEveryCoreProvince)
-        ,("every_country"           , scope HOI4Country   . compoundMessage MsgEveryCountry)
-        ,("every_other_country"     , scope HOI4Country   . compoundMessage MsgEveryOtherCountry)
-        ,("every_enemy_country"     , scope HOI4Country   . compoundMessage MsgEveryEnemyCountry)
-        ,("every_federation_member" , scope HOI4Country   . compoundMessage MsgEveryFederationMember)
-        ,("every_heretic_province"  , scope HOI4ScopeState  . compoundMessage MsgEveryHereticProvince)
-        ,("every_known_country"     , scope HOI4Country   . compoundMessage MsgEveryKnownCountry)
-        ,("every_neighbor_country"  , scope HOI4Country   . compoundMessage MsgEveryNeighborCountry)
-        ,("every_neighbor_province" , scope HOI4ScopeState  . compoundMessage MsgEveryNeighborProvince)
-        ,("every_owned_province"    , scope HOI4ScopeState  . compoundMessage MsgEveryOwnedProvince)
-        ,("every_state"             , scope HOI4ScopeState  . compoundMessage MsgEveryState)
-        ,("every_rival_country"     , scope HOI4Country   . compoundMessage MsgEveryRival)
-        ,("every_subject_country"   , scope HOI4Country   . compoundMessage MsgEverySubject)
-        ,("every_trade_node_member_country" , scope HOI4Country . compoundMessage MsgEveryTradeNodeMemberCountry)
-        ,("home_province"           ,                      compoundMessage MsgHomeProvince) -- For mercs
-        ,("home_trade_node"         , scope HOI4TradeNode . compoundMessage MsgHomeTradeNode)
-        ,("home_trade_node_effect_scope" , scope HOI4TradeNode . compoundMessage MsgHomeTradeNodeEffectScope)
-        ,("hidden_effect"           ,                      compoundMessage MsgHiddenEffect)
-        ,("hidden_trigger"          ,                      compoundMessage MsgHiddenTrigger)
         ,("if"                      ,                      compoundMessage MsgIf) -- always needs editing
         ,("limit"                   , setIsInEffect False . compoundMessage MsgLimit) -- always needs editing
-        ,("location"                , scope HOI4ScopeState  . compoundMessage MsgLocation) -- For mercs
-        ,("most_province_trade_power", scope HOI4Country  . compoundMessage MsgMostProvinceTradePower)
-        ,("overlord"                , scope HOI4Country   . compoundMessage MsgOverlord)
-        ,("owner"                   , scope HOI4Country   . compoundMessage MsgOwner)
-        ,("random_active_trade_node", scope HOI4TradeNode . compoundMessage MsgRandomActiveTradeNode)
-        ,("random_ally"             , scope HOI4Country   . compoundMessage MsgRandomAlly)
-        ,("random_Character"        , scope HOI4Character . compoundMessage MsgRandomCharacter)
-        ,("random_core_country"     , scope HOI4Country   . compoundMessage MsgRandomCoreCountry)
-        ,("random_core_province"    , scope HOI4Country   . compoundMessage MsgRandomCoreProvince)
-        ,("random_country"          , scope HOI4Country   . compoundMessage MsgRandomCountry)
-        ,("random_elector"          , scope HOI4Country   . compoundMessage MsgRandomElector)
-        ,("random_enemy_country"    , scope HOI4Country   . compoundMessage MsgRandomEnemyCountry)
-        ,("random_empty_neighbor_province", scope HOI4ScopeState . compoundMessage MsgRandomEmptyNeighborProvince)
-        ,("random_heretic_province"    , scope HOI4ScopeState  . compoundMessage MsgRandomHereticProvince)
-        ,("random_hired_mercenary_company" ,                compoundMessage MsgRandomHiredMercenaryCompany) -- TODO: Need unit scope?
-        ,("random_known_country"    , scope HOI4Country   . compoundMessage MsgRandomKnownCountry)
-        ,("random_neighbor_country" , scope HOI4Country   . compoundMessage MsgRandomNeighborCountry)
-        ,("random_neighbor_province", scope HOI4ScopeState  . compoundMessage MsgRandomNeighborProvince)
-        ,("random_owned_area"       , scope HOI4ScopeState  . compoundMessage MsgRandomOwnedArea)
-        ,("random_owned_state"      , scope HOI4ScopeState  . compoundMessage MsgRandomOwnedState)
-        ,("random_owned_controlled_state", scope HOI4ScopeState  . compoundMessage MsgRandomOwnedControlledState)
-        ,("random_other_country"    , scope HOI4Country   . compoundMessage MsgRandomOtherCountry)
-        ,("random_privateering_country", scope HOI4TradeNode . compoundMessage MsgRandomPrivateeringCountry)
-        ,("random_state"            , scope HOI4ScopeState  . compoundMessage MsgRandomState)
-        ,("random_rival_country"    , scope HOI4Country   . compoundMessage MsgRandomRival)
-        ,("random_subject_country"  , scope HOI4Country   . compoundMessage MsgRandomSubjectCountry)
-        ,("random_trade_node"       , scope HOI4TradeNode . compoundMessage MsgRandomTradeNode)
-        ,("random_trade_node_member_province" , scope HOI4ScopeState . compoundMessage MsgRandomTradeNodeMemberProvince)
-        ,("region_for_scope_province" , scope HOI4ScopeState . scopeProvince MsgRegionProvinceScope MsgRegionProvinceScopeAll)
-        ,("strongest_trade_power"   , scope HOI4Country   . compoundMessage MsgStrongestTradePower) -- always needs editing
-        ,("variable_arithmetic_trigger" ,                  compoundMessage MsgVariableArithmeticTrigger)
-        ,("while"                   , scope HOI4Country   . compoundMessage MsgWhile) -- always needs editing
+        ,("prioritize"              ,                      prioritize) -- always needs editing
+        ,("while_loop_effect"       ,                       compoundMessage MsgWhile) -- always needs editing
+        ,("for_loop_effect"         ,                       compoundMessage MsgFor) -- always needs editing
+        -- random and random_list are also part of flow control but are more complicated
         ]
 
 withLocAtomTitle msg = withLocAtom' msg (\t -> t <> "_title")
@@ -821,6 +793,7 @@ handlersLocRhs = Tr.fromList
         ,("add_government_reform" , withLocAtom MsgAddGovernmentReform)
         ,("can_be_overlord"       , withLocAtom MsgCanBeOverlord)
         ,("change_government"     , withLocAtom MsgChangeGovernment)
+        ,("create_faction"        , withLocAtom MsgCreateFaction)
         ,("set_state_name"        , withLocAtom MsgSetStateName)
         ,("set_state_category"    , withLocAtom MsgSetStateCategory)
         ,("colonial_region"       , withLocAtom MsgColonialRegion)
@@ -846,6 +819,7 @@ handlersLocRhs = Tr.fromList
         ,("has_winter"            , withLocAtom MsgHasWinter)
         ,("hre_reform_passed"     , withLocAtomTitle MsgHREPassedReform)
         ,("in_league"             , withLocAtom MsgInLeague)
+        ,("is_character"          , withLocAtom MsgIsCharacter)
         ,("is_incident_active"    , withLocAtomTitle MsgIsIncidentActive)
         ,("is_incident_happened"  , withLocAtomTitle MsgHasIncidentHappened)
         ,("is_incident_possible"  , withLocAtomTitle MsgIsIncidentPossible)
@@ -864,41 +838,42 @@ handlersLocRhs = Tr.fromList
         ,("set_estate_privilege"  , withLocAtom MsgGrantEstatePrivilege)
         ,("set_imperial_incident" , withLocAtom MsgStartHREIncident)
         ,("superregion"           , withLocAtom MsgSuperRegionIs)
+        ,("tooltip"               , withLocAtom MsgTooltip)
         ,("trade_company_region"  , withLocAtom MsgTradeCompanyRegion)
         ]
 
--- | Handlers for statements whose RHS is a province ID
-handlersProvince :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
-handlersProvince = Tr.fromList
-        [("add_state_core"    , withProvince MsgAddStateCore)
-        ,("capital"           , withProvince MsgCapitalIs)
-        ,("controls_state"    , withProvince MsgControlsState)
-        ,("has_full_control_of_state" , withProvince MsgHasFullControlOfState)
-        ,("discover_province" , withProvince MsgDiscoverProvince)
-        ,("higher_development_than" , withProvince MsgHigherDevelopmentThan)
-        ,("owns_state"              , withProvince MsgOwnsState)
-        ,("owns_core_province", withProvince MsgOwnsCore)
-        ,("owns_or_non_sovereign_subject_of" , withProvince MsgOwnsOrNonTribSubject)
-        ,("owns_or_vassal_of" , withProvince MsgOwnsOrVassal)
-        ,("province_id"       , withProvince MsgProvinceIs)
-        ,("set_capital"       , withProvince MsgSetCapital)
-        ,("transfer_state"    , withProvince MsgTransferState)
+-- | Handlers for statements whose RHS is a state ID
+handlersState :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
+handlersState = Tr.fromList
+        [("add_state_claim"   , withState MsgAddStateClaim)
+        ,("add_state_core"    , withState MsgAddStateCore)
+        ,("capital"           , withState MsgCapitalIs)
+        ,("controls_state"    , withState MsgControlsState)
+        ,("has_full_control_of_state" , withState MsgHasFullControlOfState)
+        ,("discover_province" , withState MsgDiscoverProvince)
+        ,("higher_development_than" , withState MsgHigherDevelopmentThan)
+        ,("owns_state"              , withState MsgOwnsState)
+        ,("owns_core_province", withState MsgOwnsCore)
+        ,("owns_or_non_sovereign_subject_of" , withState MsgOwnsOrNonTribSubject)
+        ,("owns_or_vassal_of" , withState MsgOwnsOrVassal)
+        ,("province_id"       , withState MsgProvinceIs)
+        ,("remove_state_claim" , withState MsgRemoveStateClaim)
+        ,("set_capital"       , withState MsgSetCapital)
+        ,("state"             , withState MsgIsState)
+        ,("transfer_state"    , withState MsgTransferState)
         ]
 
 -- | Handlers for statements whose RHS is a flag OR a province ID
 -- Also abusable for tag,scope purposes
-handlersFlagOrProvince :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
-handlersFlagOrProvince = Tr.fromList
-        [("add_claim"          , withFlagOrProvince MsgAddClaimFor MsgAddClaimOn)
---        ,("add_core"           , withFlagOrProvince MsgGainCore MsgGainCoreProvince)
-        ,("add_permanent_claim", withFlagOrProvince MsgGainPermanentClaimCountry MsgGainPermanentClaimProvince)
-        ,("cavalry"            , withFlagOrProvince MsgCavalrySpawnsCountry MsgCavalrySpawnsProvince)
-        ,("infantry"           , withFlagOrProvince MsgInfantrySpawnsCountry MsgInfantrySpawnsProvince)
-        ,("remove_core"        , withFlagOrProvince MsgLoseCoreCountry MsgLoseCoreProvince)
-        ,("is_colonial_nation_of" , withFlagOrProvince MsgIsColonialNationOf MsgIsColonialNationOf)
-        -- RHS is a flag or province id, but the statement's meaning depends on the scope
-        ,("has_discovered"     , withFlagOrProvinceHOI4Scope MsgHasDiscovered MsgHasDiscovered MsgDiscoveredBy MsgDiscoveredBy) -- scope sensitive
-        ,("same_continent"     , withFlagOrProvinceHOI4Scope (MsgSameContinent True True) (MsgSameContinent True False) (MsgSameContinent False True) (MsgSameContinent False False)) -- scope sensitive
+handlersFlagOrstate :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
+handlersFlagOrstate = Tr.fromList
+        [("add_claim"          , withFlagOrState MsgAddClaimFor MsgAddClaimOn)
+--        ,("add_core"           , withFlagOrState MsgGainCore MsgGainCoreProvince)
+        ,("add_permanent_claim", withFlagOrState MsgGainPermanentClaimCountry MsgGainPermanentClaimProvince)
+        ,("cavalry"            , withFlagOrState MsgCavalrySpawnsCountry MsgCavalrySpawnsProvince)
+        ,("infantry"           , withFlagOrState MsgInfantrySpawnsCountry MsgInfantrySpawnsProvince)
+        ,("remove_core"        , withFlagOrState MsgLoseCoreCountry MsgLoseCoreProvince)
+        ,("is_colonial_nation_of" , withFlagOrState MsgIsColonialNationOf MsgIsColonialNationOf)
         ]
 
 -- | Handlers for statements whose RHS is a number OR a tag/pronoun, with icon
@@ -1011,7 +986,7 @@ handlersSimpleIcon = Tr.fromList
 -- | Handlers for simple statements with a flag or pronoun
 handlersSimpleFlag :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSimpleFlag = Tr.fromList
-        [("add_claim"               , withFlag MsgGainClaim)
+        [("add_claim_by"            , withFlag MsgAddClaimBy)
         ,("add_core_of"             , withFlag MsgAddCoreOf)
         ,("add_historical_friend"   , withFlag MsgAddHistoricalFriend)
         ,("add_historical_rival"    , withFlag MsgAddHistoricalRival)
@@ -1041,27 +1016,33 @@ handlersSimpleFlag = Tr.fromList
         ,("form_coalition_against"  , withFlag MsgFormCoalitionAgainst)
         ,("free_vassal"             , withFlag MsgFreeVassal)
         ,("galley"                  , withFlag MsgGalley)
+        ,("give_guarantee"          , withFlag MsgGiveGuarantee)
         ,("give_military_access"    , withFlag MsgGiveMilitaryAccess)
         ,("guaranteed_by"           , withFlag MsgGuaranteedBy)
         ,("has_guaranteed"          , withFlag MsgHasGuaranteed)
         ,("has_merchant"            , withFlag MsgHasMerchant)
         ,("has_most_province_trade_power" , withFlag MsgHasMostProvinceTradePower)
+        ,("has_non_aggression_pact_with" , withFlag MsgHasNonAggressionPactWith)
         ,("has_religious_school_of" , withFlag MsgHasReligiousSchoolOf)
         ,("has_trader"              , withFlag MsgHasTrader)
         ,("heavy_ship"              , withFlag MsgHeavyShip)
         ,("historical_friend_with"  , withFlag MsgHistoricalFriendWith)
         ,("historical_rival_with"   , withFlag MsgHistoricalRivalWith)
-        ,("inherit"                 , withFlag MsgInherit)
         ,("has_pillaged_capital_against" , withFlag MsgHasPillagedCapitalAgainst)
         ,("humiliated_by"           , withFlag MsgHumiliatedBy)
+        ,("inherit_technology"      , withFlag MsgInheritTechnology)
         ,("is_capital_of"           , withFlag MsgIsCapitalOf)
         ,("is_enemy"                , scope HOI4Country . withFlag MsgIsEnemy)
+        ,("is_guaranteed_by"        , withFlag MsgIsGuaranteedBy)
 --        ,("is_in_trade_league_with" , withFlag MsgIsInTradeLeagueWith)
         ,("is_in_faction_with"      , withFlag MsgIsInFactionWith)
+        ,("is_justifying_wargoal_against" , withFlag MsgIsJustifyingWargoalAgainst)
         ,("is_league_enemy"         , withFlag MsgIsLeagueEnemy)
         ,("is_league_friend"        , withFlag MsgIsLeagueFriend)
         ,("is_neighbor_of"          , withFlag MsgNeighbors)
         ,("is_origin_of_consort"    , withFlag MsgIsOriginOfConsort)
+        ,("is_owned_and_controlled_by" , withFlag MsgIsOwnedAndControlledBy)
+        ,("is_puppet_of"            , withFlag MsgIsPuppetOf)
         ,("is_rival"                , withFlag MsgIsRival)
         ,("is_supporting_independence_of" , withFlag MsgIsSupportingIndependenceOf)
         ,("is_core_of"              , withFlag MsgIsStateCore)
@@ -1079,6 +1060,7 @@ handlersSimpleFlag = Tr.fromList
         ,("provinces_on_capital_continent_of" , withFlag MsgProvincesOnCapitalContinentOf)
         ,("release"                 , withFlag MsgReleaseVassal)
         ,("remove_claim"            , withFlag MsgRemoveClaim)
+        ,("remove_core_of"          , withFlag MsgRemoveCoreOf)
         ,("remove_from_faction"     , withFlag MsgRemoveFromFaction)
         ,("remove_historical_friend" , withFlag MsgRemoveHistoricalFriend)
         ,("remove_historical_rival" , withFlag MsgRemoveHistoricalRival)
@@ -1109,43 +1091,38 @@ handlersFlagOrYesNo = Tr.fromList
 -- pronoun (such as ROOT).
 handlersIconFlagOrPronoun :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersIconFlagOrPronoun = Tr.fromList
-        [("change_culture"   , locAtomTagOrProvince (const MsgChangeCulture) MsgChangeSameCulture)
+        [("change_culture"   , locAtomTagOrState (const MsgChangeCulture) MsgChangeSameCulture)
         -- above is province, below is country - use same messages for both
-        ,("change_primary_culture", locAtomTagOrProvince (const MsgChangeCulture) MsgChangeSameCulture)
-        ,("change_culture"   , locAtomTagOrProvince (const MsgChangeCulture) MsgChangeSameCulture)
+        ,("change_primary_culture", locAtomTagOrState (const MsgChangeCulture) MsgChangeSameCulture)
+        ,("change_culture"   , locAtomTagOrState (const MsgChangeCulture) MsgChangeSameCulture)
         ,("change_religion"  , iconOrFlag MsgChangeReligion MsgChangeSameReligion Nothing)
-        ,("consort_culture"  , locAtomTagOrProvince (const MsgConsortCultureIs) MsgConsortCultureIsSame)
-        ,("continent"        , locAtomTagOrProvince (const MsgContinentIs) MsgContinentIsAs)
-        ,("culture"          , locAtomTagOrProvince (const MsgCultureIs) MsgCultureIsAs)
-        ,("culture_group"    , locAtomTagOrProvince (const MsgCultureIsGroup) MsgCultureGroupAs)
-        ,("dominant_culture" , locAtomTagOrProvince (const MsgDominantCultureIs) MsgDominantCultureIsAs)
-        ,("dominant_religion", locAtomTagOrProvince MsgDominantReligion MsgDominantReligionAs)
-        ,("heir_culture"     , locAtomTagOrProvince (const MsgHeirCultureIs) MsgHeirCultureIsSame)
-        ,("heir_nationality" , locAtomTagOrProvince (const MsgHeirNationality) MsgHeirNationalityAs)
-        ,("heir_religion"    , locAtomTagOrProvince MsgHeirReligion MsgHeirReligionAs)
-        ,("is_core"          , tagOrProvince MsgIsCoreOf MsgHasCoreOn (Just HOI4Country))
-        ,("is_claim"         , tagOrProvince MsgHasClaim MsgHasClaimOn (Just HOI4Country))
-        ,("is_harmonizing_with" , locAtomTagOrProvince MsgIsHarmonizingWith MsgIsHarmonizingWithProvince)
-        ,("is_permanent_claim" , tagOrProvince MsgIsPermanentClaim MsgHasPermanentClaim (Just HOI4Country))
-        ,("primary_culture"  , locAtomTagOrProvince (const MsgPrimaryCultureIs) MsgPrimaryCultureIsAs)
-        ,("province_religion" , locAtomTagOrProvince MsgProvinceReligion MsgProvinceSameReligion)
-        ,("religion"         , locAtomTagOrProvince MsgReligion MsgSameReligion)
-        ,("religion_group"   , locAtomTagOrProvince MsgReligionGroup MsgSameReligionGroup)
+        ,("consort_culture"  , locAtomTagOrState (const MsgConsortCultureIs) MsgConsortCultureIsSame)
+        ,("continent"        , locAtomTagOrState (const MsgContinentIs) MsgContinentIsAs)
+        ,("culture"          , locAtomTagOrState (const MsgCultureIs) MsgCultureIsAs)
+        ,("culture_group"    , locAtomTagOrState (const MsgCultureIsGroup) MsgCultureGroupAs)
+        ,("dominant_culture" , locAtomTagOrState (const MsgDominantCultureIs) MsgDominantCultureIsAs)
+        ,("dominant_religion", locAtomTagOrState MsgDominantReligion MsgDominantReligionAs)
+        ,("heir_culture"     , locAtomTagOrState (const MsgHeirCultureIs) MsgHeirCultureIsSame)
+        ,("heir_nationality" , locAtomTagOrState (const MsgHeirNationality) MsgHeirNationalityAs)
+        ,("heir_religion"    , locAtomTagOrState MsgHeirReligion MsgHeirReligionAs)
+        ,("is_core"          , tagOrState MsgIsCoreOf MsgHasCoreOn (Just HOI4Country))
+        ,("is_claim"         , tagOrState MsgHasClaim MsgHasClaimOn (Just HOI4Country))
+        ,("is_permanent_claim" , tagOrState MsgIsPermanentClaim MsgHasPermanentClaim (Just HOI4Country))
+        ,("primary_culture"  , locAtomTagOrState (const MsgPrimaryCultureIs) MsgPrimaryCultureIsAs)
+        ,("province_religion" , locAtomTagOrState MsgProvinceReligion MsgProvinceSameReligion)
+        ,("religion"         , locAtomTagOrState MsgReligion MsgSameReligion)
+        ,("religion_group"   , locAtomTagOrState MsgReligionGroup MsgSameReligionGroup)
         ,("ruler_culture"    , iconOrFlag MsgRulerCultureIs MsgRulerCultureIsSame Nothing)
         ,("ruler_religion"   , iconOrFlag MsgRulerReligionIs MsgRulerReligionIsSame Nothing)
-        ,("set_consort_culture" , locAtomTagOrProvince (const MsgChangeConsortCulture) MsgChangeConsortSameCulture)
-        ,("set_heir_culture" , locAtomTagOrProvince (const MsgChangeHeirCulture) MsgChangeHeirSameCulture)
-        ,("set_heir_religion", locAtomTagOrProvince MsgSetHeirReligion MsgSetHeirReligionAs)
-        ,("set_ruler_culture" , locAtomTagOrProvince (const MsgChangeRulerCulture) MsgChangeRulerSameCulture)
+        ,("set_consort_culture" , locAtomTagOrState (const MsgChangeConsortCulture) MsgChangeConsortSameCulture)
+        ,("set_heir_culture" , locAtomTagOrState (const MsgChangeHeirCulture) MsgChangeHeirSameCulture)
+        ,("set_heir_religion", locAtomTagOrState MsgSetHeirReligion MsgSetHeirReligionAs)
+        ,("set_ruler_culture" , locAtomTagOrState (const MsgChangeRulerCulture) MsgChangeRulerSameCulture)
         ,("set_ruler_religion" , iconOrFlag MsgChangeRulerReligion MsgChangeRulerSameReligion Nothing)
-        ,("trade_goods"      , locAtomTagOrProvince MsgProducesGoods MsgProducesSameGoods)
+        ,("trade_goods"      , locAtomTagOrState MsgProducesGoods MsgProducesSameGoods)
         ]
 
--- | Handlers for statements whose RHS may be either a tag or a province
-handlersTagOrProvince :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
-handlersTagOrProvince = Tr.fromList
-        [ -- obsolete
-        ]
+
 
 -- | Handlers for yes/no statements
 handlersYesNo :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
@@ -1260,6 +1237,7 @@ handlersYesNo = Tr.fromList
         ,("is_part_of_hre"              , withBool MsgIsPartOfHRE)
         ,("is_playing_custom_nation"    , withBool MsgIsCustomNation)
         ,("is_prosperous"               , withBool MsgIsProsperous)
+        ,("is_puppet"                   , withBool MsgIsPuppet)
         ,("is_random_new_world"         , withBool MsgRandomNewWorld)
         ,("is_reformation_center"       , withBool MsgIsCenterOfReformation)
         ,("is_religion_reformed"        , withBool MsgReligionReformed)
@@ -1268,13 +1246,13 @@ handlersYesNo = Tr.fromList
         ,("is_revolutionary"            , withBool MsgIsRevolutionary)
         ,("is_revolutionary_republic_trigger" , withBool MsgIsRevolutionaryRepublic)
         ,("is_sea"                      , withBool MsgIsSea) -- province or trade node
-        ,("is_state"                    , withBool MsgIsState)
         ,("is_statists_in_power"        , withBool MsgIsStatistsInPower)
         ,("is_subject"                  , withBool MsgIsSubject)
         ,("is_territory"                , withBool MsgIsTerritory)
         ,("is_trade_league_leader"      , withBool MsgIsTradeLeagueLeader)
         ,("is_tribal"                   , withBool MsgIsTribal)
         ,("is_tutorial_active"          , withBool MsgIsInTutorial)
+        ,("is_unit_leader"              , withBool MsgIsUnitLeader)
         ,("is_vassal"                   , withBool MsgIsVassal)
         ,("is_wasteland"                , withBool MsgIsWasteland)
         ,("luck"                        , withBool MsgLucky)
@@ -1285,6 +1263,7 @@ handlersYesNo = Tr.fromList
         ,("revolution_target_exists"    , withBool MsgRevolutionTargetExists)
         ,("recent_treasure_ship_passage", withBool MsgRecentTreasureShipPassage)
         ,("ruler_is_foreigner"          , withBool MsgRulerIsForeigner)
+        ,("set_demilitarized_zone"      , withBool MsgSetDemilitarizedZone)
         ,("set_hre_religion_locked"     , withBool MsgSetHREReligionLocked)
         ,("set_in_empire"               , withBool MsgSetInEmpire)
         ,("set_seat_in_parliament"      , withBool MsgSetSeatInParliament)
@@ -1337,8 +1316,8 @@ handlersSignedNumeric = Tr.fromList
 
 -- | Handlers querying the number of provinces of some kind, mostly religions
 -- and trade goods
-handlersNumProvinces :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
-handlersNumProvinces = Tr.fromList
+handlersNumStates :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
+handlersNumStates = Tr.fromList
         [
         -- Religions
          ("animism"       , numProvinces "animism" MsgReligionProvinces)
@@ -1427,8 +1406,10 @@ handlersTextValue = Tr.fromList
         ,("naval_strength"              , textValue "who" "value" MsgNavalStrength MsgNavalStrength flagTextMaybe)
         ,("province_distance"           , textValue "who" "distance" MsgProvinceDistance MsgProvinceDistance flagTextMaybe)
         ,("school_opinion"              , textValue "who" "opinion" MsgSchoolOpinion MsgSchoolOpinion flagTextMaybe)
+        ,("set_province_name"           , textValue "name" "id" MsgSetProvinceName MsgSetProvinceName tryLocMaybe)
         ,("set_school_opinion"          , textValue "who" "opinion" MsgSetSchoolOpinion MsgSetSchoolOpinion flagTextMaybe)
         ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPoints)
+        ,("strength_ratio"              , textValueCompare "tag" "ratio" MsgStrengthRatio MsgStrengthRatio flagTextMaybe)
         ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuilding tryLocAndIcon)
         ,("remove_loot"                 , textValue "who" "amount" MsgRemoveLoot MsgRemoveLoot flagTextMaybe)
         ,("trade_goods_produced_amount" , textValue "trade_goods" "amount" MsgTradeGoodsProduced MsgTradeGoodsProduced tryLocAndIcon)
@@ -1475,6 +1456,7 @@ handlersSpecialComplex = Tr.fromList
         ,("create_conquistador"          , createMilitaryLeader "conquistador" False MsgCreateConquistador MsgDefineConquistador)
         ,("create_explorer"              , createMilitaryLeader "explorer" True MsgCreateExplorer MsgDefineExplorer)
         ,("create_general"               , createMilitaryLeader "general" False MsgCreateGeneral MsgDefineGeneral)
+        ,("create_equipment_variant"     , createEquipmentVariant)
         ,("create_wargoal"               , createWargoal)
         ,("custom_trigger_tooltip"       , customTriggerTooltip)
         ,("build_to_forcelimit"          , buildToForcelimit)
@@ -1498,6 +1480,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_completed_focus"          , hasFocus MsgHasCompletedFocus)
         ,("complete_national_focus"      , hasFocus MsgCompleteNationalFocus)
         ,("focus_progress"               , focusProgress MsgFocusProgress)
+        ,("has_army_size"                , hasArmySize)
         ,("has_estate_led_regency"       , hasEstateLedRegency)
         ,("has_estate_influence_modifier", hasEstateModifier MsgEstateHasInfluenceModifier)
         ,("has_estate_loyalty_modifier"  , hasEstateModifier MsgEstateHasLoyaltyModifier)
@@ -1517,7 +1500,6 @@ handlersSpecialComplex = Tr.fromList
         ,("load_focus_tree"              , loadFocusTree)
         ,("news_event"                   , scope HOI4Country . triggerEvent MsgNewsEvent)
         ,("privateer_power"              , privateerPower)
-        ,("province_event"               , scope HOI4ScopeState . triggerEvent MsgProvinceEvent)
         ,("region"                       , region)
         ,("remove_opinion_modifier"      , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
 --        ,("reverse_has_opinion"          , hasOpinion MsgReverseHasOpinion)
@@ -1531,6 +1513,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_global_flag"              , hasCountryFlag MsgGlobalFlag)
         ,("set_politics"                 , setPolitics)
         ,("set_party_name"               , setPartyName)
+        ,("start_civil_war"              , startCivilWar)
         ,("state_event"                  , scope HOI4ScopeState . triggerEvent MsgStateEvent)
         ,("reverse_add_casus_belli"      , addCB False)
         ,("trading_bonus"                , tradingBonus)
@@ -1554,6 +1537,7 @@ handlersSpecialComplex = Tr.fromList
         ,("set_great_project_tier_1"        , simpleEffectAtom "type" (MsgSetGreatProjectTier 1))
         ,("set_great_project_tier_2"        , simpleEffectAtom "type" (MsgSetGreatProjectTier 2))
         ,("set_great_project_tier_3"        , simpleEffectAtom "type" (MsgSetGreatProjectTier 3))
+        ,("set_nationality"                 , setNationality)
         ,("scaled_estate_land_share_reduce_effect" , simpleEffectAtom "estate" (MsgScaledEstateLandShareEffect False))
         ,("scaled_estate_land_share_add_effect" , simpleEffectAtom "estate" (MsgScaledEstateLandShareEffect True))
         ,("unlock_estate_privilege"         , simpleEffectAtom "estate_privilege" MsgUnlockEstatePrivilege)
@@ -1630,15 +1614,16 @@ handlersMisc = Tr.fromList
         ,("create_succession_crisis" , createSuccessionCrisis)
         ,("development_in_provinces" , numOwnedProvincesWith MsgDevelopmentInProvinces)
         ,("dominant_culture"    , dominantCulture)
+        ,("diplomatic_relation" , diplomaticRelation)
         ,("dynasty"             , dynasty)
         ,("faction_in_power"    , factionInPower)
         ,("government_rank"     , govtRank)
-        ,("has_casus_belli"     , taTypeFlag "type" "target" MsgHasCasusBelli)
         ,("has_dlc"             , hasDlc)
         ,("has_government_attribute" , hasGovermentAttribute)
         ,("has_heir"            , hasHeir)
         ,("has_leader_with"     , hasLeaderWith)
         ,("hre_reform_level"    , hreReformLevel)
+        ,("has_wargoal_against" , hasWarGoalAgainst)
         ,("is_month"            , isMonth)
         ,("kill_leader"         , killLeader)
         ,("kill_heir"           , killHeir)
@@ -1719,7 +1704,7 @@ handlersIgnored = Tr.fromList
         ,("effect_tooltip", return $ return []) -- shows the effects but doesn't execute them, don't know if I want it to show up in the parser
         ,("goto"          , return $ return [])
         ,("log"           , return $ return [])
-        ,("tooltip"       , return $ return [])
+        ,("original_tag_to_check" , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
         ,("picture"       , return $ return []) -- Some modifiers have custom pictures
@@ -1843,7 +1828,7 @@ ppMaybeGeo label loc scr = do
         describe HOI4GeoTradeCompany = "trade company region"
         describe HOI4GeoColonialRegion = "region" -- No need to say "colonial region" since that's implied by the localized name
 
--- | Try to extra one matching statement
+-- | Try to extract one matching statement
 extractStmt :: (a -> Bool) -> [a] -> (Maybe a, [a])
 extractStmt p xs = extractStmt' p xs []
     where
@@ -1857,6 +1842,8 @@ extractStmt p xs = extractStmt' p xs []
 -- | Predicate for matching text on the left hand side
 matchLhsText :: Text -> GenericStatement -> Bool
 matchLhsText t s@[pdx| $lhs = %_ |] | t == lhs = True
+matchLhsText t s@[pdx| $lhs < %_ |] | t == lhs = True
+matchLhsText t s@[pdx| $lhs > %_ |] | t == lhs = True
 matchLhsText _ _ = False
 
 -- | Predicate for matching text on boths sides

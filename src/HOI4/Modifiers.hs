@@ -1,6 +1,6 @@
 {-|
 Module      : HOI4.Modifiers
-Description : Country, ruler, province and opinion modifiers
+Description : Country, ruler, dynamic and opinion modifiers
 -}
 module HOI4.Modifiers (
 --        parseHOI4Modifiers, writeHOI4Modifiers,
@@ -250,13 +250,13 @@ pp_opinion_modifer mod = do
         monthlyDecay _ _ = []
 
         duration :: Maybe Double -> Maybe Double -> Maybe Double -> [Doc]
-        duration (Just d) Nothing Nothing   | d /= 0 = [Doc.strictText $ formatDays d]
-        duration Nothing (Just m) Nothing   | m /= 0 = [Doc.strictText $ formatMonths m]
-        duration Nothing Nothing (Just y)   | y /= 0 = [Doc.strictText $ formatYears $ floor y]
-        duration (Just d) (Just m) Nothing  | d /= 0 || m /= 0 = [mconcat [fmt "Month" m, " and ", fmt "Day" d]]
-        duration (Just d) Nothing (Just y)  | d /= 0 || y /= 0 = [Doc.strictText $ formatDays (y*356+d)]
-        duration Nothing (Just m) (Just y)  | m /= 0 || y /= 0 = [Doc.strictText $ formatMonths (y*12+m)]
-        duration (Just d) (Just m) (Just y) | d /= 0 || m /= 0 || y /= 0 = [mconcat [fmt "Year" y, " and ", fmt "Month" m, " and ", fmt "Day" d]]
+        duration (Just d) Nothing Nothing   | d /= 0 = ["{{icon|time}} ", Doc.strictText $ formatDays d]
+        duration Nothing (Just m) Nothing   | m /= 0 = ["{{icon|time}} ", Doc.strictText $ formatMonths m]
+        duration Nothing Nothing (Just y)   | y /= 0 = ["{{icon|time}} ", Doc.strictText $ formatYears $ floor y]
+        duration (Just d) (Just m) Nothing  | d /= 0 || m /= 0 = [mconcat ["{{icon|time}} ", fmt "Month" m, " and ", fmt "Day" d]]
+        duration (Just d) Nothing (Just y)  | d /= 0 || y /= 0 = ["{{icon|time}} ", Doc.strictText $ formatDays (y*356+d)]
+        duration Nothing (Just m) (Just y)  | m /= 0 || y /= 0 = ["{{icon|time}} ", Doc.strictText $ formatMonths (y*12+m)]
+        duration (Just d) (Just m) (Just y) | d /= 0 || m /= 0 || y /= 0 = [mconcat ["{{icon|time}} ", fmt "Year" y, " and ", fmt "Month" m, " and ", fmt "Day" d]]
         duration _ _ _ = []
 
         fmt :: Text -> Double -> Doc
@@ -355,13 +355,4 @@ writeHOI4DynamicModifiers = do
                 , req , PP.line
                 , "|", PP.line
                 , eff, PP.line
-                ]
-
-        withHeader :: (HOI4Info g, Monad m) => Text -> GenericScript -> PPT g m Doc
-        withHeader _ [] = return $ mconcat []
-        withHeader hdr stmts = do
-            stpp'd <- imsg2doc =<< ppMany stmts
-            return $ mconcat
-                [ Doc.strictText hdr, PP.line
-                , stpp'd, PP.line
                 ]

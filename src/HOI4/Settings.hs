@@ -51,7 +51,7 @@ import HOI4.Modifiers (
                       parseHOI4OpinionModifiers, writeHOI4OpinionModifiers
                     , parseHOI4DynamicModifiers, writeHOI4DynamicModifiers)
 --import HOI4.Missions (parseHOI4Missions , writeHOI4Missions)
-import HOI4.NationalFocus(parseHOI4NationalFocuss)
+import HOI4.NationalFocus(parseHOI4NationalFocuses, writeHOI4NationalFocuses)
 import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
                    , findTriggeredEventsInOnActions, findTriggeredEventsInNationalFocus)
@@ -465,7 +465,7 @@ parseHOI4Scripts = do
     events <- parseHOI4Events =<< getEventScripts
 --    missions <- parseHOI4Missions =<< getMissionScripts
     on_actions <- getOnActionsScripts
-    nationalFocus <- parseHOI4NationalFocuss =<< getNationalFocusScripts
+    nationalFocus <- parseHOI4NationalFocuses =<< getNationalFocusScripts
     countryHistory <- parseHOI4CountryHistory =<< getCountryHistoryScripts
 --    disasters <- getDisasterScripts
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
@@ -504,6 +504,7 @@ writeHOI4Scripts = do
         writeHOI4Events
         writeHOI4DecisionCats
         writeHOI4Decisions
+        writeHOI4NationalFocuses
 --        writeHOI4Missions
         writeHOI4OpinionModifiers
         writeHOI4DynamicModifiers

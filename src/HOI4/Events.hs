@@ -111,7 +111,6 @@ parseHOI4Event stmt@[pdx| %left = %right |] = case right of
                     "country_event" -> Just HOI4Country
                     "unit_leader_event" -> Just HOI4UnitLeader
                     "operative_leader_event" -> Just HOI4Operative
-                    "province_event" -> Just HOI4ScopeState
                     "state_event" -> Just HOI4ScopeState
                     "news_event" -> Just HOI4Country -- ?
                     "event" -> Just HOI4NoScope
@@ -312,7 +311,7 @@ iquotes't = Doc.doc2text . iquotes
 -- | Present an event's title block.
 ppTitles :: (HOI4Info g, Monad m) => Bool {- ^ Is this a hidden event? -}
                                 -> [HOI4EvtTitle] -> Text -> PPT g m Doc
-ppTitles _ [] eid = return "| event_name = (No title)"
+ppTitles _ [] eid = return $ "| event_name = " <> Doc.strictText eid
 ppTitles False [HOI4EvtTitleSimple key] eid = ("| event_name = " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
 ppTitles True [HOI4EvtTitleSimple key]eid  = ("| event_name = (Hidden) " <>) . Doc.strictText . Doc.nl2br <$> getGameL10n key
 ppTitles True _ eid = return "| event_name = (This event is hidden and has no title.)"
