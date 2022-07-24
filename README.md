@@ -57,6 +57,7 @@ only the files you want, and rebuild.
     * Fractions can be written as 0.15 or .15 the second case the parser sees it as text instead of a double
     * add_country_leader, promote_character aren't processed. Would probably need to load common/characters for it to be properly handled.
     * ~~add_ideas, remove_ideas can have multiple ideas in an array, but they aren't handled (no clue how to do it)~~
+    * no icons in modifier statements
 
 ## To do
 Feel extremely free to help with any of these or the issues, I honestly doubt I can do any of these except maybe the additonal formatting

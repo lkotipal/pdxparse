@@ -108,7 +108,7 @@ module HOI4.Handlers (
     ,   handleIdeas
     ,   handleTimedIdeas
     ,   handleSwapIdeas
-    ,   hasFocus
+    ,   handleFocus
     ,   focusProgress
     ,   trust
     ,   governmentPower
@@ -162,8 +162,8 @@ module HOI4.Handlers (
     ,   hasGovernmentReforTier
     ,   annexCountry
     ,   addTechBonus
-    ,   setCountryFlag
-    ,   hasCountryFlag
+    ,   setFlag
+    ,   hasFlag
     ,   addToWar
     ,   setAutonomy
     ,   setPolitics
@@ -177,6 +177,10 @@ module HOI4.Handlers (
     ,   hasArmySize
     ,   startCivilWar
     ,   createEquipmentVariant
+    ,   dateHandle
+    ,   setRule
+    ,   addDoctrineCostReduction
+    ,   freeBuildingSlots
     -- testing
     ,   isPronoun
     ,   flag
@@ -280,7 +284,10 @@ icon :: Text -> Doc
 icon what = case HM.lookup what scriptIconFileTable of
     Just "" -> Doc.strictText $ "[[File:" <> what <> ".png|28px]]" -- shorthand notation
     Just file -> Doc.strictText $ "[[File:" <> file <> ".png|28px]]"
-    _ -> template "icon" [HM.findWithDefault what what scriptIconTable]
+    _ ->  if isPronoun what then
+            ""
+        else
+            template "icon" [HM.findWithDefault what what scriptIconTable]
 iconText :: Text -> Text
 iconText = Doc.doc2text . icon
 
@@ -1280,12 +1287,13 @@ numeric _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for numeric compare statements.
 numericCompare :: (IsGameState (GameState g), Monad m) =>
+    Text -> Text ->
     (Double -> Text -> ScriptMessage)
         -> StatementHandler g m
-numericCompare msg stmt@[pdx| %_ = !n |] = msgToPP $ msg n "equal to or more than"
-numericCompare msg stmt@[pdx| %_ > !n |] = msgToPP $ msg n "more than"
-numericCompare msg stmt@[pdx| %_ < !n |] = msgToPP $ msg n "less than"
-numericCompare _ stmt = plainMsg $ pre_statement' stmt
+numericCompare gt lt msg stmt@[pdx| %_ = !n |] = msgToPP $ msg n $ "equal to or " <> gt
+numericCompare gt lt msg stmt@[pdx| %_ > !n |] = msgToPP $ msg n gt
+numericCompare gt lt msg stmt@[pdx| %_ < !n |] = msgToPP $ msg n lt
+numericCompare _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for statements where the RHS is either a number or a tag.
 numericOrTag :: (HOI4Info g, Monad m) =>
@@ -1517,8 +1525,8 @@ tryLocAndIcon atom = do
             maybe ("<tt>" <> atom <> "</tt>") id loc)
 
 
--- | Get icon and localization for the atom given. Return @mempty@ if there is
--- no icon, and wrapped in @<tt>@ tags if there is no localization.
+-- | Get localization for the atom given. Return atom
+-- if there is no localization.
 tryLocMaybe :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
 tryLocMaybe atom = do
     loc <- tryLoc atom
@@ -3424,10 +3432,10 @@ focusProgress msg stmt@[pdx| $lhs = @compa |] = do
         getcomp (_ : ss) = getcomp ss
 focusProgress _ stmt = preStatement stmt
 
-hasFocus :: (HOI4Info g, Monad m) =>
+handleFocus :: (HOI4Info g, Monad m) =>
     (Text -> Text -> Text -> ScriptMessage)
         -> StatementHandler g m
-hasFocus msg stmt@[pdx| $lhs = $nf |] = do
+handleFocus msg stmt@[pdx| $lhs = $nf |] = do
     nfs <- getNationalFocus
     gfx <- getInterfaceGFX
     let mnf = HM.lookup nf nfs
@@ -3438,7 +3446,7 @@ hasFocus msg stmt@[pdx| $lhs = $nf |] = do
                 nfIcon = HM.findWithDefault "GFX_goal_unknown" (nf_icon nnf) gfx
             nf_loc <- getGameL10n nfKey
             msgToPP (msg nfIcon nfKey nf_loc)
-hasFocus _ stmt = preStatement stmt
+handleFocus _ stmt = preStatement stmt
 -----------
 -- Trust --
 -----------
@@ -4583,7 +4591,10 @@ addBuildingConstruction stmt@[pdx| %_ = @scr |] =
             buildingLoc <- getGameL10n building
             let provform = case addbc_province abc of
                     Just (HOI4ABCProvSimple id) -> -- plural (length id) "province" "provinces"
-                        T.pack $ concat [" to the province (" , intercalate "), (" (map (show . round) id),")"]
+                        if length id > 1 then
+                            T.pack $ concat [" to the provinces (" , intercalate "), (" (map (show . round) id),")"]
+                        else
+                            T.pack $ concat [" to the province (" , (concatMap (show . round) id),")"]
                     Just (HOI4ABCProvAll all bord) -> " to all provinces on a border."
                     _ -> ""
                 amount = case amountvar of
@@ -4829,95 +4840,96 @@ addTechBonus stmt@[pdx| %_ = @scr |]
                     (_, Just ahead) ->
                         MsgAddTechBonusAhead ahead ifname uses
                     _ -> trace ("issues in add_technology_bonus: " ++ show stmt ) $ preMessage stmt
-            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return $ (i+1, MsgTooltip tc) : []) techcat
+            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return $ (i+1, MsgEmpty tc) : []) techcat
             tbmsg_pp <- msgToPP $ tbmsg
             return $ tbmsg_pp ++ concat techcatmsg
 addTechBonus stmt = preStatement stmt
 
-----------------------
--- set_country_flag --
-----------------------
+------------------------------------------
+-- handlers for various flag statements --
+------------------------------------------
 
-data SetCountryFlag = SetCountryFlag
-        {   scf_flag :: Text
-        ,   scf_value :: Maybe Double
-        ,   scf_days :: Maybe Double
-        ,   scf_dayst :: Maybe Text
+data SetFlag = SetFlag
+        {   sf_flag :: Text
+        ,   sf_value :: Maybe Double
+        ,   sf_days :: Maybe Double
+        ,   sf_dayst :: Maybe Text
         }
 
-newSCF :: SetCountryFlag
-newSCF = SetCountryFlag undefined Nothing Nothing Nothing
-setCountryFlag :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-setCountryFlag stmt@[pdx| %_ = $flag |] = withNonlocAtom2 MsgCountryFlag MsgSetFlag stmt
-setCountryFlag stmt@[pdx| %_ = @scr |]
-    = msgToPP . pp_scf =<< foldM addLine newSCF scr
+newSF :: SetFlag
+newSF = SetFlag undefined Nothing Nothing Nothing
+setFlag :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
+setFlag msgft stmt@[pdx| %_ = $flag |] = withNonlocAtom2 msgft MsgSetFlag stmt
+setFlag msgft stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_sf =<< foldM addLine newSF scr
     where
-        addLine :: SetCountryFlag -> GenericStatement -> PPT g m SetCountryFlag
-        addLine scf [pdx| flag = $flag |] =
-            return scf { scf_flag = flag }
-        addLine scf [pdx| value = !amt |] =
-            return scf { scf_value = Just amt }
-        addLine scf [pdx| days = !amt |] =
-            return scf { scf_days = Just amt }
-        addLine scf [pdx| days = $amt |] =
-            return scf { scf_dayst = Just amt }
-        addLine scf stmt
-            = trace ("unknown section in set_country_flag: " ++ show stmt) $ return scf
-        pp_scf scf =
-            let value = case scf_value scf of
+        addLine :: SetFlag -> GenericStatement -> PPT g m SetFlag
+        addLine sf [pdx| flag = $flag |] =
+            return sf { sf_flag = flag }
+        addLine sf [pdx| value = !amt |] =
+            return sf { sf_value = Just amt }
+        addLine sf [pdx| days = !amt |] =
+            return sf { sf_days = Just amt }
+        addLine sf [pdx| days = $amt |] =
+            return sf { sf_dayst = Just amt }
+        addLine sf stmt
+            = trace ("unknown section in set_country_flag: " ++ show stmt) $ return sf
+        pp_sf sf = do
+            let value = case sf_value sf of
                     Just num -> T.pack $ concat [" to " , show $ round num]
                     _ -> ""
-                days = case (scf_days scf, scf_dayst scf) of
+                days = case (sf_days sf, sf_dayst sf) of
                     (Just day, _) -> " for " <> formatDays day
                     (_, Just day) -> " for " <> day <> " days"
                     _ -> ""
-            in MsgSetCountryFlag (scf_flag scf) value days
-setCountryFlag stmt = preStatement stmt
+            msgfts <- messageText msgft
+            return $ MsgSetFlagFor msgfts (sf_flag sf) value days
+setFlag _ stmt = preStatement stmt
 
-data HasCountryFlag = HasCountryFlag
-        {   hcf_flag :: Text
-        ,   hcf_value :: Text
-        ,   hcf_days :: Text
-        ,   hcf_date :: Text
+data HasFlag = HasFlag
+        {   hf_flag :: Text
+        ,   hf_value :: Text
+        ,   hf_days :: Text
+        ,   hf_date :: Text
         }
 
-newHCF :: HasCountryFlag
-newHCF = HasCountryFlag undefined "" "" ""
-hasCountryFlag :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
-hasCountryFlag msgft stmt@[pdx| %_ = $flag |] = withNonlocAtom2 msgft MsgHasFlag stmt
-hasCountryFlag msgft stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_hcf =<< foldM addLine newHCF scr
+newHF :: HasFlag
+newHF = HasFlag undefined "" "" ""
+hasFlag :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
+hasFlag msgft stmt@[pdx| %_ = $flag |] = withNonlocAtom2 msgft MsgHasFlag stmt
+hasFlag msgft stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_hf =<< foldM addLine newHF scr
     where
-        addLine :: HasCountryFlag -> GenericStatement -> PPT g m HasCountryFlag
-        addLine hcf [pdx| flag = $flag |] =
-            return hcf { hcf_flag = flag }
-        addLine hcf [pdx| value = !amt |] =
+        addLine :: HasFlag -> GenericStatement -> PPT g m HasFlag
+        addLine hf [pdx| flag = $flag |] =
+            return hf { hf_flag = flag }
+        addLine hf [pdx| value = !amt |] =
             let amtd = " equal to or more than " <> (show (amt :: Int)) in
-            return hcf { hcf_value = T.pack amtd }
-        addLine hcf [pdx| value < !amt |] =
+            return hf { hf_value = T.pack amtd }
+        addLine hf [pdx| value < !amt |] =
             let amtd = " to less than " <> (show (amt :: Int)) in
-            return hcf { hcf_value = T.pack amtd }
-        addLine hcf [pdx| value > !amt |] =
+            return hf { hf_value = T.pack amtd }
+        addLine hf [pdx| value > !amt |] =
             let amtd = " to more than " <> (show (amt :: Int)) in
-            return hcf { hcf_value = T.pack amtd }
-        addLine hcf [pdx| days < !amt |] =
+            return hf { hf_value = T.pack amtd }
+        addLine hf [pdx| days < !amt |] =
             let amtd = " for less than " <> (show (amt :: Int)) <> " days" in
-            return hcf { hcf_days = T.pack amtd }
-        addLine hcf [pdx| days > !amt |] =
+            return hf { hf_days = T.pack amtd }
+        addLine hf [pdx| days > !amt |] =
             let amtd = " for more than " <> (show (amt :: Int)) <> " days" in
-            return hcf { hcf_days = T.pack amtd }
-        addLine hcf [pdx| date > %amt |] =
+            return hf { hf_days = T.pack amtd }
+        addLine hf [pdx| date > %amt |] =
             let amtd = " later than " <> (show amt) in
-            return hcf { hcf_date = T.pack amtd }
-        addLine hcf [pdx| date < %amt |] =
+            return hf { hf_date = T.pack amtd }
+        addLine hf [pdx| date < %amt |] =
             let amtd = " earlier than " <> (show amt) in
-            return hcf { hcf_date = T.pack amtd }
-        addLine hcf stmt
-            = trace ("unknown section in has_country_flag: " ++ show stmt) $ return hcf
-        pp_hcf hcf = do
+            return hf { hf_date = T.pack amtd }
+        addLine hf stmt
+            = trace ("unknown section in has_country_flag: " ++ show stmt) $ return hf
+        pp_hf hf = do
             msgfts <- messageText msgft
-            return $ MsgHasFlagFor msgfts (hcf_flag hcf) (hcf_value hcf) (hcf_days hcf) (hcf_date hcf)
-hasCountryFlag _ stmt = preStatement stmt
+            return $ MsgHasFlagFor msgfts (hf_flag hf) (hf_value hf) (hf_days hf) (hf_date hf)
+hasFlag _ stmt = preStatement stmt
 
 ----------------------------------
 -- Handler for add_to_war --
@@ -5119,3 +5131,114 @@ createEquipmentVariant stmt@[pdx| %_ = @scr |] = do
         _ -> return "<!-- Check Script -->"
     msgToPP $ MsgCreateEquipmentVariant typed name
 createEquipmentVariant stmt = preStatement stmt
+
+dateHandle :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+dateHandle [pdx| %_ < %dte |] = msgToPP $ MsgDate "earlier than" $ T.pack $ show dte
+dateHandle [pdx| %_ > %dte |] = msgToPP $ MsgDate "later than" $ T.pack $ show dte
+dateHandle stmt = preStatement stmt
+
+-- | Handler for set_rule
+setRule :: forall g m. (HOI4Info g, Monad m) =>
+    (Double -> ScriptMessage) -- ^ Message to use as the block header
+    -> StatementHandler g m
+setRule header [pdx| %_ = @scr |]
+    = withCurrentIndent $ \i -> do
+        rules_pp'd <- ppRules scr
+        let numrules = fromIntegral $ length scr
+        return ((i, header numrules) : rules_pp'd)
+    where
+        ppRules :: GenericScript -> PPT g m IndentedMessages
+        ppRules scr = indentUp (concat <$> mapM ppRule scr)
+        ppRule :: StatementHandler g m
+        ppRule stmt@[pdx| $lhs = ?yn |] =
+            case yn of
+                "yes" -> do
+                    let lhst = T.toUpper lhs
+                    loc <- getGameL10n lhst
+                    msgToPP $ MsgSetRuleYes loc
+                "no" -> do
+                    let lhst = T.toUpper lhs
+                    loc <- getGameL10n lhst
+                    msgToPP $ MsgSetRuleNo loc
+                _ -> preStatement stmt
+        ppRule stmt = trace ("unknownsecton found in set_rule for " ++ show stmt) preStatement stmt
+setRule _ stmt = preStatement stmt
+
+-------------------------------------
+-- Handler for add_doctrine_cost_reduction  --
+-------------------------------------
+data DoctrineCostReduction = DoctrineCostReduction
+        {   dcr_name :: Maybe Text
+        ,   dcr_cost_reduction :: Double
+        ,   dcr_uses :: Double
+        ,   dcr_category :: [Text]
+        ,   dcr_technology :: [Text]
+        }
+newDCR :: DoctrineCostReduction
+newDCR = DoctrineCostReduction Nothing undefined 1 [] []
+addDoctrineCostReduction :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+addDoctrineCostReduction stmt@[pdx| %_ = @scr |]
+    = pp_dcr =<< foldM addLine newDCR scr
+    where
+        addLine :: DoctrineCostReduction -> GenericStatement -> PPT g m DoctrineCostReduction
+        addLine dcr [pdx| name = $name |] = do
+            nameloc <- getGameL10n name
+            return dcr { dcr_name = Just nameloc }
+        addLine dcr [pdx| cost_reduction = !amt |] =
+            return dcr { dcr_cost_reduction = amt }
+        addLine dcr [pdx| uses = !amt  |]
+            = return dcr { dcr_uses = amt }
+        addLine dcr [pdx| category = $cat |] = do
+            let oldcat = dcr_category dcr
+            catloc <- getGameL10n cat
+            return dcr { dcr_category = oldcat ++ [catloc] }
+        addLine dcr [pdx| technology = $tech |] = do
+            let oldtech = dcr_technology dcr
+            techloc <- getGameL10n tech
+            return dcr { dcr_technology = oldtech ++ [techloc] }
+        addLine dcr _ = return dcr
+        pp_dcr :: DoctrineCostReduction -> PPT g m IndentedMessages
+        pp_dcr dcr = do
+            let techcat = (dcr_category dcr) ++ (dcr_technology dcr)
+                ifname = case dcr_name dcr of
+                    Just name -> "(" <> italicText name <> ") "
+                    _ -> ""
+                dcrmsg =  MsgAddDoctrineCostReduction (dcr_uses dcr) (dcr_cost_reduction dcr) ifname
+            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return $ (i+1, MsgEmpty tc) : []) techcat
+            dcrmsg_pp <- msgToPP $ dcrmsg
+            return $ dcrmsg_pp ++ concat techcatmsg
+addDoctrineCostReduction stmt = preStatement stmt
+
+-------------------------------------
+-- Handler for free_building_slots --
+-------------------------------------
+data FreeBuildingSlots = FreeBuildingSlots
+        {   fbs_building :: Text
+        ,   fbs_size :: Double
+        ,   fbs_comp :: Text
+        ,   fbs_include_locked :: Bool
+        }
+
+newFBS :: FreeBuildingSlots
+newFBS = FreeBuildingSlots undefined undefined undefined False
+freeBuildingSlots  :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+freeBuildingSlots stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_fbs =<< foldM addLine newFBS scr
+    where
+        addLine :: FreeBuildingSlots -> GenericStatement -> PPT g m FreeBuildingSlots
+        addLine fbs [pdx| building = $txt |] = do
+            txtd <- getGameL10n txt
+            return fbs { fbs_building = txtd }
+        addLine fbs [pdx| size < !amt |] =
+            let comp = "less than" in
+            return fbs { fbs_comp = comp, fbs_size = amt }
+        addLine fbs [pdx| size > !amt |] =
+            let comp = "more than" in
+            return fbs { fbs_comp = comp, fbs_size = amt}
+        addLine fbs [pdx| include_locked = %_ |] =
+            return fbs { fbs_include_locked = True }
+        addLine fbs stmt
+            = trace ("unknown section in free_building_slots: " ++ show stmt) $ return fbs
+        pp_fbs fbs = do
+            return $ MsgFreeBuildingSlots (fbs_comp fbs) (fbs_size fbs) (fbs_building fbs) (fbs_include_locked fbs)
+freeBuildingSlots stmt = preStatement stmt

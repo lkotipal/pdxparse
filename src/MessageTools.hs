@@ -27,6 +27,7 @@ module MessageTools (
     -- be duplicated for languages other than English.
     ,   gainOrLose, gainsOrLoses
     ,   increasedOrDecreased, increaseOrDecrease
+    ,   addOrRemove
     -- * Advisor text helpers
     ,   advisorDiscountText
     -- * Time formatting
@@ -241,7 +242,13 @@ increasedOrDecreased n | n < 0     = "decreased"
 -- numeric argument is positive or negative (respectively).
 increaseOrDecrease :: (Ord n, Num n) => n -> Text
 increaseOrDecrease n | n < 0     = "Decrease"
-                       | otherwise = "Increase"
+                     | otherwise = "Increase"
+
+-- | Say "Add" or "Remove" (with that capitalisation) depending on whether the
+-- numeric argument is positive or negative (respectively).
+addOrRemove :: (Ord n, Num n) => n -> Text
+addOrRemove n | n < 0     = "Remove"
+              | otherwise = "Add"
 
 -- | Format advisor discount text (or empty if none)
 advisorDiscountText :: Double -> Doc

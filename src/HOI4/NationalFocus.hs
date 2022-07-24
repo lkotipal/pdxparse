@@ -133,6 +133,8 @@ nationalFocusAddSection nf stmt
                 GenericRhs txt [] -> nf { nf_text = Just txt}
                 _-> trace ("bad nf id in: " ++ show stmt) nf
             "completion_reward" -> case rhs of
+                CompoundRhs [] ->
+                    nf
                 CompoundRhs scr -> nf { nf_completion_reward = Just scr }
                 _-> trace ("bad nf completion_reward") nf
             "icon" -> case rhs of
@@ -150,17 +152,25 @@ nationalFocusAddSection nf stmt
             "y" -> case rhs of
                 _-> nf
             "prerequisite" -> case rhs of
+                CompoundRhs [] ->
+                    nf
                 CompoundRhs scr ->
                     nf { nf_prerequisite = (nf_prerequisite nf) ++ [Just scr] }
                 _-> trace ("bad nf prerequisite") nf
             "mutually_exclusive" -> case rhs of
+                CompoundRhs [] ->
+                    nf
                 CompoundRhs scr ->
                     nf { nf_mutually_exclusive = Just scr }
                 _-> trace ("bad nf mutually_exclusive") nf
             "available" -> case rhs of
+                CompoundRhs [] ->
+                    nf
                 CompoundRhs scr -> nf { nf_available = Just scr }
                 _-> trace ("bad nf available") nf
             "bypass" -> case rhs of
+                CompoundRhs [] ->
+                    nf
                 CompoundRhs scr -> nf { nf_bypass = Just scr }
                 _-> trace ("bad nf bypass") nf
             "cancel" -> case rhs of
@@ -180,6 +190,8 @@ nationalFocusAddSection nf stmt
             "search_filters" -> case rhs of
                 _-> nf
             "select_effect" -> case rhs of
+                CompoundRhs [] ->
+                    nf
                 CompoundRhs scr -> nf {nf_select_effect = Just scr}
                 _-> trace ("bad nf select_effect in: " ++ show stmt) nf
             "ai_will_do" -> case rhs of --Do we want to deal with aistuff with focus' ?
