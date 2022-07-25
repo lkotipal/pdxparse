@@ -26,14 +26,14 @@ settings:
     language: "english" #required
 
     # Game version (major patch number) (or mod version). Only used to add version templates.
-    version: "1.9.2" #required
+    version: "1.11.12" #required
 
     # All Platforms where mod files are kept
     #   Windows: C:\Users\<Username>\Documents\Paradox Interactive\Hearts of Iron IV\mod\nameofmod
     #   Mac OS: ~/Documents/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
     #   Linux: ~/.local/share/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
     #
-    mod_path: "C:/Users/PC/Documents/Paradox Interactive/Hearts of Iron IV/mod/equestria" # currently only supported for HOI4
+    #mod_path:  # currently only supported for HOI4
 
     # The name of the mod you're trying to parse eg. "Kaiserreich"
-    mod_name: "Equestria at War" # currently only supported for HOI4
+    #mod_name:  # currently only supported for HOI4

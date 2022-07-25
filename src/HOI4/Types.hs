@@ -420,7 +420,7 @@ data HOI4NationalFocus = HOI4NationalFocus
     ,   nf_text :: Maybe Text
     ,   nf_icon :: Text
     ,   nf_cost :: Double
-    ,   nf_allow_branch  :: Maybe Text
+    ,   nf_allow_branch  :: Maybe GenericScript
     ,   nf_prerequisite  :: [Maybe GenericScript]
     ,   nf_mutually_exclusive :: Maybe GenericScript
     ,   nf_available :: Maybe GenericScript

@@ -33,6 +33,7 @@ import Abstract -- everything
 import qualified Doc
 import FileIO (Feature (..), writeFeatures)
 import HOI4.Messages -- everything
+import MessageTools (italicText)
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..), Game (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
@@ -146,7 +147,10 @@ nationalFocusAddSection nf stmt
                 (floatRhs -> Just num) -> nf {nf_cost = num}
                 _ -> trace ("bad nf cost in: " ++ show stmt) nf
             "allow_branch" -> case rhs of
-                _-> nf
+                CompoundRhs [] ->
+                    nf
+                CompoundRhs scr -> nf { nf_allow_branch = Just scr }
+                _-> trace ("bad nf allow_branch") nf
             "x" -> case rhs of
                 _-> nf
             "y" -> case rhs of
@@ -272,6 +276,7 @@ pp_national_focus gfx nf = do
             (field nf)
     icon_pp <- return $ HM.findWithDefault "GFX_goal_unknown" (nf_icon nf) gfx
     prerequisite_pp <- ppPrereq $ catMaybes $ nf_prerequisite nf
+    allowBranch_pp <- ppAllowBranch $ nf_allow_branch nf
     mutuallyExclusive_pp <- ppMutuallyExclusive $ nf_mutually_exclusive nf
     available_pp <- nfArg nf_available pp_script
     bypass_pp <- nfArgExtra "bypass" nf_bypass pp_script
@@ -281,6 +286,7 @@ pp_national_focus gfx nf = do
         [ "|- id = \"", Doc.strictText (nf_name_loc nf),"\"" , PP.line
         , "|style=\"text-align:center\"| [[File:", Doc.strictText icon_pp, ".png|center|bottom|70px]] ", Doc.strictText (nf_name_loc nf) , " <!-- ", Doc.strictText (nf_id nf), " -->", PP.line
         , "| ",PP.line]++
+        allowBranch_pp ++
         prerequisite_pp ++
         mutuallyExclusive_pp ++
         available_pp ++
@@ -289,7 +295,7 @@ pp_national_focus gfx nf = do
         completionReward_pp ++
         selectEffect_pp ++
         [ "| ",PP.line
-        , Doc.strictText $ fromMaybe "" (nf_name_desc nf), PP.line ]
+        , Doc.strictText $ maybe "" italicText (nf_name_desc nf), PP.line ]
 
 ppPrereq :: (HOI4Info g, Monad m) => [GenericScript] -> PPT g m [Doc]
 ppPrereq [] = return [""]
@@ -314,3 +320,13 @@ ppMutuallyExclusive (Just mex) = ppTitle mex
             mexcpp <- indentUp (pp_script mexc)
             let excl = [mexfol, mexcpp, PP.line]
             return excl
+
+ppAllowBranch :: (HOI4Info g, Monad m) => Maybe GenericScript -> PPT g m [Doc]
+ppAllowBranch Nothing = return [""]
+ppAllowBranch (Just abr) = ppTitle abr
+    where
+        ppTitle awbr = do
+            let awbrfol = mconcat [Doc.strictText "* Allow Branch if:", PP.line]
+            awbrpp <- indentUp (pp_script awbr)
+            let allwbr = [awbrfol, awbrpp, PP.line]
+            return allwbr

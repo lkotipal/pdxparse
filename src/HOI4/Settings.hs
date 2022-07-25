@@ -501,12 +501,18 @@ writeHOI4Scripts = do
     settings <- gets getSettings
     unless (Onlyextra `elem` (clargs settings)) $ do
 --        writeHOI4Ideas
+        liftIO $ putStrLn "Writing events."
         writeHOI4Events
+        liftIO $ putStrLn "Writing decision categories."
         writeHOI4DecisionCats
+        liftIO $ putStrLn "Writing decisions."
         writeHOI4Decisions
+        liftIO $ putStrLn "Writing national focuses."
         writeHOI4NationalFocuses
 --        writeHOI4Missions
+        liftIO $ putStrLn "Writing opinion modifiers."
         writeHOI4OpinionModifiers
+        liftIO $ putStrLn "Writing dynamic modifiers."
         writeHOI4DynamicModifiers
     writeHOI4Extra
     writeHOI4ExtraCountryScope

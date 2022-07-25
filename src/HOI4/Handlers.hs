@@ -7,6 +7,7 @@ module HOI4.Handlers (
     ,   flagText
     ,   isTag
     ,   getStateLoc
+    ,   eGetState
     ,   pp_mtth
     ,   compound
     ,   compoundMessage
@@ -181,6 +182,11 @@ module HOI4.Handlers (
     ,   setRule
     ,   addDoctrineCostReduction
     ,   freeBuildingSlots
+    ,   addAutonomyRatio
+    ,   hasEquipment
+    ,   sendEquipment
+    ,   buildRailway
+    ,   canBuildRailway
     -- testing
     ,   isPronoun
     ,   flag
@@ -217,7 +223,7 @@ import Abstract -- everything
 import Doc (Doc)
 import qualified Doc -- everything
 import HOI4.Messages -- everything
-import MessageTools (plural, iquotes, italicText
+import MessageTools (plural, iquotes, italicText, boldText
                     , colourNumSign, plainNumSign, plainPc, colourPc, reducedNum
                     , formatDays, formatHours)
 import QQ -- everything
@@ -459,8 +465,17 @@ getStateLoc n = do
     let stateid_t = T.pack (show n)
     mstateloc <- getGameL10nIfPresent ("STATE_" <> stateid_t)
     return $ case mstateloc of
-        Just loc -> loc <> " (" <> stateid_t <> ")"
+        Just loc -> boldText loc <> " (" <> stateid_t <> ")"
         _ -> "State" <> stateid_t
+
+eGetState :: (HOI4Info g, Monad m) =>
+             Either Text (Text, Text) -> PPT g m (Maybe Text)
+eGetState = \case
+    Left name -> do
+        pronouned <- pronoun (Just HOI4ScopeState) name
+        let pronountext = Doc.doc2text pronouned
+        return $ Just pronountext
+    Right (vartag, var) -> tagged vartag var
 
 -----------------------------------------------------------------
 -- Script handlers that should be used directly, not via ppOne --
@@ -3318,70 +3333,100 @@ dynasty stmt = (trace (show stmt)) $ preStatement stmt
 
 handleSwapIdeas :: forall g m. (HOI4Info g, Monad m) =>
         StatementHandler g m
-handleSwapIdeas  stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_si (parseTA "add_idea" "remove_idea" scr)
+handleSwapIdeas stmt@[pdx| %_ = @scr |]
+    = pp_si (parseTA "add_idea" "remove_idea" scr)
     where
-        pp_si :: TextAtom -> PPT g m ScriptMessage
+        pp_si :: TextAtom -> PPT g m IndentedMessages
         pp_si ta = case (ta_what ta, ta_atom ta) of
             (Just what, Just atom) -> do
-                add_loc <- handleIdea what
-                remove_loc <- handleIdea atom
+                add_loc <- handleIdea True what
+                remove_loc <- handleIdea False atom
                 case (add_loc, remove_loc) of
-                    (Just (addcategory, addideaIcon, addideaKey, addidea_loc), Just (category, ideaIcon, ideaKey, idea_loc)) ->
+                    (Just (addcategory, addideaIcon, addideaKey, addidea_loc, Just addeffectbox),
+                     Just (category, ideaIcon, ideaKey, idea_loc, _)) ->
+                        if addidea_loc == idea_loc then do
+                                idmsg <- msgToPP $ MsgModifyIdea category ideaIcon ideaKey idea_loc
+                                                    addcategory addideaIcon addideaKey addidea_loc
+                                return $ idmsg ++ addeffectbox
+                        else do
+                            idmsg <- msgToPP $ MsgReplaceIdea category ideaIcon ideaKey idea_loc
+                                                addcategory addideaIcon addideaKey addidea_loc
+                            return $ idmsg ++ addeffectbox
+                    (Just (addcategory, addideaIcon, addideaKey, addidea_loc, Nothing),
+                     Just (category, ideaIcon, ideaKey, idea_loc, _)) ->
                         if addidea_loc == idea_loc then
-                            return $ MsgModifyIdea category ideaIcon ideaKey idea_loc addcategory addideaIcon addideaKey addidea_loc
+                            msgToPP $ MsgModifyIdea category ideaIcon ideaKey idea_loc
+                                addcategory addideaIcon addideaKey addidea_loc
                         else
-                            return $ MsgReplaceIdea category ideaIcon ideaKey idea_loc addcategory addideaIcon addideaKey addidea_loc
-                    _ -> return $ preMessage stmt
-            _ -> return $ preMessage stmt
+                            msgToPP $ MsgReplaceIdea category ideaIcon ideaKey idea_loc
+                                addcategory addideaIcon addideaKey addidea_loc
+                    _ -> preStatement stmt
+            _ -> preStatement stmt
 handleSwapIdeas stmt = preStatement stmt
 
 handleTimedIdeas :: forall g m. (HOI4Info g, Monad m) =>
         (Text -> Text -> Text -> Text -> Double -> ScriptMessage) -- ^ Message constructor, if abs value >= 1
         -> StatementHandler g m
 handleTimedIdeas msg stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_idda (parseTV "idea" "days" scr)
+    = pp_idda (parseTV "idea" "days" scr)
     where
-        pp_idda :: TextValue -> PPT g m ScriptMessage
+        pp_idda :: TextValue -> PPT g m IndentedMessages
         pp_idda tv = case (tv_what tv, tv_value tv) of
             (Just what, Just value) -> do
-                ideashandled <- handleIdea what
+                ideashandled <- handleIdea True what
                 case ideashandled of
-                    Just (category, ideaIcon, ideaKey, idea_loc) -> return $ msg category ideaIcon ideaKey idea_loc value
-                    Nothing -> return $ preMessage stmt
-            _ -> return $ preMessage stmt
+                    Just (category, ideaIcon, ideaKey, idea_loc, Just effectbox) -> do
+                        idmsg <- msgToPP $ msg category ideaIcon ideaKey idea_loc value
+                        return $ idmsg ++ effectbox
+                    Just (category, ideaIcon, ideaKey, idea_loc, Nothing) -> msgToPP $ msg category ideaIcon ideaKey idea_loc value
+                    Nothing -> preStatement stmt
+            _ -> preStatement stmt
 handleTimedIdeas _ stmt = preStatement stmt
 
 handleIdeas :: forall g m. (HOI4Info g, Monad m) =>
+    Bool ->
     (Text -> Text -> Text -> Text -> ScriptMessage)
         -> StatementHandler g m
-handleIdeas msg stmt@[pdx| $lhs = %idea |] = case idea of
+handleIdeas addIdea msg stmt@[pdx| $lhs = %idea |] = case idea of
     CompoundRhs ideas -> if length ideas == 1 then do
-                ideashandled <- handleIdea (mconcat $ map getbareidea ideas)
+                ideashandled <- handleIdea addIdea (mconcat $ map getbareidea ideas)
                 case ideashandled of
-                    Just (category, ideaIcon, ideaKey, idea_loc) -> msgToPP $ msg category ideaIcon ideaKey idea_loc
+                    Just (category, ideaIcon, ideaKey, idea_loc, Just effectbox) -> do
+                        idmsg <- msgToPP $ msg category ideaIcon ideaKey idea_loc
+                        return $ idmsg ++ effectbox
+                    Just (category, ideaIcon, ideaKey, idea_loc, Nothing) -> msgToPP $ msg category ideaIcon ideaKey idea_loc
                     Nothing -> preStatement stmt
             else do
-                ideashandle <- mapM handleIdea (map getbareidea ideas)
+                ideashandle <- mapM (handleIdea addIdea) (map getbareidea ideas)
                 let ideashandled = catMaybes ideashandle
-                    ideasmsgd :: [(Text, Text, Text, Text)] -> PPT g m [IndentedMessages]
+                    ideasmsgd :: [(Text, Text, Text, Text, Maybe IndentedMessages)] -> PPT g m [IndentedMessages]
                     ideasmsgd ihs = mapM (\ih ->
-                            let (category, ideaIcon, ideaKey, idea_loc) = ih in
-                            withCurrentIndent $ \i -> return ((i, msg category ideaIcon ideaKey idea_loc):[])) ihs
+                            let (category, ideaIcon, ideaKey, idea_loc, effectbox) = ih in
+                            withCurrentIndent $ \i -> case effectbox of
+                                    Just boxNS -> return ((i, msg category ideaIcon ideaKey idea_loc):boxNS)
+                                    _-> return ((i, msg category ideaIcon ideaKey idea_loc):[])
+                                ) ihs
                 ideasmsgdd <- ideasmsgd ideashandled
                 return $ mconcat ideasmsgdd
     GenericRhs txt [] -> do
-        ideashandled <- handleIdea txt
+        ideashandled <- handleIdea addIdea txt
         case ideashandled of
-            Just (category, ideaIcon, ideaKey, idea_loc) -> msgToPP $ msg category ideaIcon ideaKey idea_loc
+            Just (category, ideaIcon, ideaKey, idea_loc, Just effectbox) -> do
+                idmsg <- msgToPP $ msg category ideaIcon ideaKey idea_loc
+                return $ idmsg ++ effectbox
+            Just (category, ideaIcon, ideaKey, idea_loc, Nothing) -> msgToPP $ msg category ideaIcon ideaKey idea_loc
             Nothing -> preStatement stmt
     _ -> preStatement stmt
-handleIdeas _ stmt = preStatement stmt
+handleIdeas _ _ stmt = preStatement stmt
 
+getbareidea :: GenericStatement -> Text
 getbareidea (StatementBare (GenericLhs e [])) = e
 getbareidea _ = "<!-- Check Script -->"
 
-handleIdea ide = do
+handleIdea :: (HOI4Info g, Monad m) =>
+        Bool -> Text ->
+           PPT g m (Maybe (Text, Text, Text, Text, Maybe IndentedMessages))
+handleIdea addIdea ide = do
     ides <- getIdeas
     gfx <- getInterfaceGFX
     let midea = HM.lookup ide ides
@@ -3392,7 +3437,31 @@ handleIdea ide = do
                 ideaIcon = HM.findWithDefault "GFX_idea_unknown" (id_picture iidea) gfx
             idea_loc <- getGameL10n ideaKey
             category <- if id_category iidea == "country" then getGameL10n "FE_COUNTRY_SPIRIT" else getGameL10n $ id_category iidea
-            return $ Just (category, ideaIcon, ideaKey, idea_loc)
+            effectbox <- modmessage iidea idea_loc ideaKey ideaIcon
+            effectboxNS <- if id_category iidea == "country" && addIdea then return $ Just effectbox else return  Nothing
+            return $ Just (category, ideaIcon, ideaKey, idea_loc, effectboxNS)
+
+modmessage :: forall g m. (HOI4Info g, Monad m) => HOI4Idea -> Text -> Text -> Text -> PPT g m IndentedMessages
+modmessage iidea idea_loc ideaKey ideaIcon = do
+                ideaDesc <- case id_desc_loc iidea of
+                    Just desc -> return desc
+                    _ -> return ""
+                modifier <- case id_modifier iidea of
+                    Just mod -> ppMany mod
+                    _ -> return []
+                targeted_modifier <- case id_targeted_modifier iidea of
+                    Just tarmod -> ppMany tarmod
+                    _ -> return []
+                research_bonus <- case id_research_bonus iidea of
+                    Just research -> ppMany research
+                    _ -> return []
+                equipment_bonus <- case id_equipment_bonus iidea of
+                    Just equip -> ppMany equip
+                    _ -> return []
+                boxend <- return $ (0, MsgEffectBoxEnd): []
+                let ideamods = modifier ++ targeted_modifier ++ research_bonus ++ equipment_bonus ++ boxend
+                return $ (0, MsgEffectBox idea_loc ideaKey ideaIcon ideaDesc) : ideamods
+
 
 ---------------
 -- has focus --
@@ -4671,7 +4740,7 @@ createWargoal stmt@[pdx| %_ = @scr |] =
         addLine cwg [pdx| expire = %rhs |]
             = return cwg { wg_expire = floatRhs rhs }
         addLine cwg stmts@[pdx| generator = %state |] = case state of
-            CompoundRhs array ->do
+            CompoundRhs array -> do
                 let states = mapMaybe stateFromArray array
                 statesloc <- traverse getStateLoc states
                 return cwg { wg_generator = Just (WGGeneratorArr states)
@@ -4955,32 +5024,57 @@ foldCompound "addToWar" "AddToWar" "atw"
 ------------------------------
 -- Handler for set_autonomy --
 ------------------------------
-foldCompound "setAutonomy" "SetAutonomy" "sat"
-    []
-    [CompField "target" [t|Text|] Nothing True
-    ,CompField "autonomy_state" [t|Text|] Nothing False
-    ,CompField "autonomous_state" [t|Text|] Nothing False
-    ,CompField "freedom_level" [t|Double|] Nothing False
-    ,CompField "end_wars" [t|Text|] Nothing False
-    ,CompField "end_civil_wars" [t|Text|] Nothing False
-    ]
-    [|  do
-        let endwar = case (_end_wars, _end_civil_wars) of
-                (Just yw, Just yc) -> T.pack " and end wars and civil wars for subject"
-                (Just yw, _) -> T.pack " and end wars for subject"
-                (_, Just yc) -> T.pack " and end civil wars for subject"
-                _ -> ""
-            autonomy_state = case (_autonomy_state, _autonomous_state) of
-                (Just autonomy_state, _) -> autonomy_state
-                (_, Just autonomous_state) -> autonomous_state
-                _-> "<!-- Check Script -->"
-            freedom = case _freedom_level of
-                Just num -> num
-                _ -> 0
-        target <- flagText (Just HOI4Country) _target
-        autonomy <- getGameL10n autonomy_state
-        return $ MsgSetAutonomy target (iconText autonomy) autonomy freedom endwar
-    |]
+data SetAutonomy = SetAutonomy
+        {   sa_target :: Maybe Text
+        ,   sa_autonomy_state :: Maybe Text
+        ,   sa_freedom_level :: Maybe Double
+        ,   sa_end_wars :: Bool
+        ,   sa_end_civil_wars :: Bool
+        }
+
+newSA :: SetAutonomy
+newSA = SetAutonomy Nothing Nothing Nothing True True
+setAutonomy :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+setAutonomy stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_sa =<< foldM addLine newSA scr
+    where
+        addLine :: SetAutonomy -> GenericStatement -> PPT g m SetAutonomy
+        addLine sa [pdx| target = $vartag:$var |] = do
+            flagd <- eflag (Just HOI4Country) (Right (vartag,var))
+            return sa { sa_target = flagd }
+        addLine sa [pdx| target = $txt |] = do
+            flagd <- eflag (Just HOI4Country) (Left txt)
+            return sa { sa_target = flagd }
+        addLine sa [pdx| autonomy_state = $txt |] =
+            return sa { sa_autonomy_state = Just txt }
+        addLine sa [pdx| autonomous_state = $txt |] =
+            return sa { sa_autonomy_state = Just txt }
+        addLine sa [pdx| freedom_level = !amt |] =
+            return sa { sa_freedom_level = Just (amt :: Double) }
+        addLine sa [pdx| end_wars = $yn |] =
+            return sa { sa_end_wars = False }
+        addLine sa [pdx| end_civil_wars = $yn |] =
+            return sa { sa_end_civil_wars = False }
+        addLine sa stmt
+            = trace ("unknown section in has_country_flag: " ++ show stmt) $ return sa
+        pp_sa sa = do
+            let endwar = case (sa_end_wars sa, sa_end_civil_wars sa) of
+                    (True, True) -> T.pack " and end wars and civil wars for subject"
+                    (True, False) -> T.pack " and end wars for subject"
+                    (False, True) -> T.pack " and end civil wars for subject"
+                    _ -> ""
+                freedom = case (sa_freedom_level sa) of
+                    Just num -> num
+                    _ -> 0
+                autonomy_state = case (sa_autonomy_state sa) of
+                    Just autonomy_state -> autonomy_state
+                    _-> "<!-- Check Script -->"
+                target = case (sa_target sa) of
+                    Just targetd -> targetd
+                    _ -> "<!-- Check Script -->"
+            autonomy <- getGameL10n autonomy_state
+            return $ MsgSetAutonomy target (iconText autonomy) autonomy freedom endwar
+setAutonomy stmt = preStatement stmt
 
 ------------------------------
 -- Handler for set_politics --
@@ -5242,3 +5336,192 @@ freeBuildingSlots stmt@[pdx| %_ = @scr |]
         pp_fbs fbs = do
             return $ MsgFreeBuildingSlots (fbs_comp fbs) (fbs_size fbs) (fbs_building fbs) (fbs_include_locked fbs)
 freeBuildingSlots stmt = preStatement stmt
+
+addAutonomyRatio :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+addAutonomyRatio stmt@[pdx| %_ = @scr |] = case length scr of
+    1 -> textValue "localization" "value" MsgAddAutonomyRatio MsgAddAutonomyRatio tryLocMaybe stmt
+    2 -> do
+        let (_value, _) = extractStmt (matchLhsText "value") scr
+        value <- case _value of
+            Just [pdx| %_ = !num |] -> return num
+            _ -> return 0
+        msgToPP $ MsgAddAutonomyRatio "" "" value
+    _ -> preStatement stmt
+addAutonomyRatio stmt = preStatement stmt
+
+-- | Generic handler for a simple compound statement with only one statement.
+hasEquipment :: (HOI4Info g, Monad m) => StatementHandler g m
+hasEquipment stmt@[pdx| %_ = @scr |] = if length scr == 1 then
+        case scr of
+            [[pdx| $txt = !num |]] -> do
+                equiploc <- getGameL10n txt
+                msgToPP $ MsgHasEquipment "equal to or more than" num equiploc
+            [[pdx| $txt > !num |]] -> do
+                equiploc <- getGameL10n txt
+                msgToPP $ MsgHasEquipment "more than" num equiploc
+            [[pdx| $txt < !num |]] -> do
+                equiploc <- getGameL10n txt
+                msgToPP $ MsgHasEquipment "less than" num equiploc
+            _ -> preStatement stmt
+    else
+        preStatement stmt
+hasEquipment stmt = preStatement stmt
+
+--------------------------------
+-- Handler for send_equipment --
+--------------------------------
+data SendEquipment = SendEquipment
+        {   se_equipment :: Text
+        ,   se_amount :: Double
+        ,   se_target :: Maybe Text
+        }
+
+newSE :: SendEquipment
+newSE = SendEquipment undefined undefined Nothing
+sendEquipment  :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+sendEquipment stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_se =<< foldM addLine newSE scr
+    where
+        addLine :: SendEquipment -> GenericStatement -> PPT g m SendEquipment
+        addLine se [pdx| equipment = $txt |] = do
+            txtd <- getGameL10n txt
+            return se { se_equipment = txtd }
+        addLine se [pdx| type = $txt |] = do
+            txtd <- getGameL10n txt
+            return se { se_equipment = txtd }
+        addLine se [pdx| amount = !amt |] =
+            return se { se_amount = amt }
+        addLine se [pdx| target = $vartag:$var |] = do
+            flagd <- eflag (Just HOI4Country) (Right (vartag,var))
+            return se { se_target = flagd }
+        addLine se [pdx| target = $tag |] = do
+            flagd <- eflag (Just HOI4Country) (Left tag)
+            return se { se_target = flagd }
+        addLine se stmt
+            = trace ("unknown section in send_equipment: " ++ show stmt) $ return se
+        pp_se se = do
+            let target = case (se_target se) of
+                    Just targt -> targt
+                    _ -> "<!-- Check Script -->"
+            return $ MsgSendEquipment (se_amount se) (se_equipment se) target
+sendEquipment stmt = preStatement stmt
+
+--------------------------------
+-- Handler for build_railway --
+--------------------------------
+data BuildRailway = BuildRailway
+        {   br_level :: Double
+        ,   br_build_only_on_allied :: Bool
+        ,   br_fallback :: Bool
+        ,   br_path :: Maybe [Double]
+        ,   br_start_state :: Maybe Text
+        ,   br_target_state :: Maybe Text
+        ,   br_start_province :: Maybe Double
+        ,   br_target_province :: Maybe Double
+        }
+
+newBR :: BuildRailway
+newBR = BuildRailway 1 False False Nothing Nothing Nothing Nothing Nothing
+buildRailway  :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+buildRailway stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_br =<< foldM addLine newBR scr
+    where
+        addLine :: BuildRailway -> GenericStatement -> PPT g m BuildRailway
+        addLine br [pdx| level = !num |] =
+            return br { br_level = num }
+        addLine br [pdx| build_only_on_allied = %_ |] =
+            return br
+        addLine br [pdx| fallback = %_ |] =
+            return br
+        addLine br [pdx| path = @arr |] =
+            let provs = mapMaybe provinceFromArray arr in
+            return br { br_path = Just provs }
+
+        addLine br [pdx| start_state = !num |] = do
+            stateloc <- getStateLoc num
+            return br { br_start_state = Just stateloc }
+        addLine br [pdx| start_state = $vartag:$var |] = do
+            stated <- eGetState (Right (vartag,var))
+            return br { br_start_state = stated }
+        addLine br [pdx| start_state = $txt |] = do
+            stated <- eGetState (Left txt)
+            return br { br_start_state = stated }
+
+        addLine br [pdx| target_state = !num |] = do
+            stateloc <- getStateLoc num
+            return br { br_target_state = Just stateloc }
+        addLine br [pdx| target_state = $vartag:$var |] = do
+            stated <- eGetState(Right (vartag, var))
+            return br { br_target_state = stated }
+        addLine br [pdx| target_state = $txt |] = do
+            stated <- eGetState (Left txt)
+            return br { br_target_state = stated }
+
+        addLine br [pdx| start_province = !num |] =
+            return br { br_start_province = Just num }
+        addLine br [pdx| target_province = !num |] =
+            return br { br_target_province = Just num }
+        addLine br stmt
+            = trace ("unknown section in build_railway: " ++ show stmt) $ return br
+        provinceFromArray :: GenericStatement -> Maybe Double
+        provinceFromArray (StatementBare (IntLhs e)) = Just $ fromIntegral e
+        provinceFromArray stmt = (trace $ "Unknown in generator array statement: " ++ show stmt) $ Nothing
+        pp_br br = do
+            case br_path br of
+                Just path -> do
+                    let paths = T.pack $ concat ["on the provinces (" , intercalate "), (" (map (show . round) path),")"]
+                    return $ MsgBuildRailwayPath (br_level br) paths
+                _ -> case (br_start_state br, br_target_state br,
+                           br_start_province br, br_target_province br) of
+                        (Just start, Just end, _,_) -> return $ MsgBuildRailway (br_level br) start end
+                        (_,_, Just start, Just end) -> return $ MsgBuildRailwayProv (br_level br) start end
+                        _ -> return $ preMessage stmt
+buildRailway stmt = preStatement stmt
+
+data CanBuildRailway = CanBuildRailway
+        {   cbr_start_state :: Maybe Text
+        ,   cbr_target_state :: Maybe Text
+        ,   cbr_start_province :: Maybe Double
+        ,   cbr_target_province :: Maybe Double
+        }
+
+newCBR :: CanBuildRailway
+newCBR = CanBuildRailway Nothing Nothing Nothing Nothing
+canBuildRailway  :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+canBuildRailway stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_cbr =<< foldM addLine newCBR scr
+    where
+        addLine :: CanBuildRailway -> GenericStatement -> PPT g m CanBuildRailway
+        addLine cbr [pdx| start_state = !num |] = do
+            stateloc <- getStateLoc num
+            return cbr { cbr_start_state = Just stateloc }
+        addLine cbr [pdx| start_state = $vartag:$var |] = do
+            stated <- eGetState (Right (vartag,var))
+            return cbr { cbr_start_state = stated }
+        addLine cbr [pdx| start_state = $txt |] = do
+            stated <- eGetState (Left txt)
+            return cbr { cbr_start_state = stated }
+
+        addLine cbr [pdx| target_state = !num |] = do
+            stateloc <- getStateLoc num
+            return cbr { cbr_target_state = Just stateloc }
+        addLine cbr [pdx| target_state = $vartag:$var |] = do
+            stated <- eGetState(Right (vartag, var))
+            return cbr { cbr_target_state = stated }
+        addLine cbr [pdx| target_state = $txt |] = do
+            stated <- eGetState (Left txt)
+            return cbr { cbr_target_state = stated }
+
+        addLine cbr [pdx| start_province = !num |] =
+            return cbr { cbr_start_province = Just num }
+        addLine cbr [pdx| target_province = !num |] =
+            return cbr { cbr_target_province = Just num }
+        addLine cbr stmt
+            = trace ("unknown section in build_railway: " ++ show stmt) $ return cbr
+        pp_cbr cbr =
+            case (cbr_start_state cbr, cbr_target_state cbr,
+                           cbr_start_province cbr, cbr_target_province cbr) of
+                        (Just start, Just end, _,_) -> return $ MsgCanBuildRailway start end
+                        (_,_, Just start, Just end) -> return $ MsgCanBuildRailwayProv start end
+                        _ -> return $ preMessage stmt
+canBuildRailway stmt = preStatement stmt

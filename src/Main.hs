@@ -38,6 +38,7 @@ main = withExitOnInput $ do
     case game settings of
         Game g -> runWithInitState g settings $ do
             -- 1) Read the game's scripts
+            liftIO $ putStrLn "Reading scripts."
             errs <- hoistExceptions readScripts
             case errs of
                 Right () -> return () -- carry on
@@ -46,6 +47,7 @@ main = withExitOnInput $ do
                     exitFailure
 
             -- 2) Parse the game's scripts (into state)
+            liftIO $ putStrLn "Parsing scripts."
             parseScripts
 
             -- 3) Output the result of parsing and/or report errors

@@ -131,42 +131,55 @@ ideaAddSection iidea stmt
                 GenericRhs txt [] ->  iidea { id_name = txt }
                 _-> trace ("bad idea name") iidea
             "modifier"  -> case rhs of
-                CompoundRhs scr ->  iidea { id_modifier = Just scr }
+                CompoundRhs [] -> iidea
+                CompoundRhs scr -> iidea { id_modifier = Just scr }
                 _-> trace ("bad idea modifer") iidea
             "targeted_modifier" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_targeted_modifier = Just scr }
                 _-> trace ("bad idea targeted_modifier") iidea
             "research_bonus" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_research_bonus = Just scr }
                 _-> trace ("bad idea reearch_bonus") iidea
             "equipment_bonus" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_equipment_bonus = Just scr }
                 _-> trace ("bad idea equipment_bonus") iidea
             "allowed" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_allowed = Just scr }
                 _-> trace ("bad idea allowed") iidea
             "visible" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_visible = Just scr }
                 _-> trace ("bad idea visible") iidea
             "available" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_available = Just scr }
                 _-> trace ("bad idea available") iidea
             "on_add" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_on_add = Just scr }
                 _-> trace ("bad idea on_add") iidea
             "on_remove" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_on_remove = Just scr }
                 _-> trace ("bad idea on_remove") iidea
             "cancel" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_cancel = Just scr }
                 _-> trace ("bad idea cancel") iidea
             "do_effect" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_do_effect = Just scr }
                 _-> trace ("bad idea do_effect") iidea
             "rule" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_rule = Just scr }
                 _-> trace ("bad idea rule") iidea
             "allowed_civil_war" -> case rhs of
+                CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_allowed_civil_war = Just scr }
                 _-> trace ("bad idea allowed_civil_war") iidea
             "ai_will_do"        -> iidea
