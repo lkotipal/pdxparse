@@ -35,7 +35,7 @@ import Abstract -- everything
 import qualified Doc
 import FileIO (Feature (..), writeFeatures)
 import HOI4.Messages -- everything
-import MessageTools (iquotes)
+import MessageTools (iquotes, italicText)
 import HOI4.Handlers (flagText, getStateLoc)
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..), Game (..)
@@ -170,7 +170,7 @@ pp_decisioncat decc gfx = do
         ["== ", Doc.strictText picture_pp , "<!-- ", nameD, " --> ", Doc.strictText name_loc," ==", PP.line
         ," version = ", Doc.strictText version, PP.line
         ,maybe mempty
-               (\txt -> mconcat [ Doc.strictText txt, PP.line])
+               (\txt -> mconcat [ Doc.strictText $ italicText $ Doc.nl2br txt, PP.line])
                (decc_text_loc)
         ] ++
         allow_pp'd ++
@@ -477,7 +477,7 @@ pp_decision dec gfx = do
         ,"| icon = ", Doc.strictText icon_pp'd, PP.line
         ,"| cost = ", Doc.strictText cost_pp, PP.line
         ,maybe mempty
-               (\txt -> mconcat ["| decision_text = ", Doc.strictText txt, PP.line])
+               (\txt -> mconcat ["| decision_text = ", Doc.strictText $ italicText $ Doc.nl2br txt, PP.line])
                (dec_text_loc)
         ] ++
         custom_cost_loc_pp'd ++

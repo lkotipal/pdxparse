@@ -33,6 +33,8 @@ import qualified Data.Text as T
 import Data.Attoparsec.Text (Parser, (<?>))
 import qualified Data.Attoparsec.Text as Ap
 
+import Data.Functor (($>))
+
 -- | Localization table for a single language.
 type L10nLang = HashMap Text LocEntry
 -- | Localization tables for all languages.
@@ -142,8 +144,9 @@ endspace = Ap.option mempty startspace *> Ap.option mempty hspace *> nothing
 -- | Content of a localization entry. This has its origin in YAML strings, but
 -- its syntax is actually rather different; see "Yaml#strangesyn" for details.
 stringLit :: Parser Text
-stringLit = T.init . T.dropWhileEnd (/='"') . T.pack <$> (Ap.char '"' *> many stringChar)
+stringLit = T.init . handleEmpty . T.dropWhileEnd (/='"') . T.pack <$> (Ap.char '"' *> many stringChar)
     <?> "string literal"
+handleEmpty t = if T.null t then "e" else t -- in case an entry isn't properly closed with a "
 
 -- | Characters within a string. Process backslash escapes (apostrophes,
 -- newlines and tabs).
@@ -151,8 +154,8 @@ stringChar :: Parser Char
 stringChar = Ap.satisfy (not . \c -> Ap.inClass "\\" c || Ap.isEndOfLine c)
          <|> Ap.char '\\'
             *> (    Ap.char '\''
-                <|> (Ap.char 'n' *> pure '\n')
-                <|> (Ap.char 't' *> pure '\t')
+                <|> Ap.char 'n' $> '\n'
+                <|> Ap.char 't' $> '\t'
                 <|> Ap.anyChar
                )
     <?> "string character"
@@ -209,6 +212,6 @@ message :: Parser (Text, LocEntry)
 message = (,) <$> (hspace
                *> liftA2 T.cons (Ap.satisfy (Ap.inClass "a-zA-Z._0-9-"))
                                 (Ap.takeWhile (Ap.inClass "a-zA-Z._0-9-")))
-              <*> (LocEntry <$> (Ap.char ':' *> (Ap.option 0 Ap.decimal)) -- version (2021-11-15: Note: 1.32.1 contains a file that breaks this...)
+              <*> (LocEntry <$> (Ap.char ':' *> Ap.option 0 Ap.decimal) -- version (2021-11-15: Note: 1.32.1 contains a file that breaks this...)
                             <*> (hspace *> stringLit))
     <?> "message"

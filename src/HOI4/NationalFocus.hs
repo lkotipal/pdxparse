@@ -295,7 +295,8 @@ pp_national_focus gfx nf = do
         completionReward_pp ++
         selectEffect_pp ++
         [ "| ",PP.line
-        , Doc.strictText $ maybe "" italicText (nf_name_desc nf), PP.line ]
+        , maybe mempty (Doc.strictText . italicText . Doc.nl2br)  (nf_name_desc nf), PP.line
+        ]
 
 ppPrereq :: (HOI4Info g, Monad m) => [GenericScript] -> PPT g m [Doc]
 ppPrereq [] = return [""]

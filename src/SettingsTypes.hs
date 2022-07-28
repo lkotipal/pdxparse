@@ -14,7 +14,8 @@ module SettingsTypes (
     ,   PP, PPT
     ,   hoistErrors, hoistExceptions
     ,   indentUp, indentDown
-    ,   withCurrentIndent, withCurrentIndentZero
+    ,   getCurrentIndent
+    ,   withCurrentIndent, withCurrentIndentZero, withCurrentIndentCustom
     ,   alsoIndent, alsoIndent'
     ,   getGameL10n
     ,   getGameL10nDefault
@@ -302,6 +303,9 @@ indentDown go = do
     let mindent' = Just (maybe 0 pred mindent)
     local (modifyCurrentIndent mindent') go
 
+getCurrentIndent :: (IsGameState (GameState g), Monad m) => PPT g m (Maybe Int)
+getCurrentIndent = asks currentIndent
+
 -- | Pass the current indent level to the action. If there is no current indent
 -- level, set it to 1.
 withCurrentIndent ::
@@ -323,6 +327,15 @@ withCurrentIndentBaseline base go =
             if isNothing (currentIndent s)
             then modifyCurrentIndent (Just base) s
             else s)
+          -- fromJust guaranteed to succeed
+          (go . fromJust =<< asks currentIndent)
+
+-- | Common implementation for 'withCurrentIndent' and 'withCurrentIndentZero'.
+withCurrentIndentCustom ::
+    (IsGameState (GameState g), Monad m) =>
+        Int -> (Int -> PPT g m a) -> PPT g m a
+withCurrentIndentCustom base go =
+    local (modifyCurrentIndent (Just base))
           -- fromJust guaranteed to succeed
           (go . fromJust =<< asks currentIndent)
 

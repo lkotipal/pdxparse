@@ -586,95 +586,125 @@ handlersNumericIcons = Tr.fromList
         -- Used in ideas and other bonuses, omit "gain/lose" in l10n
         --Country Scope
         --general modifiers
-        ,("monthly_population"          , numericLoc "MODIFIER_GLOBAL_MONTHLY_POPULATION" MsgModifierPlain) -- % neutral?
-        ,("nuclear_production_factor"   , numericLoc "MODIFIER_NUCLEAR_PRODUCTION_FACTOR" MsgModifierPlain) -- % pos
-        ,("research_sharing_per_country_bonus" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS" MsgModifierPlain) -- flat pos
-        ,("research_sharing_per_country_bonus_factor" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS_FACTOR" MsgModifierPlain) -- % pos
-        ,("research_speed_factor"       , numericLoc "MODIFIER_RESEARCH_SPEED_FACTOR" MsgModifierPcColourPosReduced)
-        ,("local_resources_factor"      , numericLoc "MODIFIER_LOCAL_RESOURCES_FACTOR" MsgModifierPlain) -- % pos
+        ,("monthly_population"          , numericLoc "MODIFIER_GLOBAL_MONTHLY_POPULATION" MsgModifier) -- % neutral?
+        ,("nuclear_production_factor"   , numericLoc "MODIFIER_NUCLEAR_PRODUCTION_FACTOR" MsgModifier) -- % pos
+        ,("research_sharing_per_country_bonus" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS" MsgModifierPcPosReduced)
+        ,("research_sharing_per_country_bonus_factor" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS_FACTOR" MsgModifier) -- % pos
+        ,("research_speed_factor"       , numericLoc "MODIFIER_RESEARCH_SPEED_FACTOR" MsgModifierPcPosReduced)
+        ,("local_resources_factor"      , numericLoc "MODIFIER_LOCAL_RESOURCES_FACTOR" MsgModifierPcPosReduced)
         -- Politics modifiers
-        ,("min_export"                  , numericLoc "MODIFIER_MIN_EXPORT_FACTOR" MsgModifierPlain) -- flat neutral?
-        ,("trade_opinion_factor"        , numericLoc "MODIFIER_" MsgModifierPlain) -- % pos
-        ,("party_popularity_stability_factor" , numericLoc "MODIFIER_STABILITY_POPULARITY_FACTOR" MsgModifierPlain) -- % pos
-        ,("political_power_cost"        , numericLoc "MODIFIER_POLITICAL_POWER_COST" MsgModifierPlain) -- flat neg
+        ,("min_export"                  , numericLoc "MODIFIER_MIN_EXPORT_FACTOR" MsgModifier) -- flat neutral?
+        ,("trade_opinion_factor"        , numericLoc "MODIFIER_TRADE_OPINION_FACTOR" MsgModifierPcReducedSign)
+        ,("economy_cost_factor"         , numericLoc "economy_cost_factor" MsgModifierPcNegReduced)
+        ,("mobilization_laws_cost_factor" , numericLoc "mobilization_laws_cost_factor" MsgModifierPcNegReduced)
+        ,("political_advisor_cost_factor" , numericLoc "political_advisor_cost_factor" MsgModifierPcNegReduced)
+        ,("trade_laws_cost_factor"      , numericLoc "trade_laws_cost_factor" MsgModifierPcNegReduced)
+        ,("party_popularity_stability_factor" , numericLoc "MODIFIER_STABILITY_POPULARITY_FACTOR" MsgModifier) -- % pos
+        ,("political_power_cost"        , numericLoc "MODIFIER_POLITICAL_POWER_COST" MsgModifierColourNeg) -- flat neg
         ,("political_power_gain"        , numericLoc "MODIFIER_POLITICAL_POWER_GAIN" MsgModifierColourPos)
-        ,("political_power_factor"      , numericLoc "MODIFIER_POLITICAL_POWER_FACTOR" MsgModifierPlain) -- % pos
-        ,("stability_factor"            , numericLoc "MODIFIER_STABILITY_FACTOR" MsgModifierColourPos)
-        ,("stability_weekly"            , numericLoc "MODIFIER_STABILITY_WEEKLY" MsgModifierPlain) -- flat pos
-        ,("stability_weekly_factor"     , numericLoc "MODIFIER_STABILITY_WEEKLY_FACTOR" MsgModifierPlain) -- flat pos
-        ,("war_support_factor"          , numericLoc "MODIFIER_WAR_SUPPORT_FACTOR" MsgModifierPcColourPosReduced)
-        ,("war_support_weekly"          , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY" MsgModifierPlain) -- flat pos
-        ,("war_support_weekly_factor"   , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY_FACTOR" MsgModifierPlain) -- % pos
-        ,("drift_defence_factor"        , numericLoc "MODIFIER_DRIFT_DEFENCE_FACTOR" MsgModifierPlain) -- % pos
+        ,("political_power_factor"      , numericLoc "MODIFIER_POLITICAL_POWER_FACTOR" MsgModifierPcPosReduced)
+        ,("stability_factor"            , numericLoc "MODIFIER_STABILITY_FACTOR" MsgModifierPcPosReduced)
+        ,("stability_weekly"            , numericLoc "MODIFIER_STABILITY_WEEKLY" MsgModifierPcPosReduced) -- flat pos
+        ,("stability_weekly_factor"     , numericLoc "MODIFIER_STABILITY_WEEKLY_FACTOR" MsgModifierPcPosReduced) -- flat pos
+        ,("war_support_factor"          , numericLoc "MODIFIER_WAR_SUPPORT_FACTOR" MsgModifierPcPosReduced)
+        ,("war_support_weekly"          , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY" MsgModifierPcPosReduced) -- flat pos
+        ,("war_support_weekly_factor"   , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY_FACTOR" MsgModifierPcPosReduced) -- % pos
+        ,("drift_defence_factor"        , numericLoc "MODIFIER_DRIFT_DEFENCE_FACTOR" MsgModifierPcPosReduced)
+        ,("democratic_drift"            , numericLoc "democratic_drift" MsgModifierSign)
+        ,("communism_drift"             , numericLoc "communism_drift" MsgModifierSign)
+        ,("democratic_acceptance"       , numericLoc "democratic_acceptance" MsgModifierColourPos)
         -- Diplomacy
-        ,("generate_wargoal_tension"    , numericLoc "MODIFIER_GENERATE_WARGOAL_TENSION_LIMIT" MsgModifierPlain) -- flat neg
-        ,("guarantee_cost"              , numericLoc "MODIFIER_GUARANTEE_COST" MsgModifierPlain) -- % neg
-        ,("guarantee_tension"           , numericLoc "MODIFIER_GUARANTEE_TENSION_LIMIT" MsgModifierPcColourNegReduced)
-        ,("join_faction_tension"        , numericLoc "MODIFIER_JOIN_FACTION_TENSION_LIMIT" MsgModifierPlain) -- flat neg
-        ,("justify_war_goal_time"       , numericLoc "MODIFIER_JUSTIFY_WAR_GOAL_TIME" MsgModifierPlain) -- % neg
-        ,("lend_lease_tension"          , numericLoc "MODIFIER_LEND_LEASE_TENSION_LIMIT" MsgModifierPcColourNegReduced)
-        ,("opinion_gain_monthly"        , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY" MsgModifierPlain) -- flat pos
-        ,("request_lease_tension"       , numericLoc "MODIFIER_REQUEST_LEASE_TENSION_LIMIT" MsgModifierPlain) -- % neg
-        ,("surrender_limit"             , numericLoc "MODIFIER_SURRENDER_LIMIT" MsgModifierPcColourPosReduced)
-        ,("send_volunteers_tension"     , numericLoc "MODIFIER_SEND_VOLUNTEERS_TENSION_LIMIT" MsgModifierPcColourNegReduced)
+        ,("generate_wargoal_tension"    , numericLoc "MODIFIER_GENERATE_WARGOAL_TENSION_LIMIT" MsgModifier) -- flat neg
+        ,("guarantee_cost"              , numericLoc "MODIFIER_GUARANTEE_COST" MsgModifierPcNegReduced)
+        ,("guarantee_tension"           , numericLoc "MODIFIER_GUARANTEE_TENSION_LIMIT" MsgModifierPcNegReduced)
+        ,("join_faction_tension"        , numericLoc "MODIFIER_JOIN_FACTION_TENSION_LIMIT" MsgModifier) -- flat neg
+        ,("justify_war_goal_time"       , numericLoc "MODIFIER_JUSTIFY_WAR_GOAL_TIME" MsgModifier) -- % neg
+        ,("lend_lease_tension"          , numericLoc "MODIFIER_LEND_LEASE_TENSION_LIMIT" MsgModifierPcNegReduced)
+        ,("opinion_gain_monthly"        , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY" MsgModifier) -- flat pos
+        ,("opinion_gain_monthly_same_ideology_factor" , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY_SAME_IDEOLOGY_FACTOR" MsgModifierPcPosReduced)
+        ,("request_lease_tension"       , numericLoc "MODIFIER_REQUEST_LEASE_TENSION_LIMIT" MsgModifier) -- % neg
+        ,("surrender_limit"             , numericLoc "MODIFIER_SURRENDER_LIMIT" MsgModifierPcPosReduced)
+        ,("send_volunteer_divisions_required" , numericLoc "MODIFIER_SEND_VOLUNTEER_DIVISIONS_REQUIRED" MsgModifierPcNegReduced)
+        ,("send_volunteer_size"         , numericLoc "MODIFIER_SEND_VOLUNTEER_SIZE" MsgModifierColourPos)
+        ,("send_volunteers_tension"     , numericLoc "MODIFIER_SEND_VOLUNTEERS_TENSION_LIMIT" MsgModifierPcNegReduced)
         -- Equipment
-        ,("equipment_conversion_speed"  , numericLoc "EQUIPMENT_CONVERSION_SPEED_MODIFIERS" MsgModifierPlain) -- % neg
-        ,("equipment_upgrade_xp_cost"   , numericLoc "MODIFIER_EQUIPMENT_UPGRADE_XP_COST" MsgModifierPlain) -- % neg
-        ,("production_factory_efficiency_gain_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_EFFICIENCY_GAIN_FACTOR" MsgModifierPlain) -- % pos
-        ,("production_factory_max_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_MAX_EFFICIENCY_FACTOR" MsgModifierPlain) -- % pos
-        ,("production_factory_start_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_START_EFFICIENCY_FACTOR" MsgModifierPlain) -- % pos
+        ,("equipment_conversion_speed"  , numericLoc "EQUIPMENT_CONVERSION_SPEED_MODIFIERS" MsgModifier) -- % neg
+        ,("equipment_upgrade_xp_cost"   , numericLoc "MODIFIER_EQUIPMENT_UPGRADE_XP_COST" MsgModifier) -- % neg
+        ,("license_armor_purchase_cost" , numericLoc "MODIFIER_LICENSE_ARMOR_PURCHASE_COST" MsgModifierPcNegReduced)
+        ,("production_factory_efficiency_gain_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_EFFICIENCY_GAIN_FACTOR" MsgModifierPcPosReduced)
+        ,("production_factory_max_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_MAX_EFFICIENCY_FACTOR" MsgModifier) -- % pos
+        ,("production_factory_start_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_START_EFFICIENCY_FACTOR" MsgModifier) -- % pos
         -- Military outside of combat
-        ,("command_power_gain"          , numericLoc "MODIFIER_COMMAND_POWER_GAIN" MsgModifierPlain) -- flat pos
-        ,("command_power_gain_mult"     , numericLoc "MODIFIER_COMMAND_POWER_GAIN_MULT" MsgModifierPlain) -- % neg
-        ,("conscription"                , numericLoc "MODIFIER_CONSCRIPTION_FACTOR" MsgModifierPcPlainReducedSign) -- flat neut
-        ,("conscription_factor"         , numericLoc "MODIFIER_CONSCRIPTION_TOTAL_FACTOR" MsgModifierPcColourPosReduced) -- % pos
-        ,("max_command_power"           , numericLoc "MODIFIER_MAX_COMMAND_POWER" MsgModifierPlain) -- flat pos
-        ,("max_command_power_mult"      , numericLoc "MODIFIER_MAX_COMMAND_POWER_MULT" MsgModifierPlain)  -- % pos
-        ,("training_time_army_factor"   , numericLoc "MODIFIER_TRAINING_TIME_ARMY_FACTOR" MsgModifierPcPlainReducedSign)
-        ,("unit_light_armor_design_cost_factor" , numericLoc "modifier_unit_light_armor_design_cost_factor" MsgModifierPcColourNegReduced)
-        ,("weekly_manpower"             , numericLoc "MODIFIER_WEEKLY_MANPOWER" MsgModifierPlain) -- flat pos
+        ,("command_power_gain"          , numericLoc "MODIFIER_COMMAND_POWER_GAIN" MsgModifier) -- flat pos
+        ,("command_power_gain_mult"     , numericLoc "MODIFIER_COMMAND_POWER_GAIN_MULT" MsgModifier) -- % neg
+        ,("conscription"                , numericLoc "MODIFIER_CONSCRIPTION_FACTOR" MsgModifierPcReducedSign)
+        ,("conscription_factor"         , numericLoc "MODIFIER_CONSCRIPTION_TOTAL_FACTOR" MsgModifierPcPosReduced)
+        ,("training_time_factor"        , numericLoc "MODIFIER_TRAINING_TIME_FACTOR" MsgModifierPcNegReduced)
+        ,("max_command_power"           , numericLoc "MODIFIER_MAX_COMMAND_POWER" MsgModifier) -- flat pos
+        ,("max_command_power_mult"      , numericLoc "MODIFIER_MAX_COMMAND_POWER_MULT" MsgModifier)  -- % pos
+        ,("training_time_army_factor"   , numericLoc "MODIFIER_TRAINING_TIME_ARMY_FACTOR" MsgModifierPcReducedSign)
+        ,("unit_light_armor_design_cost_factor" , numericLoc "modifier_unit_light_armor_design_cost_factor" MsgModifierPcNegReduced)
+        ,("weekly_manpower"             , numericLoc "MODIFIER_WEEKLY_MANPOWER" MsgModifier) -- flat pos
         -- Fuel
-        ,("base_fuel_gain"              , numericLoc "MODIFIER_BASE_FUEL_GAIN_ADD" MsgModifierPlain) -- flat neutr?
-        ,("base_fuel_gain_factor"       , numericLoc "MODIFIER_BASE_FUEL_GAIN_FACTOR" MsgModifierPlain) -- % pos
-        ,("fuel_cost"                   , numericLoc "MODIFIER_FUEL_COST" MsgModifierPlain) -- flat neg
-        ,("fuel_gain"                   , numericLoc "MODIFIER_FUEL_GAIN_ADD" MsgModifierPlain) -- flat pos
-        ,("fuel_gain_factor"            , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifierPlain) -- flat pos
-        ,("max_fuel"                    , numericLoc "MODIFIER_MAX_FUEL_ADD" MsgModifierPlain) -- flat
-        ,("max_fuel_factor"             , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifierPlain) -- % pos
+        ,("base_fuel_gain"              , numericLoc "MODIFIER_BASE_FUEL_GAIN_ADD" MsgModifier) -- flat neutr?
+        ,("base_fuel_gain_factor"       , numericLoc "MODIFIER_BASE_FUEL_GAIN_FACTOR" MsgModifier) -- % pos
+        ,("fuel_cost"                   , numericLoc "MODIFIER_FUEL_COST" MsgModifier) -- flat neg
+        ,("fuel_gain"                   , numericLoc "MODIFIER_FUEL_GAIN_ADD" MsgModifier) -- flat pos
+        ,("fuel_gain_factor"            , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifier) -- flat pos
+        ,("max_fuel"                    , numericLoc "MODIFIER_MAX_FUEL_ADD" MsgModifier) -- flat
+        ,("max_fuel_factor"             , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifier) -- % pos
         -- buildings
-        ,("civilian_factory_use"        , numericLoc "MODIFIER_CIVILIAN_FACTORY_USE" MsgModifierPlain) -- flat neut
-        ,("production_speed_arms_factory_factor" , numericLoc "modifier_production_speed_arms_factory_factor" MsgModifierPcColourPosReduced)
-        ,("production_speed_dockyard_factor" , numericLoc "modifier_production_speed_dockyard_factor" MsgModifierPcColourPosReduced)
-        ,("consumer_goods_factor"       , numericLoc "MODIFIER_CONSUMER_GOODS_FACTOR" MsgModifierPcPlainReduced)
-        ,("conversion_cost_civ_to_mil_factor" , numericLoc "MODIFIER_CONVERSION_COST_CIV_TO_MIL_FACTOR" MsgModifierPlain) -- % neutr
-        ,("conversion_cost_mil_to_civ_factor" , numericLoc "MODIFIER_CONVERSION_COST_MIL_TO_CIV_FACTOR" MsgModifierPlain) -- % neutr
-        ,("global_building_slots"       , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS" MsgModifierPlain) -- flat
-        ,("global_building_slots_factor" , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS_FACTOR" MsgModifierPlain) -- %
-        ,("industrial_capacity_dockyard" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_DOCKYARD_FACTOR" MsgModifierPcColourPosReduced)
-        ,("industrial_capacity_factory" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_FACTOR" MsgModifierPcColourPosReduced)
-        ,("industry_repair_factor"      , numericLoc "MODIFIER_INDUSTRY_REPAIR_FACTOR" MsgModifierPlain) -- %
-        ,("line_change_production_efficiency_factor" , numericLoc "MODIFIER_LINE_CHANGE_PRODUCTION_EFFICIENCY_FACTOR" MsgModifierPlain) -- %
-        ,("production_oil_factor"       , numericLoc "MODIFIER_PRODUCTION_OIL_FACTOR" MsgModifierPlain) -- %
-        ,("production_speed_buildings_factor" , numericLoc "MODIFIER_PRODUCTION_SPEED_BUILDINGS_FACTOR" MsgModifierPlain) -- %
+        ,("civilian_factory_use"        , numericLoc "MODIFIER_CIVILIAN_FACTORY_USE" MsgModifierPc) -- flat neut
+        ,("industry_free_repair_factor" , numericLoc "MODIFIER_INDUSTRY_FREE_REPAIR_FACTOR" MsgModifierPcPosReduced)
+        ,("production_speed_air_base_factor" , numericLoc "modifier_production_speed_air_base_factor" MsgModifierPcPosReduced)
+        ,("production_speed_anti_air_building_factor" , numericLoc "modifier_production_speed_anti_air_building_factor" MsgModifierPcPosReduced)
+        ,("production_speed_arms_factory_factor" , numericLoc "modifier_production_speed_arms_factory_factor" MsgModifierPcPosReduced)
+        ,("production_speed_bunker_factor" , numericLoc "modifier_production_speed_bunker_factor" MsgModifierPcPosReduced)
+        ,("production_speed_coastal_bunker_factor" , numericLoc "modifier_production_speed_coastal_bunker_factor" MsgModifierPcPosReduced)
+        ,("production_speed_dockyard_factor" , numericLoc "modifier_production_speed_dockyard_factor" MsgModifierPcPosReduced)
+        ,("production_speed_industrial_complex_factor" , numericLoc "modifier_production_speed_industrial_complex_factor" MsgModifierPcPosReduced)
+        ,("production_speed_nuclear_reactor_factor" , numericLoc "modifier_production_speed_nuclear_reactor_factor" MsgModifierPcPosReduced)
+        ,("production_speed_radar_station_factor" , numericLoc "modifier_production_speed_radar_station_factor" MsgModifierPcPosReduced)
+        ,("production_speed_synthetic_refinery_factor" , numericLoc "modifier_production_speed_synthetic_refinery_factor" MsgModifierPcPosReduced)
+        ,("consumer_goods_factor"       , numericLoc "MODIFIER_CONSUMER_GOODS_FACTOR" MsgModifierPcReduced)
+        ,("conversion_cost_civ_to_mil_factor" , numericLoc "MODIFIER_CONVERSION_COST_CIV_TO_MIL_FACTOR" MsgModifier) -- % neutr
+        ,("conversion_cost_mil_to_civ_factor" , numericLoc "MODIFIER_CONVERSION_COST_MIL_TO_CIV_FACTOR" MsgModifier) -- % neutr
+        ,("global_building_slots"       , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS" MsgModifier) -- flat
+        ,("global_building_slots_factor" , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS_FACTOR" MsgModifierPcPosReduced)
+        ,("industrial_capacity_dockyard" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_DOCKYARD_FACTOR" MsgModifierPcPosReduced)
+        ,("industrial_capacity_factory" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_FACTOR" MsgModifierPcPosReduced)
+        ,("industry_repair_factor"      , numericLoc "MODIFIER_INDUSTRY_REPAIR_FACTOR" MsgModifier) -- %
+        ,("line_change_production_efficiency_factor" , numericLoc "MODIFIER_LINE_CHANGE_PRODUCTION_EFFICIENCY_FACTOR" MsgModifier) -- %
+        ,("production_oil_factor"       , numericLoc "MODIFIER_PRODUCTION_OIL_FACTOR" MsgModifier) -- %
+        ,("production_speed_buildings_factor" , numericLoc "MODIFIER_PRODUCTION_SPEED_BUILDINGS_FACTOR" MsgModifierPcPosReduced) -- %
         -- resistance and compliance
-        ,("civilian_intel_to_others"    , numericLoc "MODIFIER_CIVILIAN_INTEL_TO_OTHERS" MsgModifierPlain) -- flat neg
+        ,("civilian_intel_to_others"    , numericLoc "MODIFIER_CIVILIAN_INTEL_TO_OTHERS" MsgModifier) -- flat neg
+        -- Intelligence
+        ,("foreign_subversive_activites" , numericLoc "MODIFIER_FOREIGN_SUBVERSIVE_ACTIVITIES" MsgModifierPcNegReduced)
+        -- Operatives
+        ,("enemy_operative_detection_chance_factor" , numericLoc "MODIFIER_ENEMY_OPERATIVE_DETECTION_CHANCE_FACTOR" MsgModifierPcPosReduced)
         -- AI
         -- Unit Leaders
-        ,("military_leader_cost_factor"    , numericLoc "MODIFIER_MILITARY_LEADER_COST_FACTOR" MsgModifierPcColourPosReduced)
+        ,("military_leader_cost_factor" , numericLoc "MODIFIER_MILITARY_LEADER_COST_FACTOR" MsgModifierPcNegReduced)
         -- General Combat
-        ,("offence"                     , numericLoc "MODIFIER_OFFENCE" MsgModifierPlain) -- % pos
-        ,("defence"                     , numericLoc "MODIFIER_DEFENCE" MsgModifierPlain) -- % pos
+        ,("offence"                     , numericLoc "MODIFIER_OFFENCE" MsgModifier) -- % pos
+        ,("defence"                     , numericLoc "MODIFIER_DEFENCE" MsgModifier) -- % pos
         -- Land Combat
-        ,("army_attack_factor"          , numericLoc "MODIFIERS_ARMY_ATTACK_FACTOR" MsgModifierPlain) -- % pos
-        ,("army_core_defence_factor"    , numericLoc "MODIFIERS_ARMY_ATTACK_FACTOR" MsgModifierPcColourPosReduced)
-        ,("army_morale_factor"          , numericLoc "MODIFIER_ARMY_MORALE_FACTOR" MsgModifierPcColourPosReduced)
-        ,("experience_gain_motorized_combat_factor" , numericLoc "modifier_experience_gain_motorized_combat_factor" MsgModifierPcColourPosReduced)
-        ,("max_dig_in_factor"           , numericLoc "MODIFIER_MAX_DIG_IN_FACTOR" MsgModifierPcColourPosReduced)
-        ,("land_night_attack"           , numericLoc "MODIFIER_LAND_NIGHT_ATTACK" MsgModifierPcColourPosReduced)
+        ,("army_attack_factor"          , numericLoc "MODIFIERS_ARMY_ATTACK_FACTOR" MsgModifierPcPosReduced)
+        ,("army_core_attack_factor"     , numericLoc "MODIFIERS_ARMY_CORE_ATTACK_FACTOR" MsgModifierPcPosReduced)
+        ,("army_defence_factor"         , numericLoc "MODIFIERS_ARMY_DEFENCE_FACTOR" MsgModifierPcPosReduced)
+        ,("army_core_defence_factor"    , numericLoc "MODIFIERS_ARMY_CORE_DEFENCE_FACTOR" MsgModifierPcPosReduced)
+        ,("army_morale_factor"          , numericLoc "MODIFIER_ARMY_MORALE_FACTOR" MsgModifierPcPosReduced)
+        ,("experience_gain_motorized_combat_factor" , numericLoc "modifier_experience_gain_motorized_combat_factor" MsgModifierPcPosReduced)
+        ,("max_dig_in_factor"           , numericLoc "MODIFIER_MAX_DIG_IN_FACTOR" MsgModifierPcPosReduced)
+        ,("land_night_attack"           , numericLoc "MODIFIER_LAND_NIGHT_ATTACK" MsgModifierPcPosReduced)
         -- Naval combat
         -- Air combat
+        -- targeted
+        -- state
+        ,("non_core_manpower"           , numericLoc "MODIFIER_GLOBAL_NON_CORE_MANPOWER" MsgModifierPcPosReduced)
         -- Unit Leader Scope
-        ,("trait_panzer_leader_xp_gain_factor" , numericLoc "modifier_trait_panzer_leader_xp_gain_factor" MsgModifierPcColourPosReduced)
+        ,("trait_panzer_leader_xp_gain_factor" , numericLoc "modifier_trait_panzer_leader_xp_gain_factor" MsgModifierPcPosReduced)
         ]
 
 -- | Handlers for statements pertaining to modifiers
@@ -866,7 +896,7 @@ handlersLocRhs = Tr.fromList
         ,("superregion"           , withLocAtom MsgSuperRegionIs)
         ,("tooltip"               , withLocAtom MsgTooltip)
         ,("trade_company_region"  , withLocAtom MsgTradeCompanyRegion)
-        ,("unlock_decision_tooltip" , withLocAtom MsgUnlockDecisionTooltip)
+        ,("unlock_decision_category_tooltip" , withLocAtom MsgUnlockDecisionCategoryTooltip)
         ]
 
 -- | Handlers for statements whose RHS is a state ID
@@ -1582,10 +1612,15 @@ handlersSpecialComplex = Tr.fromList
 
         -- Variables
         ,("set_variable"                 , setVariable MsgSetVariable MsgSetVariableVal)
+        ,("set_temp_variable"            , setVariable MsgSetTempVariable MsgSetTempVariableVal)
         ,("add_to_variable"              , setVariable MsgAddVariable MsgAddVariableVal)
+        ,("add_to_temp_variable"         , setVariable MsgAddTempVariable MsgAddTempVariableVal)
         ,("subtract_variable"            , setVariable MsgSubVariable MsgSubVariableVal)
+        ,("subtract_temp_variable"       , setVariable MsgSubTempVariable MsgSubTempVariableVal)
         ,("multiply_variable"            , setVariable MsgMulVariable MsgMulVariableVal)
+        ,("multiply_temp_variable"       , setVariable MsgMulTempVariable MsgMulTempVariableVal)
         ,("divide_variable"              , setVariable MsgDivVariable MsgDivVariableVal)
+        ,("divide_temp_variable"         , setVariable MsgDivTempVariable MsgDivTempVariableVal)
         ,("check_variable"               , setVariable MsgChkVariable MsgChkVariableVal)
         ,("is_variable_equal"            , setVariable MsgEquVariable MsgEquVariableVal)
         ,("export_to_variable"           , exportVariable)

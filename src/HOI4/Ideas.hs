@@ -34,12 +34,12 @@ import qualified Doc
 import FileIO (Feature (..), writeFeatures)
 import HOI4.Messages -- everything
 import MessageTools (iquotes)
-import HOI4.Handlers (flagText, getStateLoc)
+import HOI4.Handlers (flagText, getStateLoc, plainMsg')
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..), Game (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10n, getGameL10nIfPresent
-                     , setCurrentFile, withCurrentFile
+                     , setCurrentFile, withCurrentFile, withCurrentIndent
                      , hoistErrors, hoistExceptions)
 import HOI4.Common -- everything
 
@@ -86,7 +86,7 @@ parseHOI4IdeaGroup _ = withCurrentFile $ \file ->
 -- | Empty idea. Starts off Nothing everywhere, except id and name
 -- (should get filled in immediately).
 newIdea :: HOI4Idea
-newIdea = HOI4Idea undefined undefined Nothing Nothing "GFX_idea_unknown" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined undefined
+newIdea = HOI4Idea undefined undefined Nothing undefined "GFX_idea_unknown" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined undefined
 
 -- | Parse one idea script into a idea data structure.
 parseHOI4Idea :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
@@ -95,7 +95,7 @@ parseHOI4Idea [pdx| $ideaName = %rhs |] category = case rhs of
     CompoundRhs parts -> do
         idName_loc <- getGameL10n ideaName
         let idPicture = "GFX_idea_" <> ideaName
-        idDesc <- getGameL10nIfPresent (ideaName <> "_desc")
+        idDesc <- getGameL10nIfPresent $ ideaName <> "_desc"
         withCurrentFile $ \sourcePath ->
             foldM ideaAddSection
                   (Just (newIdea { id_id = ideaName
@@ -128,7 +128,7 @@ ideaAddSection iidea stmt
                     iidea { id_picture = txtd }
                 _-> trace ("bad idea picture") iidea
             "name"      -> case rhs of
-                GenericRhs txt [] ->  iidea { id_name = txt }
+                GenericRhs txt [] -> iidea { id_name = txt }
                 _-> trace ("bad idea name") iidea
             "modifier"  -> case rhs of
                 CompoundRhs [] -> iidea
@@ -191,7 +191,7 @@ ideaAddSection iidea stmt
             "traits"            -> iidea
             "ledger"            -> iidea
             "default"           -> iidea
-            other               -> trace ("unknown idea section: " ++ T.unpack other) $ iidea
+            other               -> trace ("unknown idea section: " ++ T.unpack other) iidea
         ideaAddSection' iidea _
             = trace ("unrecognised form for idea section") iidea
 {-

@@ -228,7 +228,7 @@ import MessageTools (plural, iquotes, italicText, boldText
                     , formatDays, formatHours)
 import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
-                     , indentUp, indentDown, withCurrentIndent, withCurrentIndentZero, alsoIndent, alsoIndent'
+                     , indentUp, indentDown, getCurrentIndent, withCurrentIndent, withCurrentIndentZero, withCurrentIndentCustom, alsoIndent, alsoIndent'
                      , getGameL10n, getGameL10nIfPresent, getGameL10nDefault, withCurrentFile
                      , unfoldM, unsnoc )
 import HOI4.Templates
@@ -3307,7 +3307,7 @@ dominantCulture stmt = preStatement stmt
 customTriggerTooltip :: (HOI4Info g, Monad m) => StatementHandler g m
 customTriggerTooltip [pdx| %_ = @scr |]
     -- ignore the custom tooltip -- BC - let's not
-    = indentDown $ ppMany scr
+    = ppMany scr
 customTriggerTooltip stmt = preStatement stmt
 
 piety :: (HOI4Info g, Monad m) => StatementHandler g m
@@ -3443,22 +3443,30 @@ handleIdea addIdea ide = do
 
 modmessage :: forall g m. (HOI4Info g, Monad m) => HOI4Idea -> Text -> Text -> Text -> PPT g m IndentedMessages
 modmessage iidea idea_loc ideaKey ideaIcon = do
-                ideaDesc <- case id_desc_loc iidea of
-                    Just desc -> return desc
-                    _ -> return ""
-                modifier <- case id_modifier iidea of
-                    Just mod -> ppMany mod
-                    _ -> return []
-                targeted_modifier <- case id_targeted_modifier iidea of
-                    Just tarmod -> ppMany tarmod
-                    _ -> return []
-                research_bonus <- case id_research_bonus iidea of
-                    Just research -> ppMany research
-                    _ -> return []
-                equipment_bonus <- case id_equipment_bonus iidea of
-                    Just equip -> ppMany equip
-                    _ -> return []
-                boxend <- return $ (0, MsgEffectBoxEnd): []
+        curind <- getCurrentIndent
+        curindent <- case curind of
+            Just curindt -> return curindt
+            _ -> return 1
+        withCurrentIndentCustom 0 $ \_ -> do
+            ideaDesc <- case id_desc_loc iidea of
+                Just desc -> return desc
+                _ -> return ""
+            modifier <- maybe (return []) ppMany (id_modifier iidea)
+            targeted_modifier <-
+                maybe (return [])
+                    (\tarmod -> do
+                        let (scrt,scrr) = extractStmt (matchLhsText "tag") tarmod
+                            tag = case scrt of
+                                Just [pdx| tag = $tag |] -> tag
+                                _ -> "CHECK SCRIPT"
+                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just HOI4Country) tag
+                        scriptMsgs <- scope HOI4Country $ ppMany scrr
+                        return (lflag : scriptMsgs))
+                    (id_targeted_modifier iidea)
+            research_bonus <- maybe (return []) ppMany (id_research_bonus iidea)
+            equipment_bonus <- maybe (return []) ppMany (id_equipment_bonus iidea)
+            boxend <- return $ (0, MsgEffectBoxEnd): []
+            withCurrentIndentCustom curindent $ \_ -> do
                 let ideamods = modifier ++ targeted_modifier ++ research_bonus ++ equipment_bonus ++ boxend
                 return $ (0, MsgEffectBox idea_loc ideaKey ideaIcon ideaDesc) : ideamods
 
@@ -4909,7 +4917,7 @@ addTechBonus stmt@[pdx| %_ = @scr |]
                     (_, Just ahead) ->
                         MsgAddTechBonusAhead ahead ifname uses
                     _ -> trace ("issues in add_technology_bonus: " ++ show stmt ) $ preMessage stmt
-            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return $ (i+1, MsgEmpty tc) : []) techcat
+            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return $ (i+1, MsgUnprocessed tc) : []) techcat
             tbmsg_pp <- msgToPP $ tbmsg
             return $ tbmsg_pp ++ concat techcatmsg
 addTechBonus stmt = preStatement stmt
@@ -5298,7 +5306,7 @@ addDoctrineCostReduction stmt@[pdx| %_ = @scr |]
                     Just name -> "(" <> italicText name <> ") "
                     _ -> ""
                 dcrmsg =  MsgAddDoctrineCostReduction (dcr_uses dcr) (dcr_cost_reduction dcr) ifname
-            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return $ (i+1, MsgEmpty tc) : []) techcat
+            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return $ (i+1, MsgUnprocessed tc) : []) techcat
             dcrmsg_pp <- msgToPP $ dcrmsg
             return $ dcrmsg_pp ++ concat techcatmsg
 addDoctrineCostReduction stmt = preStatement stmt
@@ -5339,8 +5347,8 @@ freeBuildingSlots stmt = preStatement stmt
 
 addAutonomyRatio :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 addAutonomyRatio stmt@[pdx| %_ = @scr |] = case length scr of
-    1 -> textValue "localization" "value" MsgAddAutonomyRatio MsgAddAutonomyRatio tryLocMaybe stmt
-    2 -> do
+    2 -> textValue "localization" "value" MsgAddAutonomyRatio MsgAddAutonomyRatio tryLocMaybe stmt
+    1 -> do
         let (_value, _) = extractStmt (matchLhsText "value") scr
         value <- case _value of
             Just [pdx| %_ = !num |] -> return num
@@ -5372,7 +5380,7 @@ hasEquipment stmt = preStatement stmt
 --------------------------------
 data SendEquipment = SendEquipment
         {   se_equipment :: Text
-        ,   se_amount :: Double
+        ,   se_amount :: Text
         ,   se_target :: Maybe Text
         }
 
@@ -5390,6 +5398,9 @@ sendEquipment stmt@[pdx| %_ = @scr |]
             txtd <- getGameL10n txt
             return se { se_equipment = txtd }
         addLine se [pdx| amount = !amt |] =
+            let amtd = T.pack $ show (amt :: Int)  in
+            return se { se_amount = amtd }
+        addLine se [pdx| amount = $amt |] =
             return se { se_amount = amt }
         addLine se [pdx| target = $vartag:$var |] = do
             flagd <- eflag (Just HOI4Country) (Right (vartag,var))

@@ -502,11 +502,11 @@ writeHOI4Scripts = do
     unless (Onlyextra `elem` (clargs settings)) $ do
 --        writeHOI4Ideas
         liftIO $ putStrLn "Writing events."
-        writeHOI4Events
+--        writeHOI4Events
         liftIO $ putStrLn "Writing decision categories."
-        writeHOI4DecisionCats
+--        writeHOI4DecisionCats
         liftIO $ putStrLn "Writing decisions."
-        writeHOI4Decisions
+--        writeHOI4Decisions
         liftIO $ putStrLn "Writing national focuses."
         writeHOI4NationalFocuses
 --        writeHOI4Missions

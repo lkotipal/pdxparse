@@ -967,17 +967,18 @@ data ScriptMessage
     | MsgTradeRange {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTradeSteering {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTextIs {scriptMessageWhat :: Text}
-    | MsgModifierPlain {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifier {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierSign {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierColourPos {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierColourNeg {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgModifierPcPlain {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgModifierPcPlainSign {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgModifierPcPlainReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgModifierPcPlainReducedSign {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgModifierPcColourPos {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgModifierPcColourNeg {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgModifierPcColourPosReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgModifierPcColourNegReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierPc {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierPcSign {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierPcReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierPcReducedSign {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierPcPos {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierPcNeg {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierPcPosReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierPcNegReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgAnyOwnedPlanet
     | MsgAnyOwnedShip
     | MsgAnyPop
@@ -1166,15 +1167,25 @@ data ScriptMessage
     | MsgNumOwnedProvincesOrNonSovereignSubjectsWith {scriptMessageAmt :: Double}
     | MsgNumOwnedStatesOrNonSovereignSubjectsWith {scriptMessageAmt :: Double}
     | MsgSetVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgSetTempVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgSetVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgSetTempVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgAddVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgAddTempVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgAddVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgAddTempVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgSubVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgSubTempVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgSubVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgSubTempVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgMulVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgMulTempVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgMulVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgMulTempVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgDivVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgDivTempVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgDivVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgDivTempVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgChkVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgChkVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgEquVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
@@ -1703,7 +1714,7 @@ data ScriptMessage
     | MsgDefinerLeaderToRuler
     | MsgChangeSubjectType {scriptMessageIcon :: Text, scriptMessageType :: Text}
     | MsgRemoveTradeModifier {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
-    | MsgSendEquipment {scriptMessageAmt :: Double, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgSendEquipment {scriptMessageAmtT :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgHasTradeCompanyInvestmentInState {scriptMessageWhom :: Text}
     | MsgRandomListTrigger
     | MsgRandomListModifier {scriptMessageAmt :: Double}
@@ -1713,7 +1724,7 @@ data ScriptMessage
     | MsgHasOneOfBuildings {scriptMessageYn :: Bool, scriptMessageWhat :: Text}
     | MsgNumBuildings {scriptMessageAmt :: Double}
     | MsgTradeCompanyRegion {scriptMessageWhat :: Text}
-    | MsgUnlockDecisionTooltip {scriptMessageWhat :: Text}
+    | MsgUnlockDecisionCategoryTooltip {scriptMessageWhat :: Text}
     | MsgPreferredEmperor {scriptMessageWhom :: Text}
     | MsgCurrentIcon {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgUsesIcons {scriptMessageYn :: Bool}
@@ -1865,7 +1876,6 @@ data ScriptMessage
     | MsgSwitchTag {scriptMessageWho :: Text}
     | MsgMonthlyPietyAccelerator {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMovementSpeedInFleetModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgEmpty {scriptMessageWhat :: Text}
 
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -3234,8 +3244,9 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Has "
                 , _comp
-                , " {{icon|war support|1}} "
+                , " "
                 , toMessage (bold (reducedNum plainPc _amt))
+                , " {{icon|war support|1}}"
                 ]
         MsgHeirAge {scriptMessageAmt = _amt}
             -> mconcat
@@ -5240,7 +5251,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgHasIdea {scriptMessageWhat = _what, scriptMessageIcon = _icon, scriptMessageKey = _key, scriptMessageLoc = _loc}
             -> mconcat
-                [ "Has "
+                [ "Has the"
                 , _what
                 , " "
                 , "[[File:"
@@ -5253,7 +5264,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddIdea {scriptMessageWhat = _what, scriptMessageIcon = _icon, scriptMessageKey = _key, scriptMessageLoc = _loc}
             -> mconcat
-                [ "Add "
+                [ "Gets the "
                 , _what
                 , " "
                 , "[[File:"
@@ -5266,7 +5277,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgRemoveIdea {scriptMessageWhat = _what, scriptMessageIcon = _icon, scriptMessageKey = _key, scriptMessageLoc = _loc}
             -> mconcat
-                [ "Remove "
+                [ "Remove the "
                 , _what
                 , " "
                 , "[[File:"
@@ -5279,7 +5290,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddTimedIdea {scriptMessageWhat = _what, scriptMessageIcon = _icon, scriptMessageKey = _key, scriptMessageLoc = _loc, scriptMessageDays = _days}
             -> mconcat
-                [ "Add "
+                [ "Gets the "
                 , _what
                 , " "
                 , "[[File:"
@@ -5294,7 +5305,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgModifyTimedIdea {scriptMessageWhat = _what, scriptMessageIcon = _icon, scriptMessageKey = _key, scriptMessageLoc = _loc, scriptMessageDays = _days}
             -> mconcat
-                [ "Extend "
+                [ "Extend the "
                 , _what
                 , " "
                 , "[[File:"
@@ -5309,7 +5320,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgModifyIdea { scriptMessageKey = _key, scriptMessageCategory2 = _cat2, scriptMessageIcon2 = _icon2, scriptMessageKey2 = _key2, scriptMessageLoc2 = _loc2}
             -> mconcat
-                [ "Modify "
+                [ "Modify the "
                 , "<!-- "
                 , _key
                 ,  " -->"
@@ -5325,7 +5336,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgReplaceIdea { scriptMessageCategory = _cat, scriptMessageIcon = _icon, scriptMessageKey = _key, scriptMessageLoc = _loc, scriptMessageCategory2 = _cat2, scriptMessageIcon2 = _icon2, scriptMessageKey2 = _key2, scriptMessageLoc2 = _loc2}
             -> mconcat
-                [ "Replace "
+                [ "Replace the "
                 , _cat
                 , " "
                 , "[[File:"
@@ -5335,7 +5346,7 @@ instance RenderMessage Script ScriptMessage where
                 , _key
                 ,  " -->"
                 , toMessage (iquotes _loc)
-                ," with "
+                ," with the "
                 , _cat2
                 , " "
                 , "[[File:"
@@ -5356,7 +5367,7 @@ instance RenderMessage Script ScriptMessage where
                 , "|file="
                 , _icon
                 , "|"
-                , _loc
+                , _desc
                 , "\n"
                 , "|modifiers="
                 ]
@@ -7174,11 +7185,17 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , "''"
                 ]
-        MsgModifierPlain {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifier {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
-                , toMessage (plainNum _amt)
+                , toMessage (bold (plainNum _amt))
+                ]
+        MsgModifierSign {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _what
+                , ": "
+                , toMessage (bold (plainNumSign _amt))
                 ]
         MsgModifierColourPos {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
@@ -7192,49 +7209,49 @@ instance RenderMessage Script ScriptMessage where
                 , ": "
                 , toMessage (colourNumSign False _amt)
                 ]
-        MsgModifierPcPlain {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifierPc {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
-                , toMessage (plainNum _amt)
+                , toMessage (bold (plainPc _amt))
                 ]
-        MsgModifierPcPlainSign {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifierPcSign {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
-                , toMessage (plainNumSign _amt)
+                , toMessage (bold (plainPcSign _amt))
                 ]
-        MsgModifierPcPlainReduced {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifierPcReduced {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
-                , toMessage (reducedNum plainNum _amt)
+                , toMessage (reducedNum plainPc _amt)
                 ]
-        MsgModifierPcPlainReducedSign {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifierPcReducedSign {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
-                , toMessage (reducedNum plainNumSign _amt)
+                , toMessage (reducedNum plainPcSign _amt)
                 ]
-        MsgModifierPcColourPos {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifierPcPos {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
                 , toMessage (colourPcSign True _amt)
                 ]
-        MsgModifierPcColourNeg {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifierPcNeg {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
                 , toMessage (colourPcSign False _amt)
                 ]
-        MsgModifierPcColourPosReduced {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifierPcPosReduced {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 ]
-        MsgModifierPcColourNegReduced {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifierPcNegReduced {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
@@ -7709,7 +7726,7 @@ instance RenderMessage Script ScriptMessage where
                 [ "Gain "
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " research bonus "
-                , if null $ T.unpack _name then "" else _name
+                , if T.null _name then "" else _name
                 , "("
                 , toMessage (colourNum True  _uses)
                 , " "
@@ -7737,7 +7754,7 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNum True _year)
                 , plural _year " year" " years"
                 , " ahead of time penalty reduction "
-                , if null $ T.unpack _name then "" else toMessage (italicText _name)
+                , if T.null _name then "" else toMessage (italicText _name)
                 , "("
                 , toMessage (colourNum True  _uses)
                 , " "
@@ -8402,6 +8419,13 @@ instance RenderMessage Script ScriptMessage where
                 , " to the value of "
                 , _var2
                 ]
+        MsgSetTempVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Set temporary variable "
+                , _var1
+                , " to the value of "
+                , _var2
+                ]
         MsgSetVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Set variable "
@@ -8409,9 +8433,23 @@ instance RenderMessage Script ScriptMessage where
                 , " to "
                 , toMessage (Doc.pp_float _amt)
                 ]
+        MsgSetTempVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Set temporary variable "
+                , _var
+                , " to "
+                , toMessage (Doc.pp_float _amt)
+                ]
         MsgAddVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
                 [ "Increase variable "
+                , _var1
+                , " by the value of "
+                , _var2
+                ]
+        MsgAddTempVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Increase temporary variable "
                 , _var1
                 , " by the value of "
                 , _var2
@@ -8424,9 +8462,24 @@ instance RenderMessage Script ScriptMessage where
                 , " by "
                 , toMessage (plainNum (if _amt < 0 then -_amt else _amt))
                 ]
+        MsgAddTempVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ toMessage (increaseOrDecrease _amt)
+                , " temporary variable "
+                , _var
+                , " by "
+                , toMessage (plainNum (if _amt < 0 then -_amt else _amt))
+                ]
         MsgSubVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
                 [ "Decrease variable "
+                , _var1
+                , " by the value of "
+                , _var2
+                ]
+        MsgSubTempVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Decrease temporary variable "
                 , _var1
                 , " by the value of "
                 , _var2
@@ -8438,9 +8491,23 @@ instance RenderMessage Script ScriptMessage where
                 , " by "
                 , toMessage (plainNum _amt)
                 ]
+        MsgSubTempVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Decrease temporary variable "
+                , _var
+                , " by "
+                , toMessage (plainNum _amt)
+                ]
         MsgMulVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
                 [ "Multiply variable "
+                , _var1
+                , " by the value of "
+                , _var2
+                ]
+        MsgMulTempVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Multiply temporary variable "
                 , _var1
                 , " by the value of "
                 , _var2
@@ -8452,6 +8519,13 @@ instance RenderMessage Script ScriptMessage where
                 , " by "
                 , toMessage (plainNum _amt)
                 ]
+        MsgMulTempVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Multiply temporary variable "
+                , _var
+                , " by "
+                , toMessage (plainNum _amt)
+                ]
         MsgDivVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
                 [ "Divide variable "
@@ -8459,9 +8533,23 @@ instance RenderMessage Script ScriptMessage where
                 , " by the value of "
                 , _var2
                 ]
+        MsgDivTempVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Divide temporary variable "
+                , _var1
+                , " by the value of "
+                , _var2
+                ]
         MsgDivVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Divide variable "
+                , _var
+                , " by "
+                , toMessage (plainNum _amt)
+                ]
+        MsgDivTempVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Divide temporary variable "
                 , _var
                 , " by "
                 , toMessage (plainNum _amt)
@@ -9747,7 +9835,7 @@ instance RenderMessage Script ScriptMessage where
         MsgHasGovernment {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Current ruling party is "
-                , if null $ T.unpack _icon then "the same as" else _icon
+                , if T.null _icon then "the same as" else _icon
                 , " "
                 , _what
                 ]
@@ -11158,9 +11246,9 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (bold (plainNum _amt))
                 , " {{icon|railway|1}} "
                 , " from province ("
-                , toMessage (plainNum _start)
+                , toMessage (roundNumNoSpace _start)
                 , ") to province ("
-                , toMessage (plainNum _end)
+                , toMessage (roundNumNoSpace _end)
                 , ")"
                 ]
         MsgBuildRailwayPath {scriptMessageAmt = _amt, scriptMessageWhat = _what}
@@ -11371,9 +11459,9 @@ instance RenderMessage Script ScriptMessage where
         MsgAddAutonomyRatio {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
-                , if null $ T.unpack _what then "" else " (" <> italicText _what <> ")"
+                , if T.null _what then "" else " (" <> italicText _what <> ")"
                 , " "
-                , toMessage (reducedNum plainPc _amt)
+                , toMessage (bold (reducedNum plainPc _amt))
                 , " {{icon|autonomy|1}} progress"
                 ]
         MsgAddGreatProjectTier {scriptMessageWhat = _what, scriptMessageAmt = _amt}
@@ -11860,10 +11948,10 @@ instance RenderMessage Script ScriptMessage where
                 , " for "
                 , _whom
                 ]
-        MsgSendEquipment {scriptMessageAmt = _amt, scriptMessageWhat = _what, scriptMessageWhom = _whom}
+        MsgSendEquipment {scriptMessageAmtT = _amtT, scriptMessageWhat = _what, scriptMessageWhom = _whom}
             -> mconcat
                 [ "Send "
-                , toMessage (plainNum _amt)
+                , _amtT
                 , " "
                 , _what
                 , " to "
@@ -11920,7 +12008,7 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " trade company region"
                 ]
-        MsgUnlockDecisionTooltip {scriptMessageWhat = _what}
+        MsgUnlockDecisionCategoryTooltip {scriptMessageWhat = _what}
             -> mconcat
                 [ "Unlock the "
                 , _what
@@ -12314,7 +12402,7 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " to "
                 , _who
-                , if null $ T.unpack _days then "" else " for "
+                , if T.null _days then "" else " for "
                 , _days
                 , " providing the following effects:"
                 ]
@@ -12850,9 +12938,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNumSign True _amt)
                 , " Fleet movement speed"
                 ]
-        MsgEmpty {scriptMessageWhat = _what}
-            -> mconcat
-                [ _what ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
 -- FIXME: What's the significance of this?
