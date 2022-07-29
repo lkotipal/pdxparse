@@ -93,7 +93,6 @@ module HOI4.Handlers (
     ,   triggerSwitch
     ,   calcTrueIf
     ,   numOwnedProvincesWith
-    ,   hreReformLevel
     ,   religionYears
     ,   govtRank
     ,   setGovtRank
@@ -140,7 +139,6 @@ module HOI4.Handlers (
     ,   hasEstateLedRegency
     ,   changePrice
     ,   hasLeaderWith
-    ,   killAdvisorByCategory
     ,   region
     ,   institutionPresence
     ,   expulsionTarget
@@ -3138,13 +3136,6 @@ hreReformLoc n = getGameL10n $ case n of
     8 -> "renovatio_title"
     _ -> error "called hreReformLoc with n < 1 or n > 8"
 
-hreReformLevel :: (HOI4Info g, Monad m) => StatementHandler g m
-hreReformLevel [pdx| %_ = !level |] | level >= 0, level <= 8
-    = if level == 0
-        then msgToPP MsgNoHREReforms
-        else msgToPP . MsgHREPassedReform =<< hreReformLoc level
-hreReformLevel stmt = preStatement stmt
-
 -- Religion
 
 religionYears :: (HOI4Info g, Monad m) => StatementHandler g m
@@ -4290,16 +4281,6 @@ hasLeaderWith stmt@[pdx| %_ = @scr |] = pp_hlw (foldl' addLine newHLW scr)
             liftA2 (++) (msgToPP msg) (pure (body1 ++ body2))
 
 hasLeaderWith stmt = (trace $ "Not handled in has_leader_with: " ++ (show stmt)) $ preStatement stmt
-
--------------------------------------------------
--- Handler for kill_advisor_by_category_effect --
--------------------------------------------------
-
-killAdvisorByCategory :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-killAdvisorByCategory stmt@[pdx| %_ = @scr |] | [[pdx| $typ = yes |]] <- scr = do
-    typeLoc <- getGameL10n typ
-    msgToPP $ MsgRemoveAdvisor typeLoc
-killAdvisorByCategory stmt = (trace $ "Not handled in kill_advisor_by_category_effect: " ++ show stmt) $ preStatement stmt
 
 ------------------------
 -- Handler for region --
