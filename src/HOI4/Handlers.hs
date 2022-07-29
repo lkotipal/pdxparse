@@ -1489,7 +1489,7 @@ numericIconBonus the_icon plainmsg yearlymsg [pdx| %_ = !amt |]
                 HOI4Bonus -> yearly
                 _ -> -- act as though it's country for all others
                     msgToPP $ plainmsg icont amt
-numericIconBonus _ _ _ stmt = plainMsg $ pre_statement' stmt
+numericIconBonus _ _ _ stmt = plainMsg $ pre_statement' stmt -- CHECK FOR USEFULNES
 
 
 -- | Like numericIconBonus but allow rhs to be a tag/scope (used for e.g. "prestige")
@@ -1504,7 +1504,7 @@ numericIconBonusAllowTag the_icon plainmsg plainAsMsg yearlymsg stmt@[pdx| %_ = 
         whatLoc <- flagText (Just HOI4Country) what
         msgToPP $ plainAsMsg (iconText the_icon) whatLoc
 numericIconBonusAllowTag the_icon plainmsg _ yearlymsg stmt
-    = numericIconBonus the_icon plainmsg yearlymsg stmt
+    = numericIconBonus the_icon plainmsg yearlymsg stmt -- CHECK FOR USEFULNES
 
 -- | Handler for values that use a different message and icon depending on
 -- whether the value is positive or negative.
@@ -1518,7 +1518,7 @@ numericIconChange negicon posicon negmsg posmsg [pdx| %_ = !amt |]
     = if amt < 0
         then msgToPP $ negmsg (iconText negicon) amt
         else msgToPP $ posmsg (iconText posicon) amt
-numericIconChange _ _ _ _ stmt = plainMsg $ pre_statement' stmt
+numericIconChange _ _ _ _ stmt = plainMsg $ pre_statement' stmt -- CHECK FOR USEFULNESS
 
 
 -- | Handler for e.g. temple = X
