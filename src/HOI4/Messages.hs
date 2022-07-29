@@ -235,11 +235,6 @@ data ScriptMessage
     | MsgGainLocPC {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgGainMP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMPFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgAddMod {scriptMessageModid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
-    | MsgGainMod {scriptMessageModid :: Text, scriptMessageType :: Text, scriptMessageName :: Text}
-    | MsgGainModDur {scriptMessageModid :: Text, scriptMessageType :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
-    | MsgGainModPow {scriptMessageModid :: Text, scriptMessageType :: Text, scriptMessageName :: Text, scriptMessagePow :: Double}
-    | MsgGainModPowDur {scriptMessageModid :: Text, scriptMessageType :: Text, scriptMessageName :: Text, scriptMessagePow :: Double, scriptMessageDays :: Double}
     | MsgActorGainsMod {scriptMessageModid :: Text, scriptMessageWho :: Text, scriptMessageType :: Text, scriptMessageName :: Text}
     | MsgActorGainsModDur {scriptMessageModid :: Text, scriptMessageWho :: Text, scriptMessageType :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgActorGainsModPow {scriptMessageModid :: Text, scriptMessageWho :: Text, scriptMessageType :: Text, scriptMessageName :: Text, scriptMessagePow :: Double}
@@ -1971,117 +1966,6 @@ instance RenderMessage Script ScriptMessage where
                 , " manpower equal to "
                 , toMessage (reducedNum (colourPc True) _amt)
                 , " of maximum"
-                ]
-        MsgAddMod {scriptMessageModid = _modid, scriptMessageName = _name, scriptMessageDays = _days}
-            -> mconcat
-                [ "Gain modifier "
-                , toMessage (iquotes _name)
-                , " <!-- "
-                , _modid
-                , " --> for "
-                , toMessage $ formatDays _days
-                ]
-        MsgGainMod {scriptMessageModid = _modid, scriptMessageType = _type, scriptMessageName = _name}
-            -> mconcat
-                [ "Gain "
-                , _type
-                , " "
-                , toMessage (iquotes _name)
-                , ", <!-- "
-                , _modid
-                , " --> giving the following effects:"
-                ]
-        MsgGainModDur {scriptMessageModid = _modid, scriptMessageType = _type, scriptMessageName = _name, scriptMessageDays = _days}
-            -> mconcat
-                [ "Gain "
-                , _type
-                , " "
-                , toMessage (iquotes _name)
-                , " <!-- "
-                , _modid
-                , " --> for "
-                , if _days < 0
-                    then if _type == "ruler"
-                        then "the duration of the current ruler's reign"
-                        else "the rest of the game"
-                    else toMessage $ formatDays _days
-                , ", giving the following effects:"
-                ]
-        MsgGainModPow {scriptMessageModid = _modid, scriptMessageType = _type, scriptMessageName = _name, scriptMessagePow = _pow}
-            -> mconcat
-                [ "Gain "
-                , _type
-                , " "
-                , toMessage (iquotes _name)
-                , " <!-- "
-                , _modid
-                , " --> ("
-                , toMessage (colourNumSign True _pow)
-                , " Power"
-                ]
-        MsgGainModPowDur {scriptMessageModid = _modid, scriptMessageType = _type, scriptMessageName = _name, scriptMessagePow = _pow, scriptMessageDays = _days}
-            -> mconcat
-                [ "Gain "
-                , _type
-                , " "
-                , toMessage (iquotes _name)
-                , " <!-- "
-                , _modid
-                , " --> ("
-                , toMessage (colourNumSign True _pow)
-                , " Power) for "
-                , toMessage (formatDays _days)
-                ]
-        MsgActorGainsMod {scriptMessageModid = _modid, scriptMessageWho = _who, scriptMessageType = _type, scriptMessageName = _name}
-            -> mconcat
-                [ _who
-                , " gains "
-                , _type
-                , " "
-                , toMessage (iquotes _name)
-                , ", <!-- "
-                , _modid
-                , " --> giving the following effects:"
-                ]
-        MsgActorGainsModDur {scriptMessageModid = _modid, scriptMessageWho = _who, scriptMessageType = _type, scriptMessageName = _name, scriptMessageDays = _days}
-            -> mconcat
-                [ _who
-                , " gains "
-                , _type
-                , " "
-                , toMessage (iquotes _name)
-                , " <!-- "
-                , _modid
-                , " --> for "
-                , toMessage $ formatDays _days
-                , ", giving the following effects:"
-                ]
-        MsgActorGainsModPow {scriptMessageModid = _modid, scriptMessageWho = _who, scriptMessageType = _type, scriptMessageName = _name, scriptMessagePow = _pow}
-            -> mconcat
-                [ _who
-                , " gains "
-                , _type
-                , " "
-                , toMessage (iquotes _name)
-                , " <!-- "
-                , _modid
-                , " --> ("
-                , toMessage (colourNumSign True _pow)
-                , " Power"
-                ]
-        MsgActorGainsModPowDur {scriptMessageModid = _modid, scriptMessageWho = _who, scriptMessageType = _type, scriptMessageName = _name, scriptMessagePow = _pow, scriptMessageDays = _days}
-            -> mconcat
-                [ _who
-                , " gains "
-                , _type
-                , " "
-                , toMessage (iquotes _name)
-                , " <!-- "
-                , _modid
-                , " --> ("
-                , toMessage (colourNumSign True _pow)
-                , " Power) for "
-                , toMessage (formatDays _days)
                 ]
         MsgArea
             -> "Area containing this province:"
@@ -6768,8 +6652,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has government type where: "
                 , _what
                 ]
-        MsgReligiousModifier
-            -> "These effects are lost if the state religion changes"
         MsgIsEnemy { scriptMessageWho = _who }
             -> mconcat
                 [ _who
