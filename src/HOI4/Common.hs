@@ -305,19 +305,7 @@ handlersNumericIcons = Tr.fromList
 -- | Handlers for statements pertaining to modifiers
 handlersModifiers :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersModifiers = Tr.fromList
-        [--("add_country_modifier"           , addModifier MsgCountryMod)
---        ,("add_disaster_modifier"          , addModifier MsgDisasterMod)
---        ,("add_permanent_province_modifier", addModifier MsgPermanentProvMod)
---        ,("add_province_modifier"          , addModifier MsgProvMod)
---        ,("add_ruler_modifier"             , addModifier MsgRulerMod)
---        ,("add_trade_modifier"             , addModifier MsgTradeMod)
-         ("add_dynamic_modifier"           , addDynamicModifier)
---        ,("has_country_modifier"           , withLocAtom2 MsgCountryMod MsgHasModifier)
---        ,("has_province_modifier"          , withLocAtom2 MsgProvMod MsgHasModifier)
---        ,("has_ruler_modifier"             , withLocAtom2 MsgRulerMod MsgHasModifier)
---        ,("has_trade_modifier"             , tradeMod)
---        ,("remove_country_modifier"        , withLocAtom2 MsgCountryMod MsgRemoveModifier)
---        ,("remove_province_modifier"       , withLocAtom2 MsgProvMod MsgRemoveModifier)
+        [("add_dynamic_modifier"           , addDynamicModifier)
         ]
 
 -- | Handlers for simple compound statements

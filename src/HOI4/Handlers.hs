@@ -99,7 +99,6 @@ module HOI4.Handlers (
     ,   setGovtRank
     ,   numProvinces
     ,   withFlagOrState
-    ,   tradeMod
     ,   isMonth
     ,   range
     ,   area
@@ -3275,28 +3274,6 @@ withFlagOrState countryMsg _ stmt@[pdx| %_ = $_:$_ |]
 withFlagOrState _ provinceMsg stmt@[pdx| %_ = !(_ :: Double) |]
     = withState provinceMsg stmt
 withFlagOrState _ _ stmt = preStatement stmt
-
-
-tradeMod :: (HOI4Info g, Monad m) => StatementHandler g m
-tradeMod stmt@[pdx| %_ = ?_ |]
-    = withLocAtom2 MsgTradeMod MsgHasModifier stmt
-tradeMod stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_tm (foldl' addLine newTA scr)
-    where
-        addLine :: TextAtom -> GenericStatement -> TextAtom
-        addLine ta [pdx| who = ?who |]
-            = ta { ta_what = Just who }
-        addLine ta [pdx| $label = ?at |]
-            | label == "key" || label == "name"
-            = ta { ta_atom = Just at }
-        addLine ta scr = (trace ("tradeMod: Ignoring " ++ show scr)) $ ta
-
-        pp_tm ta = case (ta_what ta, ta_atom ta) of
-            (Just who, Just key) -> do
-                whoText <- flagText (Just HOI4Country) who
-                keyText <- getGameL10n key
-                return $ MsgHasTradeModifier "" whoText keyText
-            _ -> return $ preMessage stmt
-tradeMod stmt = preStatement stmt
 
 isMonth :: (HOI4Info g, Monad m) => StatementHandler g m
 isMonth [pdx| %_ = !(num :: Int) |] | num >= 0, num <= 11

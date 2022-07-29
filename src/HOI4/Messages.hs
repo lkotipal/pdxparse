@@ -235,11 +235,6 @@ data ScriptMessage
     | MsgGainLocPC {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgGainMP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMPFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgCountryMod
-    | MsgProvMod
-    | MsgPermanentProvMod
-    | MsgRulerMod
-    | MsgTradeMod
     | MsgAddMod {scriptMessageModid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgGainMod {scriptMessageModid :: Text, scriptMessageType :: Text, scriptMessageName :: Text}
     | MsgGainModDur {scriptMessageModid :: Text, scriptMessageType :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
@@ -249,8 +244,6 @@ data ScriptMessage
     | MsgActorGainsModDur {scriptMessageModid :: Text, scriptMessageWho :: Text, scriptMessageType :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgActorGainsModPow {scriptMessageModid :: Text, scriptMessageWho :: Text, scriptMessageType :: Text, scriptMessageName :: Text, scriptMessagePow :: Double}
     | MsgActorGainsModPowDur {scriptMessageModid :: Text, scriptMessageWho :: Text, scriptMessageType :: Text, scriptMessageName :: Text, scriptMessagePow :: Double, scriptMessageDays :: Double}
-    | MsgHasModifier {scriptMessageModid :: Text, scriptMessageKind :: Text, scriptMessageName :: Text}
-    | MsgRemoveModifier {scriptMessageModid :: Text, scriptMessageKind :: Text, scriptMessageName :: Text}
     | MsgArea
     | MsgCreateFaction {scriptMessageWhat :: Text}
     | MsgContinentIs {scriptMessageWhat :: Text}
@@ -850,7 +843,6 @@ data ScriptMessage
     | MsgCalcTrueIf {scriptMessageAmt :: Double}
     | MsgAddResearchSlot {scriptMessageAmt :: Double}
     | MsgAddThreat {scriptMessageAmt :: Double}
-    | MsgDisasterMod
     | MsgAddClaimFor {scriptMessageWho :: Text}
     | MsgAddClaimOn {scriptMessageWhere :: Text}
     | MsgAddAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -1980,16 +1972,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPc True) _amt)
                 , " of maximum"
                 ]
-        MsgCountryMod
-            -> "country modifier"
-        MsgProvMod
-            -> "province modifier"
-        MsgPermanentProvMod
-            -> "permanent province modifier"
-        MsgRulerMod
-            -> "ruler modifier"
-        MsgTradeMod
-            -> "trade modifier"
         MsgAddMod {scriptMessageModid = _modid, scriptMessageName = _name, scriptMessageDays = _days}
             -> mconcat
                 [ "Gain modifier "
@@ -2100,26 +2082,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNumSign True _pow)
                 , " Power) for "
                 , toMessage (formatDays _days)
-                ]
-        MsgHasModifier {scriptMessageModid = _modid, scriptMessageKind = _kind, scriptMessageName = _name}
-            -> mconcat
-                [ "Has "
-                , _kind
-                , " "
-                , toMessage (iquotes _name)
-                , " <!-- "
-                , _modid
-                , " -->"
-                ]
-        MsgRemoveModifier {scriptMessageModid = _modid, scriptMessageKind = _kind, scriptMessageName = _name}
-            -> mconcat
-                [ "Remove "
-                , _kind
-                , " ''\""
-                , _name
-                , "\"'' <!-- "
-                , _modid
-                , " -->"
                 ]
         MsgArea
             -> "Area containing this province:"
@@ -5955,8 +5917,6 @@ instance RenderMessage Script ScriptMessage where
                 , " by "
                 , toMessage (colourNum False _amt)
                 ]
-        MsgDisasterMod
-            -> "disaster modifier"
         MsgAddClaimFor {scriptMessageWho = _who}
             -> mconcat
                 [ _who
