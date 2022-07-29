@@ -444,22 +444,15 @@ handlersLocRhs = Tr.fromList
 -- | Handlers for statements whose RHS is a state ID
 handlersState :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersState = Tr.fromList
-        [("add_state_claim"   , withState MsgAddStateClaim)
-        ,("add_state_core"    , withState MsgAddStateCore)
-        ,("capital"           , withState MsgCapitalIs)
-        ,("controls_state"    , withState MsgControlsState)
+        [("add_state_claim"     , withState MsgAddStateClaim)
+        ,("add_state_core"      , withState MsgAddStateCore)
+        ,("controls_state"      , withState MsgControlsState)
         ,("has_full_control_of_state" , withState MsgHasFullControlOfState)
-        ,("discover_province" , withState MsgDiscoverProvince)
-        ,("higher_development_than" , withState MsgHigherDevelopmentThan)
-        ,("owns_state"              , withState MsgOwnsState)
-        ,("owns_core_province", withState MsgOwnsCore)
-        ,("owns_or_non_sovereign_subject_of" , withState MsgOwnsOrNonTribSubject)
-        ,("owns_or_vassal_of" , withState MsgOwnsOrVassal)
-        ,("province_id"       , withState MsgProvinceIs)
-        ,("remove_state_claim" , withState MsgRemoveStateClaim)
-        ,("set_capital"       , withState MsgSetCapital)
-        ,("state"             , withState MsgIsState)
-        ,("transfer_state"    , withState MsgTransferState)
+        ,("owns_state"          , withState MsgOwnsState)
+        ,("remove_state_claim"  , withState MsgRemoveStateClaim)
+        ,("remove_state_core"   , withState MsgRemoveStateCore)
+        ,("set_capital"         , withState MsgSetCapital)
+        ,("transfer_state"      , withState MsgTransferState)
         ]
 
 -- | Handlers for statements whose RHS is a flag OR a province ID

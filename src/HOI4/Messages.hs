@@ -197,7 +197,6 @@ data ScriptMessage
     | MsgController
     | MsgCapital
     | MsgState {scriptMessageWhere :: Text}
-    | MsgIsState {scriptMessageWhere :: Text}
     | MsgSCOPEEventTarget {scriptMessageTag :: Text}
     | MsgEventTargetVar {scriptMessageTag :: Text}
     | MsgSCOPEVariable {scriptMessageTag :: Text}
@@ -267,10 +266,9 @@ data ScriptMessage
     | MsgTooltip {scriptMessageWhat :: Text}
     | MsgCustomEffectTooltip {scriptMessageWhat :: Text}
     | MsgRemoveFromEstate {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgProvinceIs {scriptMessageWhat :: Text}
     | MsgRemoveStateClaim {scriptMessageWhat :: Text}
+    | MsgRemoveStateCore {scriptMessageWhat :: Text}
     | MsgOwnsState {scriptMessageWhat :: Text}
-    | MsgOwnsCore {scriptMessageWhat :: Text}
     | MsgControlsState {scriptMessageWhat :: Text}
     | MsgHasFullControlOfState {scriptMessageWhat :: Text}
     | MsgAdvisorExists {scriptMessageAdvisorID :: Double}
@@ -337,7 +335,6 @@ data ScriptMessage
     | MsgIsControlledBy {scriptMessageWhom :: Text}
     | MsgHasDefensiveWarWith {scriptMessageWhom :: Text}
     | MsgDiscoverCountry {scriptMessageWhom :: Text}
-    | MsgDiscoverProvince {scriptMessageWhat :: Text}
     | MsgAddClaimBy {scriptMessageWho :: Text}
     | MsgGainCore {scriptMessageWho :: Text}
     | MsgAddStateClaim {scriptMessageWhat :: Text}
@@ -623,7 +620,6 @@ data ScriptMessage
     | MsgNormalOrHistoricalNations {scriptMessageYn :: Bool}
     | MsgIsCustomNation {scriptMessageYn :: Bool}
     | MsgReligionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgCapitalIs {scriptMessageWhat :: Text}
     | MsgFullIdeaGroup {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgSetRule {scriptMessageAmt :: Double}
     | MsgSetRuleYes {scriptMessageWhat :: Text}
@@ -695,7 +691,6 @@ data ScriptMessage
     | MsgOverlordOf {scriptMessageWhom :: Text}
     | MsgSetStateName {scriptMessageWhat :: Text}
     | MsgSetStateCategory {scriptMessageWhat :: Text}
-    | MsgOwnsOrVassal {scriptMessageWhere :: Text}
     | MsgIsInColonialRange {scriptMessageWhom :: Text}
     | MsgConstructingGreatProject {scriptMessageWhat :: Text}
     | MsgAlways {scriptMessageYn :: Bool}
@@ -1062,7 +1057,6 @@ data ScriptMessage
     | MsgProviceHasCenterOfTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrivateerPower {scriptMessageAmt :: Double}
     | MsgPrivateerPowerCountry {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
-    | MsgOwnsOrNonTribSubject {scriptMessageWhat :: Text}
     | MsgHasConsortRegency {scriptMessageYn :: Bool}
     | MsgHasCivilWar {scriptMessageYn :: Bool}
     | MsgIsOwnedByTradeCompany {scriptMessageYn :: Bool}
@@ -1155,7 +1149,6 @@ data ScriptMessage
     | MsgInstitutionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgArmyStrength {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgNavalStrength {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
-    | MsgHigherDevelopmentThan {scriptMessageWhat :: Text}
     | MsgNumEstatePrivileges {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAcceptVassalizationReasons {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAdmAdvisorCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1757,11 +1750,6 @@ instance RenderMessage Script ScriptMessage where
                 , _where
                 , ":"
                 ]
-        MsgIsState {scriptMessageWhere = _where}
-            -> mconcat
-                [ "State "
-                , _where
-                ]
         MsgSCOPEEventTarget {scriptMessageTag = _tag}
             -> mconcat
                 [ "[SCOPE]Event target <tt>"
@@ -2096,24 +2084,19 @@ instance RenderMessage Script ScriptMessage where
                 , _whom
                 , " estate"
                 ]
-        MsgProvinceIs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Province is "
-                , _what
-                ]
         MsgRemoveStateClaim {scriptMessageWhat = _what}
             -> mconcat
-                [ "Lose a claim on "
+                [ "Loses a claim on "
+                , _what
+                ]
+        MsgRemoveStateCore {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Loses core on "
                 , _what
                 ]
         MsgOwnsState {scriptMessageWhat = _what}
             -> mconcat
                 [ "Owns state "
-                , _what
-                ]
-        MsgOwnsCore {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Owns core province "
                 , _what
                 ]
         MsgControlsState {scriptMessageWhat = _what}
@@ -2562,11 +2545,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Discover "
                 , _whom
                 ]
-        MsgDiscoverProvince {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Discover "
-                , _what
-                ]
         MsgAddClaimBy {scriptMessageWho = _who}
             -> mconcat
                 [ "Is claimed by "
@@ -2579,12 +2557,12 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddStateClaim {scriptMessageWhat = _what}
             -> mconcat
-                [ "Gains a claim on "
+                [ "Gains claim on "
                 , _what
                 ]
         MsgAddStateCore {scriptMessageWhat = _what}
             -> mconcat
-                [ "Gains a core on "
+                [ "Gains core on "
                 , _what
                 ]
         MsgGainPermanentClaimCountry {scriptMessageWho = _who}
@@ -4462,11 +4440,6 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " religion is enabled"
                 ]
-        MsgCapitalIs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Capital is "
-                , _what
-                ]
         MsgFullIdeaGroup {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Has completed "
@@ -4896,12 +4869,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Set state category to "
                 , _what
-                ]
-        MsgOwnsOrVassal {scriptMessageWhere = _where}
-            -> mconcat
-                [ "Owns "
-                , _where
-                , " or is overlord of its owner"
                 ]
         MsgIsInColonialRange {scriptMessageWhom = _whom}
             -> mconcat
@@ -7412,11 +7379,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage $ bold (plainPc _amt)
                 , " trade power from [[privateering]]"
                 ]
-        MsgOwnsOrNonTribSubject {scriptMessageWhat = _what}
-            -> mconcat
-                [ _what
-                , " is owned by the country or or its non-tributary subjects"
-                ]
         MsgHasConsortRegency {scriptMessageYn = _yn}
             -> mconcat
                 [ "Is"
@@ -8048,11 +8010,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " times that of "
                 , _whom
-                ]
-        MsgHigherDevelopmentThan {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has higher development than "
-                , _what
                 ]
         MsgNumEstatePrivileges {scriptMessageIcon = _icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
             -> mconcat
