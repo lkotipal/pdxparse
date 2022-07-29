@@ -11,7 +11,7 @@ import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 
 import Data.Char (toLower)
-import Data.List (intersperse)
+import Data.List (intersperse, intercalate)
 import qualified Data.HashMap.Strict as HM
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -27,7 +27,7 @@ import System.IO (hPutStrLn, stderr)
 import qualified System.Info
 import System.FilePath ((</>))
 
-import Control.Monad (when, liftM, forM_)
+import Control.Monad (when, liftM, forM_, unless)
 
 import Localization (readL10n)
 import SettingsTypes ( CLArgs (..), Settings (..), Game (..), IsGame (..)
@@ -58,14 +58,14 @@ instance FromJSON SettingsInput where
         settingsIn <- o .: "settings"
         case settingsIn of
             Object o' -> SettingsInput
-                            <$> liftM (fmap T.unpack) (o' .:? "steam_drive")
-                            <*> liftM (fmap T.unpack) (o' .:? "steam_dir")
-                            <*> liftM (fmap T.unpack) (o' .:? "steam_apps")
-                            <*> liftM T.unpack (o' .: "game")
+                            <$> fmap (fmap T.unpack) (o' .:? "steam_drive")
+                            <*> fmap (fmap T.unpack) (o' .:? "steam_dir")
+                            <*> fmap (fmap T.unpack) (o' .:? "steam_apps")
+                            <*> fmap T.unpack (o' .: "game")
                             <*> (o' .: "language")
-                            <*> liftM T.unpack (o' .: "version")
-                            <*> liftM (fmap T.unpack) (o' .:? "mod_name")
-                            <*> liftM (fmap T.unpack) (o' .:? "mod_path")
+                            <*> fmap T.unpack (o' .: "version")
+                            <*> fmap (fmap T.unpack) (o' .:? "mod_name")
+                            <*> fmap (fmap T.unpack) (o' .:? "mod_path")
             _ -> fail "bad settings file"
     parseJSON _ = fail "bad settings file"
 
@@ -112,7 +112,7 @@ programOpts =
 readSettings :: IO Settings
 readSettings = do
     (opts, nonopts, errs) <- getOpt Permute programOpts <$> getArgs
-    when (not (null errs)) $ do
+    unless (null errs) $ do
         forM_ errs $ \err -> putStrLn err
         exitFailure
 
@@ -122,7 +122,7 @@ readSettings = do
     when (Paths `elem` opts || Version `elem` opts) $ do
         when (Version `elem` opts) $
             let V.Version branch _ = version
-            in putStrLn $ "pdxparse " ++ concat (intersperse "." (map show branch))
+            in putStrLn $ "pdxparse " ++ intercalate "." (map show branch)
         when (Paths `elem` opts) $
             putStrLn $ "Settings file is at " ++ settingsFilePath
         exitSuccess
@@ -177,7 +177,7 @@ readSettings = do
                             , gameOrModFolder = gameormodfolder
                             , gameModPath = modlocation
                             , gamePath = steamDirCanonicalized </> steamAppsCanonicalized </> gamefolder
-                            , justLanguage = (T.unpack lang)
+                            , justLanguage = T.unpack lang
                             , language = "l_" <> lang
                             , languageFolder = langFolder
                             , languageS = "l_" <> T.unpack lang

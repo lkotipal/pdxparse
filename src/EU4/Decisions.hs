@@ -141,9 +141,9 @@ writeEU4Decisions = do
 pp_decision :: (EU4Info g, Monad m) => EU4Decision -> PPT g m Doc
 pp_decision dec = do
     version <- gets (gameVersion . getSettings)
-    pot_pp'd    <- scope EU4Country (pp_script (dec_potential dec))
-    allow_pp'd  <- scope EU4Country (pp_script (dec_allow dec))
-    effect_pp'd <- setIsInEffect True (scope EU4Country (pp_script (dec_effect dec)))
+    pot_pp'd    <- scope EU4Country (ppScript (dec_potential dec))
+    allow_pp'd  <- scope EU4Country (ppScript (dec_allow dec))
+    effect_pp'd <- setIsInEffect True (scope EU4Country (ppScript (dec_effect dec)))
     mawd_pp'd   <- mapM ((imsg2doc =<<) . ppAiWillDo) (dec_ai_will_do dec)
     let name = dec_name dec
         nameD = Doc.strictText name
@@ -156,7 +156,7 @@ pp_decision dec = do
         ,"| decision_name = ", Doc.strictText name_loc, PP.line
         ,maybe mempty
                (\txt -> mconcat ["| decision_text = ", Doc.strictText txt, PP.line])
-               (dec_text dec) 
+               (dec_text dec)
         ,"| potential = ", PP.line, pot_pp'd, PP.line
         ,"| allow = ", PP.line, allow_pp'd, PP.line
         ,"| effect = ", PP.line, effect_pp'd, PP.line

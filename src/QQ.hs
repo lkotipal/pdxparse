@@ -148,19 +148,19 @@ expHsGeneric = do
             CodeNotString _ -> True
             _ -> False
     -- Don't use custom patterns where generic ones work
-    if (isCodeNotString head || any isCodeNotString rest)
+    if isCodeNotString head || any isCodeNotString rest
         then return $ ExpHsGeneric head rest
         else fail "no variable component"
 
 -- | Custom component for statement LHS. This parses the LHS variable sigils.
-e_lhs :: Parser StExpL
-e_lhs = expHsGeneric
+eLhs :: Parser StExpL
+eLhs = expHsGeneric
     <|> ExpHsDirect  . T.unpack <$> ("%" *> haskell)
     <|> ExpHsInt     . T.unpack <$> ("!" *> haskell)
 
 -- | Custom component for statement RHS. This parses the RHS variable sigils.
-e_rhs :: Parser StExpR
-e_rhs = expHsGeneric
+eRhs :: Parser StExpR
+eRhs = expHsGeneric
     <|> ExpHsDirect   . T.unpack <$> ("%" *> haskell)
     <|> ExpHsString   . T.unpack <$> ("?" *> haskell)
     <|> ExpHsCompound . T.unpack <$> ("@" *> haskell)
@@ -172,31 +172,31 @@ e_rhs = expHsGeneric
 haskell :: Parser Text
 haskell
     = ident
-  <|> (Ap.string "(" *> haskell_body <* Ap.string ")")
+  <|> (Ap.string "(" *> haskellBody <* Ap.string ")")
 
 -- | Body of a Haskell expression. This stage interprets the expression as pure
 -- text; it is parsed as Haskell later.
-haskell_body :: Parser Text
-haskell_body = do
+haskellBody :: Parser Text
+haskellBody = do
     next <- Ap.peekChar
     case next of
         Nothing  -> fail "eof inside antiquote"
         Just ')' -> return ""
-        Just '(' -> (<>) <$> haskell_parens <*> haskell_body
-        _        -> (<>) <$> (T.singleton <$> Ap.anyChar) <*> haskell_body
+        Just '(' -> (<>) <$> haskellParens <*> haskellBody
+        _        -> (<>) <$> (T.singleton <$> Ap.anyChar) <*> haskellBody
 
 -- | A parenthesized Haskell expression. This stage interprets the expression
 -- as pure text; it is parsed as Haskell later.
-haskell_parens :: Parser Text
-haskell_parens = T.concat <$> sequence
+haskellParens :: Parser Text
+haskellParens = T.concat <$> sequence
     [Ap.string "("
-    ,haskell_body
+    ,haskellBody
     ,Ap.string ")"
     ]
 
 -- | Expression component of the quasiquoter.
-pdx_e :: String -> Q Exp
-pdx_e s = case Ap.parseOnly (Ap.skipSpace *> statement e_lhs e_rhs <* Ap.skipSpace) (fromString s) of
+pdxE :: String -> Q Exp
+pdxE s = case Ap.parseOnly (Ap.skipSpace *> statement eLhs eRhs <* Ap.skipSpace) (fromString s) of
                 Left _ -> error "invalid statement (expression)"
                 Right e -> prostmt2stmt e
 
@@ -256,8 +256,8 @@ rhs2exp other = [| other |]
 --------------
 
 -- | Pattern component of the quasiquoter.
-pdx_p :: String -> Q Pat
-pdx_p s = case Ap.parseOnly (Ap.skipSpace *> statement p_lhs p_rhs <* Ap.skipSpace) (fromString s) of
+pdxP :: String -> Q Pat
+pdxP s = case Ap.parseOnly (Ap.skipSpace *> statement pLhs pRhs <* Ap.skipSpace) (fromString s) of
                 Left _ -> error "invalid statement (pattern)"
                 Right propat -> propat2pat propat
 
@@ -278,8 +278,8 @@ data StPat
 type StPatL = StPat
 type StPatR = StPat
 
-atoms_p :: Parser StPat
-atoms_p = do
+atomsP :: Parser StPat
+atomsP = do
     -- sepBy1 guarantees non-empty list
     (head:rest) <- (    StringNotCode . T.unpack <$> ident
                     <|> CodeNotString . T.unpack <$> ("$" *> haskell))
@@ -288,23 +288,23 @@ atoms_p = do
             CodeNotString _ -> True
             _ -> False
     -- Don't use custom patterns where generic ones work
-    if (isCodeNotString head || any isCodeNotString rest)
+    if isCodeNotString head || any isCodeNotString rest
         then return $ PatSomeGeneric head rest
         else fail "no variable component"
 
 -- | Custom component for statement LHS. This parses the LHS variable sigils.
-p_lhs :: Parser StPatL
-p_lhs = (PatHs          . T.unpack) <$> ("%"  *> haskell) -- %foo => type inferred
-    <|> atoms_p -- foo:$bar:baz:$(quux quuux) - any combo of literal or variable
+pLhs :: Parser StPatL
+pLhs =  PatHs       . T.unpack <$> ("%"  *> haskell) -- %foo => type inferred
+    <|> atomsP -- foo:$bar:baz:$(quux quuux) - any combo of literal or variable
     -- If no sigil, fall back to normal handling.
-    <|> (PatSomeInt     . T.unpack) <$> ("!" *> haskell)
+    <|> PatSomeInt  . T.unpack <$> ("!" *> haskell)
 
 -- | Custom component for statement RHS. This parses the RHS variable sigils.
-p_rhs :: Parser StPatR
-p_rhs = (PatStringOrNum . T.unpack) <$> ("?!" *> haskell)
-    <|> (PatStringlike  . T.unpack) <$> ("?" *> haskell)
-    <|> (PatCompound    . T.unpack) <$> ("@" *> haskell)
-    <|> p_lhs
+pRhs :: Parser StPatR
+pRhs =  PatStringOrNum . T.unpack <$> ("?!" *> haskell)
+    <|> PatStringlike  . T.unpack <$> ("?" *> haskell)
+    <|> PatCompound    . T.unpack <$> ("@" *> haskell)
+    <|> pLhs
 
 -- | Convert a statement into the equivalent pattern.
 propat2pat :: Statement StPatL StPatR -> Q Pat
@@ -405,18 +405,18 @@ TL.deriveLiftMany [''StringOrCode, ''Lhs, ''Rhs, ''Operator, ''Date, ''Statement
 -- supported.
 pdx :: QuasiQuoter
 pdx = QuasiQuoter {
-            quoteExp  = pdx_e
-        ,   quotePat  = pdx_p
-        ,   quoteType = pdx_t
-        ,   quoteDec  = pdx_d
+            quoteExp  = pdxE
+        ,   quotePat  = pdxP
+        ,   quoteType = pdxT
+        ,   quoteDec  = pdxD
         }
 
 -- | Type component for the quasiquoter. Since this is not meaningful, it just
 -- throws an error.
-pdx_t :: String -> Q Type
-pdx_t = error "quasiquoting statements in type context not supported"
+pdxT :: String -> Q Type
+pdxT = error "quasiquoting statements in type context not supported"
 
 -- | Declaration component for the quasiquoter. Since this is not meaningful,
 -- it just throws an error.
-pdx_d :: String -> Q [Dec]
-pdx_d = error "quasiquoting statements in declaration context not supported"
+pdxD :: String -> Q [Dec]
+pdxD = error "quasiquoting statements in declaration context not supported"

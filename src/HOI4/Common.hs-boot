@@ -1,5 +1,5 @@
 module HOI4.Common (
-        pp_script
+        ppScript
     ,   ppMany
     ,   ppOne
     ,   extractStmt
@@ -13,7 +13,7 @@ import SettingsTypes (PPT)
 import HOI4.Types (HOI4Info)
 import Data.Text (Text)
 
-pp_script :: (HOI4Info g, Monad m) => GenericScript -> PPT g m Doc
+ppScript :: (HOI4Info g, Monad m) => GenericScript -> PPT g m Doc
 ppMany :: (HOI4Info g, Monad m) => GenericScript -> PPT g m IndentedMessages
 ppOne :: (HOI4Info g, Monad m) => StatementHandler g m
 extractStmt :: (a -> Bool) -> [a] -> (Maybe a, [a])

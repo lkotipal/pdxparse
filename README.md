@@ -58,6 +58,8 @@ only the files you want, and rebuild.
     * add_country_leader, promote_character aren't processed. Would probably need to load common/characters for it to be properly handled.
     * ~~add_ideas, remove_ideas can have multiple ideas in an array, but they aren't handled (no clue how to do it)~~
     * no icons in modifier statements
+    * alias tags aren't properly handled
+    * equipment_bonus modifier isn't handled
 
 ## To do
 Feel extremely free to help with any of these or the issues, I honestly doubt I can do any of these except maybe the additonal formatting
@@ -92,3 +94,10 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * maybe load history/units/ for load_OOB
 * maybe load technology for has_tech
 * maybe load country_leader for traits
+
+## Thanks
+* Thanks the functional programming discord community for helping me out in specific:
+    * Edmundnoble
+    * skykanin سكايكانن
+    * Cyrus T
+    * let morrow = fix error

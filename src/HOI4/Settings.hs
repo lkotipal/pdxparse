@@ -72,10 +72,10 @@ fixLocalization s =
         newL10n = HM.insert "CHI" (LocEntry 0 newHavLoc) l10nForLan
     in
         if chiLoc == findKey "PRC" then
-            (trace $ "Note: Applying localization fix for CHI/PRC: " ++ (show chiLoc) ++ " -> " ++ (show newHavLoc)) $
+            trace ("Note: Applying localization fix for CHI/PRC: " ++ show chiLoc ++ " -> " ++ show newHavLoc) $
                 s { gameL10n = HM.insert lan newL10n l10n }
         else
-            (trace "Warning: fixLocalization hack for CHI/PRC in HOI4/Settings.hs no longer needed!") $ s
+            trace "Warning: fixLocalization hack for CHI/PRC in HOI4/Settings.hs no longer needed!" s
 
 -- | HOI4 game type. This is only interesting for its instances.
 data HOI4 = HOI4
@@ -499,14 +499,15 @@ parseHOI4Scripts = do
 writeHOI4Scripts :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4Scripts = do
     settings <- gets getSettings
-    unless (Onlyextra `elem` (clargs settings)) $ do
+    unless (Onlyextra `elem` clargs settings) $ do
+--        liftIO $ putStrLn "Writing ideas."
 --        writeHOI4Ideas
         liftIO $ putStrLn "Writing events."
---        writeHOI4Events
+        writeHOI4Events
         liftIO $ putStrLn "Writing decision categories."
---        writeHOI4DecisionCats
+        writeHOI4DecisionCats
         liftIO $ putStrLn "Writing decisions."
---        writeHOI4Decisions
+        writeHOI4Decisions
         liftIO $ putStrLn "Writing national focuses."
         writeHOI4NationalFocuses
 --        writeHOI4Missions

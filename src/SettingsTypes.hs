@@ -191,7 +191,7 @@ instance IsGame UnknownGame where
 -- including instances.
 data UnknownGameScope = UnknownGameScope
 
-data UnknownGameData = UnknownGameData {
+newtype UnknownGameData = UnknownGameData {
             ugSettings :: Settings
         }
 instance IsGameData (GameData UnknownGame) where
@@ -349,21 +349,21 @@ alsoIndent' x = withCurrentIndent $ \i -> return (i,x)
 
 -- | Get the current game language.
 getCurrentLang :: (IsGameData (GameData g), Monad m) => PPT g m L10nLang
-getCurrentLang = HM.findWithDefault HM.empty <$> gets (language . getSettings) <*> gets (gameL10n . getSettings)
+getCurrentLang = gets (HM.findWithDefault HM.empty . language . getSettings) <*> gets (gameL10n . getSettings)
 
 -- | Get the localization string for a given key. If it doesn't exist, use the
 -- key itself.
 getGameL10n :: (IsGameData (GameData g), Monad m) => Text -> PPT g m Text
-getGameL10n key = content <$> HM.findWithDefault (LocEntry 0 key) key <$> getCurrentLang
+getGameL10n key = content . HM.findWithDefault (LocEntry 0 key) key <$> getCurrentLang
 
 -- | Get the localization string for a given key. If it doesn't exist, use the
 -- given default (the first argument) instead.
 getGameL10nDefault :: (IsGameData (GameData g), Monad m) => Text -> Text -> PPT g m Text
-getGameL10nDefault def key = content <$> HM.findWithDefault (LocEntry 0 def) key <$> getCurrentLang
+getGameL10nDefault def key = content . HM.findWithDefault (LocEntry 0 def) key <$> getCurrentLang
 
 -- | Get the localization string for a given key, if it exists.
 getGameL10nIfPresent :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Maybe Text)
-getGameL10nIfPresent key = fmap content <$> HM.lookup key <$> getCurrentLang
+getGameL10nIfPresent key = fmap content . HM.lookup key <$> getCurrentLang
 
 -- | Pass the current file to the action. If there is no current file, set it
 -- to "(unknown)".
@@ -399,7 +399,7 @@ unfoldM f = go where
 
 -- | Extract the embedded monadic value from a ReaderT.
 fromReaderT :: ReaderT r m a -> Reader r (m a)
-fromReaderT mx = runReaderT mx <$> ask
+fromReaderT mx = asks (runReaderT mx)
 
 -- | Embed a monadic value in a ReaderT.
 toReaderT :: Reader r (m a) -> ReaderT r m a
@@ -408,7 +408,7 @@ toReaderT mx = ReaderT (runIdentity . runReaderT mx)
 -- | As 'Data.List.concatMap', but generalized to arbitrary Traversables and
 -- the function passed in is monadic.
 concatMapM :: (Monad m, Traversable t, Monoid (t b)) => (a -> m (t b)) -> t a -> m (t b)
-concatMapM f xs = liftM fold . mapM f $ xs
+concatMapM f = fmap fold . mapM f
 
 -- | Find the last element of a list and chop it off, returning it along with
 -- the rest of the list.

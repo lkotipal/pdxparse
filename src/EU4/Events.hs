@@ -62,7 +62,7 @@ parseEU4Events scripts = HM.unions . HM.elems <$> do
         HM.traverseWithKey
             (\sourceFile scr ->
                 setCurrentFile sourceFile $ mapM parseEU4Event scr)
-            scripts 
+            scripts
     case tryParse of
         Left err -> do
             traceM $ "Completely failed parsing events: " ++ T.unpack err
@@ -369,7 +369,7 @@ pp_event evt = case (eu4evt_id evt
             evtArg fieldname field fmt
                 = maybe (return [])
                     (\field_content -> do
-                        content_pp'd <- fmt field_content 
+                        content_pp'd <- fmt field_content
                         return
                             ["| ", Doc.strictText fieldname, " = "
                             ,PP.line
@@ -379,9 +379,9 @@ pp_event evt = case (eu4evt_id evt
             isTriggeredOnly = fromMaybe False $ eu4evt_is_triggered_only evt
             isFireOnlyOnce = eu4evt_fire_only_once evt
             evtId = Doc.strictText eid
-        trigger_pp'd <- evtArg "trigger" eu4evt_trigger pp_script
+        trigger_pp'd <- evtArg "trigger" eu4evt_trigger ppScript
         mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (eu4evt_mean_time_to_happen evt)
-        immediate_pp'd <- setIsInEffect True (evtArg "immediate" eu4evt_immediate pp_script)
+        immediate_pp'd <- setIsInEffect True (evtArg "immediate" eu4evt_immediate ppScript)
         triggered_pp <- ppTriggeredBy eid
         -- Keep track of incomplete events
         when (not isTriggeredOnly && isNothing mmtth_pp'd) $
@@ -454,8 +454,8 @@ pp_option evtid hidden triggered opt = do
             else throwError $ "some required option sections missing in " <> evtid <> " - dumping: " <> T.pack (show opt)
     where
         ok name_loc = let mtrigger = eu4opt_trigger opt in do
-            effects_pp'd <- setIsInEffect True (pp_script (fromMaybe [] (eu4opt_effects opt)))
-            mtrigger_pp'd <- sequence (pp_script <$> mtrigger)
+            effects_pp'd <- setIsInEffect True (ppScript (fromMaybe [] (eu4opt_effects opt)))
+            mtrigger_pp'd <- sequence (ppScript <$> mtrigger)
             return . mconcat $
                 ["{{Option\n"
                 ,"| option_text = ", Doc.strictText name_loc, PP.line

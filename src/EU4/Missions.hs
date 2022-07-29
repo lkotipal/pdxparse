@@ -145,7 +145,7 @@ writeEU4Missions = do
         pp_mtb :: (EU4Info g, Monad m) => EU4MissionTreeBranch -> PPT g m Doc
         pp_mtb mtb = setCurrentFile (eu4mtb_path mtb) $ do
             version <- gets (gameVersion . getSettings)
-            potential <- mapM (scope EU4Country . pp_script) (eu4mtb_potential mtb)
+            potential <- mapM (scope EU4Country . ppScript) (eu4mtb_potential mtb)
             missionText <- mapM pp_m (eu4mtb_missions mtb)
             return $ mconcat $ [
                         Doc.strictText $ "===" <> eu4mtb_id mtb <> "===", PP.line, -- apparently there's no localization of the headline
@@ -189,8 +189,8 @@ writeEU4Missions = do
         pp_m m = do
             title <- getGameL10n $ (eu4m_id m) <> "_title"
             desc <- getGameL10n $ (eu4m_id m) <> "_desc"
-            trigger <- scope EU4Country (pp_script (eu4m_trigger m))
-            effect <- setIsInEffect True (scope EU4Country (pp_script (eu4m_effect m)))
+            trigger <- scope EU4Country (ppScript (eu4m_trigger m))
+            effect <- setIsInEffect True (scope EU4Country (ppScript (eu4m_effect m)))
             prereqs <- mapM pp_prereq (eu4m_prerequisites m)
             return $ mconcat  $ [
                 "|-",

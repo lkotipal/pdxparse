@@ -59,7 +59,7 @@ module Abstract (
     ) where
 
 
-import Control.Applicative (Applicative (..), Alternative (..))
+import Control.Applicative (Applicative (..), Alternative (..), many)
 import Control.Monad (void)
 
 import qualified Data.Foldable as F
@@ -74,6 +74,8 @@ import Data.Void
 
 import Data.Attoparsec.Text (Parser, (<?>))
 import qualified Data.Attoparsec.Text as Ap
+
+import Data.Functor (($>))
 
 import Doc (Doc, (<++>))
 import qualified Text.PrettyPrint.Leijen.Text as PP
@@ -203,7 +205,7 @@ floatOrTextRhs rhs = case floatRhs rhs of
 -- rest of the line.
 skipSpace :: Parser ()
 skipSpace = Ap.skipMany
-            (   (void Ap.space)
+            (void Ap.space
             <|> comment)
 
 -- | A comment is a # followed by the rest of the line. This parser also
@@ -221,7 +223,7 @@ restOfLine = (Ap.many1' Ap.endOfLine >> return "")
 -- a number (or an @ in weird cases?) (and dots in case of floats) and continue with letters, numbers, underscores, at-signs, dashes, question marks (for variables) and full stops.
 ident :: Parser Text
 ident = do
-        res <- (<>) <$> (T.singleton <$> (Ap.satisfy (\c -> c `elem` ['@','_','.','-'] || isAlphaNum c)))
+        res <- (<>) <$> (T.singleton <$> Ap.satisfy (\c -> c `elem` ['@','_','.','-'] || isAlphaNum c))
                     <*> Ap.takeWhile (\c -> c `elem` ['_','.','@','-','?','^','/'] || isAlphaNum c)
         if T.all isDigit res
             then fail "ident: numeric identifier"
@@ -246,20 +248,25 @@ intLit = Ap.signed Ap.decimal
         mnext <- Ap.peekChar
         case mnext of
             Nothing -> return () -- EOF, all good
-            Just c -> if (c == '}' || c == '#' || isSpace c)
+            Just c -> if c == '}' || c == '#' || isSpace c
                         then return () -- space or comment follows
                         else fail "intLit")
     <?> "integer literal"
 
 -- | A floating-point literal. Must be followed by whitespace or eof to prevent
--- confusion with identifiers that begin with digits.
+-- confusion with identifiers that begin with digits. It also reads weird edge cases where the leading 0 is left out.
 floatLit :: Parser Double
-floatLit = Ap.signed Ap.double
+floatLit = Ap.signed (do
+    d <- Ap.option 0 Ap.decimal
+    Ap.char '.'
+    res <- many Ap.digit
+    let decimal :: Double = read $ "0." <> res
+    pure $ fromIntegral d + decimal)
     <* (do
         mnext <- Ap.peekChar
         case mnext of
             Nothing -> return () -- EOF, all good
-            Just c -> if (c == '}' || c == '#' || isSpace c)
+            Just c -> if c == '}' || c == '#' || isSpace c
                         then return () -- space or comment follows
                         else fail "floatLit")
     <?> "float literal"
@@ -281,17 +288,17 @@ stringChar :: Parser Char
 stringChar = ("\\" *> escapedChar)
          <|> Ap.notChar '"'
 escapedChar :: Parser Char
-escapedChar = ("0" *> return '\0')
-          <|> ("a" *> return '\a')
-          <|> ("b" *> return '\b')
-          <|> ("e" *> return '\ESC')
-          <|> ("f" *> return '\f')
-          <|> ("n" *> return '\n')
-          <|> ("r" *> return '\r')
-          <|> ("t" *> return '\t')
-          <|> ("v" *> return '\v')
-          <|> ("\"" *> return '"')
-          <|> ("\\" *> return '\\')
+escapedChar = "0" $> '\0'
+          <|> "a" $> '\a'
+          <|> "b" $> '\b'
+          <|> "e" $> '\ESC'
+          <|> "f" $> '\f'
+          <|> "n" $> '\n'
+          <|> "r" $> '\r'
+          <|> "t" $> '\t'
+          <|> "v" $> '\v'
+          <|> "\"" $> '"'
+          <|> "\\" $> '\\'
     <?> "character escape sequence"
 
 
@@ -350,9 +357,9 @@ lhs custom = CustomLhs <$> custom
 --  operator ::= \"<\" | \"=\" | \">\"
 -- @
 operator :: Parser Operator
-operator = "=" *> pure OpEq
-       <|> "<" *> pure OpLT
-       <|> ">" *> pure OpGT
+operator = "=" $> OpEq
+       <|> "<" $> OpLT
+       <|> ">" $> OpGT
    <?> "operator"
 
 -- | Statement RHS, possibly with custom elements. Since this may be a
@@ -438,7 +445,7 @@ rhs2doc _ customRhs (CustomRhs rhs) = customRhs rhs
 rhs2doc _ _ (GenericRhs s ts) = Doc.strictText s <> mconcat (map ((":" <>) . Doc.strictText) ts)
 rhs2doc _ _ (StringRhs rhs) = PP.text (TL.pack (show rhs))
 rhs2doc _ _ (IntRhs rhs) = PP.text (TL.pack (show rhs))
-rhs2doc _ _ (FloatRhs rhs) = Doc.pp_float rhs
+rhs2doc _ _ (FloatRhs rhs) = Doc.ppFloat rhs
 rhs2doc customLhs customRhs (CompoundRhs rhs)
     = PP.vsep ["{", PP.indent 4 (script2doc customLhs customRhs rhs), PP.text "}"]
 rhs2doc _ _ (DateRhs (Date year month day)) =

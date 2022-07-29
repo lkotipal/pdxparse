@@ -278,10 +278,10 @@ pp_national_focus gfx nf = do
     prerequisite_pp <- ppPrereq $ catMaybes $ nf_prerequisite nf
     allowBranch_pp <- ppAllowBranch $ nf_allow_branch nf
     mutuallyExclusive_pp <- ppMutuallyExclusive $ nf_mutually_exclusive nf
-    available_pp <- nfArg nf_available pp_script
-    bypass_pp <- nfArgExtra "bypass" nf_bypass pp_script
-    completionReward_pp <- setIsInEffect True $ nfArg nf_completion_reward pp_script
-    selectEffect_pp <- setIsInEffect True $ nfArgExtra "select" nf_select_effect pp_script
+    available_pp <- nfArg nf_available ppScript
+    bypass_pp <- nfArgExtra "bypass" nf_bypass ppScript
+    completionReward_pp <- setIsInEffect True $ nfArg nf_completion_reward ppScript
+    selectEffect_pp <- setIsInEffect True $ nfArgExtra "select" nf_select_effect ppScript
     return . mconcat $
         [ "|- id = \"", Doc.strictText (nf_name_loc nf),"\"" , PP.line
         , "|style=\"text-align:center\"| [[File:", Doc.strictText icon_pp, ".png|center|bottom|70px]] ", Doc.strictText (nf_name_loc nf) , " <!-- ", Doc.strictText (nf_id nf), " -->", PP.line
@@ -308,7 +308,7 @@ ppPrereq prereqs = mapM ppTitle prereqs
                 else
                     [Doc.strictText "* Requires one of the following:", PP.line]
             reqs <- sequenceA
-                [indentUp (pp_script prereq), pure PP.line
+                [indentUp (ppScript prereq), pure PP.line
                 ]
             return . mconcat $ reqfol ++ reqs
 
@@ -318,7 +318,7 @@ ppMutuallyExclusive (Just mex) = ppTitle mex
     where
         ppTitle mexc = do
             let mexfol = mconcat [Doc.strictText "* {{icon|ExclusiveM}} Mutually exclusive with:", PP.line]
-            mexcpp <- indentUp (pp_script mexc)
+            mexcpp <- indentUp (ppScript mexc)
             let excl = [mexfol, mexcpp, PP.line]
             return excl
 
@@ -328,6 +328,6 @@ ppAllowBranch (Just abr) = ppTitle abr
     where
         ppTitle awbr = do
             let awbrfol = mconcat [Doc.strictText "* Allow Branch if:", PP.line]
-            awbrpp <- indentUp (pp_script awbr)
+            awbrpp <- indentUp (ppScript awbr)
             let allwbr = [awbrfol, awbrpp, PP.line]
             return allwbr

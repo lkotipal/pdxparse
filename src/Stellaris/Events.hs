@@ -301,10 +301,10 @@ pp_event evt = case stevt_id evt of
                     (field evt)
             isTriggeredOnly = fromMaybe False $ stevt_is_triggered_only evt
             evtId = Doc.strictText eid
-        trigger_pp'd <- evtArg "trigger" stevt_trigger pp_script
+        trigger_pp'd <- evtArg "trigger" stevt_trigger ppScript
         mmtth_pp'd <- mapM pp_mtth (stevt_mean_time_to_happen evt)
-        immediate_pp'd <- evtArg "immediate" stevt_immediate pp_script
-        after_pp'd <- evtArg "after" stevt_after pp_script
+        immediate_pp'd <- evtArg "immediate" stevt_immediate ppScript
+        after_pp'd <- evtArg "after" stevt_after ppScript
         return . mconcat $
             ["<section begin=", evtId, "/>", PP.line
             ,"{{Event", PP.line
@@ -364,8 +364,8 @@ pp_option hidden triggered eid opt = do
         Just name_loc ->
             let mtrigger = stopt_trigger opt
             in do
-                effects_pp'd <- pp_script (fromMaybe [] (stopt_effects opt))
-                mtrigger_pp'd <- sequence (pp_script <$> mtrigger)
+                effects_pp'd <- ppScript (fromMaybe [] (stopt_effects opt))
+                mtrigger_pp'd <- sequence (ppScript <$> mtrigger)
                 return . mconcat $
                     ["{{Option", if stopt_last opt then "|end\n" else "\n"
                     ,"| option_text = ", Doc.strictText name_loc, PP.line

@@ -154,9 +154,9 @@ pp_decisioncat decc gfx = do
                         ,content_pp'd
                         ,PP.line])
                 (field decc)
-    allow_pp'd  <- deccArg "allowed" decc_allowed pp_script
-    visible_pp'd  <- deccArg "visible" decc_visible pp_script
-    available_pp'd  <- deccArg "available" decc_available pp_script
+    allow_pp'd  <- deccArg "allowed" decc_allowed ppScript
+    visible_pp'd  <- deccArg "visible" decc_visible ppScript
+    available_pp'd  <- deccArg "available" decc_available ppScript
     let name = decc_name decc
         nameD = Doc.strictText name
     name_loc <- getGameL10n name
@@ -417,28 +417,28 @@ pp_decision dec gfx = do
         (Just array, _, True) -> do
             let targetlist = mapMaybe extractTargetsStates array
             targetlistloc <- traverse getStateLoc targetlist
-            let targetdoc = [Doc.pp_string (intercalate ", " $ map T.unpack targetlistloc)]
+            let targetdoc = [Doc.ppString (intercalate ", " $ map T.unpack targetlistloc)]
             return $ ["| targets = "] ++ targetdoc ++ [PP.line]
         (Just array, _, False) -> do
             let targetlist = mapMaybe extractTargets array
             targetlistloc <- traverse (flagText (Just HOI4Country)) targetlist
-            let targetdoc = [Doc.pp_string (intercalate ", " $ map T.unpack targetlistloc)]
+            let targetdoc = [Doc.ppString (intercalate ", " $ map T.unpack targetlistloc)]
             return $ ["| targets = "] ++ targetdoc ++ [PP.line]
         (_, Just array, True) -> return $ ["| targets = States ",Doc.strictText array]
         (_, Just array, False) -> return $ ["| targets = ",Doc.strictText array]
         _ -> return $ [""]
     ------
-    allow_pp'd  <- decArg "allowed" dec_allowed pp_script
-    targetRootTrigger_pp'd  <- decArg "target_root_trigger" dec_target_root_trigger pp_script -- checks ROOT
-    visible_pp'd  <- decArg "visible" dec_visible pp_script
-    targetTrigger_pp'd  <- decArg "target_trigger" dec_target_trigger pp_script --checks FROM and ROOT and makes decision visible if true
-    available_pp'd  <- decArg "available" dec_available pp_script
-    removeTrigger_pp'd  <- decArg "remove_trigger" dec_remove_trigger pp_script --removes decision? and ends modifier effect and triggers remove_effect?
-    cancelTrigger_pp'd  <- decArg "cancel_trigger" dec_cancel_trigger pp_script -- cancels missions, tirggers canceleffect
-    effect_pp'd <- setIsInEffect True (decArg "complete_effect" dec_complete_effect pp_script)
-    removeEffect_pp'd <- setIsInEffect True (decArg "remove_effect" dec_remove_effect pp_script)
-    cancelEffect_pp'd <- setIsInEffect True (decArg "cancel_effect" dec_complete_effect pp_script)
-    timeoutEffect_pp'd <- setIsInEffect True (decArg "timeout_effect" dec_timeout_effect pp_script)
+    allow_pp'd  <- decArg "allowed" dec_allowed ppScript
+    targetRootTrigger_pp'd  <- decArg "target_root_trigger" dec_target_root_trigger ppScript -- checks ROOT
+    visible_pp'd  <- decArg "visible" dec_visible ppScript
+    targetTrigger_pp'd  <- decArg "target_trigger" dec_target_trigger ppScript --checks FROM and ROOT and makes decision visible if true
+    available_pp'd  <- decArg "available" dec_available ppScript
+    removeTrigger_pp'd  <- decArg "remove_trigger" dec_remove_trigger ppScript --removes decision? and ends modifier effect and triggers remove_effect?
+    cancelTrigger_pp'd  <- decArg "cancel_trigger" dec_cancel_trigger ppScript -- cancels missions, tirggers canceleffect
+    effect_pp'd <- setIsInEffect True (decArg "complete_effect" dec_complete_effect ppScript)
+    removeEffect_pp'd <- setIsInEffect True (decArg "remove_effect" dec_remove_effect ppScript)
+    cancelEffect_pp'd <- setIsInEffect True (decArg "cancel_effect" dec_complete_effect ppScript)
+    timeoutEffect_pp'd <- setIsInEffect True (decArg "timeout_effect" dec_timeout_effect ppScript)
     mawd_pp'd   <- setIsInEffect True (mapM ((imsg2doc =<<) . ppAiWillDo) (dec_ai_will_do dec))
     let name = dec_name dec
         nameD = Doc.strictText name
@@ -454,10 +454,10 @@ pp_decision dec gfx = do
                 custom_cost_text_loc <- getGameL10n custom_cost_text
                 return ["| custom_cost = ", Doc.strictText custom_cost_text_loc, PP.line]
             _ -> return []
-    custom_cost_trigger_pp'd  <- decArg "custom_cost_trigger" dec_custom_cost_trigger pp_script
-    activation_pp'd <- decArg "activation" dec_activation pp_script
-    modifier_pp'd <- setIsInEffect True (decArg "modifier" dec_modifier pp_script)
-    targetedModifier_pp'd <- setIsInEffect True (decArg "targeted_modifier" dec_modifier pp_script)
+    custom_cost_trigger_pp'd  <- decArg "custom_cost_trigger" dec_custom_cost_trigger ppScript
+    activation_pp'd <- decArg "activation" dec_activation ppScript
+    modifier_pp'd <- setIsInEffect True (decArg "modifier" dec_modifier ppScript)
+    targetedModifier_pp'd <- setIsInEffect True (decArg "targeted_modifier" dec_modifier ppScript)
     name_loc <- getGameL10n name
     icon_pp'd <- case dec_icon dec of
             Just (HOI4DecisionIconSimple txt) ->

@@ -4,11 +4,11 @@ Description : Front end to Wadler/Leijen pretty printer
 -}
 module Doc
     ( strictText
-    , pp_string
+    , ppString
     , doc2text
-    , pp_signed, pp_nosigned
-    , pp_float
-    , pp_float_t
+    , ppSigned, ppNosigned
+    , ppFloat
+    , ppFloatT
     , nl2br
     , Doc
     , (PP.<++>)
@@ -31,8 +31,8 @@ strictText :: Text -> Doc
 strictText = PP.text . TL.fromStrict
 
 -- | Embed a String value into a Doc.
-pp_string :: String -> Doc
-pp_string = PP.text . TL.pack
+ppString :: String -> Doc
+ppString = PP.text . TL.pack
 
 -- | Convert a Doc to Text by compactly displaying it. Since this defeats the
 -- point of using the pretty-printer, it should be used sparingly and only when
@@ -42,21 +42,21 @@ doc2text = TL.toStrict . PP.displayT . PP.renderCompact
 
 -- | Pretty-print a number, putting a + sign in front if it's positive.
 -- Assumes the passed-in formatting function does add a minus sign.
-pp_signed :: (Ord n, Num n) => (n -> Doc) -> n -> Doc
-pp_signed pp_num n = (if signum n > 0 then "+" else mempty) <> pp_num n
+ppSigned :: (Ord n, Num n) => (n -> Doc) -> n -> Doc
+ppSigned pp_num n = (if signum n > 0 then "+" else mempty) <> pp_num n
 
 -- | Pretty-print a number, removing the - sign in front if it's negative.
 -- Assumes the passed-in formatting function does add a minus sign.
-pp_nosigned :: (Ord n, Num n) => (n -> Doc) -> n -> Doc
-pp_nosigned pp_num n =
+ppNosigned :: (Ord n, Num n) => (n -> Doc) -> n -> Doc
+ppNosigned pp_num n =
     (if signum n < 0
         then strictText . T.drop 1 . doc2text
         else id) $ pp_num n
 
 -- | Pretty-print a Double. If it's a whole number, display it without a
 -- decimal.
-pp_float :: Double -> Doc
-pp_float n
+ppFloat :: Double -> Doc
+ppFloat n
     | fromIntegral trunc == n =
         PP.int (fromIntegral trunc)
     | otherwise =
@@ -66,8 +66,8 @@ pp_float n
     trunc = floor n
 
 -- | Pretty-print a Double, as Text.
-pp_float_t :: Double -> Text
-pp_float_t = TL.toStrict . PP.displayT . PP.renderCompact . pp_float
+ppFloatT :: Double -> Text
+ppFloatT = TL.toStrict . PP.displayT . PP.renderCompact . ppFloat
 
 -- | Convert newlines to <br/> tags.
 nl2br :: Text -> Text

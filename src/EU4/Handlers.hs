@@ -192,7 +192,7 @@ import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), Ga
                      , getGameL10n, getGameL10nIfPresent, getGameL10nDefault, withCurrentFile
                      , unfoldM, unsnoc )
 import EU4.Templates
-import {-# SOURCE #-} EU4.Common (pp_script, ppMany, ppOne, extractStmt, matchLhsText)
+import {-# SOURCE #-} EU4.Common (ppScript, ppMany, ppOne, extractStmt, matchLhsText)
 import EU4.Types -- everything
 
 import Debug.Trace
@@ -478,16 +478,16 @@ pp_mtth isTriggeredOnly = pp_mtth' . foldl' addField newMTTH
         pp_mtthmod (MTTHModifier (Just factor) conditions) =
             case conditions of
                 [_] -> do
-                    conditions_pp'd <- pp_script conditions
+                    conditions_pp'd <- ppScript conditions
                     return . mconcat $
                         [conditions_pp'd
-                        ,PP.enclose ": '''×" "'''" (Doc.pp_float factor)
+                        ,PP.enclose ": '''×" "'''" (Doc.ppFloat factor)
                         ]
                 _ -> do
-                    conditions_pp'd <- indentUp (pp_script conditions)
+                    conditions_pp'd <- indentUp (ppScript conditions)
                     return . mconcat $
                         ["*"
-                        ,PP.enclose "'''×" "''':" (Doc.pp_float factor)
+                        ,PP.enclose "'''×" "''':" (Doc.ppFloat factor)
                         ,PP.line
                         ,conditions_pp'd
                         ]

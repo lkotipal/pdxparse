@@ -3,7 +3,7 @@ Module      : HOI4.Common
 Description : Message handler for Europa Hearts of Iron IV
 -}
 module HOI4.Common (
-        pp_script
+        ppScript
     ,   pp_mtth
     ,   ppOne
     ,   ppMany
@@ -59,10 +59,10 @@ import HOI4.Types -- everything
 -- no particular order from here... TODO: organize this!
 
 -- | Format a script as wiki text.
-pp_script :: (HOI4Info g, Monad m) =>
+ppScript :: (HOI4Info g, Monad m) =>
     GenericScript -> PPT g m Doc
-pp_script [] = return "(Nothing)"
-pp_script script = imsg2doc =<< ppMany script
+ppScript [] = return "(Nothing)"
+ppScript script = imsg2doc =<< ppMany script
 
 flagTextMaybe :: (HOI4Info g, Monad m) => Text -> PPT g m (Text,Text)
 flagTextMaybe = fmap (\t -> (mempty, t)) . flagText (Just HOI4Country)
@@ -112,132 +112,10 @@ ppHandlers = foldl' Tr.unionL Tr.empty
 -- | Handlers for statements where RHS is irrelevant (usually "yes")
 handlersRhsIrrelevant :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersRhsIrrelevant = Tr.fromList
-        [("add_cardinal"             , rhsAlwaysYes MsgAddCardinal)
-        ,("add_estate_burghers_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_burghers_loyalty_effect"))
-        ,("add_estate_church_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_church_loyalty_effect"))
-        ,("add_estate_cossacks_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|cossacks"))
-        ,("add_estate_dhimmi_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_dhimmi_loyalty_effect"))
-        ,("add_estate_jains_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|jains"))
-        ,("add_estate_nobles_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_nobles_loyalty_effect"))
-        ,("add_estate_rajput_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|rajputs"))
-        ,("add_innovativeness_big_effect", rhsAlwaysYes MsgAddInnovativenessBigEffect)
-        ,("add_innovativeness_small_effect", rhsAlwaysYes MsgAddInnovativenessSmallEffect)
-        ,("add_loot_from_province_effect", rhsAlwaysYes MsgAddLootFromProvinceEffect)
-        ,("add_mandate_effect"     , rhsAlwaysYes MsgAddMandateEffect)
-        ,("add_mandate_large_effect", rhsAlwaysYes MsgAddMandateLargeEffect)
-        ,("add_meritocracy_effect" , rhsAlwaysYes MsgAddMeritocracyEffect)
-        ,("add_meritocracy_large_effect", rhsAlwaysYes MsgAddMeritocracyLargeEffect)
-        ,("add_reform_progress_medium_effect", rhsAlwaysYes MsgAddReformProgressMediumEffect)
-        ,("add_reform_progress_small_effect", rhsAlwaysYes MsgAddReformProgressSmallEffect)
-        ,("add_stability_or_adm_power", rhsAlwaysYes MsgAddStabilityOrAdm)
-        ,("boost_bureaucrats_effect", rhsAlwaysYes MsgBoostBureaucratsEffect)
-        ,("boost_bureaucrats_large_effect", rhsAlwaysYes MsgBoostBureaucratsLargeEffect)
-        ,("boost_eunuchs_effect", rhsAlwaysYes MsgBoostEunuchsEffect)
-        ,("boost_eunuchs_large_effect", rhsAlwaysYes MsgBoostEunuchsLargeEffect)
-        ,("boost_temples_effect", rhsAlwaysYes MsgBoostTemplesEffect)
-        ,("boost_temples_large_effect", rhsAlwaysYes MsgBoostTemplesLargeEffect)
-        ,("can_have_center_of_reformation_trigger" , const $ msgToPP MsgCanHaveCenterOfReformation)
-        ,("cancel_construction"     , rhsAlwaysYes MsgCancelConstruction) -- Canals
-        ,("cb_on_overseas"          , rhsAlwaysYes MsgGainOverseasCB) -- Full Expansion
-        ,("cb_on_primitives"        , rhsAlwaysYes MsgGainPrimitivesCB) -- Full Exploration
-        ,("cb_on_religious_enemies" , rhsAlwaysYes MsgGainReligiousCB) -- Deus Vult
-        ,("change_government_to_monarchy"  , rhsAlwaysYes $ MsgChangeGovernment "monarchy")
-        ,("change_government_to_republic"  , rhsAlwaysYes $ MsgChangeGovernment "republic")
-        ,("change_government_to_theocracy" , rhsAlwaysYes $ MsgChangeGovernment "theocracy")
-        ,("check_if_non_state_advisor_effect", const $ msgToPP MsgCheckIfNonStateAdvisorEffect) -- Ignore actual percentages
-        ,("clear_previous_primary_cults" , rhsAlwaysYes $ MsgClearPreviousPrimaryCults)
-        ,("clear_rebels"            , rhsAlwaysYes MsgClearRebels)
-        ,("divorce_consort_effect"  , rhsAlwaysYes MsgDivorceConsortEffect)
-        ,("dismantle_faction"       , rhsAlwaysYes MsgDismantleFaction)
+        [("dismantle_faction"       , rhsAlwaysYes MsgDismantleFaction)
         ,("drop_cosmetic_tag"       , rhsAlwaysYes MsgDropCosmeticTag)
-        ,("enable_hre_leagues"      , rhsAlwaysYes MsgEnableHRELeagues)
-        ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
-        ,("grant_independence"      , rhsAlwaysYes MsgGrantIndependence)
-        ,("has_holy_order_trigger"  , rhsAlwaysYes MsgHasAnyHolyOrder)
-        ,("has_border_with_religious_enemy" , rhsAlwaysYes MsgHasBorderWithReligiousEnemy)
-        ,("has_river_estuary_trigger", rhsAlwaysYes MsgHasRiverEstuary)
-        ,("has_religious_scholars_trigger", rhsAlwaysYes MsgHasScholar)
-        ,("has_shia_school_trigger", rhsAlwaysYes MsgHasShiaSchool)
-        ,("has_sunni_school_trigger", rhsAlwaysYes MsgHasSunniSchool)
-        ,("highest_supply_limit_in_area" , rhsAlwaysYes MsgHighestSupplyLimitInArea)
-        ,("highest_value_trade_node", rhsAlwaysYes MsgHighestValueTradeNode)
-        ,("increase_heir_adm_effect", rhsAlwaysYes MsgIncreaseHeirAdmEffect)
-        ,("increase_heir_dip_effect", rhsAlwaysYes MsgIncreaseHeirDipEffect)
-        ,("increase_heir_mil_effect", rhsAlwaysYes MsgIncreaseHeirMilEffect)
-        ,("increase_legitimacy_huge_effect"  , rhsAlwaysYes MsgIncreaseLegitimacyHugeEffect)
-        ,("increase_legitimacy_medium_effect", rhsAlwaysYes MsgIncreaseLegitimacyMediumEffect)
-        ,("increase_legitimacy_small_effect" , rhsAlwaysYes MsgIncreaseLegitimacySmallEffect)
-        ,("is_imperial_modifier"   , rhsAlwaysYes MsgIsImperialMod)
-        ,("is_janissary_modifier"  , rhsAlwaysYes MsgIsJanissaryMod)
-        ,("is_rajput_modifier"     , rhsAlwaysYes MsgIsRajputMod)
-        ,("is_subject_other_than_tributary_trigger" , rhsAlwaysYes MsgIsSubjectOtherThanTributary)
-        ,("kill_ruler"             , rhsAlwaysYes MsgRulerDies)
         ,("kill_country_leader"    , rhsAlwaysYes MsgKillCountryLeader)
-        ,("may_agitate_for_liberty", rhsAlwaysYes MsgMayAgitateForLiberty) -- Espionage: Destabilizing Efforts
-        ,("may_explore"            , rhsAlwaysYes MsgMayExplore) -- Exploration: Quest for the New World
-        ,("may_infiltrate_administration", rhsAlwaysYes MsgMayInfiltrateAdministration) -- Espionage: Espionage
-        ,("may_sabotage_reputation", rhsAlwaysYes MsgMaySabotageReputation) -- Espionage: Rumormongering
-        ,("may_sow_discontent"     , rhsAlwaysYes MsgMaySowDiscontent) -- Espionage: Destabilizing Efforts
-        ,("may_study_technology"   , rhsAlwaysYes MsgMayStudyTech) -- Espionage: Shady Recruitment
-        ,("move_capital_effect"    , rhsAlwaysYes MsgMoveCapitalEffect)
-        ,("prev_move_capital_effect" , rhsAlwaysYes MsgPrevMoveCapitalEffect)
-        ,("set_hre_religion_treaty", rhsAlwaysYes MsgSignWestphalia)
-        ,("reduced_stab_impacts"   , rhsAlwaysYes MsgReducedStabImpacts) -- Full Diplomacy
-        ,("reduce_estate_burghers_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_burghers_loyalty_effect"))
-        ,("reduce_estate_church_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_church_loyalty_effect"))
-        ,("reduce_estate_cossacks_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|cossacks|lose"))
-        ,("reduce_estate_dhimmi_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_dhimmi_loyalty_effect"))
-        ,("reduce_estate_jains_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|jains|lose"))
-        ,("reduce_estate_nobles_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_nobles_loyalty_effect"))
-        ,("reduce_bureaucrats_effect", rhsAlwaysYes MsgReduceBureaucratsEffect)
-        ,("reduce_eunuchs_effect"  , rhsAlwaysYes MsgReduceEunuchsEffect)
-        ,("reduce_innovativeness_small_effect", rhsAlwaysYes MsgAddInnovativenessSmallEffect)
-        ,("reduce_temples_effect"  , rhsAlwaysYes MsgReduceTemplesEffect)
-        ,("reduce_legitimacy_medium_effect", rhsAlwaysYes MsgReduceLegitimacyEffect)
-        ,("reduce_legitimacy_small_effect", rhsAlwaysYes MsgReduceLegitimacySmallEffect)
-        ,("reduce_mandate_effect", rhsAlwaysYes MsgReduceMandateEffect)
-        ,("reduce_mandate_large_effect", rhsAlwaysYes MsgReduceMandateLargeEffect)
-        ,("reduce_meritocracy_effect", rhsAlwaysYes MsgReduceMeritocracyEffect)
-        ,("reduce_meritocracy_large_effect", rhsAlwaysYes MsgReduceMeritocracyLargeEffect)
-        ,("reduce_reform_progress_small_effect", rhsAlwaysYes MsgReduceReformProgressSmallEffect)
-        ,("reduce_reform_progress_medium_effect", rhsAlwaysYes MsgReduceReformProgressMediumEffect)
-        ,("reduce_reform_progress_big_effect", rhsAlwaysYes MsgReduceReformProgressBigEffect)
-        ,("remove_advisor_adm_effect", rhsAlwaysYes MsgRemoveAdvisorAdmEffect) -- "The currently employed administrative advisor leaves the country's court."
-        ,("remove_cardinal"          , rhsAlwaysYes MsgLoseCardinal)
-        ,("remove_consort"           , rhsAlwaysYes MsgRemoveConsort)
-        ,("remove_current_leader"    , rhsAlwaysYes MsgRemoveCurrentLeader)
-        ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("retire_country_leader"       , rhsAlwaysYes MsgRetireCountryLeader)
-        ,("same_govt_as_root_trigger" , rhsAlwaysYes MsgSameGovtAsRoot)
-        ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
-        ,("set_estate_led_regency_privilege" , rhsAlways "random" MsgSetEstateLedRegencyPrivilegeRandom) -- Only random used in 1.31.3
-        ,("swap_free_idea_group"     , rhsAlwaysYes MsgSwapFreeIdeaGroup)
-        ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
-        ,("auto_explore_adjacent_to_colony", rhsAlwaysYes MsgAutoExploreAdjacentToColony)
-        ,("can_fabricate_for_vassals", rhsAlwaysYes MsgCanFabricateForVassals)
-        ,("idea_claim_colonies"    , rhsAlwaysYes MsgIdeaClaimColonies)
-        ,("may_establish_frontier" , rhsAlwaysYes MsgMayEstablishFrontier)
-        ,("may_perform_slave_raid" , rhsAlwaysYes MsgMayPerformSlaveRaid)
-        ,("may_perform_slave_raid_on_same_religion", rhsAlwaysYes MsgMayPerformSlaveRaidOnSameReligion)
-        ,("may_recruit_female_generals", rhsAlwaysYes MsgMayRecruitFemaleGenerals)
-        ,("no_religion_penalty"    , rhsAlwaysYes MsgNoReligionPenalty)
-        ,("map_setup"              , rhsAlways "map_setup_random" MsgMapSetupRandom) -- In 1.30.6 all uses are "map_setup = map_setup_random"
-        ,("was_never_german_regional_tag_trigger" , rhsAlwaysYes MsgWasNeverGermanReigionalTag)
-
-        -- Various effects from from common/scripted_effects/01_scripted_effects_for_simple_bonuses_penalties.txt
-        --
-        -- Curia effects
-        ,("add_curia_treasur_small_effect" {-sic-} , rhsAlwaysYes (MsgAddCuriaTreasury 25))
-        ,("add_curia_treasury_medium_effect"       , rhsAlwaysYes (MsgAddCuriaTreasury 50))
-        ,("add_curia_treasury_big_effect"          , rhsAlwaysYes (MsgAddCuriaTreasury 100))
-        ,("add_curia_treasury_huge_effect"         , rhsAlwaysYes (MsgAddCuriaTreasury 1000))
-        ,("reduce_curia_treasury_medium_effect"    , rhsAlwaysYes (MsgReduceCuriaTreasury (-50)))
-        ,("reduce_curia_treasury_big_effect"       , rhsAlwaysYes (MsgReduceCuriaTreasury (-100)))
-        ,("reduce_curia_treasury_huge_effect"      , rhsAlwaysYes (MsgReduceCuriaTreasury (-1000)))
-
-        -- Religious currency
-        ,("increase_religious_currency_effect"     , rhsAlwaysYes MsgIncreaseReligiousCurrencyEffect)
-        ,("reduce_religious_currency_effect"       , rhsAlwaysYes MsgReduceReligiousCurrencyEffect)
         ]
 
 -- | Handlers for numeric statements
@@ -334,20 +212,25 @@ handlersNumeric = Tr.fromList
 -- | Handlers for numeric statements that compare
 handlersNumericCompare :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericCompare = Tr.fromList
-        [("amount_research_slots"            , numericCompare "more than" "less than" MsgAmountResearchSlots)
-        ,("any_war_score"                    , numericCompare "over" "under" MsgAnyWarScore)
-        ,("compare_autonomy_progress_ratio"  , numericCompare "over" "under" MsgCompareAutonomyProgressRatio)
-        ,("enemies_strength_ratio"           , numericCompare "over" "under" MsgEnemiesStrengthRatio)
-        ,("has_added_tension_amount"         , numericCompare "more than" "less than" MsgHasAddedTensionAmount)
-        ,("has_manpower"                     , numericCompare "more than" "less than" MsgHasManpower)
-        ,("has_stability"                    , numericCompare "more than" "less than" MsgHasStability)
-        ,("has_war_support"                  , numericCompare "more than" "less than" MsgHasWarSupport)
-        ,("surrender_progress"               , numericCompare "more than" "less than" MsgSurrenderProgress)
-        ,("threat"                           , numericCompare "more than" "less than" MsgThreat)
-        ,("fascism"                          , numericCompare "more than" "less than" MsgFascismCompare)
-        ,("democratic"                       , numericCompare "more than" "less than" MsgDemocraticCompare)
-        ,("communism"                        , numericCompare "more than" "less than" MsgCommunismCompare)
-        ,("neutrality"                       , numericCompare "more than" "less than" MsgNeutralityCompare)
+        [("air_base"                         , numericCompare "more than" "less than" MsgAirBase MsgAirBaseVar)
+        ,("amount_research_slots"            , numericCompare "more than" "less than" MsgAmountResearchSlots MsgAmountResearchSlotsVar)
+        ,("any_war_score"                    , numericCompare "over" "under" MsgAnyWarScore MsgAnyWarScoreVar)
+        ,("arms_factory"                     , numericCompare "more than" "less than" MsgArmsFactory MsgArmsFactoryVar)
+        ,("compare_autonomy_progress_ratio"  , numericCompare "over" "under" MsgCompareAutonomyProgressRatio MsgCompareAutonomyProgressRatioVar)
+        ,("dockyard"                         , numericCompare "more than" "less than" MsgDockyard MsgDockyardVar)
+        ,("enemies_strength_ratio"           , numericCompare "over" "under" MsgEnemiesStrengthRatio MsgEnemiesStrengthRatioVar)
+        ,("has_added_tension_amount"         , numericCompare "more than" "less than" MsgHasAddedTensionAmount MsgHasAddedTensionAmountVar)
+        ,("has_army_manpower"                , numericCompareCompound "at least" "at most" MsgHasArmyManpower MsgHasArmyManpowerVar)
+        ,("has_manpower"                     , numericCompare "more than" "less than" MsgHasManpower MsgHasManpowerVar)
+        ,("has_stability"                    , numericCompare "more than" "less than" MsgHasStability MsgHasStabilityVar)
+        ,("has_war_support"                  , numericCompare "more than" "less than" MsgHasWarSupport MsgHasWarSupportVar)
+        ,("num_of_factories"                 , numericCompare "more than" "less than" MsgNumOfFactories MsgNumOfFactoriesVar)
+        ,("surrender_progress"               , numericCompare "more than" "less than" MsgSurrenderProgress MsgSurrenderProgressVar)
+        ,("threat"                           , numericCompare "more than" "less than" MsgThreat MsgThreatVar)
+        ,("fascism"                          , numericCompare "more than" "less than" MsgFascismCompare MsgFascismCompareVar)
+        ,("democratic"                       , numericCompare "more than" "less than" MsgDemocraticCompare MsgDemocraticCompareVar)
+        ,("communism"                        , numericCompare "more than" "less than" MsgCommunismCompare MsgCommunismCompareVar)
+        ,("neutrality"                       , numericCompare "more than" "less than" MsgNeutralityCompare MsgNeutralityCompareVar)
         ]
 
 -- | Handlers for numeric statements with icons
@@ -586,75 +469,86 @@ handlersNumericIcons = Tr.fromList
         -- Used in ideas and other bonuses, omit "gain/lose" in l10n
         --Country Scope
         --general modifiers
-        ,("monthly_population"          , numericLoc "MODIFIER_GLOBAL_MONTHLY_POPULATION" MsgModifier) -- % neutral?
-        ,("nuclear_production_factor"   , numericLoc "MODIFIER_NUCLEAR_PRODUCTION_FACTOR" MsgModifier) -- % pos
+        ,("monthly_population"          , numericLoc "MODIFIER_GLOBAL_MONTHLY_POPULATION" MsgModifierPcPosReduced)
+        ,("nuclear_production_factor"   , numericLoc "MODIFIER_NUCLEAR_PRODUCTION_FACTOR" MsgModifierPcPosReduced)
         ,("research_sharing_per_country_bonus" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS" MsgModifierPcPosReduced)
         ,("research_sharing_per_country_bonus_factor" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS_FACTOR" MsgModifier) -- % pos
         ,("research_speed_factor"       , numericLoc "MODIFIER_RESEARCH_SPEED_FACTOR" MsgModifierPcPosReduced)
         ,("local_resources_factor"      , numericLoc "MODIFIER_LOCAL_RESOURCES_FACTOR" MsgModifierPcPosReduced)
         -- Politics modifiers
-        ,("min_export"                  , numericLoc "MODIFIER_MIN_EXPORT_FACTOR" MsgModifier) -- flat neutral?
+        ,("min_export"                  , numericLoc "MODIFIER_MIN_EXPORT_FACTOR" MsgModifierPcReducedSign) -- yellow
         ,("trade_opinion_factor"        , numericLoc "MODIFIER_TRADE_OPINION_FACTOR" MsgModifierPcReducedSign)
         ,("economy_cost_factor"         , numericLoc "economy_cost_factor" MsgModifierPcNegReduced)
         ,("mobilization_laws_cost_factor" , numericLoc "mobilization_laws_cost_factor" MsgModifierPcNegReduced)
         ,("political_advisor_cost_factor" , numericLoc "political_advisor_cost_factor" MsgModifierPcNegReduced)
         ,("trade_laws_cost_factor"      , numericLoc "trade_laws_cost_factor" MsgModifierPcNegReduced)
-        ,("party_popularity_stability_factor" , numericLoc "MODIFIER_STABILITY_POPULARITY_FACTOR" MsgModifier) -- % pos
-        ,("political_power_cost"        , numericLoc "MODIFIER_POLITICAL_POWER_COST" MsgModifierColourNeg) -- flat neg
+        ,("improve_relations_maintain_cost_factor" , numericLoc "MODIFIER_IMPROVE_RELATIONS_MAINTAIN_COST_FACTOR" MsgModifierPcNegReduced)
+        ,("party_popularity_stability_factor" , numericLoc "MODIFIER_STABILITY_POPULARITY_FACTOR" MsgModifierPcPosReduced)
+        ,("political_power_cost"        , numericLoc "MODIFIER_POLITICAL_POWER_COST" MsgModifierColourNeg)
         ,("political_power_gain"        , numericLoc "MODIFIER_POLITICAL_POWER_GAIN" MsgModifierColourPos)
         ,("political_power_factor"      , numericLoc "MODIFIER_POLITICAL_POWER_FACTOR" MsgModifierPcPosReduced)
         ,("stability_factor"            , numericLoc "MODIFIER_STABILITY_FACTOR" MsgModifierPcPosReduced)
-        ,("stability_weekly"            , numericLoc "MODIFIER_STABILITY_WEEKLY" MsgModifierPcPosReduced) -- flat pos
-        ,("stability_weekly_factor"     , numericLoc "MODIFIER_STABILITY_WEEKLY_FACTOR" MsgModifierPcPosReduced) -- flat pos
+        ,("stability_weekly"            , numericLoc "MODIFIER_STABILITY_WEEKLY" MsgModifierPcPosReduced)
+        ,("stability_weekly_factor"     , numericLoc "MODIFIER_STABILITY_WEEKLY_FACTOR" MsgModifierPcPosReduced)
         ,("war_support_factor"          , numericLoc "MODIFIER_WAR_SUPPORT_FACTOR" MsgModifierPcPosReduced)
-        ,("war_support_weekly"          , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY" MsgModifierPcPosReduced) -- flat pos
-        ,("war_support_weekly_factor"   , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY_FACTOR" MsgModifierPcPosReduced) -- % pos
+        ,("war_support_weekly"          , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY" MsgModifierPcPosReduced)
+        ,("war_support_weekly_factor"   , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY_FACTOR" MsgModifierPcPosReduced)
         ,("drift_defence_factor"        , numericLoc "MODIFIER_DRIFT_DEFENCE_FACTOR" MsgModifierPcPosReduced)
-        ,("democratic_drift"            , numericLoc "democratic_drift" MsgModifierSign)
-        ,("communism_drift"             , numericLoc "communism_drift" MsgModifierSign)
+        ,("communism_drift"             , numericLoc "communism_drift" MsgModifierColourPos)
+        ,("democratic_drift"            , numericLoc "democratic_drift" MsgModifierColourPos)
+        ,("fascism_drift"               , numericLoc "fascism_drift" MsgModifierColourPos)
+        ,("neutrality_drift"            , numericLoc "neutrality_drift" MsgModifierColourPos)
+        ,("communism_acceptance"        , numericLoc "communism_acceptance" MsgModifierColourPos)
         ,("democratic_acceptance"       , numericLoc "democratic_acceptance" MsgModifierColourPos)
+        ,("fascism_acceptance"          , numericLoc "fascism_acceptance" MsgModifierColourPos)
+        ,("neutrality_acceptance"       , numericLoc "neutrality_acceptance" MsgModifierColourPos)
         -- Diplomacy
-        ,("generate_wargoal_tension"    , numericLoc "MODIFIER_GENERATE_WARGOAL_TENSION_LIMIT" MsgModifier) -- flat neg
+        ,("generate_wargoal_tension"    , numericLoc "MODIFIER_GENERATE_WARGOAL_TENSION_LIMIT" MsgModifierPcReduced) -- yellow
         ,("guarantee_cost"              , numericLoc "MODIFIER_GUARANTEE_COST" MsgModifierPcNegReduced)
         ,("guarantee_tension"           , numericLoc "MODIFIER_GUARANTEE_TENSION_LIMIT" MsgModifierPcNegReduced)
-        ,("join_faction_tension"        , numericLoc "MODIFIER_JOIN_FACTION_TENSION_LIMIT" MsgModifier) -- flat neg
-        ,("justify_war_goal_time"       , numericLoc "MODIFIER_JUSTIFY_WAR_GOAL_TIME" MsgModifier) -- % neg
+        ,("join_faction_tension"        , numericLoc "MODIFIER_JOIN_FACTION_TENSION_LIMIT" MsgModifierPcNegReduced)
+        ,("justify_war_goal_time"       , numericLoc "MODIFIER_JUSTIFY_WAR_GOAL_TIME" MsgModifierPcNegReduced)
         ,("lend_lease_tension"          , numericLoc "MODIFIER_LEND_LEASE_TENSION_LIMIT" MsgModifierPcNegReduced)
         ,("opinion_gain_monthly"        , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY" MsgModifier) -- flat pos
+        ,("opinion_gain_monthly_factor" , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY_FACTOR" MsgModifierPcPosReduced)
         ,("opinion_gain_monthly_same_ideology_factor" , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY_SAME_IDEOLOGY_FACTOR" MsgModifierPcPosReduced)
-        ,("request_lease_tension"       , numericLoc "MODIFIER_REQUEST_LEASE_TENSION_LIMIT" MsgModifier) -- % neg
+        ,("request_lease_tension"       , numericLoc "MODIFIER_REQUEST_LEASE_TENSION_LIMIT" MsgModifierPcNegReduced)
         ,("surrender_limit"             , numericLoc "MODIFIER_SURRENDER_LIMIT" MsgModifierPcPosReduced)
         ,("send_volunteer_divisions_required" , numericLoc "MODIFIER_SEND_VOLUNTEER_DIVISIONS_REQUIRED" MsgModifierPcNegReduced)
         ,("send_volunteer_size"         , numericLoc "MODIFIER_SEND_VOLUNTEER_SIZE" MsgModifierColourPos)
         ,("send_volunteers_tension"     , numericLoc "MODIFIER_SEND_VOLUNTEERS_TENSION_LIMIT" MsgModifierPcNegReduced)
+        -- autonomy
+        ,("subjects_autonomy_gain"      , numericLoc "MODIFIER_AUTONOMY_SUBJECT_GAIN" MsgModifierColourPos)
+        -- Governments in exile
         -- Equipment
-        ,("equipment_conversion_speed"  , numericLoc "EQUIPMENT_CONVERSION_SPEED_MODIFIERS" MsgModifier) -- % neg
+        ,("equipment_conversion_speed"  , numericLoc "EQUIPMENT_CONVERSION_SPEED_MODIFIERS" MsgModifierPcPosReduced)
         ,("equipment_upgrade_xp_cost"   , numericLoc "MODIFIER_EQUIPMENT_UPGRADE_XP_COST" MsgModifier) -- % neg
         ,("license_armor_purchase_cost" , numericLoc "MODIFIER_LICENSE_ARMOR_PURCHASE_COST" MsgModifierPcNegReduced)
         ,("production_factory_efficiency_gain_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_EFFICIENCY_GAIN_FACTOR" MsgModifierPcPosReduced)
-        ,("production_factory_max_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_MAX_EFFICIENCY_FACTOR" MsgModifier) -- % pos
-        ,("production_factory_start_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_START_EFFICIENCY_FACTOR" MsgModifier) -- % pos
+        ,("production_factory_max_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_MAX_EFFICIENCY_FACTOR" MsgModifierPcPosReduced)
+        ,("production_factory_start_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_START_EFFICIENCY_FACTOR" MsgModifierPcPosReduced)
         -- Military outside of combat
-        ,("command_power_gain"          , numericLoc "MODIFIER_COMMAND_POWER_GAIN" MsgModifier) -- flat pos
-        ,("command_power_gain_mult"     , numericLoc "MODIFIER_COMMAND_POWER_GAIN_MULT" MsgModifier) -- % neg
-        ,("conscription"                , numericLoc "MODIFIER_CONSCRIPTION_FACTOR" MsgModifierPcReducedSign)
+        ,("command_power_gain"          , numericLoc "MODIFIER_COMMAND_POWER_GAIN" MsgModifierColourPos)
+        ,("command_power_gain_mult"     , numericLoc "MODIFIER_COMMAND_POWER_GAIN_MULT" MsgModifierPcPosReduced)
+        ,("conscription"                , numericLoc "MODIFIER_CONSCRIPTION_FACTOR" MsgModifierPcReducedSign) --yellow
         ,("conscription_factor"         , numericLoc "MODIFIER_CONSCRIPTION_TOTAL_FACTOR" MsgModifierPcPosReduced)
         ,("training_time_factor"        , numericLoc "MODIFIER_TRAINING_TIME_FACTOR" MsgModifierPcNegReduced)
-        ,("max_command_power"           , numericLoc "MODIFIER_MAX_COMMAND_POWER" MsgModifier) -- flat pos
+        ,("max_command_power"           , numericLoc "MODIFIER_MAX_COMMAND_POWER" MsgModifierColourPos)
         ,("max_command_power_mult"      , numericLoc "MODIFIER_MAX_COMMAND_POWER_MULT" MsgModifier)  -- % pos
-        ,("training_time_army_factor"   , numericLoc "MODIFIER_TRAINING_TIME_ARMY_FACTOR" MsgModifierPcReducedSign)
+        ,("training_time_army_factor"   , numericLoc "MODIFIER_TRAINING_TIME_ARMY_FACTOR" MsgModifierPcReducedSign) --yellow
+        ,("cat_battlefield_support_cost_factor" , numericLoc "cat_battlefield_support_cost_factor" MsgModifierPcNegReduced)
         ,("unit_light_armor_design_cost_factor" , numericLoc "modifier_unit_light_armor_design_cost_factor" MsgModifierPcNegReduced)
-        ,("weekly_manpower"             , numericLoc "MODIFIER_WEEKLY_MANPOWER" MsgModifier) -- flat pos
+        ,("weekly_manpower"             , numericLoc "MODIFIER_WEEKLY_MANPOWER" MsgModifierColourPos)
         -- Fuel
         ,("base_fuel_gain"              , numericLoc "MODIFIER_BASE_FUEL_GAIN_ADD" MsgModifier) -- flat neutr?
         ,("base_fuel_gain_factor"       , numericLoc "MODIFIER_BASE_FUEL_GAIN_FACTOR" MsgModifier) -- % pos
         ,("fuel_cost"                   , numericLoc "MODIFIER_FUEL_COST" MsgModifier) -- flat neg
         ,("fuel_gain"                   , numericLoc "MODIFIER_FUEL_GAIN_ADD" MsgModifier) -- flat pos
-        ,("fuel_gain_factor"            , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifier) -- flat pos
+        ,("fuel_gain_factor"            , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifierPcPosReduced)
         ,("max_fuel"                    , numericLoc "MODIFIER_MAX_FUEL_ADD" MsgModifier) -- flat
-        ,("max_fuel_factor"             , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifier) -- % pos
+        ,("max_fuel_factor"             , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifierPcPosReduced)
         -- buildings
-        ,("civilian_factory_use"        , numericLoc "MODIFIER_CIVILIAN_FACTORY_USE" MsgModifierPc) -- flat neut
+        ,("civilian_factory_use"        , numericLoc "MODIFIER_CIVILIAN_FACTORY_USE" MsgModifierPc) -- yellow
         ,("industry_free_repair_factor" , numericLoc "MODIFIER_INDUSTRY_FREE_REPAIR_FACTOR" MsgModifierPcPosReduced)
         ,("production_speed_air_base_factor" , numericLoc "modifier_production_speed_air_base_factor" MsgModifierPcPosReduced)
         ,("production_speed_anti_air_building_factor" , numericLoc "modifier_production_speed_anti_air_building_factor" MsgModifierPcPosReduced)
@@ -662,23 +556,26 @@ handlersNumericIcons = Tr.fromList
         ,("production_speed_bunker_factor" , numericLoc "modifier_production_speed_bunker_factor" MsgModifierPcPosReduced)
         ,("production_speed_coastal_bunker_factor" , numericLoc "modifier_production_speed_coastal_bunker_factor" MsgModifierPcPosReduced)
         ,("production_speed_dockyard_factor" , numericLoc "modifier_production_speed_dockyard_factor" MsgModifierPcPosReduced)
+        ,("production_speed_infrastructure_factor" , numericLoc "modifier_production_speed_infrastructure_factor" MsgModifierPcPosReduced)
         ,("production_speed_industrial_complex_factor" , numericLoc "modifier_production_speed_industrial_complex_factor" MsgModifierPcPosReduced)
         ,("production_speed_nuclear_reactor_factor" , numericLoc "modifier_production_speed_nuclear_reactor_factor" MsgModifierPcPosReduced)
         ,("production_speed_radar_station_factor" , numericLoc "modifier_production_speed_radar_station_factor" MsgModifierPcPosReduced)
+        ,("production_speed_rail_way_factor" , numericLoc "modifier_production_speed_rail_way_factor" MsgModifierPcPosReduced)
+        ,("production_speed_rocket_site_factor" , numericLoc "modifier_speed_rocket_site_factor" MsgModifierPcPosReduced)
         ,("production_speed_synthetic_refinery_factor" , numericLoc "modifier_production_speed_synthetic_refinery_factor" MsgModifierPcPosReduced)
         ,("consumer_goods_factor"       , numericLoc "MODIFIER_CONSUMER_GOODS_FACTOR" MsgModifierPcReduced)
-        ,("conversion_cost_civ_to_mil_factor" , numericLoc "MODIFIER_CONVERSION_COST_CIV_TO_MIL_FACTOR" MsgModifier) -- % neutr
-        ,("conversion_cost_mil_to_civ_factor" , numericLoc "MODIFIER_CONVERSION_COST_MIL_TO_CIV_FACTOR" MsgModifier) -- % neutr
+        ,("conversion_cost_civ_to_mil_factor" , numericLoc "MODIFIER_CONVERSION_COST_CIV_TO_MIL_FACTOR" MsgModifierPcNegReduced)
+        ,("conversion_cost_mil_to_civ_factor" , numericLoc "MODIFIER_CONVERSION_COST_MIL_TO_CIV_FACTOR" MsgModifierPcNegReduced)
         ,("global_building_slots"       , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS" MsgModifier) -- flat
         ,("global_building_slots_factor" , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS_FACTOR" MsgModifierPcPosReduced)
         ,("industrial_capacity_dockyard" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_DOCKYARD_FACTOR" MsgModifierPcPosReduced)
         ,("industrial_capacity_factory" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_FACTOR" MsgModifierPcPosReduced)
-        ,("industry_repair_factor"      , numericLoc "MODIFIER_INDUSTRY_REPAIR_FACTOR" MsgModifier) -- %
-        ,("line_change_production_efficiency_factor" , numericLoc "MODIFIER_LINE_CHANGE_PRODUCTION_EFFICIENCY_FACTOR" MsgModifier) -- %
-        ,("production_oil_factor"       , numericLoc "MODIFIER_PRODUCTION_OIL_FACTOR" MsgModifier) -- %
-        ,("production_speed_buildings_factor" , numericLoc "MODIFIER_PRODUCTION_SPEED_BUILDINGS_FACTOR" MsgModifierPcPosReduced) -- %
+        ,("industry_repair_factor"      , numericLoc "MODIFIER_INDUSTRY_REPAIR_FACTOR" MsgModifierPcPosReduced)
+        ,("line_change_production_efficiency_factor" , numericLoc "MODIFIER_LINE_CHANGE_PRODUCTION_EFFICIENCY_FACTOR" MsgModifierPcPosReduced)
+        ,("production_oil_factor"       , numericLoc "MODIFIER_PRODUCTION_OIL_FACTOR" MsgModifierPcPosReduced)
+        ,("production_speed_buildings_factor" , numericLoc "MODIFIER_PRODUCTION_SPEED_BUILDINGS_FACTOR" MsgModifierPcPosReduced)
         -- resistance and compliance
-        ,("civilian_intel_to_others"    , numericLoc "MODIFIER_CIVILIAN_INTEL_TO_OTHERS" MsgModifier) -- flat neg
+        ,("civilian_intel_to_others"    , numericLoc "MODIFIER_CIVILIAN_INTEL_TO_OTHERS" MsgModifierPcNeg)
         -- Intelligence
         ,("foreign_subversive_activites" , numericLoc "MODIFIER_FOREIGN_SUBVERSIVE_ACTIVITIES" MsgModifierPcNegReduced)
         -- Operatives
@@ -687,8 +584,8 @@ handlersNumericIcons = Tr.fromList
         -- Unit Leaders
         ,("military_leader_cost_factor" , numericLoc "MODIFIER_MILITARY_LEADER_COST_FACTOR" MsgModifierPcNegReduced)
         -- General Combat
-        ,("offence"                     , numericLoc "MODIFIER_OFFENCE" MsgModifier) -- % pos
-        ,("defence"                     , numericLoc "MODIFIER_DEFENCE" MsgModifier) -- % pos
+        ,("offence"                     , numericLoc "MODIFIER_OFFENCE" MsgModifierPcPosReduced)
+        ,("defence"                     , numericLoc "MODIFIER_DEFENCE" MsgModifierPcPosReduced)
         -- Land Combat
         ,("army_attack_factor"          , numericLoc "MODIFIERS_ARMY_ATTACK_FACTOR" MsgModifierPcPosReduced)
         ,("army_core_attack_factor"     , numericLoc "MODIFIERS_ARMY_CORE_ATTACK_FACTOR" MsgModifierPcPosReduced)
@@ -702,7 +599,10 @@ handlersNumericIcons = Tr.fromList
         -- Air combat
         -- targeted
         -- state
+        ,("compliance_gain"             , numericLoc "MODIFIER_GLOBAL_NON_CORE_MANPOWER" MsgModifierPcReduced)
+        ,("mobilization_speed"          , numericLoc "MODIFIER_MOBILIZATION_SPEED" MsgModifierPcPosReduced)
         ,("non_core_manpower"           , numericLoc "MODIFIER_GLOBAL_NON_CORE_MANPOWER" MsgModifierPcPosReduced)
+        ,("resistance_damage_to_garrison" , numericLoc "MODIFIER_RESISTANCE_DAMAGE_TO_GARRISONS" MsgModifierPcNegReduced)
         -- Unit Leader Scope
         ,("trait_panzer_leader_xp_gain_factor" , numericLoc "modifier_trait_panzer_leader_xp_gain_factor" MsgModifierPcPosReduced)
         ]
@@ -876,6 +776,7 @@ handlersLocRhs = Tr.fromList
         ,("hre_reform_passed"     , withLocAtomTitle MsgHREPassedReform)
         ,("in_league"             , withLocAtom MsgInLeague)
         ,("is_character"          , withLocAtom MsgIsCharacter)
+        ,("is_on_continent"       , withLocAtom MsgIsOnContinent)
         ,("is_incident_active"    , withLocAtomTitle MsgIsIncidentActive)
         ,("is_incident_happened"  , withLocAtomTitle MsgHasIncidentHappened)
         ,("is_incident_possible"  , withLocAtomTitle MsgIsIncidentPossible)
@@ -897,6 +798,7 @@ handlersLocRhs = Tr.fromList
         ,("tooltip"               , withLocAtom MsgTooltip)
         ,("trade_company_region"  , withLocAtom MsgTradeCompanyRegion)
         ,("unlock_decision_category_tooltip" , withLocAtom MsgUnlockDecisionCategoryTooltip)
+        ,("unlock_decision_tooltip" , withLocAtom MsgUnlockDecisionTooltip)
         ]
 
 -- | Handlers for statements whose RHS is a state ID
@@ -1252,6 +1154,7 @@ handlersYesNo = Tr.fromList
         ,("is_colony"                   , withBool MsgIsColony)
         ,("is_council_enabled"          , withBool MsgIsCouncilEnabled)
         ,("is_defender_of_faith"        , withBool MsgIsDefenderOfFaith)
+        ,("is_demilitarized_zone"       , withBool MsgIsDemilitarizedZone )
         ,("is_elector"                  , withBool MsgIsElector)
         ,("is_emperor"                  , withBool MsgIsEmperor)
         ,("is_emperor_of_china"         , withBool MsgIsEmperorOfChina)
@@ -1433,9 +1336,9 @@ handlersTextValue = Tr.fromList
 --        ,("add_disaster_progress"       , textValue "disaster" "value" MsgAddDisasterProgress MsgAddDisasterProgress tryLocAndIcon)
         ,("add_estate_loyalty"          , textValue "estate" "loyalty" MsgAddEstateLoyalty MsgAddEstateLoyalty tryLocAndIcon)
         ,("add_named_unrest"            , textValue "name" "value" MsgAddNamedUnrest MsgAddNamedUnrest tryLocAndIcon)
+        ,("add_offsite_building"        , textValue "type" "level" MsgAddOffsiteBuilding  MsgAddOffsiteBuilding tryLocAndIcon)
         ,("add_popularity"              , textValue "ideology" "popularity" MsgAddPopularity MsgAddPopularity tryLocAndIcon)
         ,("add_power_projection"        , textValue "type" "amount" MsgAddPowerProjection MsgAddPowerProjection tryLocAndIcon)
-        ,("add_resource"                , textValue "type" "amount" MsgAddResource MsgAddResource tryLocAndIcon)
         ,("add_spy_network_from"        , textValue "who" "value" MsgAddSpyNetworkFrom MsgAddSpyNetworkFrom flagTextMaybe)
         ,("add_spy_network_in"          , textValue "who" "value" MsgAddSpyNetworkIn MsgAddSpyNetworkIn flagTextMaybe)
         ,("army_strength"               , textValue "who" "value" MsgArmyStrength MsgArmyStrength flagTextMaybe)
@@ -1446,6 +1349,7 @@ handlersTextValue = Tr.fromList
         ,("has_global_modifier_value"   , textValue "which" "value" MsgHasGlobalModifierValue MsgHasGlobalModifierValue tryLocAndLocMod)
         ,("has_spy_network_from"        , textValue "who" "value" MsgHasSpyNetworkFrom MsgHasSpyNetworkFrom flagTextMaybe)
         ,("has_spy_network_in"          , textValue "who" "value" MsgHasSpyNetworkIn MsgHasSpyNetworkIn flagTextMaybe)
+        ,("has_volunteers_amount_from"  , textValueCompare "tag" "count" "more than" "less than" MsgHasVolunteersAmountFrom MsgHasVolunteersAmountFrom flagTextMaybe)
         ,("has_won_war_against"         , textValue "who" "max_years_since" MsgHasWonWarAgainst MsgHasWonWarAgainst flagTextMaybe)
         ,("incident_variable_value"     , textValue "incident" "value" MsgIncidentVariableValue MsgIncidentVariableValue tryLocAndIconTitle)
         ,("institution_difference"      , textValue "who" "value" MsgInstitutionDifference MsgInstitutionDifference flagTextMaybe)
@@ -1460,7 +1364,7 @@ handlersTextValue = Tr.fromList
         ,("set_province_name"           , textValue "name" "id" MsgSetProvinceName MsgSetProvinceName tryLocMaybe)
         ,("set_school_opinion"          , textValue "who" "opinion" MsgSetSchoolOpinion MsgSetSchoolOpinion flagTextMaybe)
         ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPoints)
-        ,("strength_ratio"              , textValueCompare "tag" "ratio" MsgStrengthRatio MsgStrengthRatio flagTextMaybe)
+        ,("strength_ratio"              , textValueCompare "tag" "ratio" "more than" "less than" MsgStrengthRatio MsgStrengthRatio flagTextMaybe)
         ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuilding tryLocAndIcon)
         ,("remove_loot"                 , textValue "who" "amount" MsgRemoveLoot MsgRemoveLoot flagTextMaybe)
         ,("trade_goods_produced_amount" , textValue "trade_goods" "amount" MsgTradeGoodsProduced MsgTradeGoodsProduced tryLocAndIcon)
@@ -1558,6 +1462,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_trade_company_investment_in_area", hasTradeCompanyInvestment)
         ,("is_in_war"                    , isInWar)
         ,("load_focus_tree"              , loadFocusTree)
+        ,("modify_building_resources"    , modifyBuildingResources)
         ,("news_event"                   , scope HOI4Country . triggerEvent MsgNewsEvent)
         ,("privateer_power"              , privateerPower)
         ,("region"                       , region)
@@ -1584,7 +1489,7 @@ handlersSpecialComplex = Tr.fromList
         ,("set_global_flag"              , setFlag MsgGlobalFlag)
         ,("set_state_flag"               , setFlag MsgStateFlag)
         ,("set_unit_leader_flag"         , setFlag MsgUnitLeaderFlag)
-        ,("has_character_flag"           , setFlag MsgCharacterFlag)
+        ,("has_character_flag"           , hasFlag MsgCharacterFlag)
         ,("has_country_flag"             , hasFlag MsgCountryFlag)
         ,("has_global_flag"              , hasFlag MsgGlobalFlag)
         ,("has_state_flag"               , hasFlag MsgStateFlag)
@@ -1674,6 +1579,7 @@ handlersIdeaGroups = Tr.fromList
 handlersMisc :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersMisc = Tr.fromList
         [("add_autonomy_ratio"          , addAutonomyRatio)
+        ,("add_resource"                , addResource)
         ,("random"                      , random)
         ,("random_list"                 , randomList)
         -- Special

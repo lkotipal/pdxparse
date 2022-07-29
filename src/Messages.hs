@@ -7657,7 +7657,7 @@ instance RenderMessage Script ScriptMessage where
                 [ "Set variable "
                 , _var
                 , " to "
-                , toMessage (Doc.pp_float _amt)
+                , toMessage (Doc.ppFloat _amt)
                 ]
         MsgAddVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
@@ -9418,7 +9418,7 @@ instance RenderMessage Script ScriptMessage where
         MsgTechDifference {scriptMessageAmt = _amt} -- TODO: Better description when amount is negative
             -> mconcat
                 [ "Is at least "
-                , toMessage (Doc.pp_float _amt)
+                , toMessage (Doc.ppFloat _amt)
                 , " "
                 , toMessage (plural _amt "technology" "technologies")
                 , " ahead"

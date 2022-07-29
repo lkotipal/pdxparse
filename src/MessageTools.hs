@@ -179,7 +179,7 @@ reducedNum p n = p (n * 100)
 -- | Round number to eight decimal places to avoid floating point inaccuracies
 -- e.g. 0.55 would be rendered as 0.5500000000000001
 roundEightDecimals :: Double -> Double
-roundEightDecimals num = (fromIntegral $ round (num * 10000)) / 10000
+roundEightDecimals num = fromIntegral (round (num * 10000)) / 10000
 
 -- | Pretty-print a number.
 ppNum :: (Ord n, PPSep n) => Bool -- ^ Whether to apply a colour template (red
@@ -193,7 +193,7 @@ ppNum :: (Ord n, PPSep n) => Bool -- ^ Whether to apply a colour template (red
                                   --   or strip the - from negative ones.
                           -> n -> Doc
 ppNum colour is_pc pos pos_plus n =
-    let n_pp'd = (if pos_plus then Doc.pp_signed else Doc.pp_nosigned)
+    let n_pp'd = (if pos_plus then Doc.ppSigned else Doc.ppNosigned)
                  ppNumSep n <> if is_pc then "%" else ""
     in (if not colour then id else
         case (if pos then n else negate n) `compare` 0 of
@@ -253,7 +253,7 @@ addOrRemove n | n < 0     = "Remove"
 -- | Format advisor discount text (or empty if none)
 advisorDiscountText :: Double -> Doc
 advisorDiscountText 0 = ""
-advisorDiscountText discount = " (" <> (plainPc (100*(1-discount))) <> " cheaper to employ)"
+advisorDiscountText discount = " (" <> plainPc (100*(1-discount)) <> " cheaper to employ)"
 
 -- | Format years
 formatYears :: Int -> Text

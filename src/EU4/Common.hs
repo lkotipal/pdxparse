@@ -3,7 +3,7 @@ Module      : EU4.Common
 Description : Message handler for Europa Universalis IV
 -}
 module EU4.Common (
-        pp_script
+        ppScript
     ,   pp_mtth
     ,   ppOne
     ,   ppMany
@@ -59,10 +59,10 @@ import EU4.Types -- everything
 -- no particular order from here... TODO: organize this!
 
 -- | Format a script as wiki text.
-pp_script :: (EU4Info g, Monad m) =>
+ppScript :: (EU4Info g, Monad m) =>
     GenericScript -> PPT g m Doc
-pp_script [] = return "(Nothing)"
-pp_script script = imsg2doc =<< ppMany script
+ppScript [] = return "(Nothing)"
+ppScript script = imsg2doc =<< ppMany script
 
 flagTextMaybe :: (EU4Info g, Monad m) => Text -> PPT g m (Text,Text)
 flagTextMaybe = fmap (\t -> (mempty, t)) . flagText (Just EU4Country)

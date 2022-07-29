@@ -6,7 +6,7 @@ module EU4.IdeaGroups (
         IdeaGroup (..)
     ,   Idea (..)
     ,   parseEU4IdeaGroups
-    ,   writeEU4IdeaGroups 
+    ,   writeEU4IdeaGroups
     ) where
 
 import Control.Arrow (first)
@@ -251,7 +251,7 @@ ppIdeaGroup ig = fixup <$> do
                         Left Nothing -> mconcat
                             ["<!-- Looks like a country idea group, but has no traditions -->", PP.line]
                     Just cat -> mconcat
-                        ["<!-- Category: ", Doc.pp_string (show cat), " -->", PP.line
+                        ["<!-- Category: ", Doc.ppString (show cat), " -->", PP.line
                         ,"| events = ", name_loc, " idea group events", PP.line]
                 ,"|idea1=", Doc.strictText (idea_name_loc (rawideas !! 0)), PP.line
 --                 ,iconForIdea (rawideas !! 0)

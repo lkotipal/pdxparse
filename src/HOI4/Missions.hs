@@ -145,7 +145,7 @@ writeHOI4Missions = do
         pp_mtb :: (HOI4Info g, Monad m) => HOI4MissionTreeBranch -> PPT g m Doc
         pp_mtb mtb = setCurrentFile (hoi4mtb_path mtb) $ do
             version <- gets (gameVersion . getSettings)
-            potential <- mapM (scope HOI4Country . pp_script) (hoi4mtb_potential mtb)
+            potential <- mapM (scope HOI4Country . ppScript) (hoi4mtb_potential mtb)
             missionText <- mapM pp_m (hoi4mtb_missions mtb)
             return $ mconcat $ [
                         Doc.strictText $ "===" <> hoi4mtb_id mtb <> "===", PP.line, -- apparently there's no localization of the headline
@@ -189,8 +189,8 @@ writeHOI4Missions = do
         pp_m m = do
             title <- getGameL10n $ (hoi4m_id m) <> "_title"
             desc <- getGameL10n $ (hoi4m_id m) <> "_desc"
-            trigger <- scope HOI4Country (pp_script (hoi4m_trigger m))
-            effect <- setIsInEffect True (scope HOI4Country (pp_script (hoi4m_effect m)))
+            trigger <- scope HOI4Country (ppScript (hoi4m_trigger m))
+            effect <- setIsInEffect True (scope HOI4Country (ppScript (hoi4m_effect m)))
             prereqs <- mapM pp_prereq (hoi4m_prerequisites m)
             return $ mconcat  $ [
                 "|-",

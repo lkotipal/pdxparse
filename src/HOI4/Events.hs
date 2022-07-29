@@ -22,7 +22,7 @@ import Control.Monad.State (MonadState (..), gets)
 import Control.Monad.Trans (MonadIO (..))
 
 import Data.List (intersperse, foldl')
-import Data.Maybe (isJust, isNothing, fromMaybe, fromJust, catMaybes)
+import Data.Maybe (isJust, isNothing, fromMaybe, fromJust, catMaybes, mapMaybe)
 import Data.Monoid ((<>))
 
 import Data.HashMap.Strict (HashMap)
@@ -474,9 +474,9 @@ pp_event evt = case hoi4evt_id evt of
             isFireOnlyOnce = hoi4evt_fire_only_once evt
             isFireForSender = fromMaybe False $ hoi4evt_fire_for_sender evt
             evtId = Doc.strictText eid
-        trigger_pp'd <- evtArg "trigger" hoi4evt_trigger pp_script
+        trigger_pp'd <- evtArg "trigger" hoi4evt_trigger ppScript
         mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (hoi4evt_mean_time_to_happen evt)
-        immediate_pp'd <- setIsInEffect True (evtArg "immediate" hoi4evt_immediate pp_script)
+        immediate_pp'd <- setIsInEffect True (evtArg "immediate" hoi4evt_immediate ppScript)
         triggered_pp <- ppTriggeredBy eid trigger_pp'd
         -- Keep track of incomplete events
         when (not isTriggeredOnly && isNothing mmtth_pp'd && null trigger_pp'd) $
@@ -555,8 +555,8 @@ pp_option evtid hidden triggered opt = do
     where
         ok name_loc = let mtrigger = hoi4opt_trigger opt in do
             mawd_pp'd   <- mapM ((imsg2doc =<<) . ppAiWillDo) (hoi4opt_ai_chance opt)
-            effects_pp'd <- setIsInEffect True (pp_script (fromMaybe [] (hoi4opt_effects opt)))
-            mtrigger_pp'd <- sequence (pp_script <$> mtrigger)
+            effects_pp'd <- setIsInEffect True (ppScript (fromMaybe [] (hoi4opt_effects opt)))
+            mtrigger_pp'd <- sequence (ppScript <$> mtrigger)
             return . mconcat $
                 ["{{Option",PP.line
                 ,"| option_text = ", Doc.strictText name_loc, PP.line
@@ -590,14 +590,14 @@ findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "news_ev
             _ -> (trace $ "Invalid event id statement: " ++ show stmt) $ Nothing
         getId (_ : ss) = getId ss
 findInStmt stmt@[pdx| $lhs = $id |] | lhs == "country_event" || lhs == "news_event" || lhs == "unit_leader_event" || lhs == "state_event" || lhs == "operative_leader_event" = [(Nothing, id)]
-findInStmt [pdx| events = @scr |]  = catMaybes $ map extractEvent scr
+findInStmt [pdx| events = @scr |]  = mapMaybe extractEvent scr
     where
         extractEvent :: GenericStatement -> Maybe (HOI4EventWeight, Text)
         extractEvent (StatementBare (GenericLhs e [])) = Just (Nothing, e)
         extractEvent (StatementBare (IntLhs e)) = Just (Nothing, T.pack (show e))
         extractEvent stmt = (trace $ "Unknown in events statement: " ++ show stmt) $ Nothing
 findInStmt [pdx| random_events = @scr |] =
-    let evts = catMaybes $ map extractRandomEvent scr
+    let evts = mapMaybe extractRandomEvent scr
         total = sum $ map fst evts
     in map (\t -> (Just (fst t, total), snd t)) evts
     where

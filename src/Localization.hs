@@ -68,14 +68,14 @@ readL10n settings = do
                 -- Key and value in the chosen language
                 parseLine :: Parser L10n
                 parseLine = do
-                    tag:fields <- csvField `Ap.sepBy` (Ap.string ";")
+                    tag:fields <- csvField `Ap.sepBy` Ap.string ";"
                     -- fields :: [Text]
                     let addField (fieldnum, lang)
                             = HM.singleton
                                 lang
                                 (HM.singleton tag (LocEntry 0 (fields!!fieldnum)))
                     return $ mergeLangList (map addField langs)
-            in liftM mconcat . forM files $ \file -> do
+            in fmap mconcat . forM files $ \file -> do
                 fileContents <- T.lines <$> TIO.readFile file
                 let parsedLines = mapM (Ap.parseOnly parseLine) fileContents
                 case parsedLines of
@@ -85,7 +85,7 @@ readL10n settings = do
                             ++ ": " ++ err)
                         exitFailure
                     Right lines -> return (mconcat lines)
-        L10nQYAML -> liftM (foldl' mergeLangs HM.empty) . forM files $ \file -> do
+        L10nQYAML -> fmap (foldl' mergeLangs HM.empty) . forM files $ \file -> do
             parseResult <- parseLocFile <$> TIO.readFile file
             case parseResult of
                 Left exc -> do

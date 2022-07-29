@@ -1,5 +1,5 @@
 module Stellaris.Common (
-        pp_script
+        ppScript
     ,   pp_mtth
     ,   ppOne
     ,   ppMany
@@ -63,9 +63,9 @@ isPronoun s = T.map toLower s `S.member` pronouns where
         ,"controller"
         ]
 
-pp_script :: (StellarisInfo g, Monad m) => GenericScript -> PPT g m Doc
-pp_script [] = return "(Nothing)"
-pp_script script = imsg2doc_html =<< ppMany script
+ppScript :: (StellarisInfo g, Monad m) => GenericScript -> PPT g m Doc
+ppScript [] = return "(Nothing)"
+ppScript script = imsg2doc_html =<< ppMany script
 
 -- Emit icon template.
 icon :: Text -> Doc
@@ -303,16 +303,16 @@ pp_mtth = pp_mtth' . foldl' addField newMTTH
         pp_mtthmod (MTTHModifier (Just factor) conditions) =
             case conditions of
                 [_] -> do
-                    conditions_pp'd <- pp_script conditions
+                    conditions_pp'd <- ppScript conditions
                     return . mconcat $
                         [conditions_pp'd
-                        ,PP.enclose ": '''×" "'''" (Doc.pp_float factor)
+                        ,PP.enclose ": '''×" "'''" (Doc.ppFloat factor)
                         ]
                 _ -> do
-                    conditions_pp'd <- indentUp (pp_script conditions)
+                    conditions_pp'd <- indentUp (ppScript conditions)
                     return . mconcat $
                         ["*"
-                        ,PP.enclose "'''×" "''':" (Doc.pp_float factor)
+                        ,PP.enclose "'''×" "''':" (Doc.ppFloat factor)
                         ,PP.line
                         ,conditions_pp'd
                         ]
