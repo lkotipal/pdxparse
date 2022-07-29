@@ -54,7 +54,7 @@ only the files you want, and rebuild.
     * Various lines don't have custom messages yet
     * ~~Localization files need to be directly in the localisation folder and not the localisation->english folder to work~~
     * ~~There are like 5 events where hidden and picture have the first letter capitilized making them fail to parse~~
-    * Fractions can be written as 0.15 or .15 the second case the parser sees it as text instead of a double
+    * ~~Fractions can be written as 0.15 or .15 the second case the parser sees it as text instead of a double~~
     * add_country_leader, promote_character aren't processed. Would probably need to load common/characters for it to be properly handled.
     * ~~add_ideas, remove_ideas can have multiple ideas in an array, but they aren't handled (no clue how to do it)~~
     * no icons in modifier statements
@@ -65,7 +65,7 @@ only the files you want, and rebuild.
 Feel extremely free to help with any of these or the issues, I honestly doubt I can do any of these except maybe the additonal formatting
 
 * Clean up/optimize code (probably never, cause I'm not good enough, but should still be done)
-* Add text output for national focuses
+* ~~Add text output for national focuses~~
 * Have time for event to be triggered added to the triggered only part in events
 * ~~Have script look for triggers in national focuses~~
 * Add more formatting for various lines, best case scenarion minimal editing is needed to place it on the wiki
