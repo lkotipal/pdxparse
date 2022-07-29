@@ -543,35 +543,7 @@ handlersFlagOrYesNo = Tr.fromList
 -- pronoun (such as ROOT).
 handlersIconFlagOrPronoun :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersIconFlagOrPronoun = Tr.fromList
-        [("change_culture"   , locAtomTagOrState (const MsgChangeCulture) MsgChangeSameCulture)
-        -- above is province, below is country - use same messages for both
-        ,("change_primary_culture", locAtomTagOrState (const MsgChangeCulture) MsgChangeSameCulture)
-        ,("change_culture"   , locAtomTagOrState (const MsgChangeCulture) MsgChangeSameCulture)
-        ,("change_religion"  , iconOrFlag MsgChangeReligion MsgChangeSameReligion Nothing)
-        ,("consort_culture"  , locAtomTagOrState (const MsgConsortCultureIs) MsgConsortCultureIsSame)
-        ,("continent"        , locAtomTagOrState (const MsgContinentIs) MsgContinentIsAs)
-        ,("culture"          , locAtomTagOrState (const MsgCultureIs) MsgCultureIsAs)
-        ,("culture_group"    , locAtomTagOrState (const MsgCultureIsGroup) MsgCultureGroupAs)
-        ,("dominant_culture" , locAtomTagOrState (const MsgDominantCultureIs) MsgDominantCultureIsAs)
-        ,("dominant_religion", locAtomTagOrState MsgDominantReligion MsgDominantReligionAs)
-        ,("heir_culture"     , locAtomTagOrState (const MsgHeirCultureIs) MsgHeirCultureIsSame)
-        ,("heir_nationality" , locAtomTagOrState (const MsgHeirNationality) MsgHeirNationalityAs)
-        ,("heir_religion"    , locAtomTagOrState MsgHeirReligion MsgHeirReligionAs)
-        ,("is_core"          , tagOrState MsgIsCoreOf MsgHasCoreOn (Just HOI4Country))
-        ,("is_claim"         , tagOrState MsgHasClaim MsgHasClaimOn (Just HOI4Country))
-        ,("is_permanent_claim" , tagOrState MsgIsPermanentClaim MsgHasPermanentClaim (Just HOI4Country))
-        ,("primary_culture"  , locAtomTagOrState (const MsgPrimaryCultureIs) MsgPrimaryCultureIsAs)
-        ,("province_religion" , locAtomTagOrState MsgProvinceReligion MsgProvinceSameReligion)
-        ,("religion"         , locAtomTagOrState MsgReligion MsgSameReligion)
-        ,("religion_group"   , locAtomTagOrState MsgReligionGroup MsgSameReligionGroup)
-        ,("ruler_culture"    , iconOrFlag MsgRulerCultureIs MsgRulerCultureIsSame Nothing)
-        ,("ruler_religion"   , iconOrFlag MsgRulerReligionIs MsgRulerReligionIsSame Nothing)
-        ,("set_consort_culture" , locAtomTagOrState (const MsgChangeConsortCulture) MsgChangeConsortSameCulture)
-        ,("set_heir_culture" , locAtomTagOrState (const MsgChangeHeirCulture) MsgChangeHeirSameCulture)
-        ,("set_heir_religion", locAtomTagOrState MsgSetHeirReligion MsgSetHeirReligionAs)
-        ,("set_ruler_culture" , locAtomTagOrState (const MsgChangeRulerCulture) MsgChangeRulerSameCulture)
-        ,("set_ruler_religion" , iconOrFlag MsgChangeRulerReligion MsgChangeRulerSameReligion Nothing)
-        ,("trade_goods"      , locAtomTagOrState MsgProducesGoods MsgProducesSameGoods)
+        [
         ]
 
 
@@ -937,7 +909,6 @@ handlersSpecialComplex = Tr.fromList
         ,("define_general"               , defineMilitaryLeader "general" False MsgDefineGeneral)
         ,("define_leader_to_ruler"       , defineDynMember (\_ -> MsgDefinerLeaderToRuler) (\_ -> \_ -> MsgDefinerLeaderToRuler) (\_ -> MsgDefinerLeaderToRuler) (\_ -> \_ -> MsgDefinerLeaderToRuler))
         ,("define_ruler_to_general"      , defineMilitaryLeader "general" False MsgDefineRulerToGeneral)
-        ,("employed_advisor"             , employedAdvisor)
         ,("expulsion_target"             , expulsionTarget)
         ,("faction_influence"            , factionInfluence MsgFactionHasInfluence)
         ,("free_building_slots"          , freeBuildingSlots)

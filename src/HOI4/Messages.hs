@@ -236,27 +236,11 @@ data ScriptMessage
     | MsgGainMPFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgArea
     | MsgCreateFaction {scriptMessageWhat :: Text}
-    | MsgContinentIs {scriptMessageWhat :: Text}
-    | MsgContinentIsAs {scriptMessageWhat :: Text}
-    | MsgCultureIs {scriptMessageWhat :: Text}
-    | MsgCultureIsAs {scriptMessageWho :: Text}
-    | MsgCultureIsGroup {scriptMessageWhat :: Text}
-    | MsgCultureGroupAs {scriptMessageWhat :: Text}
     | MsgRulerIsDynasty {scriptMessageWhat :: Text}
     | MsgRulerIsSameDynasty {scriptMessageWho :: Text}
-    | MsgHeirNationality {scriptMessageWhat :: Text}
-    | MsgHeirNationalityAs {scriptMessageWho :: Text}
-    | MsgHeirReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHeirReligionAs {scriptMessageWho :: Text}
-    | MsgSetHeirReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgSetHeirReligionAs {scriptMessageWho :: Text}
     | MsgGovernmentIsIcon {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasTech {scriptMessageWhat :: Text}
-    | MsgDominantCultureIs {scriptMessageWhat :: Text}
-    | MsgDominantCultureIsAs {scriptMessageWhat :: Text}
     | MsgDiplomaticRelation {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
-    | MsgPrimaryCultureIs {scriptMessageWhat :: Text}
-    | MsgPrimaryCultureIsAs {scriptMessageWhat :: Text}
     | MsgRegionIs {scriptMessageWhat :: Text}
     | MsgTooltip {scriptMessageWhat :: Text}
     | MsgCustomEffectTooltip {scriptMessageWhat :: Text}
@@ -301,8 +285,6 @@ data ScriptMessage
     | MsgInflation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgInflationAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgHasIdeaGroup {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgProducesGoods {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgProducesSameGoods {scriptMessageWhere :: Text}
     | MsgIsControlledBy {scriptMessageWhom :: Text}
     | MsgHasDefensiveWarWith {scriptMessageWhom :: Text}
     | MsgAddClaimBy {scriptMessageWho :: Text}
@@ -321,22 +303,6 @@ data ScriptMessage
     | MsgMakeWhitePeace {scriptMessageWhom :: Text}
     | MsgCountryExists {scriptMessageWho :: Text}
     | MsgExists {scriptMessageYn :: Bool}
-    | MsgSameReligion {scriptMessageWhom :: Text}
-    | MsgReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgSameReligionGroup {scriptMessageWhom :: Text}
-    | MsgReligionGroup {scriptMessage_ :: Text, scriptMessageWhat :: Text}
-    | MsgChangeSameReligion {scriptMessageWhom :: Text}
-    | MsgChangeReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgChangeRulerSameReligion {scriptMessageWhom :: Text}
-    | MsgChangeRulerReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgRulerReligionIs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgRulerReligionIsSame {scriptMessageWhom :: Text}
-    | MsgRulerCultureIs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgRulerCultureIsSame {scriptMessageWhom :: Text}
-    | MsgIsCoreOf {scriptMessageWhom :: Text}
-    | MsgHasCoreOn {scriptMessageWhat :: Text}
-    | MsgHasClaim {scriptMessageWho :: Text}
-    | MsgHasClaimOn {scriptMessageWhat :: Text}
     | MsgIsAIControlled {scriptMessageYn :: Bool}
     | MsgHasCardinal {scriptMessageYn :: Bool}
     | MsgHasCapitulated {scriptMessageYn :: Bool}
@@ -492,8 +458,6 @@ data ScriptMessage
     | MsgSetReligiousSchool {scriptSchoolIcon :: Text, scriptSchoolName :: Text, scriptGroupName :: Text}
     | MsgAreaIs {scriptMessageWhat :: Text}
     | MsgAreaIsAs {scriptMessageWhat :: Text}
-    | MsgDominantReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgDominantReligionAs {scriptMessageWhom :: Text}
     | MsgSetDemilitarizedZone {scriptMessageYn :: Bool}
     | MsgSetHREReligionLocked {scriptMessageYn :: Bool}
     | MsgHRELeaguesEnabled {scriptMessageYn :: Bool}
@@ -615,7 +579,6 @@ data ScriptMessage
     | MsgIsSea {scriptMessageYn :: Bool}
     | MsgGiveGuarantee {scriptMessageWhom :: Text}
     | MsgGiveMilitaryAccess {scriptMessageWhom :: Text}
-    | MsgChangeSameCulture {scriptMessageWhom :: Text}
     | MsgChangeCulture {scriptMessageWhat :: Text}
     | MsgIsTribal {scriptMessageYn :: Bool}
     | MsgSetCapital {scriptMessageWhat :: Text}
@@ -847,8 +810,6 @@ data ScriptMessage
     | MsgTypeAll
     | MsgSetSavedName { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageFemale :: Bool }
     | MsgSetSavedNameScope { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageScope :: Text, scriptMessageFemale :: Bool }
-    | MsgHasPermanentClaim { scriptMessageWhat :: Text }
-    | MsgIsPermanentClaim { scriptMessageWhom :: Text }
     | MsgLandLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLandLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLandLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1105,8 +1066,6 @@ data ScriptMessage
     | MsgHasGuaranteed {scriptMessageWhom :: Text}
     | MsgHasNumberOfBuildingType {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgTradeGoodsProduced {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgProvinceSameReligion {scriptMessageWhom :: Text}
-    | MsgProvinceReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgIsFederationLeader {scriptMessageYn :: Bool}
     | MsgIsIroquois {scriptMessageYn :: Bool}
     | MsgMilitaryStrength { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
@@ -1237,16 +1196,6 @@ data ScriptMessage
     | MsgIsInCoalition {scriptMessageYn :: Bool}
     | MsgIsExcommunicated {scriptMessageYn :: Bool}
     | MsgIsFactionLeader {scriptMessageYn :: Bool}
-    | MsgChangeConsortSameCulture {scriptMessageWhom :: Text}
-    | MsgChangeConsortCulture {scriptMessageWhat :: Text}
-    | MsgChangeHeirSameCulture {scriptMessageWhom :: Text}
-    | MsgChangeHeirCulture {scriptMessageWhat :: Text}
-    | MsgChangeRulerSameCulture {scriptMessageWhom :: Text}
-    | MsgChangeRulerCulture {scriptMessageWhat :: Text}
-    | MsgConsortCultureIs {scriptMessageWhat :: Text}
-    | MsgConsortCultureIsSame {scriptMessageWhom :: Text}
-    | MsgHeirCultureIs {scriptMessageWhat :: Text}
-    | MsgHeirCultureIsSame {scriptMessageWhom :: Text}
     | MsgHasFemaleConsort {scriptMessageYn :: Bool}
     | MsgIsOwnedAndControlledBy {scriptMessageWhom :: Text}
     | MsgIsPuppetOf {scriptMessageWhom :: Text}
@@ -1765,37 +1714,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Create faction called "
                 , toMessage (iquotes _what)
                 ]
-        MsgContinentIs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Continent is "
-                , _what
-                ]
-        MsgContinentIsAs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Continent is the same as "
-                , _what
-                ]
-        MsgCultureIs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Culture is "
-                , _what
-                ]
-        MsgCultureIsAs {scriptMessageWho = _who}
-            -> mconcat
-                [ "Culture is the same as "
-                , _who
-                ]
-        MsgCultureIsGroup {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Culture is in "
-                , _what
-                , " group"
-                ]
-        MsgCultureGroupAs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Culture is in the same group as "
-                , _what
-                ]
         MsgRulerIsDynasty {scriptMessageWhat = _what}
             -> mconcat
                 [ "Ruler is of the "
@@ -1805,40 +1723,6 @@ instance RenderMessage Script ScriptMessage where
         MsgRulerIsSameDynasty {scriptMessageWho = _who}
             -> mconcat
                 [ "Ruler is of the same dynasty as "
-                , _who
-                ]
-        MsgHeirNationality {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Heir's culture is "
-                , _what
-                ]
-        MsgHeirNationalityAs {scriptMessageWho = _who}
-            -> mconcat
-                [ "Heir's culture is the same as "
-                , _who
-                ]
-        MsgHeirReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Heir's religion is "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgHeirReligionAs {scriptMessageWho = _who}
-            -> mconcat
-                [ "Heir's religion is the same as "
-                , _who
-                ]
-        MsgSetHeirReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Heir's religion becomes "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgSetHeirReligionAs {scriptMessageWho = _who}
-            -> mconcat
-                [ "Heir's religion becomes that of "
                 , _who
                 ]
         MsgGovernmentIsIcon {scriptMessageIcon = _icon, scriptMessageWhat = _what}
@@ -1854,30 +1738,10 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " technology researched"
                 ]
-        MsgDominantCultureIs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Dominant culture is "
-                , _what
-                ]
-        MsgDominantCultureIsAs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Dominant culture is the same as "
-                , _what
-                ]
         MsgDiplomaticRelation {scriptMessageWhat = _what, scriptMessageWhom = _whom}
             -> mconcat
                 [ _what
                 , _whom
-                ]
-        MsgPrimaryCultureIs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Primary culture is "
-                , _what
-                ]
-        MsgPrimaryCultureIsAs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Primary culture is the same as "
-                , _what
                 ]
         MsgRegionIs {scriptMessageWhat = _what}
             -> mconcat
@@ -2163,18 +2027,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgProducesGoods {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Produces "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgProducesSameGoods {scriptMessageWhere = _where}
-            -> mconcat
-                [ "Produces the same goods as "
-                , _where
-                ]
         MsgIsControlledBy {scriptMessageWhom = _whom}
             -> mconcat
                 [ "Is controlled by "
@@ -2264,97 +2116,6 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgExists {scriptMessageYn = _yn}
             -> toMessage (ifThenElseT _yn "Exists" "Does ''not'' exist")
-        MsgSameReligion {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Religion is same as "
-                , _whom
-                ]
-        MsgReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Religion is "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgSameReligionGroup {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Religion group is same as "
-                , _whom
-                ]
-        MsgReligionGroup {scriptMessage_ = __, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Religion is in "
-                , _what
-                , " group"
-                ]
-        MsgChangeSameReligion {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Change religion to that of "
-                , _whom
-                ]
-        MsgChangeReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Change religion to "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgChangeRulerSameReligion {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Change ruler religion to that of "
-                , _whom
-                ]
-        MsgChangeRulerReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Change ruler religion to "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgRulerReligionIsSame {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Ruler religion is the same as that of "
-                , _whom
-                ]
-        MsgRulerReligionIs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Ruler religion is "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgRulerCultureIsSame {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Ruler culture is the same as that of "
-                , _whom
-                ]
-        MsgRulerCultureIs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Ruler culture is "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgIsCoreOf {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Is a core of "
-                , _whom
-                ]
-        MsgHasCoreOn {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has a core on "
-                , _what
-                ]
-        MsgHasClaim {scriptMessageWho = _who}
-            -> mconcat
-                [ _who
-                , " has a claim on this province"
-                ]
-        MsgHasClaimOn {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has a claim on "
-                , _what
-                ]
         MsgIsAIControlled {scriptMessageYn = _yn}
             -> mconcat
                 [ "Is "
@@ -3363,18 +3124,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is in the same area as "
                 , _what
                 ]
-        MsgDominantReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "The country's dominant religion is "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgDominantReligionAs {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "The country's dominant religion is that of "
-                , _whom
-                ]
         MsgSetDemilitarizedZone {scriptMessageYn = _yn}
             -> mconcat
                 [ "Is "
@@ -4247,11 +3996,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Change culture to "
                 , _what
-                ]
-        MsgChangeSameCulture {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Change culture to that of "
-                , _whom
                 ]
         MsgIsTribal {scriptMessageYn = _yn}
             -> mconcat
@@ -5819,16 +5563,6 @@ instance RenderMessage Script ScriptMessage where
                 , " to <tt>"
                 , _var
                 , "</tt>"
-                ]
-        MsgHasPermanentClaim { scriptMessageWhat = _what }
-            -> mconcat
-                [ "Has a [[permanent claim]] on "
-                , _what
-                ]
-        MsgIsPermanentClaim { scriptMessageWhom = _whom }
-            -> mconcat
-                [ "Is a [[permanent claim]] of "
-                , _whom
                 ]
         MsgLandLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7603,18 +7337,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgProvinceSameReligion {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Province religion is same as "
-                , _whom
-                ]
-        MsgProvinceReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Province religion is "
-                , _icon
-                , " "
-                , _what
-                ]
         MsgIsFederationLeader {scriptMessageYn = _yn}
             -> mconcat
                 [ "Is"
@@ -8480,56 +8202,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is"
                 , ifThenElseT _yn "" " ''not''"
                 , " leader of a faction"
-                ]
-        MsgChangeConsortSameCulture {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Change consort culture to that of "
-                , _whom
-                ]
-        MsgChangeConsortCulture {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Change consort culture to "
-                , _what
-                ]
-        MsgChangeHeirSameCulture {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Change heir culture to that of "
-                , _whom
-                ]
-        MsgChangeHeirCulture {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Change heir culture to "
-                , _what
-                ]
-        MsgChangeRulerSameCulture {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Change ruler culture to that of "
-                , _whom
-                ]
-        MsgChangeRulerCulture {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Change ruler culture to "
-                , _what
-                ]
-        MsgConsortCultureIs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Consort's culture is "
-                , _what
-                ]
-        MsgConsortCultureIsSame {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Consort's culture is the same as "
-                , _whom
-                ]
-        MsgHeirCultureIs {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Heir's culture is "
-                , _what
-                ]
-        MsgHeirCultureIsSame {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Heir's culture is the same as "
-                , _whom
                 ]
         MsgHasFemaleConsort {scriptMessageYn = _yn}
             -> mconcat
