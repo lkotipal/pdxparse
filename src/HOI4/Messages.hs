@@ -253,10 +253,6 @@ data ScriptMessage
     | MsgGovernmentIsIcon {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasAdvisorType {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasTech {scriptMessageWhat :: Text}
-    | MsgCavalrySpawnsCountry {scriptMessageWhom :: Text}
-    | MsgCavalrySpawnsProvince {scriptMessageWhere :: Text}
-    | MsgInfantrySpawnsCountry {scriptMessageWhom :: Text}
-    | MsgInfantrySpawnsProvince {scriptMessageWhere :: Text}
     | MsgDominantCultureIs {scriptMessageWhat :: Text}
     | MsgDominantCultureIsAs {scriptMessageWhat :: Text}
     | MsgDiplomaticRelation {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
@@ -336,11 +332,8 @@ data ScriptMessage
     | MsgHasDefensiveWarWith {scriptMessageWhom :: Text}
     | MsgDiscoverCountry {scriptMessageWhom :: Text}
     | MsgAddClaimBy {scriptMessageWho :: Text}
-    | MsgGainCore {scriptMessageWho :: Text}
     | MsgAddStateClaim {scriptMessageWhat :: Text}
     | MsgAddStateCore {scriptMessageWhat :: Text}
-    | MsgGainPermanentClaimCountry {scriptMessageWho :: Text}
-    | MsgGainPermanentClaimProvince {scriptMessageWhere :: Text}
     | MsgHasDiscovered {scriptMessageWhomOrWhere :: Text}
     | MsgDiscoveredBy {scriptMessageWhom :: Text}
     | MsgSameContinent {scopeIsCountry :: Bool, paramIsCountry :: Bool, scriptMessageWhomOrWhere :: Text}
@@ -348,8 +341,6 @@ data ScriptMessage
     | MsgNeighbors {scriptMessageWhom :: Text}
     | MsgIsRival {scriptMessageWhom :: Text}
     | MsgIsSubjectOf {scriptMessageWhom :: Text}
-    | MsgLoseCoreCountry {scriptMessageWho :: Text}
-    | MsgLoseCoreProvince {scriptMessageWhere :: Text}
     | MsgRoyalMarriageWith {scriptMessageWhom :: Text}
     | MsgIsOwnedBy {scriptMessageWhom :: Text}
     | MsgReleaseVassal {scriptMessageWhom :: Text}
@@ -529,7 +520,6 @@ data ScriptMessage
     | MsgSpawnRebels {scriptMessageRtype :: Text, scriptMessageSize :: Double, scriptMessageFriend :: Text, scriptMessageLeader :: Text, scriptMessageWin :: Bool, scriptMessageProgress :: Text}
     | MsgRebelsHaveRisen {scriptMessageIcon :: Text, scriptMessageRtype :: Text}
     | MsgAddCoreOf {scriptMessageWho :: Text}
-    | MsgGainCoreOnProvince {scriptMessageProv :: Text}
     | MsgHasDLC {scriptMessageIcon :: Text, scriptMessageDlc :: Text}
     | MsgHasEquipment {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text}
     | MsgTechGroup {scriptMessageIcon :: Text, scriptMessageName :: Text}
@@ -812,8 +802,6 @@ data ScriptMessage
     | MsgCalcTrueIf {scriptMessageAmt :: Double}
     | MsgAddResearchSlot {scriptMessageAmt :: Double}
     | MsgAddThreat {scriptMessageAmt :: Double}
-    | MsgAddClaimFor {scriptMessageWho :: Text}
-    | MsgAddClaimOn {scriptMessageWhere :: Text}
     | MsgAddAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddHarmonizedReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -893,7 +881,6 @@ data ScriptMessage
     | MsgChkVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgEquVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgEquVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
-    | MsgIsColonialNationOf { scriptMessageWho :: Text }
     | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
     | MsgHasCompletedAllReforms { scriptMessageYn :: Bool }
@@ -2013,28 +2000,6 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " technology researched"
                 ]
-        MsgCavalrySpawnsCountry {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "A cavalry regiment loyal to "
-                , _whom
-                , " spawns"
-                ]
-        MsgCavalrySpawnsProvince {scriptMessageWhere = _where}
-            -> mconcat
-                [ "A cavalry regiment spawns in "
-                , _where
-                ]
-        MsgInfantrySpawnsCountry {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "An infantry regiment loyal to "
-                , _whom
-                , " spawns"
-                ]
-        MsgInfantrySpawnsProvince {scriptMessageWhere = _where}
-            -> mconcat
-                [ "An infantry regiment spawns in "
-                , _where
-                ]
         MsgDominantCultureIs {scriptMessageWhat = _what}
             -> mconcat
                 [ "Dominant culture is "
@@ -2550,11 +2515,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is claimed by "
                 , _who
                 ]
-        MsgGainCore {scriptMessageWho = _who}
-            -> mconcat
-                [ _who
-                , " gains a core on this province"
-                ]
         MsgAddStateClaim {scriptMessageWhat = _what}
             -> mconcat
                 [ "Gains claim on "
@@ -2564,16 +2524,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Gains core on "
                 , _what
-                ]
-        MsgGainPermanentClaimCountry {scriptMessageWho = _who}
-            -> mconcat
-                [ _who
-                , " gains a permanent claim on this province"
-                ]
-        MsgGainPermanentClaimProvince {scriptMessageWhere = _where}
-            -> mconcat
-                [ "Gain a permanent claim on "
-                , _where
                 ]
         MsgHasDiscovered {scriptMessageWhomOrWhere = _whomOrWhere}
             -> mconcat
@@ -2611,16 +2561,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is a subject of "
                 , _whom
-                ]
-        MsgLoseCoreCountry {scriptMessageWho = _who}
-            -> mconcat
-                [ _who
-                , " loses their core on this province"
-                ]
-        MsgLoseCoreProvince {scriptMessageWhere = _where}
-            -> mconcat
-                [ "Lose core on "
-                , _where
                 ]
         MsgRoyalMarriageWith {scriptMessageWhom = _whom}
             -> mconcat
@@ -3742,11 +3682,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _who
                 , " gains a core on this state"
-                ]
-        MsgGainCoreOnProvince {scriptMessageProv = _prov}
-            -> mconcat
-                [ "Gain core on "
-                , _prov
                 ]
         MsgHasDLC {scriptMessageIcon = _icon, scriptMessageDlc = _dlc}
             -> mconcat
@@ -5631,16 +5566,6 @@ instance RenderMessage Script ScriptMessage where
                 , " by "
                 , toMessage (colourNum False _amt)
                 ]
-        MsgAddClaimFor {scriptMessageWho = _who}
-            -> mconcat
-                [ _who
-                , " gains a claim on this province"
-                ]
-        MsgAddClaimOn {scriptMessageWhere = _where}
-            -> mconcat
-                [ "Gain a claim on "
-                , _where
-                ]
         MsgAddAcceptedCulture {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ _icon
@@ -6284,11 +6209,6 @@ instance RenderMessage Script ScriptMessage where
                 , _var
                 , " equal to "
                 , toMessage (plainNum _amt)
-                ]
-        MsgIsColonialNationOf { scriptMessageWho = _who }
-            -> mconcat
-                [ "Is colonial nation of "
-                , _who
                 ]
         MsgHasInstitution { scriptMessageIcon = _icon, scriptMessageWhat = _what }
             -> mconcat

@@ -3185,7 +3185,7 @@ withFlagOrState countryMsg _ stmt@[pdx| %_ = $_:$_ |]
     = withFlag countryMsg stmt -- could be either
 withFlagOrState _ provinceMsg stmt@[pdx| %_ = !(_ :: Double) |]
     = withState provinceMsg stmt
-withFlagOrState _ _ stmt = preStatement stmt
+withFlagOrState _ _ stmt = preStatement stmt -- CHECK FOR USEFULNESS
 
 isMonth :: (HOI4Info g, Monad m) => StatementHandler g m
 isMonth [pdx| %_ = !(num :: Int) |] | num >= 0, num <= 11

@@ -459,13 +459,7 @@ handlersState = Tr.fromList
 -- Also abusable for tag,scope purposes
 handlersFlagOrstate :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersFlagOrstate = Tr.fromList
-        [("add_claim"          , withFlagOrState MsgAddClaimFor MsgAddClaimOn)
---        ,("add_core"           , withFlagOrState MsgGainCore MsgGainCoreProvince)
-        ,("add_permanent_claim", withFlagOrState MsgGainPermanentClaimCountry MsgGainPermanentClaimProvince)
-        ,("cavalry"            , withFlagOrState MsgCavalrySpawnsCountry MsgCavalrySpawnsProvince)
-        ,("infantry"           , withFlagOrState MsgInfantrySpawnsCountry MsgInfantrySpawnsProvince)
-        ,("remove_core"        , withFlagOrState MsgLoseCoreCountry MsgLoseCoreProvince)
-        ,("is_colonial_nation_of" , withFlagOrState MsgIsColonialNationOf MsgIsColonialNationOf)
+        [
         ]
 
 -- | Handlers for statements whose RHS is a number OR a tag/pronoun, with icon
