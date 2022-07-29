@@ -1423,7 +1423,7 @@ withFlagOrBool :: (HOI4Info g, Monad m) =>
         -> StatementHandler g m
 withFlagOrBool bmsg _ [pdx| %_ = yes |] = msgToPP (bmsg True)
 withFlagOrBool bmsg _ [pdx| %_ = no  |]  = msgToPP (bmsg False)
-withFlagOrBool _ tmsg stmt = withFlag tmsg stmt
+withFlagOrBool _ tmsg stmt = withFlag tmsg stmt -- CHECK FOR USEFULNESS
 
 -- | Handler for statements whose RHS is a number OR a tag/prounoun, with icon
 withTagOrNumber :: (HOI4Info g, Monad m) =>
@@ -1435,7 +1435,7 @@ withTagOrNumber iconkey numMsg _ [pdx| %_ = !num |]
     = msgToPP $ numMsg (iconText iconkey) num
 withTagOrNumber iconkey _ tagMsg scr@[pdx| %_ = $_ |]
     = withFlagAndIcon iconkey tagMsg (Just HOI4Country) scr
-withTagOrNumber  _ _ _ stmt = plainMsg $ pre_statement' stmt
+withTagOrNumber  _ _ _ stmt = plainMsg $ pre_statement' stmt -- CHECK FOR USEFULNESS
 
 -- | Handler for statements that have a number and an icon.
 numericIcon :: (IsGameState (GameState g), Monad m) =>

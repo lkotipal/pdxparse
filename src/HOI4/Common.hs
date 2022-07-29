@@ -465,24 +465,14 @@ handlersFlagOrstate = Tr.fromList
 -- | Handlers for statements whose RHS is a number OR a tag/pronoun, with icon
 handlersNumericOrFlag :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericOrFlag = Tr.fromList
-        [("adm_tech"             , withTagOrNumber "adm tech" MsgADMTech MsgADMTechAs)
-        ,("army_size"            , withTagOrNumber "" MsgArmySize MsgArmySizeMatches) -- FIXME: Don't really need icon
-        ,("development"          , withTagOrNumber "development" MsgDevelopment MsgDevelopmentAs) -- Can't really be a tag, but it can be "CAPITAL"
-        ,("land_morale"          , withTagOrNumber "morale of armies" MsgMoraleOfArmies MsgMoraleOfArmiesAs)
-        ,("monthly_income"       , withTagOrNumber "ducats" MsgMonthlyIncome MsgMonthlyIncomeAs)
-        ,("navy_size"            , withTagOrNumber "" MsgNavySize MsgNavySizeMatches) -- FIXME: Don't really need icon
-        ,("num_of_light_ship"    , withTagOrNumber "light ship" MsgNumLightShips MsgNumLightShipsMatches)
-        ,("num_of_heavy_ship"    , withTagOrNumber "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
-        ,("num_of_galley"        , withTagOrNumber "galley" MsgNumGalleyShips MsgNumGalleyShipsMatches)
-        ,("num_of_transport"     , withTagOrNumber "transport" MsgNumTransportShips MsgNumTransportShipsMatches)
+        [
         ]
 
 -- TODO: parse advisor files
 -- | Handlers for statements whose RHS is an advisor ID
 handlersAdvisorId :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersAdvisorId = Tr.fromList
-        [("advisor_exists"     , numeric MsgAdvisorExists)
-        ,("is_advisor_employed", numeric MsgAdvisorIsEmployed)
+        [
         ]
 
 -- | Simple statements whose RHS should be presented as is, in typewriter face
@@ -493,19 +483,10 @@ handlersTypewriter = Tr.fromList
         ,("clr_global_flag"     , withNonlocAtom2 MsgGlobalFlag MsgClearFlag)
         ,("clr_state_flag"      , withNonlocAtom2 MsgStateFlag MsgClearFlag)
         ,("clr_unit_leader_flag" , withNonlocAtom2 MsgUnitLeaderFlag MsgClearFlag)
-        ,("clear_exiled_ruler"  , withNonlocAtom MsgClearExiledRuler)
-        ,("clear_saved_name"    , withNonlocAtom MsgClearSavedName)
-        ,("exile_heir_as"       , withNonlocAtom MsgExileHeir)
-        ,("exile_ruler_as"      , withNonlocAtom MsgExileRuler)
-        ,("exiled_same_dynasty_as_current" , withNonlocAtom MsgExiledRulerSameDynastyAsCurrent)
         ,("has_focus_tree"      , withNonlocAtom MsgHasFocusTree)
-        ,("has_ruler"           , withNonlocAtom MsgHasRuler)
-        ,("has_saved_event_target", withNonlocAtom MsgHasSavedEventTarget)
         ,("save_event_target_as", withNonlocAtom MsgSaveEventTargetAs)
         ,("save_global_event_target_as", withNonlocAtom MsgSaveGlobalEventTargetAs)
         ,("set_cosmetic_tag"    , withNonlocAtom MsgSetCosmeticTag)
-        ,("set_heir"            , withNonlocAtom MsgSetHeir)
-        ,("set_ruler"           , withNonlocAtom MsgSetRuler)
         ]
 
 -- | Handlers for simple statements with icon
@@ -663,7 +644,7 @@ handlersSimpleFlag = Tr.fromList
 -- | Handlers for simple generic statements with a flag or "yes"/"no"
 handlersFlagOrYesNo :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersFlagOrYesNo = Tr.fromList
-        [("exists", withFlagOrBool MsgExists MsgCountryExists)
+        [
         ]
 
 -- | Handlers for statements whose RHS may be an icon, a flag, a province, or a
@@ -713,6 +694,7 @@ handlersYesNo = Tr.fromList
         ,("back_current_issue"          , withBool MsgBackCurrentIssue)
         ,("can_establish_order"         , withBool MsgCanEstablishHolyOrder)
         ,("elector"                     , withBool MsgElector)
+        ,("exists", withBool MsgExists)
         ,("expelling_minorities"        , withBool MsgExpellingMinorities)
         ,("has_active_debate"           , withBool MsgHasActiveDebate)
         ,("has_any_active_estate_agenda", withBool MsgHasAnyActiveEstateAgenda)

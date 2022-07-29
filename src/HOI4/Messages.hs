@@ -267,8 +267,6 @@ data ScriptMessage
     | MsgOwnsState {scriptMessageWhat :: Text}
     | MsgControlsState {scriptMessageWhat :: Text}
     | MsgHasFullControlOfState {scriptMessageWhat :: Text}
-    | MsgAdvisorExists {scriptMessageAdvisorID :: Double}
-    | MsgAdvisorIsEmployed {scriptMessageAdvisorID :: Double}
     | MsgClearFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text}
     | MsgHasFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text}
     | MsgHasFlagFor {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageAmtText :: Text, scriptMessageTime :: Text, scriptMessageDate :: Text}
@@ -296,25 +294,12 @@ data ScriptMessage
     | MsgNumCities {scriptMessageAmt :: Double}
     | MsgNumCitiesThan {scriptMessageWhom :: Text}
     | MsgToleranceToThis {scriptMessageAmt :: Double}
-    | MsgADMTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCreateAdmiral {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCreateConquistador {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCreateExplorer {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCreateGeneral {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgDevelopment {scriptMessageIcon :: Text, scriptMessageDevelopment :: Double}
-    | MsgDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgNumHeavyShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNumHeavyShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgNumLightShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNumLightShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgNumGalleyShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNumGalleyShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgNumTransportShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNumTransportShipsMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgTotalDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTotalDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgMonthlyIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgMonthlyIncomeAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgInflation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgInflationAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgChangeGoods {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -708,8 +693,6 @@ data ScriptMessage
     | MsgCavalryCombatAbility {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgArtilleryCombatAbility {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgShipDurability {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgMoraleOfArmies {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgMoraleOfArmiesAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgMoraleOfNavies {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavalAttrition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDiscipline {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -831,7 +814,6 @@ data ScriptMessage
     | MsgAddTrustMutual {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgSaveEventTargetAs {scriptMessageName :: Text}
     | MsgSaveGlobalEventTargetAs {scriptMessageName :: Text}
-    | MsgHasSavedEventTarget {scriptMessageName :: Text}
     | MsgRemoveClaim {scriptMessageWho :: Text}
     | MsgRemoveCoreOf {scriptMessageWho :: Text}
     | MsgRemoveFromFaction {scriptMessageWho :: Text}
@@ -843,7 +825,6 @@ data ScriptMessage
     | MsgEraseAdvisorFlagsEffect
     | MsgDismantleFaction
     | MsgDropCosmeticTag
-    | MsgADMTechAs {scriptMessageIcon :: Text, scriptMessageWho :: Text}
     | MsgSetCompliance {scriptMessageAmt :: Double}
     | MsgSurrenderProgress {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgSurrenderProgressVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
@@ -926,10 +907,8 @@ data ScriptMessage
     | MsgTypeAll
     | MsgSetSavedName { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageFemale :: Bool }
     | MsgSetSavedNameScope { scriptMessageVar :: Text, scriptMessageType :: Text, scriptMessageScope :: Text, scriptMessageFemale :: Bool }
-    | MsgClearSavedName { scriptMessageVar :: Text }
     | MsgHasPermanentClaim { scriptMessageWhat :: Text }
     | MsgIsPermanentClaim { scriptMessageWhom :: Text }
-    | MsgHasRuler { scriptMessageWho :: Text }
     | MsgLandLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLandLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLandLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1048,10 +1027,6 @@ data ScriptMessage
     | MsgHasCivilWar {scriptMessageYn :: Bool}
     | MsgIsOwnedByTradeCompany {scriptMessageYn :: Bool}
     | MsgOrignalTag {scriptMessageWhom :: Text}
-    | MsgArmySize {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgArmySizeMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgNavySize {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavySizeMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgHasClimate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasGovernment {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgTradingBonus {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -1253,13 +1228,7 @@ data ScriptMessage
     | MsgNewExiledRuler
     | MsgNewExiledRulerAttribs
     | MsgExiledAs {scriptMessageWhat :: Text}
-    | MsgSetHeir {scriptMessageWhat :: Text}
     | MsgSetCosmeticTag {scriptMessageWhat :: Text}
-    | MsgSetRuler {scriptMessageWhat :: Text}
-    | MsgExileHeir {scriptMessageWhat :: Text}
-    | MsgExileRuler {scriptMessageWhat :: Text}
-    | MsgClearExiledRuler {scriptMessageWhat :: Text}
-    | MsgExiledRulerSameDynastyAsCurrent {scriptMessageWhat :: Text}
     | MsgHasFocusTree {scriptMessageWhat :: Text}
     | MsgAddAutonomyRatio {scriptMessage_icon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgAddGreatProjectTier {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
@@ -2074,18 +2043,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has full control of state "
                 , _what
                 ]
-        MsgAdvisorExists {scriptMessageAdvisorID = _advisorID}
-            -> mconcat
-                [ "Advisor with ID "
-                , toMessage (plainNum _advisorID)
-                , " exists"
-                ]
-        MsgAdvisorIsEmployed {scriptMessageAdvisorID = _advisorID}
-            -> mconcat
-                [ "Advisor with ID "
-                , toMessage (plainNum _advisorID)
-                , " is employed"
-                ]
         MsgClearFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name}
             -> mconcat
                 [ "Clear "
@@ -2264,18 +2221,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Tolerance to this religion is at least "
                 , toMessage (colourNum True _amt)
                 ]
-        MsgADMTech {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " Administrative technology is at least "
-                , toMessage (roundNum _amt)
-                ]
-        MsgADMTechAs {scriptMessageIcon = _icon, scriptMessageWho = _who}
-            -> mconcat
-                [ _icon
-                , " Administrative technology is at least that of "
-                , _who
-                ]
         MsgCreateAdmiral {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Gain "
@@ -2308,82 +2253,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (roundNum _amt)
                 , " army tradition"
                 ]
-        MsgDevelopment {scriptMessageIcon = _icon, scriptMessageDevelopment = _development}
-            -> mconcat
-                [ _icon
-                , " Development is at least "
-                , toMessage (roundNum _development)
-                ]
-        MsgDevelopmentAs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ _icon
-                , " Development is at least that of "
-                , _what
-                ]
-        MsgNumHeavyShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , _icon
-                , " "
-                , toMessage (roundNum _amt)
-                , " heavy "
-                , plural _amt "ship" "ships"
-                ]
-        MsgNumHeavyShipsMatches {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Has at least as many "
-                , _icon
-                , " heavy ships as "
-                , _whom
-                ]
-        MsgNumLightShipsMatches {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Has at least as many "
-                , _icon
-                , " light ships as "
-                , _whom
-                ]
-        MsgNumLightShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , _icon
-                , " "
-                , toMessage (roundNum _amt)
-                , " light "
-                , plural _amt "ship" "ships"
-                ]
-        MsgNumGalleyShipsMatches {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Has at least as many "
-                , _icon
-                , " galley ships as "
-                , _whom
-                ]
-        MsgNumGalleyShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , _icon
-                , " "
-                , toMessage (roundNum _amt)
-                , " galley "
-                , plural _amt "ship" "ships"
-                ]
-        MsgNumTransportShipsMatches {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Has at least as many "
-                , _icon
-                , " transport ships as "
-                , _whom
-                ]
-        MsgNumTransportShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , _icon
-                , " "
-                , toMessage (roundNum _amt)
-                , " transport "
-                , plural _amt "ship" "ships"
-                ]
         MsgTotalDevelopment {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Country's total "
@@ -2396,19 +2265,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Country's total "
                 , _icon
                 , " development is at least that of "
-                , _whom
-                ]
-        MsgMonthlyIncome {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " Monthly income is at least "
-                , toMessage (colourNum True _amt)
-                , " ducats"
-                ]
-        MsgMonthlyIncomeAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ _icon
-                , " Monthly income is at least that of "
                 , _whom
                 ]
         MsgInflation {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -4968,19 +4824,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Ship durability"
                 ]
-        MsgMoraleOfArmies {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Morale of armies"
-                ]
-        MsgMoraleOfArmiesAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ _icon
-                , " Morale of armies is at least that of "
-                , _whom
-                ]
         MsgMoraleOfNavies {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -5890,12 +5733,6 @@ instance RenderMessage Script ScriptMessage where
                 , _name
                 , "</tt>"
                 ]
-        MsgHasSavedEventTarget {scriptMessageName = _name}
-            -> mconcat
-                [ "An event target named <tt>"
-                , _name
-                , "</tt> has been saved"
-                ]
         MsgRemoveClaim {scriptMessageWho = _who}
             -> mconcat
                 [ _who
@@ -6484,12 +6321,6 @@ instance RenderMessage Script ScriptMessage where
                 , _var
                 , "</tt>"
                 ]
-        MsgClearSavedName { scriptMessageVar = _var }
-            -> mconcat
-                [ "Clear saved name <tt>"
-                , _var
-                , "</tt>"
-                ]
         MsgHasPermanentClaim { scriptMessageWhat = _what }
             -> mconcat
                 [ "Has a [[permanent claim]] on "
@@ -6499,12 +6330,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is a [[permanent claim]] of "
                 , _whom
-                ]
-        MsgHasRuler { scriptMessageWho = _who }
-            -> mconcat
-                [ "Has "
-                , toMessage (quotes _who)
-                ," as ruler"
                 ]
         MsgLandLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7320,26 +7145,6 @@ instance RenderMessage Script ScriptMessage where
         MsgOrignalTag {scriptMessageWhom = _whom}
             -> mconcat
                 [ "The country was previously or is "
-                , _whom
-                ]
-        MsgArmySize {scriptMessageIcon = _, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Army size is at least "
-                , toMessage (plainNum _amt)
-                ]
-        MsgArmySizeMatches {scriptMessageIcon = _, scriptMessageWhom = _whom}
-            -> mconcat
-                ["Army size is at least as large as that of "
-                , _whom
-                ]
-        MsgNavySize {scriptMessageIcon = _, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Navy size is at least "
-                , toMessage (plainNum _amt)
-                ]
-        MsgNavySizeMatches {scriptMessageIcon = _, scriptMessageWhom = _whom}
-            -> mconcat
-                ["Navy size is at least as large as that of "
                 , _whom
                 ]
         MsgHasClimate {scriptMessageIcon = _icon, scriptMessageWhat = _what}
@@ -8723,47 +8528,11 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , "</tt>"
                 ]
-        MsgSetHeir {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Make exiled heir <tt>"
-                , _what
-                , "</tt> the current heir"
-                ]
         MsgSetCosmeticTag {scriptMessageWhat = _what}
             -> mconcat
                 [ "Set cosmetic tag to <tt>"
                 , _what
                 , "</tt>"
-                ]
-        MsgSetRuler {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Make exiled ruler <tt>"
-                , _what
-                , "</tt> the current ruler"
-                ]
-        MsgExileHeir {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Exile current heir as <tt>"
-                , _what
-                , "</tt>"
-                ]
-        MsgExileRuler {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Exile current ruler as <tt>"
-                , _what
-                , "</tt>"
-                ]
-        MsgClearExiledRuler {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Remove exiled ruler <tt>"
-                , _what
-                , "</tt>"
-                ]
-        MsgExiledRulerSameDynastyAsCurrent {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Exiled ruler <tt>"
-                , _what
-                , "</tt> has the same dynasty as the current ruler"
                 ]
         MsgHasFocusTree {scriptMessageWhat = _what}
             -> mconcat
