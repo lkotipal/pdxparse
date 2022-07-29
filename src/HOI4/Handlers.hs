@@ -134,7 +134,6 @@ module HOI4.Handlers (
     ,   estateLandShareEffect
     ,   changeEstateLandShare
     ,   scopeProvince
-    ,   personalityAncestor
     ,   hasGreatProject
     ,   hasEstateLedRegency
     ,   changePrice
@@ -730,7 +729,7 @@ withLocAtomIconBuilding :: (HOI4Info g, Monad m) =>
 withLocAtomIconBuilding msg stmt@[pdx| %_ = ?key |]
     = do what <- Doc.doc2text <$> allowPronoun Nothing (fmap Doc.strictText . getGameL10n) ("building_" <> key)
          msgToPP $ msg (iconText key) what
-withLocAtomIconBuilding _ stmt = preStatement stmt
+withLocAtomIconBuilding _ stmt = preStatement stmt -- CHECK FOR USEFULNESS
 
 -- | Generic handler for a statement where the RHS is a localizable atom, but
 -- may be replaced with a tag or province to refer synecdochally to the
@@ -4135,17 +4134,6 @@ scopeProvince msgAny msgAll stmt@[pdx| %_ = @scr |] =
                 return ((i, msg) : scr_pp'd)
             _ -> compoundMessage msgAny stmt
 scopeProvince _ _ stmt = preStatement stmt
-
-
----------------------------------------
--- Handler for *personality_ancestor --
----------------------------------------
-personalityAncestor :: forall g m. (HOI4Info g, Monad m) => (Text -> Text -> ScriptMessage) -> StatementHandler g m
-personalityAncestor msg stmt@[pdx| %_ = @scr |] | [pdx| key = $personality |] : [] <- scr = do
-    let perso = personality <> "_personality"
-    loc <- getGameL10n perso
-    msgToPP $ msg (iconText perso) loc
-personalityAncestor _ stmt = preStatement stmt
 
 
 -- Helper

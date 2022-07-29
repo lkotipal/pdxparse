@@ -251,7 +251,6 @@ data ScriptMessage
     | MsgSetHeirReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgSetHeirReligionAs {scriptMessageWho :: Text}
     | MsgGovernmentIsIcon {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHasAdvisorType {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasTech {scriptMessageWhat :: Text}
     | MsgDominantCultureIs {scriptMessageWhat :: Text}
     | MsgDominantCultureIsAs {scriptMessageWhat :: Text}
@@ -261,7 +260,6 @@ data ScriptMessage
     | MsgRegionIs {scriptMessageWhat :: Text}
     | MsgTooltip {scriptMessageWhat :: Text}
     | MsgCustomEffectTooltip {scriptMessageWhat :: Text}
-    | MsgRemoveFromEstate {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgRemoveStateClaim {scriptMessageWhat :: Text}
     | MsgRemoveStateCore {scriptMessageWhat :: Text}
     | MsgOwnsState {scriptMessageWhat :: Text}
@@ -302,15 +300,9 @@ data ScriptMessage
     | MsgTotalDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgInflation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgInflationAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgChangeGoods {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgCreateAdvisor {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasIdeaGroup {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgProducesGoods {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgProducesSameGoods {scriptMessageWhere :: Text}
-    | MsgEstateExists {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHasEstate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAssignToEstate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgRulerIsGeneral {scriptMessageIcon :: Text, scriptMessage_what :: Text}
     | MsgAlliedWith {scriptMessageWhom :: Text}
     | MsgCedeProvinceTo {scriptMessageWhom :: Text}
     | MsgIsControlledBy {scriptMessageWhom :: Text}
@@ -396,10 +388,7 @@ data ScriptMessage
     | MsgFactionHasInfluence {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgFactionInPower {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgHasFactions {scriptMessageYn :: Bool}
-    | MsgHasAdoptedCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasAutonomyState {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHasUnlockedCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHasBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgIndefinitely
     | MsgForDays {scriptMessageDays :: Double}
     | MsgEstateLoyalty {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
@@ -507,8 +496,6 @@ data ScriptMessage
     | MsgAddCoreOf {scriptMessageWho :: Text}
     | MsgHasDLC {scriptMessageIcon :: Text, scriptMessageDlc :: Text}
     | MsgHasEquipment {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text}
-    | MsgTechGroup {scriptMessageIcon :: Text, scriptMessageName :: Text}
-    | MsgUnlockCult {scriptMessageIcon :: Text, scriptMessageName :: Text}
     | MsgNumOfReligion {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
     | MsgReligiousSchool {scriptSchoolIcon :: Text, scriptSchoolName :: Text, scriptGroupName :: Text}
     | MsgSetReligiousSchool {scriptSchoolIcon :: Text, scriptSchoolName :: Text, scriptGroupName :: Text}
@@ -517,12 +504,8 @@ data ScriptMessage
     | MsgAreaIsAs {scriptMessageWhat :: Text}
     | MsgDominantReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgDominantReligionAs {scriptMessageWhom :: Text}
-    | MsgEnableReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHREReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgSetDemilitarizedZone {scriptMessageYn :: Bool}
     | MsgSetHREReligionLocked {scriptMessageYn :: Bool}
-    | MsgSetHREReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgSetHREHereticReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHRELeaguesEnabled {scriptMessageYn :: Bool}
     | MsgHREReligionLocked {scriptMessageYn :: Bool}
     | MsgHREWestphalia {scriptMessageYn :: Bool}
@@ -594,8 +577,6 @@ data ScriptMessage
     | MsgReverseHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
     | MsgNormalOrHistoricalNations {scriptMessageYn :: Bool}
     | MsgIsCustomNation {scriptMessageYn :: Bool}
-    | MsgReligionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgFullIdeaGroup {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgSetRule {scriptMessageAmt :: Double}
     | MsgSetRuleYes {scriptMessageWhat :: Text}
     | MsgSetRuleNo {scriptMessageWhat :: Text}
@@ -616,12 +597,9 @@ data ScriptMessage
     | MsgChangeTagFrom {scriptMessageWho :: Text}
     | MsgSetInEmpire {scriptMessageYn :: Bool}
     | MsgHasSecondaryReligion {scriptMessageYn :: Bool}
-    | MsgSecondaryReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgIsDefenderOfFaith {scriptMessageYn :: Bool}
     | MsgIsDemilitarizedZone {scriptMessageYn :: Bool}
     | MsgCheckVariable {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
-    | MsgChangeTechGroup {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgChangeUnitType {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgNoBaseWeight
     | MsgAIBaseWeight {scriptMessageAmt :: Double}
     | MsgAIFactorOneline {scriptMessageFactor :: Text, scriptMessageMultiplier :: Double}
@@ -780,22 +758,9 @@ data ScriptMessage
     | MsgRandomSystem
     | MsgRandomTile
     | MsgGainTrait {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgCurrentAge {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgCalcTrueIf {scriptMessageAmt :: Double}
     | MsgAddResearchSlot {scriptMessageAmt :: Double}
     | MsgAddThreat {scriptMessageAmt :: Double}
-    | MsgAddAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddHarmonizedReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddHeirPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddConsortPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddRulerPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgRemoveRulerPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgRulerHasPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHeirHasPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgConsortHasPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text }
-    | MsgAddCenterOfReformation {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddTruceWith {scriptMessageWho :: Text}
     | MsgGainSailors {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainSailorsFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -862,7 +827,6 @@ data ScriptMessage
     | MsgChkVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgEquVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgEquVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
-    | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
     | MsgHasCompletedAllReforms { scriptMessageYn :: Bool }
     | MsgHasFinalTierReform { scriptMessageYn :: Bool }
@@ -1027,14 +991,12 @@ data ScriptMessage
     | MsgHasCivilWar {scriptMessageYn :: Bool}
     | MsgIsOwnedByTradeCompany {scriptMessageYn :: Bool}
     | MsgOrignalTag {scriptMessageWhom :: Text}
-    | MsgHasClimate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasGovernment {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgTradingBonus {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgApplyEstateModifer {scriptMessageWhat :: Text}
     | MsgRemoveEstateModifer {scriptMessageWhat :: Text}
     | MsgReapplyEstatePrivilege {scriptMessageWhat :: Text}
     | MsgLeaderTradition {scriptMessageNaval :: Bool, scriptMessageAmt :: Double}
-    | MsgCanBuild {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgNumInvestmentsInTradeCompanyReigion {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgHasTradeCompanyInvestmentInArea {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text}
     | MsgHasPrivateers { scriptMessageYn :: Bool }
@@ -1108,7 +1070,6 @@ data ScriptMessage
     | MsgIsInFactionWith {scriptMessageWhom :: Text}
     | MsgIsJustifyingWargoalAgainst {scriptMessageWhom :: Text}
     | MsgIsTradeLeagueLeader {scriptMessageYn :: Bool}
-    | MsgInstitutionEnabled {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgArmyStrength {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgNavalStrength {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgNumEstatePrivileges {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
@@ -1251,12 +1212,9 @@ data ScriptMessage
     | MsgRegion
     | MsgAddDisasterProgress {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgYearsInUnionUnder {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
-    | MsgHasHolyOrder {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgCanEstablishHolyOrder {scriptMessageYn :: Bool}
     | MsgIsInTechSharingGroup {scriptMessageWhat :: Text}
     | MsgAddToTechSharingGroup {scriptMessageWhat :: Text}
-    | MsgSetPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHasPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgInstitutionPresence {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgKnowsCountry {scriptMessageWhom :: Text}
     | MsgIsTerritory {scriptMessageYn :: Bool}
@@ -1264,7 +1222,6 @@ data ScriptMessage
     | MsgCreateUnion {scriptMessageWhom :: Text}
     | MsgCreateVassal {scriptMessageWhom :: Text}
     | MsgCreateMarch {scriptMessageWhom :: Text}
-    | MsgStartEstateAgenda {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgPickRandomEstateIfPresent {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgHasRule {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgHasAnyActiveEstateAgenda {scriptMessageYn :: Bool}
@@ -1302,7 +1259,6 @@ data ScriptMessage
     | MsgUnlockDecisionCategoryTooltip {scriptMessageWhat :: Text}
     | MsgUnlockDecisionTooltip {scriptMessageWhat :: Text}
     | MsgPreferredEmperor {scriptMessageWhom :: Text}
-    | MsgCurrentIcon {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgUsesIcons {scriptMessageYn :: Bool}
     | MsgPatriarchAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgIsRevolutionTarget {scriptMessageYn :: Bool}
@@ -1324,7 +1280,6 @@ data ScriptMessage
     | MsgSuccessionClaim {scriptMessageWhom :: Text}
     | MsgHasActiveFervor {scriptMessageYn :: Bool}
     | MsgIsHarmonizingWith {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHasHarmonizedWith {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgProvinceHasCurrentTechFort {scriptMessageYn :: Bool}
     | MsgHasMostProvinceTradePower {scriptMessageWhom :: Text}
     | MsgHasNonAggressionPactWith {scriptMessageWhom :: Text}
@@ -1388,7 +1343,6 @@ data ScriptMessage
     | MsgYearlyAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgColonyMissionReward {scriptMessageProv :: Text}
     | MsgHasPrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgChangeCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgSelectPrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgChangePrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -1955,14 +1909,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgHasAdvisorType {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has "
-                , _icon
-                , " "
-                , _what
-                , " advisor"
-                ]
         MsgHasTech {scriptMessageWhat = _what}
             -> mconcat
                 [ "Has "
@@ -2009,14 +1955,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Custom effect tooltip: "
                 , _what
-                ]
-        MsgRemoveFromEstate {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Remove province from the "
-                , _icon
-                , " "
-                , _whom
-                , " estate"
                 ]
         MsgRemoveStateClaim {scriptMessageWhat = _what}
             -> mconcat
@@ -2279,21 +2217,6 @@ instance RenderMessage Script ScriptMessage where
                 , " Inflation is at least that of "
                 , _whom
                 ]
-        MsgChangeGoods {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Change province's goods produced to "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgCreateAdvisor {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Gain "
-                , _icon
-                , " "
-                , _what
-                , " advisor"
-                ]
         MsgHasIdeaGroup {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Has activated "
@@ -2312,34 +2235,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Produces the same goods as "
                 , _where
-                ]
-        MsgEstateExists {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ _icon
-                , " "
-                , _what
-                , " estate exists"
-                ]
-        MsgHasEstate {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has estate "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgAssignToEstate {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Assign province to the "
-                , _icon
-                , " "
-                , _what
-                , " estate"
-                ]
-        MsgRulerIsGeneral {scriptMessageIcon = _icon}
-            -> mconcat
-                [ "Ruler is a "
-                , _icon
-                , " general"
                 ]
         MsgAlliedWith {scriptMessageWhom = _whom}
             -> mconcat
@@ -2824,36 +2719,12 @@ instance RenderMessage Script ScriptMessage where
                 [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
                 , " factions"
                 ]
-        MsgHasAdoptedCult {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has adopted the "
-                , _icon
-                , " "
-                , _what
-                , " cult"
-                ]
         MsgHasAutonomyState {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Has autonomy level of "
                 , _icon
                 , " "
                 , _what
-                ]
-        MsgHasUnlockedCult {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has unlocked the "
-                , _icon
-                , " "
-                , _what
-                , " cult"
-                ]
-        MsgHasBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has "
-                , _icon
-                , " "
-                , _what
-                , " building"
                 ]
         MsgIndefinitely
             -> "indefinitely"
@@ -3556,21 +3427,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgTechGroup {scriptMessageIcon = _icon, scriptMessageName = _name}
-            -> mconcat
-                [ "Technology group is "
-                , _icon
-                , " "
-                , _name
-                ]
-        MsgUnlockCult {scriptMessageIcon = _icon, scriptMessageName = _name}
-            -> mconcat
-                [ "Unlock the "
-                , _icon
-                , " "
-                , _name
-                , " cult"
-                ]
         MsgNumOfReligion {scriptMessageIcon = _icon, scriptMessageName = _name, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -3631,21 +3487,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "The country's dominant religion is that of "
                 , _whom
                 ]
-        MsgEnableReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Enable the "
-                , _icon
-                , " "
-                , _what
-                , " religion"
-                ]
-        MsgHREReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "The Holy Roman Empire's official religion is "
-                , _icon
-                , " "
-                , _what
-                ]
         MsgSetDemilitarizedZone {scriptMessageYn = _yn}
             -> mconcat
                 [ "Is "
@@ -3655,21 +3496,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "The Holy Roman Empire's religion "
                 , toMessage (ifThenElseT _yn "becomes fixed" "is no longer fixed")
-                ]
-        MsgSetHREReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "The Holy Roman Empire's official religion becomes "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgSetHREHereticReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "The "
-                , _icon
-                , " "
-                , _what
-                , " religion is considered heretical within the Holy Roman Empire"
                 ]
         MsgHRELeaguesEnabled {scriptMessageYn = _yn}
             -> mconcat
@@ -4223,21 +4049,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " playing a custom nation"
                 ]
-        MsgReligionEnabled {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "The "
-                , _icon
-                , " "
-                , _what
-                , " religion is enabled"
-                ]
-        MsgFullIdeaGroup {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has completed "
-                , _icon
-                , " "
-                , _what
-                ]
         MsgSetRule {scriptMessageAmt = _amt}
             -> mconcat
                 ["Set the "
@@ -4342,13 +4153,6 @@ instance RenderMessage Script ScriptMessage where
                 [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
                 , " a secondary religion"
                 ]
-        MsgSecondaryReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Secondary religion is "
-                , _icon
-                , " "
-                , _what
-                ]
         MsgIsDefenderOfFaith {scriptMessageYn = _yn}
             -> mconcat
                 [ "Is"
@@ -4367,20 +4171,6 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " is at least "
                 , toMessage (plainNum _amt)
-                ]
-        MsgChangeTechGroup {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Change technology group to "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgChangeUnitType {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Change units to "
-                , _icon
-                , " "
-                , _what
                 ]
         MsgNoBaseWeight
             -> "(no base weight?)"
@@ -5375,20 +5165,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgCurrentAge {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "It is currently the "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgAcceptedCulture {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ _icon
-                , " "
-                , _what
-                , " is accepted culture"
-                ]
         MsgCalcTrueIf {scriptMessageAmt = _amt}
             -> mconcat
                 [ "At least "
@@ -5408,92 +5184,6 @@ instance RenderMessage Script ScriptMessage where
                 , increasedOrDecreased _amt
                 , " by "
                 , toMessage (colourNum False _amt)
-                ]
-        MsgAddAcceptedCulture {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ _icon
-                , " Gain "
-                , _what
-                , " as an accepted culture"
-                ]
-        MsgAddBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Build "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgAddHarmonizedReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Gain "
-                , _icon
-                , " "
-                , _what
-                , " as a harmonized religion"
-                ]
-        MsgAddHeirPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Heir gains the personality trait "
-                , _icon
-                , " "
-                , _what
-                , ancestorText _ancestor
-                ]
-        MsgAddConsortPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Consort gains the personality trait "
-                , _icon
-                , " "
-                , _what
-                , ancestorText _ancestor
-                ]
-        MsgAddRulerPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Ruler gains the personality trait "
-                , _icon
-                , " "
-                , _what
-                , ancestorText _ancestor
-                ]
-        MsgRemoveRulerPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Ruler loses the personality trait "
-                , _icon
-                , " "
-                , _what
-                , ancestorText _ancestor
-                ]
-        MsgRulerHasPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Ruler has the personality trait "
-                , _icon
-                , " "
-                , _what
-                , ancestorText _ancestor
-                ]
-        MsgHeirHasPersonality {scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Heir has the personality trait "
-                , _icon
-                , " "
-                , _what
-                , ancestorText _ancestor
-                ]
-        MsgConsortHasPersonality { scriptMessageAncestor = _ancestor, scriptMessageIcon = _icon, scriptMessageWhat = _what }
-            -> mconcat
-                [ "Consort has the personality trait "
-                , _icon
-                , " "
-                , _what
-                , ancestorText _ancestor
-                ]
-        MsgAddCenterOfReformation {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Create a "
-                , _icon
-                , " "
-                , _what
-                , " Center of Reformation"
                 ]
         MsgAddTruceWith {scriptMessageWho = _who}
             -> mconcat
@@ -6046,14 +5736,6 @@ instance RenderMessage Script ScriptMessage where
                 , _var
                 , " equal to "
                 , toMessage (plainNum _amt)
-                ]
-        MsgHasInstitution { scriptMessageIcon = _icon, scriptMessageWhat = _what }
-            -> mconcat
-                [ "The country has embraced the "
-                , _icon
-                , " "
-                , _what
-                , " institution"
                 ]
         MsgWasNeverEndGameTag { scriptMessageYn = _yn }
             -> mconcat
@@ -7147,13 +6829,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "The country was previously or is "
                 , _whom
                 ]
-        MsgHasClimate {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Climate is "
-                , _icon
-                , " "
-                , _what
-                ]
         MsgHasGovernment {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Current ruling party is "
@@ -7190,13 +6865,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (ifThenElseT _yn "naval" "army")
                 , " tradition"
-                ]
-        MsgCanBuild {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ _icon
-                , " "
-                , _what
-                , " can be built in the province"
                 ]
         MsgNumInvestmentsInTradeCompanyReigion {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
@@ -7713,14 +7381,6 @@ instance RenderMessage Script ScriptMessage where
                 ["Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " the leader of a [[trade league]]"
-                ]
-        MsgInstitutionEnabled {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "The "
-                , _icon
-                , " "
-                , _what
-                , " institution is enabled"
                 ]
         MsgArmyStrength {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
             -> mconcat
@@ -8689,14 +8349,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " years"
                 ]
-        MsgHasHolyOrder {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has established "
-                , _icon
-                , " "
-                , _what
-                , " holy order"
-                ]
         MsgCanEstablishHolyOrder {scriptMessageYn = _yn}
             -> mconcat
                 [ "Can"
@@ -8712,21 +8364,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Add to the technology sharing group "
                 , toMessage (iquotes _what)
-                ]
-        MsgSetPersonalDiety {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Choose "
-                , _icon
-                , " "
-                , _what
-                , " as personal deity"
-                ]
-        MsgHasPersonalDiety {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ _icon
-                , " "
-                , _what
-                , " has been chosen as personal deity"
                 ]
         MsgInstitutionPresence {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
@@ -8770,14 +8407,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Make "
                 , _whom
                 , " a march"
-                ]
-        MsgStartEstateAgenda {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Start an agenda for the "
-                , _icon
-                , " "
-                , _what
-                , " estate"
                 ]
         MsgPickRandomEstateIfPresent {scriptMessageWhom = _whom, scriptMessageWhat = _what}
             -> mconcat
@@ -9014,13 +8643,6 @@ instance RenderMessage Script ScriptMessage where
                 , _whom
                 , " to become Emperor of the HRE"
                 ]
-        MsgCurrentIcon {scriptMessageIcon = _icon, scriptMessageWhom = _what}
-            -> mconcat
-                [ "Has commissioned "
-                , _icon
-                , " "
-                , _what
-                ]
         MsgUsesIcons {scriptMessageYn = _yn}
             -> mconcat
                 [ ifThenElseT _yn "Uses" "Does ''not'' use"
@@ -9134,13 +8756,6 @@ instance RenderMessage Script ScriptMessage where
         MsgIsHarmonizingWith {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Is currently harmonizing with "
-                , _icon
-                , " "
-                , _what
-                ]
-        MsgHasHarmonizedWith {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has harmonized with "
                 , _icon
                 , " "
                 , _what
@@ -9527,13 +9142,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " as primary cult"
-                ]
-        MsgChangeCult {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Change cult to "
-                , _icon
-                , " "
-                , _what
                 ]
         MsgSelectPrimaryCult {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
