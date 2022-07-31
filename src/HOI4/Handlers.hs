@@ -39,7 +39,6 @@ module HOI4.Handlers (
     ,   numericOrTag
     ,   numericOrTagIcon
     ,   numericIconChange
-    ,   buildingCount
     ,   withFlag
     ,   withBool
     ,   withFlagOrBool
@@ -70,49 +69,23 @@ module HOI4.Handlers (
     ,   random
     ,   randomList
     ,   hasDlc
-    ,   calcTrueIf
-    ,   numOwnedProvincesWith
-    ,   govtRank
-    ,   setGovtRank
     ,   numProvinces
     ,   withFlagOrState
-    ,   isMonth
-    ,   range
-    ,   dominantCulture
     ,   customTriggerTooltip
-    ,   piety
-    ,   dynasty
     ,   handleIdeas
     ,   handleTimedIdeas
     ,   handleSwapIdeas
     ,   handleFocus
     ,   focusProgress
     ,   setVariable
-    ,   hasGovermentAttribute
-    ,   setSavedName
     ,   rhsAlways
     ,   rhsAlwaysYes
     ,   rhsIgnored
     ,   rhsAlwaysEmptyCompound
-    ,   randomAdvisor
-    ,   killLeader
-    ,   addEstateLoyaltyModifier
     ,   exportVariable
 --    ,   aiAttitude
-    ,   estateLandShareEffect
-    ,   changeEstateLandShare
     ,   scopeProvince
-    ,   institutionPresence
-    ,   createIndependentEstate
-    ,   numOfReligion
-    ,   createSuccessionCrisis
-    ,   productionLeader
     ,   addDynamicModifier
-    ,   hasHeir
-    ,   killHeir
---    ,   createColonyMissionReward
---    ,   hasIdeaGroup
-    ,   killUnits
     ,   addBuildingConstruction
     ,   addNamedThreat
     ,   createWargoal
@@ -134,7 +107,6 @@ module HOI4.Handlers (
     ,   hasArmySize
     ,   startCivilWar
     ,   createEquipmentVariant
-    ,   dateHandle
     ,   setRule
     ,   addDoctrineCostReduction
     ,   freeBuildingSlots
@@ -148,7 +120,6 @@ module HOI4.Handlers (
     -- testing
     ,   isPronoun
     ,   flag
-    ,   estatePrivilege
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -1475,14 +1446,6 @@ numericIconChange negicon posicon negmsg posmsg [pdx| %_ = !amt |]
         else msgToPP $ posmsg (iconText posicon) amt
 numericIconChange _ _ _ _ stmt = plainMsg $ pre_statement' stmt -- CHECK FOR USEFULNESS
 
-
--- | Handler for e.g. temple = X
-buildingCount :: (HOI4Info g, Monad m) => StatementHandler g m
-buildingCount [pdx| $building = !count |] = do
-    what <- getGameL10n ("building_" <> building)
-    msgToPP $ MsgHasNumberOfBuildingType (iconText building) what count
-buildingCount stmt = preStatement stmt
-
 ----------------------
 -- Text/value pairs --
 ----------------------
@@ -2144,35 +2107,6 @@ randomList stmt@[pdx| %_ = @scr |] = if or (map chk scr) then -- Ugly solution f
 randomList _ = withCurrentFile $ \file ->
     error ("randomList sent strange statement in " ++ file)
 
-foldCompound "numOfReligion" "NumOfReligion" "nr"
-    []
-    [CompField "religion" [t|Text|] Nothing False
-    ,CompField "value" [t|Double|] Nothing True
-    ,CompField "secondary" [t|Text|] Nothing False]
-    [|
-        case (_religion, _secondary) of
-            (Just rel, Nothing) -> do
-                relLoc <- getGameL10n rel
-                return $ MsgNumOfReligion (iconText rel) relLoc _value
-            (Nothing, Just secondary) | T.toLower secondary == "yes" -> do
-                return $ MsgNumOfReligionSecondary _value
-            _ -> return $ (trace $ "Not handled in numOfReligion: " ++ show stmt) $ preMessage stmt
-    |]
-
-
-foldCompound "createSuccessionCrisis" "CreateSuccessionCrisis" "csc"
-    []
-    [CompField "attacker" [t|Text|] Nothing True
-    ,CompField "defender" [t|Text|] Nothing True
-    ,CompField "target"   [t|Text|] Nothing True
-    ]
-    [| do
-        attackerLoc <- flagText (Just HOI4Country) _attacker
-        defenderLoc <- flagText (Just HOI4Country) _defender
-        targetLoc   <- flagText (Just HOI4Country) _target
-        return $ MsgCreateSuccessionCrisis attackerLoc defenderLoc targetLoc
-    |]
-
 -- DLC
 
 hasDlc :: (HOI4Info g, Monad m) => StatementHandler g m
@@ -2191,72 +2125,6 @@ hasDlc [pdx| %_ = ?dlc |]
         dlc_icon = maybe "" iconText mdlc_key
 hasDlc stmt = preStatement stmt
 
--- | Handle @calc_true_if@ clauses, of the following form:
---
--- @
---  calc_true_if = {
---       <conditions>
---       amount = N
---  }
--- @
---
--- This tests the conditions, and returns true if at least N of them are true.
--- They can be individual conditions, e.g. from @celestial_empire_events.3@:
---
--- @
---  calc_true_if = {
---      accepted_culture = manchu
---      accepted_culture = chihan
---      accepted_culture = miao
---      accepted_culture = cantonese
---      ... etc. ...
---      amount = 2
---   }
--- @
---
--- or a single "all" scope, e.g. from @court_and_country_events.3@:
---
--- @
---  calc_true_if = {
---      all_core_province = {
---          owned_by = ROOT
---          culture = PREV
---      }
---      amount = 5
---  }
--- @
---
-calcTrueIf :: (HOI4Info g, Monad m) => StatementHandler g m
-calcTrueIf stmt@[pdx| %_ = @stmts |] = do
-    let (mvalStmt, rest) = extractStmt (matchLhsText "amount") stmts
-        (_, rest') = extractStmt (matchLhsText "desc") rest -- ignore desc for missions
-    case mvalStmt of
-        Just [pdx| %_ = !count |] -> do
-            restMsgs <- ppMany rest'
-            withCurrentIndent $ \i ->
-                return $ (i, MsgCalcTrueIf count) : restMsgs
-        _ -> preStatement stmt
-calcTrueIf stmt = preStatement stmt
-
-
-------------------------------------------------
--- Handler for num_of_owned_provinces_**_with --
--- also used for development_in_provinces     --
-------------------------------------------------
-
-numOwnedProvincesWith :: (HOI4Info g, Monad m) => (Double -> ScriptMessage) -> StatementHandler g m
-numOwnedProvincesWith msg stmt@[pdx| %_ = @stmts |] = do
-    let (mvalStmt, rest) = extractStmt (matchLhsText "value") stmts
-    case mvalStmt of
-        Just [pdx| %_ = !count |] -> do
-            restMsgs <- ppMany rest
-            withCurrentIndent $ \i ->
-                return $ (i, msg count) : restMsgs
-        Just [pdx| %_ = estate |] -> do -- FIXME: Since 1.30 this doesn't seem to do anything? (Only found in estate events)
-            return []
-        _ -> preStatement stmt
-numOwnedProvincesWith _ stmt = preStatement stmt
-
 -- Holy Roman Empire
 
 -- Assume 1 <= n <= 8
@@ -2272,25 +2140,6 @@ hreReformLoc n = getGameL10n $ case n of
     8 -> "renovatio_title"
     _ -> error "called hreReformLoc with n < 1 or n > 8"
 
--- Government
-
-govtRank :: (HOI4Info g, Monad m) => StatementHandler g m
-govtRank [pdx| %_ = !level |]
-    = case level :: Int of
-        1 -> msgToPP MsgRankDuchy -- unlikely, but account for it anyway
-        2 -> msgToPP MsgRankKingdom
-        3 -> msgToPP MsgRankEmpire
-        _ -> error "impossible: govtRank matched an invalid rank number"
-govtRank stmt = preStatement stmt
-
-setGovtRank :: (HOI4Info g, Monad m) => StatementHandler g m
-setGovtRank [pdx| %_ = !level |] | level `elem` [1..3]
-    = case level :: Int of
-        1 -> msgToPP MsgSetRankDuchy
-        2 -> msgToPP MsgSetRankKingdom
-        3 -> msgToPP MsgSetRankEmpire
-        _ -> error "impossible: setGovtRank matched an invalid rank number"
-setGovtRank stmt = preStatement stmt
 
 numProvinces :: (HOI4Info g, Monad m) =>
     Text
@@ -2313,59 +2162,11 @@ withFlagOrState _ provinceMsg stmt@[pdx| %_ = !(_ :: Double) |]
     = withState provinceMsg stmt
 withFlagOrState _ _ stmt = preStatement stmt -- CHECK FOR USEFULNESS
 
-isMonth :: (HOI4Info g, Monad m) => StatementHandler g m
-isMonth [pdx| %_ = !(num :: Int) |] | num >= 0, num <= 11
-    = do
-        month_loc <- getGameL10n $ case num of
-            0 -> "January" -- programmer counting -_-
-            1 -> "February"
-            2 -> "March"
-            3 -> "April"
-            4 -> "May"
-            5 -> "June"
-            6 -> "July"
-            7 -> "August"
-            8 -> "September"
-            9 -> "October"
-            10 -> "November"
-            11 -> "December"
-            _ -> error "impossible: tried to localize bad month number"
-        msgToPP $ MsgIsMonth month_loc
-isMonth stmt = preStatement stmt
-
-range :: (HOI4Info g, Monad m) => StatementHandler g m
-range stmt@[pdx| %_ = !(_ :: Double) |]
-    = numericIcon "colonial range" MsgGainColonialRange stmt
-range stmt = withFlag MsgIsInColonialRange stmt
-
--- Currently dominant_culture only appears in decisions/Cultural.txt
--- (dominant_culture = capital).
-dominantCulture :: (HOI4Info g, Monad m) => StatementHandler g m
-dominantCulture [pdx| %_ = capital |] = msgToPP MsgCapitalCultureDominant
-dominantCulture stmt = preStatement stmt
-
 customTriggerTooltip :: (HOI4Info g, Monad m) => StatementHandler g m
 customTriggerTooltip [pdx| %_ = @scr |]
     -- ignore the custom tooltip -- BC - let's not
     = ppMany scr
 customTriggerTooltip stmt = preStatement stmt
-
-piety :: (HOI4Info g, Monad m) => StatementHandler g m
-piety stmt@[pdx| %_ = !amt |]
-    = numericIcon (case amt `compare` (0::Double) of
-        LT -> "lack of piety"
-        _  -> "being pious")
-      MsgPiety stmt
-piety stmt = preStatement stmt
-
-dynasty :: (HOI4Info g, Monad m) => StatementHandler g m
-dynasty stmt@[pdx| %_ = ?str |] = do
-    nflag <- flag (Just HOI4Country) str
-    if isTag str || isPronoun str then
-        msgToPP $ MsgRulerIsSameDynasty (Doc.doc2text nflag)
-    else
-        msgToPP $ MsgRulerIsDynasty str
-dynasty stmt = (trace (show stmt)) $ preStatement stmt
 
 -----------------
 -- handle idea --
@@ -2605,176 +2406,6 @@ setVariable msgWW msgWV stmt@[pdx| %_ = @scr |]
             _ ->  do return $ preMessage stmt
 setVariable _ _ stmt = preStatement stmt
 
-------------------------------------------
--- Handler for has_government_attribute --
-------------------------------------------
-hasGovermentAttribute :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-hasGovermentAttribute stmt@[pdx| %_ = $mech |]
-    = msgToPP =<< MsgGovernmentHasAttribute <$> getGameL10n ("mechanic_" <> mech <> "_yes")
-hasGovermentAttribute stmt = trace ("warning: not handled for has_government_attribute: " ++ (show stmt)) $ preStatement stmt
-
---------------------------------
--- Handler for set_saved_name --
---------------------------------
-
-data SetSavedName = SetSavedName
-        { ssn_key  :: Maybe Text
-        , ssn_type :: Maybe Text
-        , ssn_scope :: Maybe Text
-        , ssn_female :: Bool
-        }
-
-newSSN :: SetSavedName
-newSSN = SetSavedName Nothing Nothing Nothing False
-
-setSavedName :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-setSavedName stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_ssn (foldl' addLine newSSN scr)
-    where
-        addLine :: SetSavedName -> GenericStatement -> SetSavedName
-        addLine ssn [pdx| key = ?val |]
-            = ssn { ssn_key = Just val }
-        addLine ssn [pdx| type = ?typ |]
-            = ssn { ssn_type = Just (T.toUpper typ) }
-        addLine ssn [pdx| scope = ?scope |]
-            = ssn { ssn_scope = Just scope }
-        addLine ssn [pdx| female = ?val |]
-            = case T.toLower val of
-                "yes" -> ssn { ssn_female = True }
-                _ -> ssn
-        addLine ssn stmt = (trace $ "Unknown in set_saved_name" ++ show stmt) $ ssn
-        pp_ssn :: SetSavedName -> PPT g m ScriptMessage
-        pp_ssn ssn = do
-            typeText <- maybeM getGameL10n (ssn_type ssn)
-            scopeText <- maybeM (\n -> if isPronoun n then Doc.doc2text <$> pronoun Nothing n else return $ "<tt>" <> n <> "</tt>") (ssn_scope ssn)
-            case (ssn_key ssn, typeText, scopeText) of
-                (Just key, Just typ, Nothing) -> return $ MsgSetSavedName key typ (ssn_female ssn)
-                (Just key, Just typ, Just scope) -> return $ MsgSetSavedNameScope key typ scope (ssn_female ssn)
-                _ -> return $ preMessage stmt
-setSavedName stmt = (trace (show stmt)) $ preStatement stmt
-
------------------------------------
--- Handler for estate privileges --
------------------------------------
-estatePrivilege :: forall g m. (HOI4Info g, Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
-estatePrivilege msg [pdx| %_ = @scr |] | length scr == 1 = estatePrivilege' (head scr)
-    where
-        estatePrivilege' :: GenericStatement -> PPT g m IndentedMessages
-        estatePrivilege' [pdx| privilege = $priv |] = do
-            locText <- getGameL10n priv
-            msgToPP $ msg locText
-        estatePrivilege' stmt = preStatement stmt
-estatePrivilege _ stmt = preStatement stmt
-
---------------------------------------------------------------------------
--- Handler for generate_advisor_of_type_and_semi_random_religion_effect --
---------------------------------------------------------------------------
-
-data RandomAdvisor = RandomAdvisor
-        { ra_type :: Maybe Text
-        , ra_type_non_state :: Maybe Text
-        , ra_scaled_skill :: Bool
-        , ra_skill :: Maybe Double
-        , ra_discount :: Bool
-        } deriving Show
-
-newRA :: RandomAdvisor
-newRA = RandomAdvisor Nothing Nothing False Nothing False
-
-randomAdvisor :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-randomAdvisor stmt@[pdx| %_ = @scr |] = pp_ra (foldl' addLine newRA scr)
-    where
-        addLine :: RandomAdvisor -> GenericStatement -> RandomAdvisor
-        addLine ra [pdx| advisor_type = $typ |] = ra { ra_type = Just typ }
-        addLine ra [pdx| advisor_type_if_not_state= $typ |] = ra { ra_type_non_state = Just typ }
-        addLine ra [pdx| scaled_skill = $yn |] = ra { ra_scaled_skill = T.toLower yn == "yes" }
-        addLine ra [pdx| skill = !skill |] = ra { ra_skill = Just skill }
-        addLine ra [pdx| discount = $yn |] = ra { ra_discount = T.toLower yn == "yes" }
-        addLine ra stmt = (trace $ "randomAdvisor: Ignoring " ++ (show stmt)) $ ra
-
-        pp_ra_attrib :: RandomAdvisor -> PPT g m (Maybe (IndentedMessage, RandomAdvisor))
-        pp_ra_attrib ra@RandomAdvisor{ra_type_non_state = Just typ} | T.toLower typ /= maybe "" T.toLower (ra_type ra) = do
-            (t, i) <- tryLocAndIcon typ
-            msg <- msgToPP' $ MsgRandomAdvisorNonState i t
-            return (Just (msg, ra { ra_type_non_state = Nothing }))
-        pp_ra_attrib ra@RandomAdvisor{ra_skill = Just skill} = do
-            msg <- msgToPP' $ MsgRandomAdvisorSkill skill
-            return (Just (msg, ra { ra_skill = Nothing }))
-        pp_ra_attrib ra@RandomAdvisor{ra_scaled_skill = True} = do
-            msg <- msgToPP' $ MsgRandomAdvisorScaledSkill
-            return (Just (msg, ra { ra_scaled_skill = False }))
-        pp_ra_attrib ra = return Nothing
-
-        pp_ra :: RandomAdvisor -> PPT g m IndentedMessages
-        pp_ra ra@RandomAdvisor{ra_type = Just typ, ra_discount = discount} = do
-            (t, i) <- tryLocAndIcon typ
-            body <- indentUp (unfoldM pp_ra_attrib ra)
-            liftA2 (++)
-                (msgToPP $ MsgRandomAdvisor i t discount)
-                (pure body)
-        pp_ra ra = (trace $ show ra) $ preStatement stmt
-
-randomAdvisor stmt = preStatement stmt
-
------------------------------
--- Handler for kill_leader --
------------------------------
-killLeader :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-killLeader stmt@[pdx| %_ = @scr |] =
-    let
-        (mtype, rest) = extractStmt (matchLhsText "type") scr
-    in
-        case (mtype, rest) of
-            (Just (Statement _ _ (StringRhs name)), []) -> msgToPP $ MsgKillLeaderNamed (iconText "general") name
-            (Just (Statement _ _ (GenericRhs typ _)), []) ->
-                case T.toLower typ of
-                    "random" -> msgToPP $ MsgKillLeaderRandom (iconText "general")
-                    t -> do
-                        locType <- getGameL10n t
-                        msgToPP $ MsgKillLeaderType (iconText t) locType
-            _ -> (trace $ "Not handled in killLeader: " ++ (show stmt)) $ preStatement stmt
-killLeader stmt = (trace $ "Not handled in killLeader: " ++ (show stmt)) $ preStatement stmt
-
----------------------------------------------
--- Handler for add_estate_loyalty_modifier --
----------------------------------------------
-
-data EstateLoyaltyModifier = EstateLoyaltyModifier
-        { elm_estate  :: Maybe Text
-        , elm_desc :: Maybe Text
-        , elm_loyalty :: Maybe Double
-        , elm_duration :: Maybe Double
-        } deriving Show
-
-newELM :: EstateLoyaltyModifier
-newELM = EstateLoyaltyModifier Nothing Nothing Nothing Nothing
-
-addEstateLoyaltyModifier :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-addEstateLoyaltyModifier stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_elm (foldl' addLine newELM scr)
-    where
-        addLine :: EstateLoyaltyModifier -> GenericStatement -> EstateLoyaltyModifier
-        addLine elm [pdx| estate = ?val |]
-            = elm { elm_estate = Just val }
-        addLine elm [pdx| desc = ?val |]
-            = elm { elm_desc = Just val }
-        addLine elm [pdx| loyalty = %val |]
-            = elm { elm_loyalty = floatRhs val }
-        addLine elm [pdx| duration = %val |]
-            = elm { elm_duration = floatRhs val }
-        addLine elm stmt = (trace $ "Unknown in add_estate_loyalty_modifier " ++ show stmt) $ elm
-        pp_elm :: EstateLoyaltyModifier -> PPT g m ScriptMessage
-        -- It appears that the game can handle missing description and duration, this seems unintended in 1.31.2, but here we go.
-        pp_elm EstateLoyaltyModifier { elm_estate = Just estate, elm_desc = mdesc, elm_loyalty = Just loyalty, elm_duration = mduration } = do
-            estateLoc <- getGameL10n estate
-            descLoc <- case mdesc of
-                Just desc -> getGameL10n desc
-                _ -> return "(Missing)"
-            return $ MsgAddEstateLoyaltyModifier (iconText estate) estateLoc descLoc (fromMaybe (-1) mduration) loyalty
-        pp_elm elm = return $ (trace $ "Missing info for add_estate_loyalty_modifier " ++ show elm ++ " " ++ (show stmt)) $ preMessage stmt
-addEstateLoyaltyModifier stmt = (trace $ "Not handled in addEstateLoyaltyModifier: " ++ (show stmt)) $ preStatement stmt
-
-
-
 -------------------------------------
 -- Handler for export_to_variable  --
 -------------------------------------
@@ -2830,36 +2461,6 @@ exportVariable stmt = (trace $ "Not handled in export_to_variable: " ++ (show st
 --            _ -> return $ preMessage stmt
 --aiAttitude stmt = trace ("Not handled in aiAttitude: " ++ show stmt) $ preStatement stmt
 
-------------------------------------------------------
--- Handler for {give,take}_estate_land_share_<size> --
-------------------------------------------------------
-estateLandShareEffect :: forall g m. (HOI4Info g, Monad m) => Double -> StatementHandler g m
-estateLandShareEffect amt stmt@[pdx| %_ = @scr |] | [pdx| estate = ?estate |] : [] <- scr =
-    case T.toLower estate of
-        "all" -> msgToPP $ MsgEstateLandShareEffectAll amt
-        _ -> do
-                eLoc <- getGameL10n estate
-                msgToPP $ MsgEstateLandShareEffect amt (iconText estate) eLoc
-estateLandShareEffect _ stmt = preStatement stmt
-
-------------------------------------------
--- Handler for change_estate_land_share --
-------------------------------------------
-changeEstateLandShare :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-changeEstateLandShare stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_cels (parseTV "estate" "share" scr)
-    where
-        pp_cels :: TextValue -> PPT g m ScriptMessage
-        pp_cels tv = case (tv_what tv, tv_value tv) of
-            (Just estate, Just share) ->
-                case T.toLower estate of
-                    "all" -> return $ MsgEstateLandShareEffectAll share
-                    _ -> do
-                        eLoc <- getGameL10n estate
-                        return $ MsgEstateLandShareEffect share (iconText estate) eLoc
-            _ -> return $ preMessage stmt
-changeEstateLandShare stmt = preStatement stmt
-
 --------------------------------------------------
 -- Handler for {area,region}_for_scope_province --
 --------------------------------------------------
@@ -2884,65 +2485,6 @@ scopeProvince _ _ stmt = preStatement stmt
 getMaybeRhsText :: Maybe GenericStatement -> Maybe Text
 getMaybeRhsText (Just [pdx| %_ = $t |]) = Just t
 getMaybeRhsText _ = Nothing
-
-----------------------------------------
--- Handler for e.g. enlightenment = X --
-----------------------------------------
-institutionPresence :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-institutionPresence [pdx| $inst = !val |] = do
-    instLoc <- getGameL10n inst
-    msgToPP $ MsgInstitutionPresence (iconText inst) instLoc val
-institutionPresence stmt = (trace $ "Warning: institutionPresence doesn't handle: " ++ (show stmt)) $ preStatement stmt
-
-data CreateIndependentEstate = CreateIndependentEstate
-    {   cie_estate :: Maybe Text
-    ,   cie_government :: Maybe Text
-    ,   cie_government_reform :: Maybe Text
-    ,   cie_national_ideas :: Maybe Text
-    ,   cie_play_as :: Bool
-    } deriving Show
-
-createIndependentEstate :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-createIndependentEstate stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_cie (foldl' addLine (CreateIndependentEstate Nothing Nothing Nothing Nothing False) scr)
-    where
-        addLine :: CreateIndependentEstate -> GenericStatement -> CreateIndependentEstate
-        addLine cie [pdx| estate = $estate |] = cie { cie_estate = Just estate }
-        addLine cie [pdx| government = $gov |] = cie { cie_government = Just gov }
-        addLine cie [pdx| government_reform = $govreform |] = cie { cie_government_reform = Just govreform }
-        addLine cie [pdx| custom_national_ideas = $ideas |] = cie { cie_national_ideas = Just ideas }
-        addLine cie [pdx| play_as = $yn |] = cie { cie_play_as = T.toLower yn == "yes" }
-        addLine cie stmt = (trace $ "Not handled in createIndependentEstate: " ++ show stmt) $ cie
-
-        pp_cie :: CreateIndependentEstate -> PPT g m ScriptMessage
-        pp_cie cie@CreateIndependentEstate{cie_estate = Just estate, cie_government = Just gov, cie_government_reform = Just reform, cie_national_ideas = Just ideas} = do
-            estateLoc <- getGameL10n estate
-            govLoc <- getGameL10n gov
-            govReformLoc <- getGameL10n reform
-            ideasLoc <- getGameL10n ideas
-            -- FIXME: Should actually be localizable
-            let desc = " with " <> govLoc <> " government, the " <> govReformLoc <> " reform and " <> ideasLoc
-            return $ MsgCreateIndependentEstate (iconText estate) estateLoc desc (cie_play_as cie)
-        pp_cie cie@CreateIndependentEstate{cie_estate = Just estate, cie_government = Nothing, cie_government_reform = Nothing, cie_national_ideas = Nothing} = do
-            estateLoc <- getGameL10n estate
-            return $ MsgCreateIndependentEstate (iconText estate) estateLoc "" (cie_play_as cie)
-        pp_cie cie = return $ (trace $ "Not handled in createIndependentEstate: cie=" ++ show cie ++ " stmt=" ++ show stmt) $ preMessage stmt
-createIndependentEstate stmt = (trace $ "Not handled in createIndependentEstate: " ++ show stmt) $ preStatement stmt
-
-
------------------------------------
--- Handler for production_leader --
------------------------------------
-foldCompound "productionLeader" "ProductionLeader" "pl"
-    []
-    [CompField "trade_goods" [t|Text|] Nothing True
-    ,CompField "value" [t|Text|] Nothing False
-    ]
-    [| do
-        -- The "value = yes" part doesn't seem to do anything that appears in Aragon's mission tree doesn't appear
-        -- to do anything. It's probably a copy/paste error from a trading_bonus clause.
-        tgLoc <- getGameL10n _trade_goods
-        return $ MsgIsProductionLeader (iconText _trade_goods) tgLoc
-    |]
 
 -------------------------------------------------
 -- Handler for add_dynamic_modifier --
@@ -2977,39 +2519,6 @@ addDynamicModifier stmt@[pdx| %_ = @scr |] =
                     return $ ((i, MsgAddDynamicModifier locName dynflag days) : effect) ++ (if null trigger then [] else ((i+1, MsgLimit) : trigger))
                 _ -> (trace $ "add_dynamic_modifier: Modifier " ++ T.unpack (adm_modifier adm) ++ " not found") $ preStatement stmt
 addDynamicModifier stmt = (trace $ "Not handled in addDynamicModifier: " ++ show stmt) $ preStatement stmt
-
---------------------------
--- Handler for has_heir --
---------------------------
-hasHeir :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-hasHeir stmt@[pdx| %_ = ?rhs |] = msgToPP $
-    case T.toLower rhs of
-        "yes" -> MsgHasHeir True
-        "no" -> MsgHasHeir False
-        _ -> MsgHasHeirNamed rhs
-hasHeir stmt = (trace $ "Not handled in hasHeir " ++ show stmt) $ preStatement stmt
-
----------------------------
--- Handler for kill_heir --
----------------------------
-killHeir :: (HOI4Info g, Monad m) => StatementHandler g m
-killHeir stmt@(Statement _ OpEq (CompoundRhs [])) = msgToPP $ MsgHeirDies True
-killHeir stmt@(Statement _ OpEq (CompoundRhs [Statement (GenericLhs "allow_new_heir" []) OpEq (GenericRhs "no" [])])) = msgToPP $ MsgHeirDies False
-killHeir stmt = (trace $ "Not handled in killHeir: " ++ show stmt) $ preStatement stmt
-
-----------------------------
--- Handler for kill_units --
-----------------------------
-foldCompound "killUnits" "KillUnits" "ku"
-    []
-    [CompField "amount" [t|Double|] Nothing True
-    ,CompField "type" [t|Text|] Nothing True
-    ,CompField "who" [t|Text|] Nothing True]
-    [| do
-        who <- flagText (Just HOI4Country) _who
-        what <- getGameL10n _type
-        return $ MsgKillUnits (iconText what) what who _amount
-    |]
 
 -------------------------------------------
 -- Handler for add_building_construction --
@@ -3623,11 +3132,6 @@ createEquipmentVariant stmt@[pdx| %_ = @scr |] = do
         _ -> return "<!-- Check Script -->"
     msgToPP $ MsgCreateEquipmentVariant typed name
 createEquipmentVariant stmt = preStatement stmt
-
-dateHandle :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-dateHandle [pdx| %_ < %dte |] = msgToPP $ MsgDate "earlier than" $ T.pack $ show dte
-dateHandle [pdx| %_ > %dte |] = msgToPP $ MsgDate "later than" $ T.pack $ show dte
-dateHandle stmt = preStatement stmt
 
 -- | Handler for set_rule
 setRule :: forall g m. (HOI4Info g, Monad m) =>
