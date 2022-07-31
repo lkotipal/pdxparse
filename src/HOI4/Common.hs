@@ -709,7 +709,7 @@ handlersIdeas = Tr.fromList
 -- | Handlers for miscellaneous statements
 handlersMisc :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersMisc = Tr.fromList
-        [("add_autonomy_ratio"          , rhsIgnored MsgAddAiStrategy)
+        [("add_ai_strategy"             , rhsIgnored MsgAddAiStrategy)
         ,("add_autonomy_ratio"          , addAutonomyRatio)
         ,("add_resource"                , addResource)
         ,("date"                        , handleDate "After" "Before")
