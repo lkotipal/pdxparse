@@ -193,9 +193,9 @@ textRhs _ = Nothing
 
 -- | Get either a number or a Text from a RHS.
 floatOrTextRhs :: CoerceNum a => GenericRhs -> Maybe (Either a Text)
-floatOrTextRhs rhs = case floatRhs rhs of
-    Just n -> Just (Left n)
-    Nothing -> Right <$> textRhs rhs
+floatOrTextRhs rhs = maybe (Right <$> textRhs rhs )
+    (Just . Left)
+    (floatRhs rhs)
 
 ------------
 -- Parser --

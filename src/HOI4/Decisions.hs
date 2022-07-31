@@ -162,11 +162,11 @@ ppdecisioncat decc gfx = do
         nameD = Doc.strictText name
     name_loc <- getGameL10n name
     let picture = decc_picture decc
-    picture_pp <- case picture of
-            Just pict ->
+    picture_pp <- maybe (return "")
+            (\pict ->
                 let pictc = if not $ "GFX_decision_cat_" `T.isPrefixOf` pict then "GFX_decision_cat_" <> pict else pict in
-                return $ HM.findWithDefault pictc pictc gfx
-            _ -> return ""
+                return $ HM.findWithDefault pictc pictc gfx)
+            picture
     return . mconcat $
         ["== ", Doc.strictText picture_pp , "<!-- ", nameD, " --> ", Doc.strictText name_loc," ==", PP.line
         ," version = ", Doc.strictText version, PP.line
@@ -624,9 +624,9 @@ addDecisionSource :: (HOI4DecisionWeight -> HOI4DecisionSource) -> [(HOI4Decisio
 addDecisionSource ds = map (\t -> (snd t, ds (fst t)))
 
 findInOptions :: Text -> [HOI4Option] -> [(Text, HOI4DecisionSource)]
-findInOptions decisionId = concatMap (\o -> case hoi4opt_name o of
-    Just optName -> addDecisionSource (const (HOI4DecSrcOption decisionId optName)) (maybe [] (concatMap findInStmt) (hoi4opt_effects o))
-    _ -> [])
+findInOptions decisionId = concatMap (\o -> maybe []
+    (\optName -> addDecisionSource (const (HOI4DecSrcOption decisionId optName)) (maybe [] (concatMap findInStmt) (hoi4opt_effects o)))
+    (hoi4opt_name o))
 
 addDecisionTriggers :: HOI4DecisionTriggers -> [(Text, HOI4DecisionSource)] -> HOI4DecisionTriggers
 addDecisionTriggers hm l = foldl' ins hm l

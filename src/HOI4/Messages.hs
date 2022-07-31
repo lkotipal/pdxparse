@@ -421,8 +421,7 @@ data ScriptMessage
     | MsgArmsFactoryVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
     | MsgCompareAutonomyProgressRatio {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgCompareAutonomyProgressRatioVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
-    | MsgDate {scriptMessageDated :: Double, scriptMessageCompare :: Text}
-    | MsgDateVar {scriptMessageDate :: Text, scriptMessageCompare :: Text}
+    | MsgDate {scriptMessageCompare :: Text, scriptMessageMonth :: Text, scriptMessageDay :: Double, scriptMessageYear :: Double}
     | MsgDockyard {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgDockyardVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
     | MsgEnemiesStrengthRatio {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
@@ -2648,18 +2647,15 @@ instance RenderMessage Script ScriptMessage where
                 , ifThenElseT _yn "" " ''not''"
                 , " a Major country"
                 ]
-        MsgDate {scriptMessageCompare = _comp, scriptMessageDated = _date}
-            -> mconcat
-                [ "The date is "
-                , _comp
-                , " "
-                , toMessage (plainNum _date)
-                ]
-        MsgDateVar {scriptMessageCompare = _comp, scriptMessageDate = _date}
+        MsgDate {scriptMessageCompare = _comp, scriptMessageMonth = _month, scriptMessageDay = _day, scriptMessageYear = _year}
             -> mconcat
                 [ _comp
                 , " "
-                , _date
+                , _month
+                , " "
+                , toMessage (plainNum _day)
+                , " of "
+                , toMessage (plainNum _year)
                 ]
         MsgSendEquipment {scriptMessageAmtT = _amtT, scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageYn = _yn}
             -> mconcat

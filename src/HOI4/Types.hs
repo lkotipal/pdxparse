@@ -426,12 +426,12 @@ aiWillDo :: GenericScript -> AIWillDo
 aiWillDo = foldl' aiWillDoAddSection newAIWillDo
 aiWillDoAddSection :: AIWillDo -> GenericStatement -> AIWillDo
 aiWillDoAddSection awd [pdx| $left = %right |] = case T.toLower left of
-    "base" -> case floatRhs right of
-        Just fac -> awd { awd_base = Just fac }
-        _        -> awd
-    "factor" -> case floatRhs right of
-        Just fac -> awd { awd_base = Just fac }
-        _        -> awd
+    "base" -> maybe awd
+        (\fac -> awd { awd_base = Just fac })
+        (floatRhs right)
+    "factor" -> maybe awd
+        (\fac -> awd { awd_base = Just fac })
+        (floatRhs right)
     "modifier" -> case right of
         CompoundRhs scr -> awd { awd_modifiers = awd_modifiers awd ++ [awdModifier scr] }
         _               -> awd
@@ -443,12 +443,12 @@ awdModifier :: GenericScript -> AIModifier
 awdModifier = foldl' awdModifierAddSection newAIModifier
 awdModifierAddSection :: AIModifier -> GenericStatement -> AIModifier
 awdModifierAddSection aim stmt@[pdx| $left = %right |] = case T.toLower left of
-    "factor" -> case floatRhs right of
-        Just fac -> aim { aim_factor = Just fac }
-        Nothing  -> aim
-    "add" -> case floatRhs right of
-        Just add -> aim { aim_add = Just add }
-        Nothing  -> aim
+    "factor" -> maybe aim
+        (\fac -> aim { aim_factor = Just fac })
+        (floatRhs right)
+    "add" -> maybe aim
+        (\add -> aim { aim_add = Just add })
+        (floatRhs right)
     _ -> -- the rest of the statements are just the conditions.
         aim { aim_triggers = aim_triggers aim ++ [stmt] }
 awdModifierAddSection aim stmt@[pdx| $left > %right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }

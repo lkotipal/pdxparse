@@ -134,7 +134,6 @@ handlersNumericCompare = Tr.fromList
         ,("any_war_score"                    , numericCompare "over" "under" MsgAnyWarScore MsgAnyWarScoreVar)
         ,("arms_factory"                     , numericCompare "more than" "less than" MsgArmsFactory MsgArmsFactoryVar)
         ,("compare_autonomy_progress_ratio"  , numericCompare "over" "under" MsgCompareAutonomyProgressRatio MsgCompareAutonomyProgressRatioVar)
-        ,("date"                             , numericCompare "After" "Before" MsgDate MsgDateVar) -- create special date handler at some point?
         ,("dockyard"                         , numericCompare "more than" "less than" MsgDockyard MsgDockyardVar)
         ,("enemies_strength_ratio"           , numericCompare "over" "under" MsgEnemiesStrengthRatio MsgEnemiesStrengthRatioVar)
         ,("has_added_tension_amount"         , numericCompare "more than" "less than" MsgHasAddedTensionAmount MsgHasAddedTensionAmountVar)
@@ -708,6 +707,7 @@ handlersMisc = Tr.fromList
         [("add_autonomy_ratio"          , rhsIgnored MsgAddAiStrategy)
         ,("add_autonomy_ratio"          , addAutonomyRatio)
         ,("add_resource"                , addResource)
+        ,("date"                        , handleDate)
         ,("random"                      , random)
         ,("random_list"                 , randomList)
         -- Special

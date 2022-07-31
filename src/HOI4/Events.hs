@@ -93,7 +93,7 @@ writeHOI4Events = do
                             (HM.elems events)
     writeFeatures "events"
                   pathedEvents
-                  (\e -> scope (hoi4evt_scope e) $ ppevent e)
+                  (\e -> scope (hoi4evt_scope e) $ ppEvent e)
 
 -- | Parse a statement in an events file. Some statements aren't events; for
 -- those, and for any obvious errors, return Right Nothing.
@@ -444,10 +444,11 @@ ppTriggeredBy eventId trig = do
 
 -- | Pretty-print an event. If some essential parts are missing from the data,
 -- throw an exception.
-ppevent :: forall g m. (HOI4Info g, MonadError Text m) =>
+ppEvent :: forall g m. (HOI4Info g, MonadError Text m) =>
     HOI4Event -> PPT g m Doc
-ppevent evt = case hoi4evt_id evt of
-    Just eid -> setCurrentFile (hoi4evt_path evt) $ do
+ppEvent evt = maybe
+    (throwError "hoi4evt_id missing")
+    (\eid -> setCurrentFile (hoi4evt_path evt) $ do
         -- Valid event
         version <- gets (gameVersion . getSettings)
         (conditional, options_pp'd) <- case hoi4evt_options evt of
@@ -520,9 +521,8 @@ ppevent evt = case hoi4evt_id evt of
             ["| collapse = yes", PP.line
             ,"}}", PP.line
             ,"<section end=", evtId, "/>", PP.line
-            ]
-
-    Nothing -> throwError "hoi4evt_id missing"
+            ])
+    (hoi4evt_id evt)
 
 fixForNoOptions :: Monad m => Text -> m (Bool, Doc)
 fixForNoOptions eid = do --BC: less ugly fix for having no options for an event
@@ -575,9 +575,10 @@ ppoption evtid hidden triggered opt = do
                 ]
 
 findInStmt :: GenericStatement -> [(HOI4EventWeight, Text)]
-findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "news_event" || lhs == "unit_leader_event" || lhs == "state_event" || lhs == "operative_leader_event" = case getId scr of
-    Just triggeredId -> [(Nothing, triggeredId)]
-    _ -> trace ("Unrecognized event trigger: " ++ show stmt) []
+findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "news_event" || lhs == "unit_leader_event" || lhs == "state_event" || lhs == "operative_leader_event" =
+    maybe (trace ("Unrecognized event trigger: " ++ show stmt) [])
+        (\triggeredId -> [(Nothing, triggeredId)])
+        (getId scr)
     where
         getId :: [GenericStatement] -> Maybe Text
         getId [] = Nothing
@@ -614,9 +615,9 @@ addEventSource :: (HOI4EventWeight -> HOI4EventSource) -> [(HOI4EventWeight, Tex
 addEventSource es = map (\t -> (snd t, es (fst t)))
 
 findInOptions :: Text -> [HOI4Option] -> [(Text, HOI4EventSource)]
-findInOptions eventId = concatMap (\o -> case hoi4opt_name o of
-    Just optName -> addEventSource (const (HOI4EvtSrcOption eventId optName)) (maybe [] (concatMap findInStmt) (hoi4opt_effects o))
-    _ -> []
+findInOptions eventId = concatMap (\o -> maybe []
+    (\optName -> addEventSource (const (HOI4EvtSrcOption eventId optName)) (maybe [] (concatMap findInStmt) (hoi4opt_effects o)))
+    (hoi4opt_name o)
     )
 
 addEventTriggers :: HOI4EventTriggers -> [(Text, HOI4EventSource)] -> HOI4EventTriggers

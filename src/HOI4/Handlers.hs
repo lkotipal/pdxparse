@@ -105,6 +105,7 @@ module HOI4.Handlers (
     ,   canBuildRailway
     ,   addResource
     ,   modifyBuildingResources
+    ,   handleDate
     -- testing
     ,   isPronoun
     ,   flag
@@ -431,27 +432,26 @@ ppMtth isTriggeredOnly = ppMtth' . foldl' addField newMTTH
                 hasDays = isJust mdays
                 hasModifiers = not (null modifiers)
             return . mconcat $ (if isTriggeredOnly then [] else
-                case myears of
-                    Just years ->
+                maybe []
+                    (\years ->
                         [PP.int years, PP.space, Doc.strictText $ plural years "year" "years"]
                         ++
                         if hasMonths && hasDays then [",", PP.space]
                         else if hasMonths || hasDays then ["and", PP.space]
-                        else []
-                    Nothing -> []
+                        else [])
+                    myears
                 ++
-                case mmonths of
-                    Just months ->
-                        [PP.int months, PP.space, Doc.strictText $ plural months "month" "months"]
-                    _ -> []
+                maybe []
+                    (\months -> [PP.int months, PP.space, Doc.strictText $ plural months "month" "months"])
+                    mmonths
                 ++
-                case mdays of
-                    Just days ->
+                maybe []
+                    (\days ->
                         (if hasYears && hasMonths then ["and", PP.space]
                          else []) -- if years but no months, already added "and"
                         ++
-                        [PP.int days, PP.space, Doc.strictText $ plural days "day" "days"]
-                    _ -> []
+                        [PP.int days, PP.space, Doc.strictText $ plural days "day" "days"])
+                    mdays
                 ) ++
                 (if hasModifiers then
                     (if isTriggeredOnly then
@@ -1917,9 +1917,7 @@ addDynamicModifier stmt@[pdx| %_ = @scr |] =
         addLine adm [pdx| days = !amt |] = adm { adm_days = Just amt }
         addLine adm stmt = trace ("Unknown in add_dynamic_modifier: " ++ show stmt) adm
         pp_adm adm = do
-            let days = case adm_days adm of
-                    Just time -> formatDays time
-                    _ -> ""
+            let days = maybe "" formatDays (adm_days adm)
             mmod <- HM.lookup (adm_modifier adm) <$> getDynamicModifiers
             dynflag <- flagText (Just HOI4Country) $ adm_scope adm
             case mmod of
@@ -1929,7 +1927,7 @@ addDynamicModifier stmt@[pdx| %_ = @scr |] =
                     let name = dmodLocName mod
                         locName = maybe ("<tt>" <> adm_modifier adm <> "</tt>") (Doc.doc2text . iquotes) name
                     return $ ((i, MsgAddDynamicModifier locName dynflag days) : effect) ++ (if null trigger then [] else (i+1, MsgLimit) : trigger)
-                _ -> trace ("add_dynamic_modifier: Modifier " ++ T.unpack (adm_modifier adm) ++ " not found") $ preStatement stmt
+                Nothing -> trace ("add_dynamic_modifier: Modifier " ++ T.unpack (adm_modifier adm) ++ " not found") $ preStatement stmt
 addDynamicModifier stmt = trace ("Not handled in addDynamicModifier: " ++ show stmt) $ preStatement stmt
 
 -------------------------------------------
@@ -2876,3 +2874,44 @@ foldCompound "modifyBuildingResources" "ModifyBuildingResources" "mbr"
             resourceicon = iconText _resource
         return $ MsgModifyBuildingResources buildicon resourceicon _amount
     |]
+
+----------
+-- date --
+----------
+
+handleDate :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+handleDate stmt@[pdx| %_ = %date |] = case date of
+    DateRhs Date {year = year, month = month, day = day} -> do
+        monthloc <- isMonth month
+        msgToPP $ MsgDate "After" monthloc (fromIntegral day) (fromIntegral year)
+    _ -> preStatement stmt
+handleDate stmt@[pdx| %_ > %date |] = case date of
+    DateRhs Date {year = year, month = month, day = day} ->  do
+        monthloc <- isMonth month
+        msgToPP $ MsgDate "After" monthloc (fromIntegral day) (fromIntegral year)
+    _ -> preStatement stmt
+handleDate stmt@[pdx| %_ < %date |] = case date of
+    DateRhs Date {year = year, month = month, day = day} ->  do
+        monthloc <- isMonth month
+        msgToPP $ MsgDate "Before" monthloc (fromIntegral day) (fromIntegral year)
+    _ -> preStatement stmt
+handleDate stmt = preStatement stmt
+
+
+isMonth :: (IsGameData (GameData g), Monad m) =>
+    Int -> PPT g m Text
+isMonth month
+    = getGameL10n $ case month of
+            1 -> "January" -- programmer counting -_-
+            2 -> "February"
+            3 -> "March"
+            4 -> "April"
+            5 -> "May"
+            6 -> "June"
+            7 -> "July"
+            8 -> "August"
+            9 -> "September"
+            10 -> "October"
+            11 -> "November"
+            12 -> "December"
+            _ -> error "impossible: tried to localize bad month number"
