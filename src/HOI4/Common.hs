@@ -5,10 +5,9 @@ Description : Message handler for Europa Hearts of Iron IV
 -}
 module HOI4.Common (
         ppScript
-    ,   pp_mtth
+    ,   ppMtth
     ,   ppOne
     ,   ppMany
-    ,   iconKey, iconFile, iconFileB
     ,   AIWillDo (..), AIModifier (..)
     ,   ppAiWillDo, ppAiMod
     ,   extractStmt, matchLhsText, matchExactText
@@ -159,9 +158,9 @@ handlersNumericIcons = Tr.fromList
         ,("add_political_power"      , numericIcon "political power" MsgGainPoliticalPower)
         ,("add_stability"            , numericIconLoc "stability" "STABILITY" MsgGainLocPC)
         ,("add_war_support"          , numericIconLoc "war support" "WAR_SUPPORT" MsgGainLocPC)
-        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgAirExperience)
-        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgArmyExperience)
-        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgNavyExperience)
+        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgExperience)
+        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgExperience)
+        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgExperience)
         ]
 
 -- | Handlers for statements pertaining to modifiers
@@ -520,7 +519,7 @@ handlersSimpleFlag = Tr.fromList
         ,("is_guaranteed_by"        , withFlag MsgIsGuaranteedBy)
         ,("is_in_faction_with"      , withFlag MsgIsInFactionWith)
         ,("is_justifying_wargoal_against" , withFlag MsgIsJustifyingWargoalAgainst)
-        ,("is_neighbor_of"          , withFlag MsgNeighbors)
+        ,("is_neighbor_of"          , withFlag MsgIsNeighborOf)
         ,("is_owned_and_controlled_by" , withFlag MsgIsOwnedAndControlledBy)
         ,("is_puppet_of"            , withFlag MsgIsPuppetOf)
         ,("is_core_of"              , withFlag MsgIsStateCore)
@@ -757,29 +756,11 @@ ppOne' stmt lhs rhs = case lhs of
                         scriptMsgs <- scope HOI4Country $ ppMany scr
                         return (lflag : scriptMsgs)
                 _ -> preStatement stmt
-             else do
-                geoData <- getGeoData
-                mloc <- getGameL10nIfPresent label
-                case mloc of
-                    -- Check for localizable atoms, e.g. regions
-                    Just loc -> case rhs of
-                        CompoundRhs scr -> ppMaybeGeo label loc scr
-                        _ -> compound loc stmt
-                    Nothing -> preStatement stmt
+             else preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
     IntLhs n -> do -- Treat as a province tag
-        tradeNodes <- getTradeNodes
         case rhs of
-            CompoundRhs scr ->
-                -- Check if this is the main province of a trade node in which case we need
-                -- to see if that needs to be displayed instead
-                case HM.lookup n tradeNodes of
-                    Just node | isTradeNodeQuery scr -> do
-                        nodeLoc <- getGameL10n node
-                        header <- msgToPP (MsgTradeNode nodeLoc)
-                        scriptMsgs <- scope HOI4TradeNode $ ppMany scr
-                        return (header ++ scriptMsgs)
-                    _ -> do
+            CompoundRhs scr -> do
                         state_loc <- getStateLoc n
                         header <- msgToPP (MsgState state_loc)
                         scriptMsgs <- scope HOI4ScopeState $ ppMany scr
@@ -787,74 +768,6 @@ ppOne' stmt lhs rhs = case lhs of
             _ -> preStatement stmt
     CustomLhs _ -> preStatement stmt
 
-isTradeNodeQuery :: GenericScript -> Bool
-isTradeNodeQuery scr = any isTradeNodeQuery' scr
-    where
-        isTradeNodeQuery' :: GenericStatement -> Bool
-        isTradeNodeQuery' stmt@[pdx| $lhs = @scr |] = case Tr.lookup (TE.encodeUtf8 (T.toLower lhs)) isTradeNodeScrTrie of
-            Just True -> True
-            Just False -> isTradeNodeQuery scr
-            _ -> False
-        isTradeNodeQuery' stmt@[pdx| $lhs = %_ |] = isJust $ Tr.lookup (TE.encodeUtf8 (T.toLower lhs)) isTradeNodeQueryTrie
-        isTradeNodeQuery' _ = False
-        -- Conditions/commands that are listed as Province (Trade node) on the wiki
-        isTradeNodeQueryTrie :: Trie ()
-        isTradeNodeQueryTrie = Tr.fromList
-            [("add_trade_node_income",())
-            ,("has_merchant",())
-            ,("has_most_province_trade_power",())
-            ,("has_trader",())
-            ,("highest_value_trade_node",())
-            ,("is_strongest_trade_power",())
-            ,("recall_merchant",())
-            ,("trade_range",())
-            ]
-        isTradeNodeScrTrie :: Trie Bool
-        isTradeNodeScrTrie = Tr.fromList
-            [("add_trade_modifier"                , True)
-            ,("has_privateer_share_in_trade_node" , True)
-            ,("has_trade_modifier"                , True)
-            ,("most_province_trade_power"         , True)
-            ,("privateer_power"                   , True)
-            ,("strongest_trade_power"             , True)
-            ,("remove_trade_modifier"             , True)
-            ,("trade_share"                       , True)
-
-            ,("and"                               , False)
-            ,("else"                              , False)
-            ,("if"                                , False)
-            ,("not"                               , False)
-            ,("or"                                , False)
-            ]
-
-ppMaybeGeo :: (HOI4Info g, Monad m) => Text -> Text -> GenericScript -> PPT g m IndentedMessages
-ppMaybeGeo label loc scr = do
-    geoData <- getGeoData
-    let (mtypeStmt, rest) = extractStmt (matchExactText "type" "all") scr
-    case HM.lookup label geoData of
-        Just geoType -> do
-            inEffect <- getIsInEffect
-            header <- plainMsg' $ (if isJust mtypeStmt || inEffect then "All provinces" else "Any province")
-                <> " in the " <> loc <> " " <> (describe geoType) <> ":"
-            scriptMsgs <- scope HOI4ScopeState $ ppMany rest
-            return (header : scriptMsgs)
-        Nothing -> do
-            let actScope = if (T.toLower label) `elem` ["emperor", "revolution_target", "crusade_target"] then
-                    HOI4Country
-                else
-                    HOI4ScopeState
-            header <- plainMsg' $ loc <> ":"
-            scriptMsgs <- scope actScope $ ppMany scr
-            return (header : scriptMsgs)
-
-    where
-        describe :: HOI4GeoType -> Text
-        describe HOI4GeoArea = "area"
-        describe HOI4GeoRegion = "region"
-        describe HOI4GeoSuperRegion = "subcontinent"
-        describe HOI4GeoContinent = "continent"
-        describe HOI4GeoTradeCompany = "trade company region"
-        describe HOI4GeoColonialRegion = "region" -- No need to say "colonial region" since that's implied by the localized name
 
 -- | Try to extract one matching statement
 extractStmt :: (a -> Bool) -> [a] -> (Maybe a, [a])

@@ -1,35 +1,28 @@
+{-# LANGUAGE LambdaCase #-}
 module HOI4.Handlers (
         preStatement
     ,   plainMsg
     ,   plainMsg'
     ,   msgToPP
-    ,   msgToPP'
     ,   flagText
     ,   isTag
     ,   getStateLoc
-    ,   eGetState
-    ,   pp_mtth
+    ,   ppMtth
     ,   compound
     ,   compoundMessage
     ,   compoundMessageExtract
     ,   compoundMessagePronoun
     ,   compoundMessageTagged
-    ,   allowPronoun
     ,   withLocAtom
     ,   withLocAtom'
     ,   withLocAtom2
-    ,   withLocAtomAndIcon
     ,   withLocAtomIcon
     ,   withLocAtomIconHOI4Scope
-    ,   withLocAtomIconBuilding
     ,   locAtomTagOrState
     ,   withState
     ,   withNonlocAtom
     ,   withNonlocAtom2
     ,   withNonlocTextValue
-    ,   iconKey
-    ,   iconFile
-    ,   iconFileB
     ,   iconOrFlag
     ,   tagOrState
     ,   tagOrStateIcon
@@ -46,13 +39,10 @@ module HOI4.Handlers (
     ,   numericIcon
     ,   numericIconLoc
     ,   numericLoc
-    ,   numericIconBonus
-    ,   numericIconBonusAllowTag
     ,   boolIconLoc
     ,   tryLoc
     ,   tryLocAndIcon
     ,   tryLocMaybe
-    ,   tryLocAndLocMod
     ,   textValue
     ,   textValueCompare
     ,   valueValue
@@ -69,7 +59,6 @@ module HOI4.Handlers (
     ,   random
     ,   randomList
     ,   hasDlc
-    ,   numProvinces
     ,   withFlagOrState
     ,   customTriggerTooltip
     ,   handleIdeas
@@ -84,7 +73,6 @@ module HOI4.Handlers (
     ,   rhsAlwaysEmptyCompound
     ,   exportVariable
 --    ,   aiAttitude
-    ,   scopeProvince
     ,   addDynamicModifier
     ,   addBuildingConstruction
     ,   addNamedThreat
@@ -182,12 +170,12 @@ preStatement [pdx| %lhs = @scr |] = do
 preStatement stmt = (:[]) <$> alsoIndent' (preMessage stmt)
 
 -- | Pretty-print a statement and wrap it in a @<pre>@ element.
-pre_statement :: GenericStatement -> Doc
-pre_statement stmt = "<pre>" <> genericStatement2doc stmt <> "</pre>"
+preStatementText :: GenericStatement -> Doc
+preStatementText stmt = "<pre>" <> genericStatement2doc stmt <> "</pre>"
 
--- | 'Text' version of 'pre_statement'.
-pre_statement' :: GenericStatement -> Text
-pre_statement' = Doc.doc2text . pre_statement
+-- | 'Text' version of 'preStatementText'.
+preStatementText' :: GenericStatement -> Text
+preStatementText' = Doc.doc2text . preStatementText
 
 -- | Pretty-print a script statement, wrap it in a @<pre>@ element, and emit a
 -- generic message for it.
@@ -198,7 +186,7 @@ preMessage = MsgUnprocessed
             . PP.renderPretty 0.8 80 -- Don't use 'Doc.doc2text', because it uses
                                      -- 'Doc.renderCompact' which is not what
                                      -- we want here.
-            . pre_statement
+            . preStatementText
 
 -- | Create a generic message from a piece of text. The rendering function will
 -- pass this through unaltered.
@@ -206,13 +194,13 @@ plainMsg :: (IsGameState (GameState g), Monad m) => Text -> PPT g m IndentedMess
 plainMsg msg = (:[]) <$> plainMsg' msg
 
 plainMsg' :: (IsGameState (GameState g), Monad m) => Text -> PPT g m IndentedMessage
-plainMsg' msg = alsoIndent' . MsgUnprocessed $ msg
+plainMsg' = alsoIndent' . MsgUnprocessed
 
 msgToPP :: (IsGameState (GameState g), Monad m) => ScriptMessage -> PPT g m IndentedMessages
 msgToPP msg = (:[]) <$> msgToPP' msg
 
 msgToPP' :: (IsGameState (GameState g), Monad m) => ScriptMessage -> PPT g m IndentedMessage
-msgToPP' msg = alsoIndent' msg
+msgToPP' = alsoIndent'
 
 -- Emit icon template.
 icon :: Text -> Doc
@@ -265,6 +253,8 @@ flag expectscope = allowPronoun expectscope $ \name -> do
                     nameIdeo <- getCoHi name
                     template "flag" . (:[]) <$> getGameL10n nameIdeo
 
+getCoHi :: (Monad m, HOI4Info g) =>
+    Text -> PPT g m Text
 getCoHi name = do
     chistories <- getCountryHistory
     let mchistories = HM.lookup name chistories
@@ -275,17 +265,6 @@ getCoHi name = do
             case rulLoc of
                 Just rulingTag -> return $ chRulingTag chistory
                 Nothing -> return name
-
-getScopeForPronoun :: (HOI4Info g, Monad m) =>
-    Text -> PPT g m (Maybe HOI4Scope)
-getScopeForPronoun = helper . T.toLower where
-    helper "this" = getCurrentScope
-    helper "root" = getRootScope
-    helper "prev" = getPrevScope
-    helper "controller" = return (Just HOI4Country)
-    helper "emperor" = return (Just HOI4Country)
-    helper "capital" = return (Just HOI4ScopeState)
-    helper _ = return Nothing
 
 -- | Emit an appropriate phrase for a pronoun.
 -- If a scope is passed, that is the type the current command expects. If they
@@ -318,7 +297,7 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
     "prev" -> --do
 --      ss <- getScopeStack
 --      traceM (f ++ ": pronoun PREV: scope stack is " ++ show ss)
-        getPrevScope >>= \_scope -> case _scope of -- will need editing
+        getPrevScope >>= \case -- will need editing
             Just HOI4Country
                 | expectedScope `matchScope` HOI4Country -> message MsgPREVCountry
                 | otherwise                             -> message MsgPREVCountryAsOther
@@ -430,8 +409,8 @@ newMTTHMod :: MTTHModifier
 newMTTHMod = MTTHModifier Nothing []
 
 -- | Format a @mean_time_to_happen@ clause as wiki text.
-pp_mtth :: (HOI4Info g, Monad m) => Bool -> GenericScript -> PPT g m Doc
-pp_mtth isTriggeredOnly = pp_mtth' . foldl' addField newMTTH
+ppMtth :: (HOI4Info g, Monad m) => Bool -> GenericScript -> PPT g m Doc
+ppMtth isTriggeredOnly = ppMtth' . foldl' addField newMTTH
     where
         addField mtth [pdx| years    = !n   |] = mtth { mtth_years = Just n }
         addField mtth [pdx| months   = !n   |] = mtth { mtth_months = Just n }
@@ -445,7 +424,7 @@ pp_mtth isTriggeredOnly = pp_mtth' . foldl' addField newMTTH
                 = mtthmod { mtthmod_factor = Just n }
             addMTTHModField mtthmod stmt -- anything else is a condition
                 = mtthmod { mtthmod_conditions = mtthmod_conditions mtthmod ++ [stmt] }
-        pp_mtth' (MTTH myears mmonths mdays modifiers) = do
+        ppMtth' (MTTH myears mmonths mdays modifiers) = do
             modifiers_pp'd <- intersperse PP.line <$> mapM pp_mtthmod modifiers
             let hasYears = isJust myears
                 hasMonths = isJust mmonths
@@ -577,7 +556,7 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
             return $ (i, scopemsg) : script_pp'd
         _ -> do
             withCurrentFile $ \f -> do
-                traceM $ "compoundMessagePronoun: " ++ f ++ ": potentially invalid use of " ++ (T.unpack head) ++ " in " ++ (show stmt)
+                traceM $ "compoundMessagePronoun: " ++ f ++ ": potentially invalid use of " ++ T.unpack head ++ " in " ++ show stmt
             preStatement stmt
 compoundMessagePronoun stmt = preStatement stmt
 
@@ -587,9 +566,7 @@ compoundMessageTagged :: (HOI4Info g, Monad m) =>
     -> Maybe HOI4Scope -- ^ Scope to push on the stack, if any
     -> StatementHandler g m
 compoundMessageTagged header mscope stmt@[pdx| $_:$tag = %_ |]
-    = (case mscope of
-        Just newscope -> scope newscope
-        Nothing -> id) $ compoundMessage (header tag) stmt
+    = maybe id scope mscope $ compoundMessage (header tag) stmt
 compoundMessageTagged _ _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom.
@@ -597,11 +574,14 @@ compoundMessageTagged _ _ stmt = preStatement stmt
 withLocAtom' :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage) -> (Text -> Text) -> StatementHandler g m
 withLocAtom' msg xform [pdx| %_ = ?key |]
-    = msgToPP =<< msg <$> getGameL10n (xform key)
+    = msgToPP . msg =<< getGameL10n (xform key)
 withLocAtom' _ _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom.
-withLocAtom msg stmt = withLocAtom' msg id stmt
+withLocAtom :: (HOI4Info g, Monad m) =>
+    (Text -> ScriptMessage)
+    -> GenericStatement -> PPT g m IndentedMessages
+withLocAtom msg = withLocAtom' msg id
 
 -- | Generic handler for a statement whose RHS is a localizable atom and we
 -- need a second one (passed to message as first arg).
@@ -610,7 +590,7 @@ withLocAtom2 :: (HOI4Info g, Monad m) =>
         -> (Text -> Text -> Text -> ScriptMessage)
         -> StatementHandler g m
 withLocAtom2 inMsg msg [pdx| %_ = ?key |]
-    = msgToPP =<< msg <$> pure key <*> messageText inMsg <*> getGameL10n key
+    = msgToPP =<< msg key <$> messageText inMsg <*> getGameL10n key
 withLocAtom2 _ _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom, where we
@@ -652,15 +632,6 @@ withLocAtomIconHOI4Scope countrymsg provincemsg stmt = do
         Just HOI4ScopeState -> withLocAtomIcon provincemsg stmt
         _ -> preStatement stmt -- others don't make sense
 
--- | Handler for buildings. Localization needs "building_" prepended. Hack..
-withLocAtomIconBuilding :: (HOI4Info g, Monad m) =>
-    (Text -> Text -> ScriptMessage)
-        -> StatementHandler g m
-withLocAtomIconBuilding msg stmt@[pdx| %_ = ?key |]
-    = do what <- Doc.doc2text <$> allowPronoun Nothing (fmap Doc.strictText . getGameL10n) ("building_" <> key)
-         msgToPP $ msg (iconText key) what
-withLocAtomIconBuilding _ stmt = preStatement stmt -- CHECK FOR USEFULNESS
-
 -- | Generic handler for a statement where the RHS is a localizable atom, but
 -- may be replaced with a tag or province to refer synecdochally to the
 -- corresponding value.
@@ -691,9 +662,9 @@ withState msg stmt@[pdx| %lhs = $vartag:$var |] = do
         Just tagloc -> msgToPP $ msg tagloc
         Nothing -> preStatement stmt
 withState msg stmt@[pdx| %lhs = $var |]
-    = msgToPP =<< msg . Doc.doc2text <$> pronoun (Just HOI4ScopeState) var
+    = msgToPP . msg . Doc.doc2text =<< pronoun (Just HOI4ScopeState) var
 withState msg [pdx| %lhs = !stateid |]
-    = msgToPP =<< msg <$> getStateLoc stateid
+    = msgToPP . msg =<< getStateLoc stateid
 withState _ stmt = preStatement stmt
 
 -- As withLocAtom but no l10n.
@@ -714,428 +685,20 @@ withNonlocAtom2 _ _ stmt = preStatement stmt
 -- | Table of script atom -> icon key. Only ones that are different are listed.
 scriptIconTable :: HashMap Text Text
 scriptIconTable = HM.fromList
-    [("administrative_ideas", "administrative")
-    ,("age_of_absolutism", "age of absolutism")
-    ,("age_of_discovery", "age of discovery")
-    ,("age_of_reformation", "age of reformation")
-    ,("age_of_revolutions", "age of revolutions")
-    ,("aristocracy_ideas", "aristocratic")
-    ,("army_organizer", "army organizer")
-    ,("army_organiser", "army organizer") -- both are used
-    ,("army_reformer", "army reformer")
-    ,("base_production", "production")
-    ,("colonial_governor", "colonial governor")
-    ,("defensiveness", "fort defense")
-    ,("diplomat", "diplomat_adv")
-    ,("diplomatic_ideas", "diplomatic")
-    ,("economic_ideas", "economic")
-    ,("estate_brahmins", "brahmins")
-    ,("estate_burghers", "burghers")
-    ,("estate_church", "clergy")
-    ,("estate_cossacks", "cossacks")
-    ,("estate_dhimmi", "dhimmi")
-    ,("estate_jains", "jains")
-    ,("estate_maratha", "marathas")
-    ,("estate_nobles", "nobles")
-    ,("estate_nomadic_tribes", "tribes")
-    ,("estate_rajput", "rajputs")
-    ,("estate_vaisyas", "vaishyas")
-    ,("grand_captain", "grand captain")
-    ,("horde_gov_ideas", "horde government")
-    ,("indigenous_ideas", "indigenous")
-    ,("influence_ideas", "influence")
-    ,("innovativeness_ideas", "innovative")
-    ,("is_monarch_leader", "ruler general")
-    ,("master_of_mint", "master of mint")
-    ,("max_accepted_cultures", "max promoted cultures")
-    ,("master_recruiter", "master recruiter")
-    ,("mesoamerican_religion", "mayan")
-    ,("military_engineer", "military engineer")
-    ,("natural_scientist", "natural scientist")
-    ,("naval_reformer", "naval reformer")
-    ,("navy_reformer", "naval reformer") -- these are both used!
-    ,("nomad_group", "nomadic")
-    ,("norse_pagan_reformed", "norse")
-    ,("particularist", "particularists")
-    ,("piety", "being pious") -- chosen arbitrarily
-    ,("religious_ideas", "religious")
-    ,("shamanism", "fetishism") -- religion reused
-    ,("local_state_maintenance_modifier", "state maintenance")
-    ,("spy_ideas", "espionage")
-    ,("tengri_pagan_reformed", "tengri")
-    ,("theocracy_gov_ideas", "divine")
-    ,("trade_ideas", "trade")
-    -- religion
-    ,("dreamtime", "alcheringa")
-    -- technology
-    ,("aboriginal_tech", "aboriginal")
-    ,("polynesian_tech", "polynesian")
-    -- cults
-    ,("buddhism_cult", "buddhadharma")
-    ,("central_african_ancestor_cult", "mlira")
-    ,("christianity_cult", "christianity")
-    ,("cwezi_cult", "cwezi")
-    ,("dharmic_cult", "sanatana")
-    ,("enkai_cult", "enkai")
-    ,("islam_cult", "islam")
-    ,("jewish_cult", "haymanot")
-    ,("mwari_cult", "mwari")
-    ,("norse_cult", "freyja")
-    ,("nyame_cult", "nyame")
-    ,("roog_cult", "roog")
-    ,("south_central_american_cult", "teotl")
-    ,("waaq_cult", "waaq")
-    ,("yemoja_cult", "yemoja")
-    ,("zanahary_cult", "zanahary")
-    ,("zoroastrian_cult", "mazdayasna")
-    -- religious schools
-    ,("hanafi_school", "hanafi")
-    ,("hanbali_school", "hanbali")
-    ,("maliki_school", "maliki")
-    ,("shafii_school", "shafii")
-    ,("ismaili_school", "ismaili")
-    ,("jafari_school", "jafari")
-    ,("zaidi_school", "zaidi")
-    -- buildings
-    ,("barracks", "western_barracks")
-    ,("cathedral", "western_cathedral")
-    ,("conscription_center", "western_conscription_center")
-    ,("counting_house", "western_counting_house")
-    ,("courthouse", "western_courthouse")
-    ,("dock", "western_dock")
-    ,("drydock", "western_drydock")
-    ,("grand_shipyard", "western_grand_shipyard")
-    ,("marketplace", "western_marketplace")
-    ,("mills", "mill")
-    ,("regimental_camp", "western_regimental_camp")
-    ,("shipyard", "western_shipyard")
-    ,("stock_exchange", "western_stock_exchange")
-    ,("temple", "western_temple")
-    ,("town_hall", "western_town_hall")
-    ,("trade_depot", "western_trade_depot")
-    ,("training_fields", "western_training_fields")
-    ,("university", "western_university")
-    ,("workshop", "western_workshop")
-    -- institutions
-    ,("new_world_i", "colonialism")
-    -- personalities (from ruler_personalities/00_core.txt)
-    ,("architectural_visionary_personality", "architectural visionary")
-    ,("babbling_buffoon_personality", "babbling buffoon")
-    ,("benevolent_personality", "benevolent")
-    ,("bold_fighter_personality", "bold fighter")
-    ,("calm_personality", "calm")
-    ,("careful_personality", "careful")
-    ,("charismatic_negotiator_personality", "charismatic negotiator")
-    ,("conqueror_personality", "conqueror")
-    ,("craven_personality", "craven")
-    ,("cruel_personality", "cruel")
-    ,("drunkard_personality", "indulgent")
-    ,("embezzler_personality", "embezzler")
-    ,("entrepreneur_personality", "entrepreneur")
-    ,("expansionist_personality", "expansionist")
-    ,("fertile_personality", "fertile")
-    ,("fierce_negotiator_personality", "fierce negotiator")
-    ,("free_thinker_personality", "free thinker")
-    ,("greedy_personality", "greedy")
-    ,("immortal_personality", "immortal")
-    ,("incorruptible_personality", "incorruptible")
-    ,("industrious_personality", "industrious")
-    ,("infertile_personality", "infertile")
-    ,("inspiring_leader_personality", "inspiring leader")
-    ,("intricate_web_weaver_personality", "intricate webweaver")
-    ,("just_personality", "just")
-    ,("kind_hearted_personality", "kind-hearted")
-    ,("lawgiver_personality", "lawgiver")
-    ,("loose_lips_personality", "loose lips")
-    ,("malevolent_personality", "malevolent")
-    ,("martial_educator_personality", "martial educator")
-    ,("midas_touched_personality", "midas touched")
-    ,("naive_personality", "naive enthusiast")
-    ,("navigator_personality", "navigator personality")
-    ,("obsessive_perfectionist_personality", "obsessive perfectionist")
-    ,("pious_personality", "pious")
-    ,("righteous_personality", "righteous")
-    ,("scholar_personality", "scholar")
-    ,("secretive_personality", "secretive")
-    ,("silver_tongue_personality", "silver tongue")
-    ,("sinner_personality", "sinner")
-    ,("strict_personality", "strict")
-    ,("tactical_genius_personality", "tactical genius")
-    ,("tolerant_personality", "tolerant")
-    ,("well_advised_personality", "well advised")
-    ,("well_connected_personality", "well connected")
-    ,("zealot_personality", "zealot")
-    -- AI attitudes
-    ,("attitude_allied"      , "ally attitude")
-    ,("attitude_defensive"   , "defensive attitude")
-    ,("attitude_disloyal"    , "disloyal attitude")
-    ,("attitude_domineering" , "domineering attitude")
-    ,("attitude_friendly"    , "friendly attitude")
-    ,("attitude_hostile"     , "hostile attitude")
-    ,("attitude_loyal"       , "loyal attitude")
-    ,("attitude_neutral"     , "neutral attitude")
-    ,("attitude_outraged"    , "outraged attitude")
-    ,("attitude_overlord"    , "overlord attitude")
-    ,("attitude_protective"  , "protective attitude")
-    ,("attitude_rebellious"  , "rebellious attitude")
-    ,("attitude_rivalry"     , "rivalry attitude")
-    ,("attitude_threatened"  , "threatened attitude")
+    [
     ]
 
 -- | Table of script atom -> file. For things that don't have icons and should instead just
 -- show an image. An empty string can be used as a short hand for just appending ".png".
 scriptIconFileTable :: HashMap Text Text
 scriptIconFileTable = HM.fromList
-    [("cost to promote mercantilism", "")
-    ,("establish holy order cost", "")
-    ,("fleet movement speed", "")
-    ,("local state maintenance modifier", "")
-    ,("monthly piety accelerator", "")
-    -- Trade company investments
-    ,("local_quarter", "TC local quarters")
-    ,("permanent_quarters", "TC permanent quarters")
-    ,("officers_mess", "TC officers mess")
-    ,("company_warehouse", "TC warehouse")
-    ,("company_depot", "TC depot")
-    ,("admiralty", "TC admiralty")
-    ,("brokers_office", "TC brokers office")
-    ,("brokers_exchange", "TC brokers exchange")
-    ,("property_appraiser", "TC property appraiser")
-    ,("settlements", "TC settlement")
-    ,("district", "TC district")
-    ,("townships", "TC township")
-    ,("company_administration", "TC company administration")
-    ,("military_administration", "TC military administration")
-    ,("governor_general_mansion", "TC governor generals mansion")
-    -- Disasters
---    ,("coup_attempt_disaster", "Coup Attempt")
-    -- Holy orders
-    ,("dominican_order", "Dominicans")
-    ,("franciscan_order", "Franciscans")
-    ,("jesuit_order", "Jesuits")
-    -- Icons
-    ,("icon_climacus"   , "Icon of St. John Climacus")
-    ,("icon_eleusa"     , "Icon of Eleusa")
-    ,("icon_michael"    , "Icon of St. Michael")
-    ,("icon_nicholas"   , "Icon of St. Nicholas")
-    ,("icon_pancreator" , "Icon of Christ Pantocrator")
+    [
     ]
 
 -- Given a script atom, return the corresponding icon key, if any.
 iconKey :: Text -> Maybe Text
 iconKey atom = HM.lookup atom scriptIconTable
 
--- | Table of icon tag to wiki filename. Only those that are different are
--- listed.
-iconFileTable :: HashMap Text Text
-iconFileTable = HM.fromList
-    [("improve relations", "Improve relations")
-    ,("ship durability", "Ship durability")
-    ,("embargo efficiency", "Embargo efficiency")
-    ,("power projection from insults", "Power projection from insults")
-    ,("trade company investment cost", "Trade company investment cost")
-    ,("missionaries", "Missionaries")
-    ,("prestige", "Yearly prestige")
-    ,("trade efficiency", "Trade efficiency")
-    ,("infantry power", "Infantry combat ability")
-    ,("envoy travel time", "Envoy travel time")
-    ,("army tradition decay", "Yearly army tradition decay")
-    ,("cavalry power", "Cavalry combat ability")
-    ,("recover army morale speed", "Recover army morale speed")
-    ,("cost of enforcing religion through war", "Cost of enforcing religion through war")
-    ,("burghers loyalty", "Burghers loyalty equilibrium")
-    ,("heavy ship power", "Heavy ship combat ability")
-    ,("blockade impact on siege", "Blockade impact on siege")
-    ,("nobility loyalty", "Nobility loyalty equilibrium")
-    ,("development cost", "Development cost")
-    ,("advisor cost", "Advisor cost")
-    ,("missionary strength", "Missionary strength")
-    ,("legitimacy", "Legitimacy")
-    ,("naval forcelimit", "Naval forcelimit")
-    ,("ship cost", "Ship costs")
-    ,("siege ability", "Siege ability")
-    ,("mercenary cost", "Mercenary cost")
-    ,("culture conversion cost", "Culture conversion cost")
-    ,("autonomy change cooldown", "Autonomy change cooldown")
-    ,("naval attrition", "Naval attrition")
-    ,("looting speed", "Looting speed")
-    ,("land leader shock", "Land leader shock")
-    ,("cost of advisors with ruler's culture", "Cost of advisors with ruler's culture")
-    ,("national manpower modifier", "National manpower modifier")
-    ,("yearly corruption", "Yearly corruption")
-    ,("artillery fire", "Artillery fire")
-    ,("free leader pool", "Leader(s) without upkeep")
-    ,("regiment cost", "Regiment cost")
-    ,("goods produced modifier", "Goods produced modifier")
-    ,("unjustified demands", "Unjustified demands")
-    ,("province warscore cost", "Province war score cost")
-    ,("global heretic missionary strength", "Missionary strength vs heretics")
-    ,("trade steering", "Trade steering")
-    ,("provincial trade power modifier", "Provincial trade power modifier")
-    ,("inflation reduction", "Yearly inflation reduction")
-    ,("core creation cost", "Core-creation cost")
-    ,("morale of navies", "Morale of navies")
-    ,("mandate growth modifier", "Mandate")
-    ,("naval maintenance", "Naval maintenance modifier")
-    ,("fort maintenance on border with rival", "Fort maintenance on border with rival")
-    ,("imperial authority modifier", "Imperial authority modifier")
-    ,("interest", "Interest per annum")
-    ,("clergy loyalty", "Clergy loyalty equilibrium")
-    ,("diplomatic possible policies", "Diplomatic possible policies")
-    ,("attrition for enemies", "Attrition for enemies")
-    ,("navy tradition", "Navy tradition")
-    ,("max promoted cultures", "Max promoted cultures")
-    ,("merchant", "Merchants")
-    ,("merchants", "Merchants")
-    ,("reform desire", "Reform desire")
-    ,("church power", "Church power")
-    ,("stability cost", "Stability cost modifier")
-    ,("imperial authority growth modifier", "Imperial authority growth modifier")
-    ,("native assimilation", "Native assimilation")
-    ,("embracement cost", "Institution embracement cost")
-    ,("mercenary discipline", "Mercenary discipline")
-    ,("absolutism", "Absolutism")
-    ,("infantry cost", "Infantry cost")
-    ,("colonists", "Colonists")
-    ,("cost to justify trade conflict", "Justify trade conflict cost")
-    ,("naval leader fire", "Naval leader fire")
-    ,("years of separatism", "Years of separatism")
-    ,("land forcelimit modifier", "Land force limit modifier")
-    ,("monthly fervor", "Monthly fervor")
-    ,("meritocracy", "Meritocracy")
-    ,("land leader fire", "Land leader fire")
-    ,("diplomatic annexation cost", "Diplomatic annexation cost")
-    ,("advisor pool", "Possible advisors")
-    ,("ship disengagement chance", "Ship disengagement chance")
-    ,("prestige from land", "Prestige from land battles")
-    ,("tolerance heretic", "Tolerance heretic")
-    ,("construction time", "Construction time")
-    ,("horde unity", "Horde unity")
-    ,("burghers influence", "Burghers influence")
-    ,("cost to fabricate claims", "Cost to fabricate claims")
-    ,("liberty desire in subjects", "Liberty desire in subjects")
-    ,("trade power abroad", "Trade power abroad")
-    ,("reform progress growth", "Reform progress growth")
-    ,("shock damage", "Shock damage")
-    ,("diplomatic free policies", "Diplomatic free policies")
-    ,("republican tradition", "Republican tradition")
-    ,("naval leader shock", "Naval leader shock")
-    ,("ship trade power", "Ship trade power")
-    ,("manpower recovery speed", "Manpower recovery speed")
-    ,("global regiment recruit speed", "Recruitment time")
-    ,("sailor maintenance", "Sailor maintenance")
-    ,("monarch military skill", "Monarch military skill")
-    ,("idea cost", "Idea cost")
-    ,("devotion", "Devotion")
-    ,("navy tradition decay", "Yearly navy tradition decay")
-    ,("cavalry cost", "Cavalry cost")
-    ,("national garrison growth", "National garrison growth")
-    ,("leader siege", "Leader siege")
-    ,("shock damage received", "Shock damage received")
-    ,("mercenary manpower", "Mercenary manpower")
-    ,("general cost", "General cost")
-    ,("cavalry flanking ability", "Cavalry flanking ability")
-    ,("military free policies", "Military free policies")
-    ,("army tradition from battles", "Army tradition from battles")
-    ,("global tariffs", "Global tariffs")
-    ,("diplomats", "Diplomat")
-    ,("colonial range", "Colonial range")
-    ,("global autonomy", "Autonomy")
-    ,("marines force limit", "Marines force limit")
-    ,("shipbuilding time", "Shipbuilding time")
-    ,("blockade efficiency", "Blockade efficiency")
-    ,("institution spread", "Institution spread")
-    ,("galley cost", "Galley cost")
-    ,("maximum revolutionary zeal", "Maximum revolutionary zeal")
-    ,("merc maintenance modifier", "Mercenary maintenance")
-    ,("vassal forcelimit bonus", "Vassal force limit contribution")
-    ,("war exhaustion cost", "Cost of reducing war exhaustion")
-    ,("migration cooldown", "Migration cooldown")
-    ,("build cost", "Construction cost")
-    ,("galley power", "Galley combat ability")
-    ,("domestic trade power", "Trade power")
-    ,("tribal allegiance", "Yearly tribal _allegiance")
-    ,("land fire damage", "Land fire damage")
-    ,("light ship power", "Light ship combat ability")
-    ,("morale hit when losing a ship", "Morale hit when losing a ship")
-    ,("administrative free policies", "Administrative free policies")
-    ,("harsh treatment cost", "Harsh treatment cost")
-    ,("global settler increase", "Global settler increase")
-    ,("global naval engagement", "Global naval engagement")
-    ,("caravan power", "Caravan power")
-    ,("mil tech cost", "Military technology cost")
-    ,("heavy ship cost", "Heavy ship cost")
-    ,("papal influence", "Papal influence")
-    ,("movement speed", "Movement speed")
-    ,("morale of armies", "Morale of armies")
-    ,("monthly piety", "Monthly piety")
-    ,("native uprising chance", "Native uprising chance")
-    ,("female advisor chance", "Female advisor chance")
-    ,("liberty desire from subjects development", "Liberty desire from subjects development")
-    ,("adm tech cost", "Administrative technology cost")
-    ,("artillery power", "Artillery combat ability")
-    ,("sailor recovery speed", "Sailor recovery speed")
-    ,("missionary maintenance cost", "Missionary maintenance cost")
-    ,("land maintenance", "Land maintenance modifier")
-    ,("possible policies", "Possible policies")
-    ,("tolerance own", "Tolerance of the true faith")
-    ,("global spy defence", "Foreign spy detection")
-    ,("spy offense", "Spy network construction")
-    ,("privateer efficiency", "Privateer efficiency")
-    ,("war exhaustion", "War exhaustion")
-    ,("reelection cost", "Reelection cost")
-    ,("diplomatic reputation", "Diplomatic reputation")
-    ,("global trade power", "Trade power")
-    ,("army tradition", "Army tradition")
-    ,("chance to capture enemy ships", "Chance to capture enemy ships")
-    ,("national sailors modifier", "National sailors modifier")
-    ,("reinforce speed", "Reinforce speed")
-    ,("artillery damage from back row", "Artillery damage from back row")
-    ,("tolerance heathen", "Tolerance heathen")
-    ,("fort defense", "Fort defense")
-    ,("administrative efficiency", "Administrative efficiency")
-    ,("flagship cost", "Flagship cost")
-    ,("technology cost", "Technology cost")
-    ,("prestige decay", "Prestige decay")
-    ,("dip tech cost", "Diplomatic technology cost")
-    ,("fort maintenance", "Fort maintenance")
-    ,("reinforce cost", "Reinforce cost")
-    ,("enemy core creation", "Hostile core-creation cost on us")
-    ,("state maintenance", "State maintenance")
-    ,("possible manchu banners", "Possible Manchu banners")
-    ,("global tax modifier", "National tax modifier")
-    ,("merchant trade power", "Merchant trade power")
-    ,("trade range", "Trade range")
-    ,("fire damage received", "Fire damage received")
-    ,("income from vassals", "Income from vassals")
-    ,("national unrest", "National unrest")
-    ,("transport cost", "Transport cost")
-    ,("artillery cost", "Artillery cost")
-    ,("religious unity", "Religious unity")
-    ,("land attrition", "Land attrition")
-    ,("light ship cost", "Light ship cost")
-    ,("governing capacity modifier", "Governing capacity modifier")
-    ,("ae impact", "Aggressive expansion impact")
-    ,("minimum autonomy in territories", "Minimum autonomy in territories")
-    ,("production efficiency", "Production efficiency")
-    ,("diplomatic upkeep", "Diplomatic relations")
-    ,("garrison size", "Garrison size")
-    ,("cavalry to infantry ratio", "Cavalry to infantry ratio")
-    ,("land leader maneuver", "Land leader maneuver")
-    ,("monarch diplomatic skill", "Monarch diplomatic skill")
-    ,("naval leader maneuver", "Naval leader maneuver")
-    ,("discipline", "Discipline")
-    ,("chance of new heir", "Chance of new heir")
-    ]
-
--- | Given an {{icon}} key, give the corresponding icon file name.
---
--- Needed for idea groups, which don't use {{icon}}.
-iconFile :: Text -> Text
-iconFile s = HM.findWithDefault s s iconFileTable
--- | ByteString version of 'iconFile'.
-iconFileB :: ByteString -> ByteString
-iconFileB = TE.encodeUtf8 . iconFile . TE.decodeUtf8
 
 -- | As generic_icon except
 --
@@ -1159,9 +722,8 @@ iconOrFlag iconmsg flagmsg expectScope [pdx| $head = $name |] = msgToPP =<< do
 --       traceM $ "PREV scope is: " ++ show ps
     if isTag name || isPronoun name
         then return . flagmsg . Doc.doc2text $ nflag
-        else iconmsg <$> return (iconText . HM.findWithDefault name name $ scriptIconTable)
-                     <*> getGameL10n name
-iconOrFlag _ _ _ stmt = plainMsg $ pre_statement' stmt -- CHECK FOR USEFULNESS
+        else iconmsg (iconText . HM.findWithDefault name name $ scriptIconTable) <$> getGameL10n name
+iconOrFlag _ _ _ stmt = plainMsg $ preStatementText' stmt -- CHECK FOR USEFULNESS
 
 -- | Message with icon and tag.
 withFlagAndIcon :: (HOI4Info g, Monad m) =>
@@ -1177,7 +739,7 @@ withFlagAndIcon iconkey flagmsg expectScope stmt@[pdx| %_ = $vartag:$var |] = do
 withFlagAndIcon iconkey flagmsg expectScope [pdx| %_ = $name |] = msgToPP =<< do
     nflag <- flag expectScope name
     return . flagmsg (iconText iconkey) . Doc.doc2text $ nflag
-withFlagAndIcon _ _ _ stmt = plainMsg $ pre_statement' stmt
+withFlagAndIcon _ _ _ stmt = plainMsg $ preStatementText' stmt
 
 -- | Handler for statements where RHS is a tag or province id.
 tagOrState :: (HOI4Info g, Monad m) =>
@@ -1227,7 +789,7 @@ numeric :: (IsGameState (GameState g), Monad m) =>
     (Double -> ScriptMessage)
         -> StatementHandler g m
 numeric msg [pdx| %_ = !n |] = msgToPP $ msg n
-numeric _ stmt = plainMsg $ pre_statement' stmt
+numeric _ stmt = plainMsg $ preStatementText' stmt
 
 -- | Handler for numeric compare statements.
 numericCompare :: (HOI4Info g, Monad m) =>
@@ -1364,7 +926,7 @@ withTagOrNumber iconkey numMsg _ [pdx| %_ = !num |]
     = msgToPP $ numMsg (iconText iconkey) num
 withTagOrNumber iconkey _ tagMsg scr@[pdx| %_ = $_ |]
     = withFlagAndIcon iconkey tagMsg (Just HOI4Country) scr
-withTagOrNumber  _ _ _ stmt = plainMsg $ pre_statement' stmt -- CHECK FOR USEFULNESS
+withTagOrNumber  _ _ _ stmt = plainMsg $ preStatementText' stmt -- CHECK FOR USEFULNESS
 
 -- | Handler for statements that have a number and an icon.
 numericIcon :: (IsGameState (GameState g), Monad m) =>
@@ -1373,7 +935,7 @@ numericIcon :: (IsGameState (GameState g), Monad m) =>
         -> StatementHandler g m
 numericIcon the_icon msg [pdx| %_ = !amt |]
     = msgToPP $ msg (iconText the_icon) amt
-numericIcon _ _ stmt = plainMsg $ pre_statement' stmt
+numericIcon _ _ stmt = plainMsg $ preStatementText' stmt
 
 -- | Handler for statements that have a number and an icon, plus a fixed
 -- localizable atom.
@@ -1385,7 +947,7 @@ numericIconLoc :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) 
 numericIconLoc the_icon what msg [pdx| %_ = !amt |]
     = do whatloc <- getGameL10n what
          msgToPP $ msg (iconText the_icon) whatloc amt
-numericIconLoc _ _ _ stmt = plainMsg $ pre_statement' stmt
+numericIconLoc _ _ _ stmt = plainMsg $ preStatementText' stmt
 
 -- | Handler for statements that have a number and a localizable atom.
 numericLoc :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
@@ -1395,42 +957,7 @@ numericLoc :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
 numericLoc what msg [pdx| %_ = !amt |]
     = do whatloc <- getGameL10n what
          msgToPP $ msg whatloc amt
-numericLoc _ _  stmt = plainMsg $ pre_statement' stmt
-
--- | Handler for statements that have a number and an icon, whose meaning
--- differs depending on what scope it's in.
-numericIconBonus :: (HOI4Info g, Monad m) =>
-    Text
-        -> (Text -> Double -> ScriptMessage) -- ^ Message for country / other scope
-        -> (Text -> Double -> ScriptMessage) -- ^ Message for bonus scope
-        -> StatementHandler g m
-numericIconBonus the_icon plainmsg yearlymsg [pdx| %_ = !amt |]
-    = do
-        mscope <- getCurrentScope
-        let icont = iconText the_icon
-            yearly = msgToPP $ yearlymsg icont amt
-        case mscope of
-            Nothing -> yearly -- ideas / bonuses
-            Just thescope -> case thescope of
-                HOI4Bonus -> yearly
-                _ -> -- act as though it's country for all others
-                    msgToPP $ plainmsg icont amt
-numericIconBonus _ _ _ stmt = plainMsg $ pre_statement' stmt -- CHECK FOR USEFULNES
-
-
--- | Like numericIconBonus but allow rhs to be a tag/scope (used for e.g. "prestige")
-numericIconBonusAllowTag :: (HOI4Info g, Monad m) =>
-    Text
-        -> (Text -> Double -> ScriptMessage) -- ^ Message for country / other scope
-        -> (Text -> Text -> ScriptMessage)   -- ^ Message for tag/scope
-        -> (Text -> Double -> ScriptMessage) -- ^ Message for bonus scope
-        -> StatementHandler g m
-numericIconBonusAllowTag the_icon plainmsg plainAsMsg yearlymsg stmt@[pdx| %_ = $what |]
-    = do
-        whatLoc <- flagText (Just HOI4Country) what
-        msgToPP $ plainAsMsg (iconText the_icon) whatLoc
-numericIconBonusAllowTag the_icon plainmsg _ yearlymsg stmt
-    = numericIconBonus the_icon plainmsg yearlymsg stmt -- CHECK FOR USEFULNES
+numericLoc _ _  stmt = plainMsg $ preStatementText' stmt
 
 -- | Handler for values that use a different message and icon depending on
 -- whether the value is positive or negative.
@@ -1444,7 +971,7 @@ numericIconChange negicon posicon negmsg posmsg [pdx| %_ = !amt |]
     = if amt < 0
         then msgToPP $ negmsg (iconText negicon) amt
         else msgToPP $ posmsg (iconText posicon) amt
-numericIconChange _ _ _ _ stmt = plainMsg $ pre_statement' stmt -- CHECK FOR USEFULNESS
+numericIconChange _ _ _ _ stmt = plainMsg $ preStatementText' stmt -- CHECK FOR USEFULNESS
 
 ----------------------
 -- Text/value pairs --
@@ -1481,8 +1008,8 @@ tryLoc = getGameL10nIfPresent
 tryLocAndIcon :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
 tryLocAndIcon atom = do
     loc <- tryLoc atom
-    return (maybe mempty id (Just (iconText atom)),
-            maybe ("<tt>" <> atom <> "</tt>") id loc)
+    return (fromMaybe mempty (Just (iconText atom)),
+            fromMaybe ("<tt>" <> atom <> "</tt>") loc)
 
 
 -- | Get localization for the atom given. Return atom
@@ -1490,25 +1017,7 @@ tryLocAndIcon atom = do
 tryLocMaybe :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
 tryLocMaybe atom = do
     loc <- tryLoc atom
-    return ("", maybe atom id loc)
-
--- | Same as tryLocAndIcon but for global modifiers
-tryLocAndLocMod :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
-tryLocAndLocMod atom = do
-    loc <- tryLoc (HM.findWithDefault atom atom locTable)
-    when (isNothing loc) (traceM $ "tryLocAndLocMod: Localization failed for modifier: " ++ (T.unpack atom))
-    return (maybe mempty id (Just (iconText atom)),
-            maybe ("<tt>" <> atom <> "</tt>") id loc)
-    where
-        locTable :: HashMap Text Text
-        locTable = HM.fromList
-            [("female_advisor_chance", "MODIFIER_FEMALE_ADVISOR_CHANCE")
-            ,("discipline", "MODIFIER_DISCIPLINE")
-            ,("cavalry_power", "CAVALRY_POWER")
-            ,("missionaries" , "MISSIONARY_CONSTRUCTIONS") -- ?
-            ,("ship_durability", "MODIFIER_SHIP_DURABILITY")
-            ,("tolerance_heathen", "MODIFIER_TOLERANCE_HEATHEN")
-            ]
+    return ("", fromMaybe atom loc)
 
 data TextValue = TextValue
         {   tv_what :: Maybe Text
@@ -1517,7 +1026,8 @@ data TextValue = TextValue
 newTV :: TextValue
 newTV = TextValue Nothing Nothing
 
-parseTV whatlabel vallabel scr = foldl' addLine newTV scr
+parseTV :: Foldable t => Text -> Text -> t GenericStatement -> TextValue
+parseTV whatlabel vallabel = foldl' addLine newTV
     where
         addLine :: TextValue -> GenericStatement -> TextValue
         addLine tv [pdx| $label = ?what |] | label == whatlabel
@@ -1534,7 +1044,9 @@ data TextValueComp = TextValueComp
 newTVC :: TextValueComp
 newTVC = TextValueComp Nothing Nothing Nothing
 
-parseTVC whatlabel vallabel gt lt scr = foldl' addLine newTVC scr
+parseTVC :: Foldable t =>
+    Text -> Text -> Text -> Text -> t GenericStatement -> TextValueComp
+parseTVC whatlabel vallabel gt lt = foldl' addLine newTVC
     where
         addLine :: TextValueComp -> GenericStatement -> TextValueComp
         addLine tvc [pdx| $label = ?what |] | label == whatlabel
@@ -1609,7 +1121,8 @@ data ValueValue = ValueValue
 newVV :: ValueValue
 newVV = ValueValue Nothing Nothing
 
-parseVV whatlabel vallabel scr = foldl' addLine newVV scr
+parseVV :: Foldable t => Text -> Text -> t GenericStatement -> ValueValue
+parseVV whatlabel vallabel = foldl' addLine newVV
     where
         addLine :: ValueValue -> GenericStatement -> ValueValue
         addLine vv [pdx| $label = !what |] | label == whatlabel
@@ -1648,7 +1161,8 @@ data TextAtom = TextAtom
 newTA :: TextAtom
 newTA = TextAtom Nothing Nothing
 
-parseTA whatlabel atomlabel scr = (foldl' addLine newTA scr)
+parseTA :: Foldable t => Text -> Text -> t GenericStatement -> TextAtom
+parseTA whatlabel atomlabel scr = foldl' addLine newTA scr
     where
         addLine :: TextAtom -> GenericStatement -> TextAtom
         addLine ta [pdx| $label = ?what |]
@@ -1657,7 +1171,7 @@ parseTA whatlabel atomlabel scr = (foldl' addLine newTA scr)
         addLine ta [pdx| $label = ?at |]
             | label == atomlabel
             = ta { ta_atom = Just at }
-        addLine ta scr = (trace ("parseTA: Ignoring " ++ show scr)) $ ta
+        addLine ta scr = trace ("parseTA: Ignoring " ++ show scr) ta
 
 
 textAtom :: forall g m. (HOI4Info g, Monad m) =>
@@ -1702,7 +1216,8 @@ data TextFlag = TextFlag
 newTF :: TextFlag
 newTF = TextFlag Nothing Nothing
 
-parseTF whatlabel flaglabel scr = (foldl' addLine newTF scr)
+parseTF :: Foldable t => Text -> Text -> t GenericStatement -> TextFlag
+parseTF whatlabel flaglabel scr = foldl' addLine newTF scr
     where
         addLine :: TextFlag -> GenericStatement -> TextFlag
         addLine tf [pdx| $label = ?what |]
@@ -1714,7 +1229,7 @@ parseTF whatlabel flaglabel scr = (foldl' addLine newTF scr)
         addLine tf [pdx| $label = $vartag:$var |]
             | label == flaglabel
             = tf { tf_flag = Just (Right (vartag, var)) }
-        addLine tf scr = (trace ("parseTF: Ignoring " ++ show scr)) $ tf
+        addLine tf scr = trace ("parseTF: Ignoring " ++ show scr) tf
 
 taTypeFlag :: forall g m. (HOI4Info g, Monad m) => Text -> Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
 taTypeFlag tType tFlag msg stmt@[pdx| %_ = @scr |]
@@ -1745,7 +1260,7 @@ simpleEffectNum tArg msg stmt =
     case getEffectArg tArg stmt of
         Just (FloatRhs num) -> msgToPP (msg num)
         Just (IntRhs num) -> msgToPP (msg (fromIntegral num))
-        _ -> (trace $ "warning: Not handled by simpleEffectNum: " ++ (show stmt)) $ preStatement stmt -- CHECK FOR USEFULNESS
+        _ -> trace ("warning: Not handled by simpleEffectNum: " ++ show stmt) $ preStatement stmt -- CHECK FOR USEFULNESS
 
 simpleEffectAtom :: forall g m. (HOI4Info g, Monad m) => Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
 simpleEffectAtom tArg msg stmt =
@@ -1753,7 +1268,7 @@ simpleEffectAtom tArg msg stmt =
         Just (GenericRhs atom _) -> do
             loc <- getGameL10n atom
             msgToPP $ msg (iconText atom) loc
-        _ -> (trace $ "warning: Not handled by simpleEffectAtom: " ++ (show stmt)) $ preStatement stmt -- CHECK FOR USEFULNESS
+        _ -> trace ("warning: Not handled by simpleEffectAtom: " ++ show stmt) $ preStatement stmt -- CHECK FOR USEFULNESS
 
 -- AI decision factors
 
@@ -1761,9 +1276,7 @@ simpleEffectAtom tArg msg stmt =
 ppAiWillDo :: (HOI4Info g, Monad m) => AIWillDo -> PPT g m IndentedMessages
 ppAiWillDo (AIWillDo mbase mods) = do
     mods_pp'd <- fold <$> traverse ppAiMod mods
-    let baseWtMsg = case mbase of
-            Nothing -> MsgNoBaseWeight
-            Just base -> MsgAIBaseWeight base
+    let baseWtMsg = maybe MsgNoBaseWeight MsgAIBaseWeight mbase
     iBaseWtMsg <- msgToPP baseWtMsg
     return $ iBaseWtMsg ++ mods_pp'd
 
@@ -1788,27 +1301,24 @@ ppAiMod (AIModifier Nothing (Just addition) triggers) = do
         _ -> withCurrentIndentZero $ \i -> return $
             (i, MsgAIAddHeader addition)
             : map (first succ) triggers_pp'd -- indent up
-ppAiMod (AIModifier _ _ _) =
+ppAiMod AIModifier {} =
     plainMsg "(missing multiplier/add for this factor)"
 
 -- | Verify assumption about rhs
 rhsAlways :: (HOI4Info g, Monad m) => Text -> ScriptMessage -> StatementHandler g m
-rhsAlways assumedRhs msg [pdx| %_ = ?rhs |] | T.toLower rhs == assumedRhs = msgToPP $ msg
-rhsAlways _ _ stmt = (trace $ "Expectation is wrong in statement " ++ show stmt) $ preStatement stmt
+rhsAlways assumedRhs msg [pdx| %_ = ?rhs |] | T.toLower rhs == assumedRhs = msgToPP msg
+rhsAlways _ _ stmt = trace ("Expectation is wrong in statement " ++ show stmt) $ preStatement stmt
 
 rhsAlwaysYes :: (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
 rhsAlwaysYes = rhsAlways "yes"
 
+rhsIgnored :: (IsGameState (GameState g), Monad m) =>
+    ScriptMessage -> p -> PPT g m IndentedMessages
 rhsIgnored msg stmt = msgToPP msg
 
 rhsAlwaysEmptyCompound :: (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
 rhsAlwaysEmptyCompound msg stmt@(Statement _ OpEq (CompoundRhs [])) = msgToPP msg
-rhsAlwaysEmptyCompound _ stmt = (trace $ "Expectation is wrong in statement " ++ show stmt) $ preStatement stmt
-
--- Modifiers
-
-maybeM :: Monad m => (a -> m b) -> Maybe a -> m (Maybe b)
-maybeM f = maybe (return Nothing) (fmap Just . f)
+rhsAlwaysEmptyCompound _ stmt = trace ("Expectation is wrong in statement " ++ show stmt) $ preStatement stmt
 
 -- Opinions
 
@@ -1884,57 +1394,6 @@ hasOpinion msg stmt@[pdx| %_ = @scr |]
             _ -> return (preMessage stmt)
 hasOpinion _ stmt = preStatement stmt
 
--- Rebels
-
--- Render a rebel type atom (e.g. anti_tax_rebels) as their name and icon key.
--- This is needed because all religious rebels localize as simply "Religious" -
--- we want to be more specific.
-rebel_loc :: HashMap Text (Text,Text)
-rebel_loc = HM.fromList
-        [("polish_noble_rebels",    ("Magnates", "magnates"))
-        ,("lollard_rebels",         ("Lollard heretics", "lollards"))
-        ,("catholic_rebels",        ("Catholic zealots", "catholic zealots"))
-        ,("protestant_rebels",      ("Protestant zealots", "protestant zealots"))
-        ,("reformed_rebels",        ("Reformed zealots", "reformed zealots"))
-        ,("orthodox_rebels",        ("Orthodox zealots", "orthodox zealots"))
-        ,("sunni_rebels",           ("Sunni zealots", "sunni zealots"))
-        ,("shiite_rebels",          ("Shiite zealots", "shiite zealots"))
-        ,("buddhism_rebels",        ("Buddhist zealots", "buddhist zealots"))
-        ,("mahayana_rebels",        ("Mahayana zealots", "mahayana zealots"))
-        ,("vajrayana_rebels",       ("Vajrayana zealots", "vajrayana zealots"))
-        ,("hinduism_rebels",        ("Hindu zealots", "hindu zealots"))
-        ,("confucianism_rebels",    ("Confucian zealots", "confucian zealots"))
-        ,("shinto_rebels",          ("Shinto zealots", "shinto zealots"))
-        ,("animism_rebels",         ("Animist zealots", "animist zealots"))
-        ,("shamanism_rebels",       ("Fetishist zealots", "fetishist zealots"))
-        ,("totemism_rebels",        ("Totemist zealots", "totemist zealots"))
-        ,("coptic_rebels",          ("Coptic zealots", "coptic zealots"))
-        ,("ibadi_rebels",           ("Ibadi zealots", "ibadi zealots"))
-        ,("sikhism_rebels",         ("Sikh zealots", "sikh zealots"))
-        ,("jewish_rebels",          ("Jewish zealots", "jewish zealots"))
-        ,("norse_pagan_reformed_rebels", ("Norse zealots", "norse zealots"))
-        ,("inti_rebels",            ("Inti zealots", "inti zealots"))
-        ,("maya_rebels",            ("Maya zealots", "maya zealots"))
-        ,("nahuatl_rebels",         ("Nahuatl zealots", "nahuatl zealots"))
-        ,("tengri_pagan_reformed_rebels", ("Tengri zealots", "tengri zealots"))
-        ,("zoroastrian_rebels",     ("Zoroastrian zealots", "zoroastrian zealots"))
-        ,("ikko_ikki_rebels",       ("Ikko-Ikkis", "ikko-ikkis"))
-        ,("ronin_rebels",           ("Ronin rebels", "ronin"))
-        ,("reactionary_rebels",     ("Reactionaries", "reactionaries"))
-        ,("anti_tax_rebels",        ("Peasants", "peasants"))
-        ,("revolutionary_rebels",   ("Revolutionaries", "revolutionaries"))
-        ,("heretic_rebels",         ("Heretics", "heretics"))
-        ,("religious_rebels",       ("Religious zealots", "religious zealots"))
-        ,("nationalist_rebels",     ("Separatist rebels", "separatists"))
-        ,("noble_rebels",           ("Noble rebels", "noble rebels"))
-        ,("colonial_rebels",        ("Colonial rebels", "colonial rebels")) -- ??
-        ,("patriot_rebels",         ("Patriot rebels", "patriot"))
-        ,("pretender_rebels",       ("Pretender rebels", "pretender"))
-        ,("colonial_patriot_rebels", ("Colonial patriot", "colonial patriot")) -- ??
-        ,("particularist_rebels",   ("Particularist rebels", "particularist"))
-        ,("nationalist_rebels",     ("Separatist rebels", "separatists"))
-        ]
-
 -- Events
 
 data TriggerEvent = TriggerEvent
@@ -1975,9 +1434,9 @@ triggerEvent evtType stmt@[pdx| %_ = @scr |]
             case e_id evt of
                 Just msgid ->
                     let loc = fromMaybe msgid (e_title_loc evt)
-                        time = (fromMaybe 0 (e_days evt)) * 24 + (fromMaybe 0 (e_hours evt))
-                        timernd = time + (fromMaybe 0 (e_random_days evt)) * 24 + (fromMaybe 0 (e_random evt)) + (fromMaybe 0 (e_hours evt))
-                        tottimer = (formatHours time) <> if timernd /= time then " to " <> (formatHours timernd) else ""
+                        time = fromMaybe 0 (e_days evt) * 24 + fromMaybe 0 (e_hours evt)
+                        timernd = time + fromMaybe 0 (e_random_days evt) * 24 + fromMaybe 0 (e_random evt) + fromMaybe 0 (e_hours evt)
+                        tottimer = formatHours time <> if timernd /= time then " to " <> formatHours timernd else ""
                     in if time > 0 then
                         return $ MsgTriggerEventTime evtType_t msgid loc tottimer
                     else
@@ -2008,7 +1467,7 @@ triggerEvent _ stmt = preStatement stmt
 random :: (HOI4Info g, Monad m) => StatementHandler g m
 random stmt@[pdx| %_ = @scr |]
     | (front, back) <- break
-                        (\substmt -> case substmt of
+                        (\case
                             [pdx| chance = %_ |] -> True
                             _ -> False)
                         scr
@@ -2023,10 +1482,10 @@ random stmt = preStatement stmt
 
 
 toPct :: Double -> Double
-toPct num = (fromIntegral $ round (num * 1000)) / 10 -- round to one digit after the point
+toPct num = fromIntegral (round (num * 1000)) / 10 -- round to one digit after the point
 
 randomList :: (HOI4Info g, Monad m) => StatementHandler g m
-randomList stmt@[pdx| %_ = @scr |] = if or (map chk scr) then -- Ugly solution for vars in random list
+randomList stmt@[pdx| %_ = @scr |] = if any chk scr then -- Ugly solution for vars in random list
         fmtRandomList $ map entry scr
     else
         fmtRandomVarList $ map entryv scr
@@ -2038,12 +1497,11 @@ randomList stmt@[pdx| %_ = @scr |] = if or (map chk scr) then -- Ugly solution f
         entry _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list, possibly vars?")
         entryv [pdx| $var = @scr |] = (var, scr)
         entryv [pdx| $_:$var = @scr |] = (var, scr)
-        entryv [pdx| !weight = @scr |] = ((T.pack (show weight)), scr)
+        entryv [pdx| !weight = @scr |] = (T.pack (show weight), scr)
         entryv _ = trace ("DEBUG: random_list " ++ show scr) (error "Bad clause in random_list, possibly ints?")
         fmtRandomList entries = withCurrentIndent $ \i ->
             let total = sum (map fst entries)
-            in (:) <$> pure (i, MsgRandom)
-                   <*> (concat <$> indentUp (mapM (fmtRandomList' total) entries))
+            in (:) (i, MsgRandom) <$> (concat <$> indentUp (mapM (fmtRandomList' total) entries))
         fmtRandomList' total (wt, what) = do
             -- TODO: Could probably be simplified.
             let (mtrigger, rest) = extractStmt (matchLhsText "trigger") what
@@ -2074,8 +1532,7 @@ randomList stmt@[pdx| %_ = @scr |] = if or (map chk scr) then -- Ugly solution f
                 (pure (trig ++ mod ++ body))
         -- Ugly solution for vars in random list
         fmtRandomVarList entries = withCurrentIndent $ \i ->
-            (:) <$> pure (i, MsgRandom)
-                <*> (concat <$> indentUp (mapM fmtRandomVarList' entries))
+            (:) (i, MsgRandom) <$> (concat <$> indentUp (mapM fmtRandomVarList' entries))
         fmtRandomVarList' (wt, what) = do
             -- TODO: Could probably be simplified.
             let (mtrigger, rest) = extractStmt (matchLhsText "trigger") what
@@ -2124,31 +1581,6 @@ hasDlc [pdx| %_ = ?dlc |]
             ]
         dlc_icon = maybe "" iconText mdlc_key
 hasDlc stmt = preStatement stmt
-
--- Holy Roman Empire
-
--- Assume 1 <= n <= 8
-hreReformLoc :: (IsGameData (GameData g), Monad m) => Int -> PPT g m Text
-hreReformLoc n = getGameL10n $ case n of
-    1 -> "reichsreform_title"
-    2 -> "reichsregiment_title"
-    3 -> "hofgericht_title"
-    4 -> "gemeinerpfennig_title"
-    5 -> "landfriede_title"
-    6 -> "erbkaisertum_title"
-    7 -> "privilegia_de_non_appelando_title"
-    8 -> "renovatio_title"
-    _ -> error "called hreReformLoc with n < 1 or n > 8"
-
-
-numProvinces :: (HOI4Info g, Monad m) =>
-    Text
-        -> (Text -> Text -> Double -> ScriptMessage)
-        -> StatementHandler g m
-numProvinces micon msg [pdx| $what = !amt |] = do
-    what_loc <- getGameL10n what
-    msgToPP (msg (iconText micon) what_loc amt)
-numProvinces _ _ stmt = preStatement stmt -- CHECK FOR USEFULNESS
 
 withFlagOrState :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage)
@@ -2238,14 +1670,14 @@ handleIdeas addIdea msg stmt@[pdx| $lhs = %idea |] = case idea of
                     Just (category, ideaIcon, ideaKey, idea_loc, Nothing) -> msgToPP $ msg category ideaIcon ideaKey idea_loc
                     Nothing -> preStatement stmt
             else do
-                ideashandle <- mapM (handleIdea addIdea) (map getbareidea ideas)
+                ideashandle <- mapM (handleIdea addIdea . getbareidea) ideas
                 let ideashandled = catMaybes ideashandle
                     ideasmsgd :: [(Text, Text, Text, Text, Maybe IndentedMessages)] -> PPT g m [IndentedMessages]
                     ideasmsgd ihs = mapM (\ih ->
                             let (category, ideaIcon, ideaKey, idea_loc, effectbox) = ih in
                             withCurrentIndent $ \i -> case effectbox of
                                     Just boxNS -> return ((i, msg category ideaIcon ideaKey idea_loc):boxNS)
-                                    _-> return ((i, msg category ideaIcon ideaKey idea_loc):[])
+                                    _-> return [(i, msg category ideaIcon ideaKey idea_loc)]
                                 ) ihs
                 ideasmsgdd <- ideasmsgd ideashandled
                 return $ mconcat ideasmsgdd
@@ -2300,13 +1732,13 @@ modmessage iidea idea_loc ideaKey ideaIcon = do
                             tag = case scrt of
                                 Just [pdx| tag = $tag |] -> tag
                                 _ -> "CHECK SCRIPT"
-                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just HOI4Country) tag
+                        lflag <- plainMsg' . (<> ":") =<< flagText (Just HOI4Country) tag
                         scriptMsgs <- scope HOI4Country $ ppMany scrr
                         return (lflag : scriptMsgs))
                     (id_targeted_modifier iidea)
             research_bonus <- maybe (return []) ppMany (id_research_bonus iidea)
             equipment_bonus <- maybe (return []) ppMany (id_equipment_bonus iidea)
-            boxend <- return $ (0, MsgEffectBoxEnd): []
+            let boxend = [(0, MsgEffectBoxEnd)]
             withCurrentIndentCustom curindent $ \_ -> do
                 let ideamods = modifier ++ targeted_modifier ++ research_bonus ++ equipment_bonus ++ boxend
                 return $ (0, MsgEffectBox idea_loc ideaKey ideaIcon ideaDesc) : ideamods
@@ -2431,15 +1863,15 @@ exportVariable stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_ev (foldl' addLine newEV
             = ev { ev_value = Just val }
         addLine ev [pdx| who = ?val |]
             = ev { ev_who = Just val }
-        addLine ev stmt = (trace $ "Unknown in export_to_variable " ++ show stmt) $ ev
+        addLine ev stmt = trace ("Unknown in export_to_variable " ++ show stmt) ev
         pp_ev :: ExportVariable -> PPT g m ScriptMessage
         pp_ev ExportVariable { ev_which = Just which, ev_value = Just value, ev_who = Nothing } =
             return $ MsgExportVariable which value
         pp_ev ExportVariable { ev_which = Just which, ev_value = Just value, ev_who = Just who } = do
             whoLoc <- Doc.doc2text <$> allowPronoun (Just HOI4Country) (fmap Doc.strictText . getGameL10n) who
             return $ MsgExportVariableWho which value whoLoc
-        pp_ev ev = return $ (trace $ "Missing info for export_to_variable " ++ show ev ++ " " ++ (show stmt)) $ preMessage stmt
-exportVariable stmt = (trace $ "Not handled in export_to_variable: " ++ (show stmt)) $ preStatement stmt
+        pp_ev ev = return $ trace ("Missing info for export_to_variable " ++ show ev ++ " " ++ show stmt) $ preMessage stmt
+exportVariable stmt = trace ("Not handled in export_to_variable: " ++ show stmt) $ preStatement stmt
 
 -----------------------------------
 -- Handler for (set_)ai_attitude --
@@ -2460,26 +1892,6 @@ exportVariable stmt = (trace $ "Not handled in export_to_variable: " ++ (show st
 --                return $ MsgAddAiStrategy flagloc aivalue typeStrat
 --            _ -> return $ preMessage stmt
 --aiAttitude stmt = trace ("Not handled in aiAttitude: " ++ show stmt) $ preStatement stmt
-
---------------------------------------------------
--- Handler for {area,region}_for_scope_province --
---------------------------------------------------
-scopeProvince :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> ScriptMessage -> StatementHandler g m
-scopeProvince msgAny msgAll stmt@[pdx| %_ = @scr |] =
-    let
-        (mtype, rest) = extractStmt (matchLhsText "type") scr
-    in
-        case mtype of
-            Just typstm@[pdx| $_ = $typ |] -> withCurrentIndent $ \i -> do
-                scr_pp'd <- ppMany rest
-                let msg = case T.toLower typ of
-                        "all" -> msgAll
-                        "any" -> msgAny
-                        _ -> (trace $ "scopeProvince: Unknown type " ++ (show typstm)) $ msgAll
-                return ((i, msg) : scr_pp'd)
-            _ -> compoundMessage msgAny stmt
-scopeProvince _ _ stmt = preStatement stmt
-
 
 -- Helper
 getMaybeRhsText :: Maybe GenericStatement -> Maybe Text
@@ -2503,7 +1915,7 @@ addDynamicModifier stmt@[pdx| %_ = @scr |] =
         addLine adm [pdx| modifier = $mod |] = adm { adm_modifier = mod }
         addLine adm [pdx| scope = $tag |] = adm { adm_scope = tag }
         addLine adm [pdx| days = !amt |] = adm { adm_days = Just amt }
-        addLine adm stmt = (trace $ "Unknown in add_dynamic_modifier: " ++ show stmt) $ adm
+        addLine adm stmt = trace ("Unknown in add_dynamic_modifier: " ++ show stmt) adm
         pp_adm adm = do
             let days = case adm_days adm of
                     Just time -> formatDays time
@@ -2512,13 +1924,13 @@ addDynamicModifier stmt@[pdx| %_ = @scr |] =
             dynflag <- flagText (Just HOI4Country) $ adm_scope adm
             case mmod of
                 Just mod -> withCurrentIndent $ \i -> do
-                    effect <- scope HOI4Bonus $ ppMany (dmodEffects mod)
+                    effect <- ppMany (dmodEffects mod)
                     trigger <- indentUp $ ppMany (dmodEnable mod)
                     let name = dmodLocName mod
-                        locName = maybe ("<tt>" <> (adm_modifier adm) <> "</tt>") (Doc.doc2text . iquotes) name
-                    return $ ((i, MsgAddDynamicModifier locName dynflag days) : effect) ++ (if null trigger then [] else ((i+1, MsgLimit) : trigger))
-                _ -> (trace $ "add_dynamic_modifier: Modifier " ++ T.unpack (adm_modifier adm) ++ " not found") $ preStatement stmt
-addDynamicModifier stmt = (trace $ "Not handled in addDynamicModifier: " ++ show stmt) $ preStatement stmt
+                        locName = maybe ("<tt>" <> adm_modifier adm <> "</tt>") (Doc.doc2text . iquotes) name
+                    return $ ((i, MsgAddDynamicModifier locName dynflag days) : effect) ++ (if null trigger then [] else (i+1, MsgLimit) : trigger)
+                _ -> trace ("add_dynamic_modifier: Modifier " ++ T.unpack (adm_modifier adm) ++ " not found") $ preStatement stmt
+addDynamicModifier stmt = trace ("Not handled in addDynamicModifier: " ++ show stmt) $ preStatement stmt
 
 -------------------------------------------
 -- Handler for add_building_construction --
@@ -2555,7 +1967,7 @@ addBuildingConstruction stmt@[pdx| %_ = @scr |] =
             case rhs of
                 (floatRhs -> Just amount) -> abc { addbc_level = Just (HOI4ABCLevelSimple amount) }
                 GenericRhs amount [] -> abc { addbc_level = Just (HOI4ABCLevelVariable amount) }
-                _ -> (trace $ "Unknown leveltype in add_building_construction: " ++ show stmt) $ abc
+                _ -> trace ("Unknown leveltype in add_building_construction: " ++ show stmt) abc
         addLine abc [pdx| instant_build = yes |] = abc { addbc_instantbuild = True } --default is no an doesn't exist
         addLine abc [pdx| province = %rhs |] =
             case rhs of
@@ -2566,9 +1978,9 @@ addBuildingConstruction stmt@[pdx| %_ = @scr |] =
                     | all_provinces <- fromMaybe False $ listToMaybe [ b == "yes" | [pdx| all_provinces = $b |] <- provs ]
                     , limit_to_border <- fromMaybe False $ listToMaybe [ b == "yes" | [pdx| limit_to_border = $b |] <- provs ]
                         -> abc { addbc_province = Just (HOI4ABCProvAll all_provinces limit_to_border) }
-                _ -> trace ("Unknown provincetype in add_building_construction: " ++ show rhs) $ abc
+                _ -> trace ("Unknown provincetype in add_building_construction: " ++ show rhs) abc
 
-        addLine abc stmt = (trace $ "Unknown in add_building_construction: " ++ show stmt) $ abc
+        addLine abc stmt = trace ("Unknown in add_building_construction: " ++ show stmt) abc
 
         pp_abc :: HOI4AddBC -> PPT g m ScriptMessage
         pp_abc abc@HOI4AddBC{addbc_type = building, addbc_level = Just amountvar} = do
@@ -2578,7 +1990,7 @@ addBuildingConstruction stmt@[pdx| %_ = @scr |] =
                         if length id > 1 then
                             T.pack $ concat [" to the provinces (" , intercalate "), (" (map (show . round) id),")"]
                         else
-                            T.pack $ concat [" to the province (" , (concatMap (show . round) id),")"]
+                            T.pack $ concat [" to the province (" , concatMap (show . round) id,")"]
                     Just (HOI4ABCProvAll all bord) -> " to all provinces on a border."
                     _ -> ""
                 amount = case amountvar of
@@ -2588,8 +2000,8 @@ addBuildingConstruction stmt@[pdx| %_ = @scr |] =
                     HOI4ABCLevelVariable amount -> amount
                     HOI4ABCLevelSimple amount -> ""
             return $ MsgAddBuildingConstruction (iconText (T.toLower buildingLoc)) buildingLoc amount variable provform
-        pp_abc abc = return $ (trace $ "Not handled in caddBuildingConstruction: abc=" ++ show abc ++ " stmt=" ++ show stmt) $ preMessage stmt
-addBuildingConstruction stmt = (trace $ "Not handled in addBuildingConstruction: " ++ show stmt) $ preStatement stmt
+        pp_abc abc = return $ trace ("Not handled in caddBuildingConstruction: abc=" ++ show abc ++ " stmt=" ++ show stmt) $ preMessage stmt
+addBuildingConstruction stmt = trace ("Not handled in addBuildingConstruction: " ++ show stmt) $ preStatement stmt
 
 ----------------------------------
 -- Handler for add_named_threat --
@@ -2656,17 +2068,17 @@ createWargoal stmt@[pdx| %_ = @scr |] =
                 return cwg { wg_generator = Just (WGGeneratorVar vstate)} --Need to deal with existing variables here
             GenericRhs vstate _ ->
                 return cwg { wg_generator = Just (WGGeneratorVar vstate)} --Need to deal with existing variables here
-            _ -> (trace $ "Unknown generator statement in create_wargoal: " ++ show stmts) $ return cwg
+            _ -> trace ("Unknown generator statement in create_wargoal: " ++ show stmts) $ return cwg
         addLine cwg stmt
             = trace ("unknown section in create_wargoal: " ++ show stmt) $ return cwg
         stateFromArray :: GenericStatement -> Maybe Int
         stateFromArray (StatementBare (IntLhs e)) = Just e
-        stateFromArray stmt = (trace $ "Unknown in generator array statement: " ++ show stmt) $ Nothing
+        stateFromArray stmt = trace ("Unknown in generator array statement: " ++ show stmt) Nothing
         pp_create_wg :: CreateWG -> ScriptMessage
         pp_create_wg cwg =
             let states = case wg_generator cwg of
                     Just (WGGeneratorArr arr) -> T.pack $ concat [" for the ", T.unpack $ plural (length arr) "state " "states " , intercalate ", " $ map T.unpack (wg_states cwg)]
-                    Just (WGGeneratorVar var) -> T.pack $ concat [" for" , T.unpack var]
+                    Just (WGGeneratorVar var) -> T.pack (" for" ++ T.unpack var)
                     _ -> ""
             in case (wg_type cwg, wg_type_loc cwg,
                      wg_target_flag cwg,
@@ -2727,17 +2139,17 @@ declareWarOn stmt@[pdx| %_ = @scr |] =
                 return dwo { dw_generator = Just (DWOGeneratorVar vstate)} --Need to deal with existing variables here
             GenericRhs vstate _ ->
                 return dwo { dw_generator = Just (DWOGeneratorVar vstate)} --Need to deal with existing variables here
-            _ -> (trace $ "Unknown generator statement in declare_war_on: " ++ show stmts) $ return dwo
+            _ -> trace ("Unknown generator statement in declare_war_on: " ++ show stmts) $ return dwo
         addLine dwo stmt
             = trace ("unknown section in declare_war_on: " ++ show stmt) $ return dwo
         stateFromArray :: GenericStatement -> Maybe Int
         stateFromArray (StatementBare (IntLhs e)) = Just e
-        stateFromArray stmt = (trace $ "Unknown in generator array statement: " ++ show stmt) $ Nothing
+        stateFromArray stmt = trace ("Unknown in generator array statement: " ++ show stmt) Nothing
         pp_create_dw :: DeclareWarOn -> ScriptMessage
         pp_create_dw dwo =
             let states = case dw_generator dwo of
                     Just (DWOGeneratorArr arr) -> T.pack $ concat ["for the ", T.unpack $ plural (length arr) "state " "states " , intercalate ", " $ map T.unpack (dw_states dwo)]
-                    Just (DWOGeneratorVar var) -> T.pack $ concat ["for " , T.unpack var]
+                    Just (DWOGeneratorVar var) -> T.pack ("for " ++ T.unpack var)
                     _ -> ""
             in case (dw_type dwo, dw_type_loc dwo,
                      dw_target_flag dwo) of
@@ -2803,7 +2215,7 @@ addTechBonus stmt@[pdx| %_ = @scr |]
         addLine atb _ = return atb
         pp_atb :: AddTechBonus -> PPT g m IndentedMessages
         pp_atb atb = do
-            let techcat = (tb_category atb) ++ (tb_technology atb)
+            let techcat = tb_category atb ++ tb_technology atb
                 ifname = case tb_name atb of
                     Just name -> "(" <> italicText name <> ") "
                     _ -> ""
@@ -2816,8 +2228,8 @@ addTechBonus stmt@[pdx| %_ = @scr |]
                     (_, Just ahead) ->
                         MsgAddTechBonusAhead ahead ifname uses
                     _ -> trace ("issues in add_technology_bonus: " ++ show stmt ) $ preMessage stmt
-            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return $ (i+1, MsgUnprocessed tc) : []) techcat
-            tbmsg_pp <- msgToPP $ tbmsg
+            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return [(i+1, MsgUnprocessed tc)]) techcat
+            tbmsg_pp <- msgToPP tbmsg
             return $ tbmsg_pp ++ concat techcatmsg
 addTechBonus stmt = preStatement stmt
 
@@ -2852,7 +2264,7 @@ setFlag msgft stmt@[pdx| %_ = @scr |]
             = trace ("unknown section in set_country_flag: " ++ show stmt) $ return sf
         pp_sf sf = do
             let value = case sf_value sf of
-                    Just num -> T.pack $ concat [" to " , show $ round num]
+                    Just num -> T.pack $ " to " ++ show (round num)
                     _ -> ""
                 days = case (sf_days sf, sf_dayst sf) of
                     (Just day, _) -> " for " <> formatDays day
@@ -2880,25 +2292,25 @@ hasFlag msgft stmt@[pdx| %_ = @scr |]
         addLine hf [pdx| flag = $flag |] =
             return hf { hf_flag = flag }
         addLine hf [pdx| value = !amt |] =
-            let amtd = " equal to or more than " <> (show (amt :: Int)) in
+            let amtd = " equal to or more than " <> show (amt :: Int) in
             return hf { hf_value = T.pack amtd }
         addLine hf [pdx| value < !amt |] =
-            let amtd = " to less than " <> (show (amt :: Int)) in
+            let amtd = " to less than " <> show (amt :: Int) in
             return hf { hf_value = T.pack amtd }
         addLine hf [pdx| value > !amt |] =
-            let amtd = " to more than " <> (show (amt :: Int)) in
+            let amtd = " to more than " <> show (amt :: Int) in
             return hf { hf_value = T.pack amtd }
         addLine hf [pdx| days < !amt |] =
-            let amtd = " for less than " <> (show (amt :: Int)) <> " days" in
+            let amtd = " for less than " <> show (amt :: Int) <> " days" in
             return hf { hf_days = T.pack amtd }
         addLine hf [pdx| days > !amt |] =
-            let amtd = " for more than " <> (show (amt :: Int)) <> " days" in
+            let amtd = " for more than " <> show (amt :: Int) <> " days" in
             return hf { hf_days = T.pack amtd }
         addLine hf [pdx| date > %amt |] =
-            let amtd = " later than " <> (show amt) in
+            let amtd = " later than " <> show amt in
             return hf { hf_date = T.pack amtd }
         addLine hf [pdx| date < %amt |] =
-            let amtd = " earlier than " <> (show amt) in
+            let amtd = " earlier than " <> show amt in
             return hf { hf_date = T.pack amtd }
         addLine hf stmt
             = trace ("unknown section in has_country_flag: " ++ show stmt) $ return hf
@@ -2970,15 +2382,9 @@ setAutonomy stmt@[pdx| %_ = @scr |]
                     (True, False) -> T.pack " and end wars for subject"
                     (False, True) -> T.pack " and end civil wars for subject"
                     _ -> ""
-                freedom = case (sa_freedom_level sa) of
-                    Just num -> num
-                    _ -> 0
-                autonomy_state = case (sa_autonomy_state sa) of
-                    Just autonomy_state -> autonomy_state
-                    _-> "<!-- Check Script -->"
-                target = case (sa_target sa) of
-                    Just targetd -> targetd
-                    _ -> "<!-- Check Script -->"
+                freedom = fromMaybe 0 (sa_freedom_level sa)
+                autonomy_state = fromMaybe "<!-- Check Script -->" (sa_autonomy_state sa)
+                target = fromMaybe "<!-- Check Script -->" (sa_target sa)
             autonomy <- getGameL10n autonomy_state
             return $ MsgSetAutonomy target (iconText autonomy) autonomy freedom endwar
 setAutonomy stmt = preStatement stmt
@@ -2996,9 +2402,7 @@ foldCompound "setPolitics" "SetPolitics" "sp"
     ,CompField "name" [t|Text|] Nothing False
     ]
     [|  do
-        let freq = case _election_frequency of
-                Just mnths -> mnths
-                _ -> 0
+        let freq = fromMaybe 0 _election_frequency
         party <- getGameL10n _ruling_party
         return $ MsgSetPolitics (iconText party) party freq
     |]
@@ -3033,9 +2437,7 @@ foldCompound "setPartyName" "SetPartyName" "spn"
     ,CompField "name" [t|Text|] Nothing True
     ]
     [|  do
-        let long_name = case _long_name of
-                Just long_name -> long_name
-                _-> ""
+        let long_name = fromMaybe "" _long_name
         ideo_loc <- getGameL10n _ideology
         long_loc <- getGameL10n long_name
         short_loc <- getGameL10n _name
@@ -3056,9 +2458,9 @@ prioritize :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 prioritize stmt@[pdx| %_ = @arr |] = do
                 let states = mapMaybe stateFromArray arr
                     stateFromArray (StatementBare (IntLhs e)) = Just e
-                    stateFromArray stmt = (trace $ "Unknown in prioritize array statement: " ++ show stmt) $ Nothing
+                    stateFromArray stmt = trace ("Unknown in prioritize array statement: " ++ show stmt) Nothing
                 statesloc <- traverse getStateLoc states
-                let stateslocced = T.pack $ concat [T.unpack $ plural (length statesloc) "state " "states " , intercalate ", " $ map T.unpack (statesloc)]
+                let stateslocced = T.pack $ T.unpack (plural (length statesloc) "state " "states ") ++ intercalate ", " (map T.unpack statesloc)
                 msgToPP $ MsgPrioritize stateslocced
 prioritize stmt = preStatement stmt
 
@@ -3151,11 +2553,11 @@ setRule header [pdx| %_ = @scr |]
                 "yes" -> do
                     let lhst = T.toUpper lhs
                     loc <- getGameL10n lhst
-                    msgToPP $ MsgSetRuleYes loc
+                    msgToPP $ MsgSetRuleYesNo "{{icon|yes}}" loc
                 "no" -> do
                     let lhst = T.toUpper lhs
                     loc <- getGameL10n lhst
-                    msgToPP $ MsgSetRuleNo loc
+                    msgToPP $ MsgSetRuleYesNo "{{icon|no}}" loc
                 _ -> preStatement stmt
         ppRule stmt = trace ("unknownsecton found in set_rule for " ++ show stmt) preStatement stmt
 setRule _ stmt = preStatement stmt
@@ -3195,13 +2597,13 @@ addDoctrineCostReduction stmt@[pdx| %_ = @scr |]
         addLine dcr _ = return dcr
         pp_dcr :: DoctrineCostReduction -> PPT g m IndentedMessages
         pp_dcr dcr = do
-            let techcat = (dcr_category dcr) ++ (dcr_technology dcr)
+            let techcat = dcr_category dcr ++ dcr_technology dcr
                 ifname = case dcr_name dcr of
                     Just name -> "(" <> italicText name <> ") "
                     _ -> ""
                 dcrmsg =  MsgAddDoctrineCostReduction (dcr_uses dcr) (dcr_cost_reduction dcr) ifname
-            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return $ (i+1, MsgUnprocessed tc) : []) techcat
-            dcrmsg_pp <- msgToPP $ dcrmsg
+            techcatmsg <- mapM (\tc ->withCurrentIndent $ \i -> return [(i+1, MsgUnprocessed tc)]) techcat
+            dcrmsg_pp <- msgToPP dcrmsg
             return $ dcrmsg_pp ++ concat techcatmsg
 addDoctrineCostReduction stmt = preStatement stmt
 
@@ -3309,9 +2711,7 @@ sendEquipment stmt@[pdx| %_ = @scr |]
         addLine se stmt
             = trace ("unknown section in send_equipment: " ++ show stmt) $ return se
         pp_se se = do
-            let target = case (se_target se) of
-                    Just targt -> targt
-                    _ -> "<!-- Check Script -->"
+            let target = fromMaybe "<!-- Check Script -->" (se_target se)
             return $ MsgSendEquipment (se_amount se) (se_equipment se) target (se_old_prioritised se)
 sendEquipment stmt = preStatement stmt
 
@@ -3339,14 +2739,14 @@ buildRailway stmt@[pdx| %_ = @scr |]
         addLine br [pdx| $lhs = %rhs |] = case lhs of
             "level" -> case rhs of
                 (floatRhs -> Just num) -> return br { br_level = num }
-                _ -> trace ("bad level in build_railway") $ return br
+                _ -> trace "bad level in build_railway" $ return br
             "build_only_on_allied" -> return br
             "fallback" -> return br
             "path" -> case rhs of
                 CompoundRhs arr ->
                     let provs = mapMaybe provinceFromArray arr in
                     return br { br_path = Just provs }
-                _ -> trace ("bad path in build_railway") $ return br
+                _ -> trace "bad path in build_railway" $ return br
             "start_state" -> case rhs of
                 IntRhs num -> do
                     stateloc <- getStateLoc num
@@ -3357,7 +2757,7 @@ buildRailway stmt@[pdx| %_ = @scr |]
                 GenericRhs txt [] -> do
                     stated <- eGetState (Left txt)
                     return br { br_start_state = stated }
-                _ -> trace ("bad start_state in build_railway") $ return br
+                _ -> trace "bad start_state in build_railway" $ return br
             "target_state" -> case rhs of
                 IntRhs num -> do
                     stateloc <- getStateLoc num
@@ -3368,7 +2768,7 @@ buildRailway stmt@[pdx| %_ = @scr |]
                 GenericRhs txt [] -> do
                     stated <- eGetState (Left txt)
                     return br { br_target_state = stated }
-                _ -> trace ("bad target_state in build_railway") $ return br
+                _ -> trace "bad target_state in build_railway" $ return br
 
             "start_province" ->
                     return br { br_start_province = floatRhs rhs }
@@ -3379,7 +2779,7 @@ buildRailway stmt@[pdx| %_ = @scr |]
             = trace ("unknown form in build_railway: " ++ show stmt) $ return br
         provinceFromArray :: GenericStatement -> Maybe Double
         provinceFromArray (StatementBare (IntLhs e)) = Just $ fromIntegral e
-        provinceFromArray stmt = (trace $ "Unknown in generator array statement: " ++ show stmt) $ Nothing
+        provinceFromArray stmt = trace ("Unknown in generator array statement: " ++ show stmt) Nothing
         pp_br br = do
             case br_path br of
                 Just path -> do
@@ -3417,7 +2817,7 @@ canBuildRailway stmt@[pdx| %_ = @scr |]
                 GenericRhs txt [] -> do
                     stated <- eGetState (Left txt)
                     return cbr { cbr_start_state = stated }
-                _ -> trace ("bad start_state in build_railway") $ return cbr
+                _ -> trace "bad start_state in build_railway" $ return cbr
             "target_state" -> case rhs of
                 IntRhs num -> do
                     stateloc <- getStateLoc num
@@ -3428,7 +2828,7 @@ canBuildRailway stmt@[pdx| %_ = @scr |]
                 GenericRhs txt [] -> do
                     stated <- eGetState (Left txt)
                     return cbr { cbr_target_state = stated }
-                _ -> trace ("bad target_state in build_railway") $ return cbr
+                _ -> trace "bad target_state in build_railway" $ return cbr
 
             "start_province" ->
                     return cbr { cbr_start_province = floatRhs rhs }

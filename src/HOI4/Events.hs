@@ -49,7 +49,7 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
 newHOI4Event :: HOI4Scope -> FilePath -> HOI4Event
-newHOI4Event escope path = HOI4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing path
+newHOI4Event escope = HOI4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing
 -- | Empty event option vaule. Starts off Nothing everywhere.
 newHOI4Option :: HOI4Option
 newHOI4Option = HOI4Option Nothing Nothing Nothing Nothing
@@ -100,7 +100,7 @@ writeHOI4Events = do
 parseHOI4Event :: (HOI4Info g, MonadError Text m) =>
     GenericStatement -> PPT g m (Either Text (Maybe HOI4Event))
 parseHOI4Event (StatementBare lhs) = withCurrentFile $ \f ->
-        throwError $ T.pack (f ++ ": bare statement at top level: " ++ (show lhs))
+        throwError $ T.pack (f ++ ": bare statement at top level: " ++ show lhs)
 parseHOI4Event stmt@[pdx| %left = %right |] = case right of
     CompoundRhs parts -> case left of
         CustomLhs _ -> throwError "internal error: custom lhs"
@@ -219,9 +219,7 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
                 let meid = hoi4evt_id evt
                 title <- evtTitle meid scr
                 return evt { hoi4evt_title = oldtitles ++ [title] }
-            _ -> throwError $ "bad title" <> case hoi4evt_id evt of
-                    Just eid -> " in event " <> eid
-                    Nothing -> ""
+            _ -> throwError $ "bad title" <> maybe "" (" in event " <>) (hoi4evt_id evt)
     eventAddSection' evt stmt@[pdx| desc = %rhs |] =
         let olddescs = hoi4evt_desc evt in case rhs of
             (textRhs -> Just desc) -> return evt { hoi4evt_desc = olddescs ++ [HOI4EvtDescSimple desc] }
@@ -229,9 +227,7 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
                 let meid = hoi4evt_id evt
                 desc <- evtDesc meid scr
                 return evt { hoi4evt_desc = olddescs ++ [desc] }
-            _ -> throwError $ "bad desc" <> case hoi4evt_id evt of
-                    Just eid -> " in event " <> eid
-                    Nothing -> ""
+            _ -> throwError $ "bad desc" <>  maybe "" (" in event " <>) (hoi4evt_id evt)
     eventAddSection' evt stmt@[pdx| $picture = %_ |] | T.toLower picture == "picture" = return evt
 --  picture has conditions like desc. Ignore for now since we don't actually use it
 --    eventAddSection' evt stmt@[pdx| picture = %rhs |] = case textRhs rhs of
@@ -475,7 +471,7 @@ ppevent evt = case hoi4evt_id evt of
             isFireForSender = fromMaybe False $ hoi4evt_fire_for_sender evt
             evtId = Doc.strictText eid
         trigger_pp'd <- evtArg "trigger" hoi4evt_trigger ppScript
-        mmtth_pp'd <- mapM (pp_mtth isTriggeredOnly) (hoi4evt_mean_time_to_happen evt)
+        mmtth_pp'd <- mapM (ppMtth isTriggeredOnly) (hoi4evt_mean_time_to_happen evt)
         immediate_pp'd <- setIsInEffect True (evtArg "immediate" hoi4evt_immediate ppScript)
         triggered_pp <- ppTriggeredBy eid trigger_pp'd
         -- Keep track of incomplete events

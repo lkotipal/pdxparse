@@ -48,7 +48,7 @@ import HOI4.Common -- everything
 -- | Empty decision category. Starts off Nothing/empty everywhere, except id and name
 -- (which should get filled in immediately).
 newDecisionCat :: Text -> Maybe Text -> Maybe Text -> FilePath -> HOI4Decisioncat
-newDecisionCat id locid locdesc path = HOI4Decisioncat id locid locdesc Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing path
+newDecisionCat id locid locdesc = HOI4Decisioncat id locid locdesc Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- | Take the decisions categories scripts from game data and parse them into decision
 -- data structures.
@@ -120,7 +120,7 @@ decisioncatAddSection ddeccat stmt
             [pdx| scripted_gui   = %_    |] -> decc
             [pdx| highlight_states = %_  |] -> decc
             [pdx| on_map_area    = %_    |] -> decc
-            [pdx| $other = %_ |] -> trace ("unknown decision category section: " ++ T.unpack other) $ decc
+            [pdx| $other = %_ |] -> trace ("unknown decision category section: " ++ T.unpack other) decc
             _ -> trace "unrecognised form for decision category section" decc
 
 -- | Present the parsed decision categoriess as wiki text and write them to the
@@ -273,10 +273,8 @@ decisionAddSection dec stmt
             "available" -> case rhs of -- checks visible, if it's false the decision is greyed out but still visible
                 CompoundRhs scr -> dec { dec_available = Just scr }
                 _ -> dec
-            "priority" -> case rhs of
-                _ -> dec
-            "highlight_states" -> case rhs of
-                _ -> dec
+            "priority" -> dec
+            "highlight_states" -> dec
             "days_re_enable" -> case rhs of -- number of days it takes for decision to reapear after completion
                 FloatRhs num -> dec { dec_days_re_enable = Just num }
                 _ -> dec
@@ -365,7 +363,7 @@ decisionAddSection dec stmt
                 CompoundRhs scr -> dec { dec_remove_trigger = Just scr }
                 _ -> dec
             "target_non_existing" -> dec -- no clue
-            other -> trace ("unknown decision section: " ++ show other ++ "  " ++ show stmt) $ dec
+            other -> trace ("unknown decision section: " ++ show other ++ "  " ++ show stmt) dec
         decisionAddSection' dec stmt = trace "unrecognised form for decision section" dec
 
 -- | Present the parsed decisions as wiki text and write them to the
@@ -535,8 +533,8 @@ ppActivatedBy decisionId = do
                     ts
                 else
                     map (\d -> Doc.strictText $ "* " <> Doc.doc2text d) ts
-            return $ [mconcat $ ["| activated_by = "] ++ [PP.line] ++ intersperse PP.line ts' ++ [PP.line]]
-        _ -> return $ [Doc.strictText ""]
+            return [mconcat $ ["| activated_by = "] ++ [PP.line] ++ intersperse PP.line ts' ++ [PP.line]]
+        _ -> return [Doc.strictText ""]
 
 ppEventLoc :: (HOI4Info g, Monad m) => Text -> PPT g m Text
 ppEventLoc id = do

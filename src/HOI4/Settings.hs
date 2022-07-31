@@ -51,7 +51,6 @@ import HOI4.NationalFocus(parseHOI4NationalFocuses, writeHOI4NationalFocuses)
 import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
                    , findTriggeredEventsInOnActions, findTriggeredEventsInNationalFocus)
-import HOI4.Extra (writeHOI4Extra, writeHOI4ExtraCountryScope, writeHOI4ExtraProvinceScope, writeHOI4ExtraModifier)
 import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface)
 
 -- | Temporary (?) fix for CHI and PRC both localizing to "China"
@@ -99,21 +98,19 @@ instance IsGame HOI4 where
                 ,   hoi4eventTriggers = HM.empty
                 ,   hoi4decisionTriggers = HM.empty
                 ,   hoi4onactionsScripts = HM.empty
-                ,   hoi4geoData = HM.empty
                 ,   hoi4dynamicmodifiers = HM.empty
                 ,   hoi4dynamicmodifierScripts = HM.empty
                 ,   hoi4nationalfocusScripts = HM.empty
                 ,   hoi4nationalfocus = HM.empty
                 ,   hoi4countryHistory = HM.empty
                 ,   hoi4countryHistoryScripts = HM.empty
-                ,   hoi4tradeNodes = HM.empty
+                ,   hoi4interfacegfxScripts = HM.empty
+                ,   hoi4interfacegfx = HM.empty
+                -- unused
                 ,   hoi4extraScripts = HM.empty
                 ,   hoi4extraScriptsCountryScope = HM.empty
                 ,   hoi4extraScriptsProvinceScope = HM.empty
                 ,   hoi4extraScriptsModifier = HM.empty
-                ,   hoi4interfacegfxScripts = HM.empty
-                ,   hoi4interfacegfx = HM.empty
-
                 }))
                 (HOI4S $ HOI4State {
                     hoi4currentFile = Nothing
@@ -184,9 +181,6 @@ instance HOI4Info HOI4 where
     getOnActionsScripts = do
         HOI4D ed <- get
         return (hoi4onactionsScripts ed)
-    getGeoData = do
-        HOI4D ed <- get
-        return (hoi4geoData ed)
     getDynamicModifierScripts = do
         HOI4D ed <- get
         return (hoi4dynamicmodifierScripts ed)
@@ -205,9 +199,13 @@ instance HOI4Info HOI4 where
     getCountryHistory = do
         HOI4D ed <- get
         return (hoi4countryHistory ed)
-    getTradeNodes = do
+    getInterfaceGFXScripts = do
         HOI4D ed <- get
-        return (hoi4tradeNodes ed)
+        return (hoi4interfacegfxScripts ed)
+    getInterfaceGFX = do
+        HOI4D ed <- get
+        return (hoi4interfacegfx ed)
+-- unused
     getExtraScripts = do
         HOI4D ed <- get
         return (hoi4extraScripts ed)
@@ -220,13 +218,6 @@ instance HOI4Info HOI4 where
     getExtraScriptsModifier = do
         HOI4D ed <- get
         return (hoi4extraScriptsModifier ed)
-    getInterfaceGFXScripts = do
-        HOI4D ed <- get
-        return (hoi4interfacegfxScripts ed)
-    getInterfaceGFX = do
-        HOI4D ed <- get
-        return (hoi4interfacegfx ed)
-
 
 instance IsGameData (GameData HOI4) where
     getSettings (HOI4D ed) = hoi4settings ed
@@ -335,11 +326,6 @@ readHOI4Scripts = do
     country_history <- readHOI4Script "country_history"
     interface_gfx <- readHOI4SpecificScript "interfacegfx"
 
---    extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
---    extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
---    extraProvinceScope <- mapM (readOneScript "extraProvinceScope") (concatMap getProvinceScopeFileFromOpts (clargs settings))
---    extraModifier <- mapM (readOneScript "extraModifier") (concatMap getModifierFileFromOpts (clargs settings))
-
     modify $ \(HOI4D s) -> HOI4D $ s {
             hoi4ideaScripts = ideasScripts
         ,   hoi4decisioncatScripts = decisioncats
@@ -349,10 +335,6 @@ readHOI4Scripts = do
         ,   hoi4onactionsScripts = on_actions
         ,   hoi4dynamicmodifierScripts = dynamic_modifiers
         ,   hoi4countryHistoryScripts = country_history
---        ,   hoi4extraScripts = foldl (flip (uncurry HM.insert)) HM.empty extra
---        ,   hoi4extraScriptsCountryScope = foldl (flip (uncurry HM.insert)) HM.empty extraCountryScope
---        ,   hoi4extraScriptsProvinceScope = foldl (flip (uncurry HM.insert)) HM.empty extraProvinceScope
---        ,   hoi4extraScriptsModifier = foldl (flip (uncurry HM.insert)) HM.empty extraModifier
         ,   hoi4nationalfocusScripts = national_focus
         ,   hoi4interfacegfxScripts = interface_gfx
         }
@@ -397,8 +379,6 @@ parseHOI4Scripts = do
 -- | Output the game data as wiki text.
 writeHOI4Scripts :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4Scripts = do
-    settings <- gets getSettings
-    unless (Onlyextra `elem` clargs settings) $ do
 --        liftIO $ putStrLn "Writing ideas."
 --        writeHOI4Ideas
         liftIO $ putStrLn "Writing events."
@@ -413,7 +393,3 @@ writeHOI4Scripts = do
         writeHOI4OpinionModifiers
         liftIO $ putStrLn "Writing dynamic modifiers."
         writeHOI4DynamicModifiers
-    writeHOI4Extra
-    writeHOI4ExtraCountryScope
-    writeHOI4ExtraProvinceScope
-    writeHOI4ExtraModifier

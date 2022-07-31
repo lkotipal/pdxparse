@@ -17,13 +17,10 @@ module HOI4.Types (
     ,   HOI4NationalFocus (..)
     ,   HOI4CountryHistory (..)
         -- * Low level types
-    ,   MonarchPower (..)
     ,   HOI4Scope (..)
     ,   AIWillDo (..)
     ,   AIModifier (..)
-    ,   HOI4GeoType (..)
     ,   aiWillDo
-    ,   isGeographic
     ) where
 
 import Data.List (foldl')
@@ -54,7 +51,6 @@ data HOI4Data = HOI4Data {
     ,   hoi4opmods :: HashMap Text HOI4OpinionModifier
     ,   hoi4eventTriggers :: HOI4EventTriggers
     ,   hoi4decisionTriggers :: HOI4DecisionTriggers
-    ,   hoi4geoData :: HashMap Text HOI4GeoType
     ,   hoi4dynamicmodifiers :: HashMap Text HOI4DynamicModifier
     ,   hoi4nationalfocusScripts :: HashMap FilePath GenericScript
     ,   hoi4nationalfocus :: HashMap Text HOI4NationalFocus
@@ -67,7 +63,6 @@ data HOI4Data = HOI4Data {
     ,   hoi4onactionsScripts :: HashMap FilePath GenericScript
     ,   hoi4dynamicmodifierScripts :: HashMap FilePath GenericScript
     ,   hoi4countryHistoryScripts :: HashMap FilePath GenericScript -- Country Tag -> country tag + ideology
-    ,   hoi4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
     ,   hoi4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -125,8 +120,6 @@ class (IsGame g,
     getDecisionTriggers :: Monad m => PPT g m HOI4DecisionTriggers
     -- | Get the on actions script files
     getOnActionsScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | Get the parsed geographic data
-    getGeoData :: Monad m => PPT g m (HashMap Text HOI4GeoType)
     -- | Get the contents of all dynamic modifier script files.
     getDynamicModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed dynamic modifiers table (keyed on modifier ID).
@@ -139,8 +132,6 @@ class (IsGame g,
     getCountryHistory :: Monad m => PPT g m (HashMap Text HOI4CountryHistory)
     -- | Get the country history parsed
     getCountryHistoryScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | Get the trade nodes
-    getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
     -- | Get extra scripts parsed from command line arguments
     getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     getExtraScriptsCountryScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
@@ -401,36 +392,16 @@ data HOI4CountryHistory = HOI4CountryHistory
 -- Shared lower level types --
 ------------------------------
 
--- | Types of monarch power.
-data MonarchPower = Administrative
-                  | Diplomatic
-                  | Military
-    deriving (Show, Eq, Ord, Generic)
-instance Hashable MonarchPower
-
 -- | Scopes
 data HOI4Scope
     = HOI4NoScope
     | HOI4Country
     | HOI4ScopeState
-    | HOI4TradeNode
-    | HOI4Geographic -- ^ Area, etc.
-    | HOI4Bonus
     | HOI4UnitLeader
     | HOI4Operative
     | HOI4Character
     | HOI4From -- ^ Usually country or state, varies by context
     deriving (Show, Eq, Ord, Enum, Bounded)
-
-data HOI4GeoType
-    = HOI4GeoArea
-    | HOI4GeoRegion
-    | HOI4GeoSuperRegion
-    | HOI4GeoContinent
-    | HOI4GeoTradeCompany
-    | HOI4GeoColonialRegion
-    -- Province groups aren't used in the base game (as of 1.30.6)
-    deriving (Show)
 
 -- | AI decision factors.
 data AIWillDo = AIWillDo
@@ -483,9 +454,3 @@ awdModifierAddSection aim stmt@[pdx| $left = %right |] = case T.toLower left of
 awdModifierAddSection aim stmt@[pdx| $left > %right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
 awdModifierAddSection aim stmt@[pdx| $left < %right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
 awdModifierAddSection aim _ = aim
-
-isGeographic :: HOI4Scope -> Bool
-isGeographic HOI4ScopeState = True
-isGeographic HOI4TradeNode = True
-isGeographic HOI4Geographic = True
-isGeographic _ = False
