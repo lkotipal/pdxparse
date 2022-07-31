@@ -226,7 +226,8 @@ data ScriptMessage
     | MsgKillCountryLeader
     | MsgRetireCountryLeader
     | MsgGainPoliticalPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgGainManpower {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
+    | MsgAddManpower {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
+    | MsgAddExtraStateSharedBuildingSlots {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainLocPC {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgCreateFaction {scriptMessageWhat :: Text}
     | MsgHasTech {scriptMessageWhat :: Text}
@@ -898,7 +899,7 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNum True _amt)
                 , " Political power"
                 ]
-        MsgGainManpower {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
+        MsgAddManpower {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
                 , " "
@@ -907,6 +908,16 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNum True _amt)
                 , " "
                 , _loc
+                ]
+        MsgAddExtraStateSharedBuildingSlots {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ addOrRemove _amt
+                , " "
+                , toMessage (colourNum True _amt)
+                , " "
+                , _icon
+                , " "
+                , plural _amt "building slot" "building slots"
                 ]
         MsgGainLocPC {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
             -> mconcat

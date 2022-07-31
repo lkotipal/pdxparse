@@ -153,7 +153,8 @@ handlersNumericCompare = Tr.fromList
 -- | Handlers for numeric statements with icons
 handlersNumericIcons :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericIcons = Tr.fromList
-        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgGainManpower)
+        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgAddManpower)
+        ,("add_extra_state_shared_building_slots", numericIcon "building slot" MsgAddExtraStateSharedBuildingSlots)
         ,("add_political_power"      , numericIcon "political power" MsgGainPoliticalPower)
         ,("add_stability"            , numericIconLoc "stability" "STABILITY" MsgGainLocPC)
         ,("add_war_support"          , numericIconLoc "war support" "WAR_SUPPORT" MsgGainLocPC)
