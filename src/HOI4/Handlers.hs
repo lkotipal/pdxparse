@@ -2879,30 +2879,32 @@ foldCompound "modifyBuildingResources" "ModifyBuildingResources" "mbr"
 -- date --
 ----------
 
-handleDate :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-handleDate stmt@[pdx| %_ = %date |] = case date of
+
+handleDate :: (Monad m, HOI4Info g) =>
+    Text -> Text -> StatementHandler g m
+handleDate after before  stmt@[pdx| %_ = %date |] = case date of
     DateRhs Date {year = year, month = month, day = day} -> do
         monthloc <- isMonth month
-        msgToPP $ MsgDate "After" monthloc (fromIntegral day) (fromIntegral year)
+        msgToPP $ MsgDate after monthloc (fromIntegral day) (fromIntegral year)
     _ -> preStatement stmt
-handleDate stmt@[pdx| %_ > %date |] = case date of
+handleDate after before stmt@[pdx| %_ > %date |] = case date of
     DateRhs Date {year = year, month = month, day = day} ->  do
         monthloc <- isMonth month
-        msgToPP $ MsgDate "After" monthloc (fromIntegral day) (fromIntegral year)
+        msgToPP $ MsgDate after monthloc (fromIntegral day) (fromIntegral year)
     _ -> preStatement stmt
-handleDate stmt@[pdx| %_ < %date |] = case date of
+handleDate after before stmt@[pdx| %_ < %date |] = case date of
     DateRhs Date {year = year, month = month, day = day} ->  do
         monthloc <- isMonth month
-        msgToPP $ MsgDate "Before" monthloc (fromIntegral day) (fromIntegral year)
+        msgToPP $ MsgDate before monthloc (fromIntegral day) (fromIntegral year)
     _ -> preStatement stmt
-handleDate stmt = preStatement stmt
+handleDate _ _ stmt = preStatement stmt
 
 
 isMonth :: (IsGameData (GameData g), Monad m) =>
     Int -> PPT g m Text
 isMonth month
     = getGameL10n $ case month of
-            1 -> "January" -- programmer counting -_-
+            1 -> "January"
             2 -> "February"
             3 -> "March"
             4 -> "April"
@@ -2914,4 +2916,6 @@ isMonth month
             10 -> "October"
             11 -> "November"
             12 -> "December"
-            _ -> error "impossible: tried to localize bad month number"
+            0 -> "" -- no programmer counting, is used when only year is used to check
+            14 -> "14th month for some reason" -- for some reason there is a month 14, but not idea why and what for.
+            _ -> error ("impossible: tried to localize bad month number" ++ show month)

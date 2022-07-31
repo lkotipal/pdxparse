@@ -281,6 +281,9 @@ handlersModifiers = Tr.fromList
             -- Operatives
         ,("enemy_operative_detection_chance_factor" , numericLoc "MODIFIER_ENEMY_OPERATIVE_DETECTION_CHANCE_FACTOR" MsgModifierPcPosReduced)
             -- AI
+        ,("ai_focus_defense_factor"     , numericLoc "MODIFIER_AI_FOCUS_DEFENSE_FACTOR" MsgModifierPcReducedSign)
+        ,("ai_focus_peaceful_factor"    , numericLoc "MODIFIER_AI_FOCUS_PEACEFUL_FACTOR" MsgModifierPcReducedSign)
+        ,("ai_get_ally_desire_factor"   , numericLoc "MODIFIER_AI_GET_ALLY_DESIRE_FACTOR" MsgModifierSign)
             -- Unit Leaders
         ,("military_leader_cost_factor" , numericLoc "MODIFIER_MILITARY_LEADER_COST_FACTOR" MsgModifierPcNegReduced)
             -- General Combat
@@ -524,7 +527,8 @@ handlersSimpleFlag = Tr.fromList
         ,("is_core_of"              , withFlag MsgIsStateCore)
         ,("is_subject_of"           , withFlag MsgIsSubjectOf)
         ,("is_owned_by"             , withFlag MsgIsOwnedBy)
-        ,("remove_claim_by"          , withFlag MsgRemoveClaimBy)
+        ,("puppet"                  , withFlag MsgPuppet)
+        ,("remove_claim_by"         , withFlag MsgRemoveClaimBy)
         ,("remove_core_of"          , withFlag MsgRemoveCoreOf)
         ,("remove_from_faction"     , withFlag MsgRemoveFromFaction)
         ,("tag"                     , withFlag MsgCountryIs)
@@ -707,7 +711,8 @@ handlersMisc = Tr.fromList
         [("add_autonomy_ratio"          , rhsIgnored MsgAddAiStrategy)
         ,("add_autonomy_ratio"          , addAutonomyRatio)
         ,("add_resource"                , addResource)
-        ,("date"                        , handleDate)
+        ,("date"                        , handleDate "After" "Before")
+        ,("has_start_date"              , handleDate "Game initially started after" "Game initially started before")
         ,("random"                      , random)
         ,("random_list"                 , randomList)
         -- Special

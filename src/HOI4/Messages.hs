@@ -271,6 +271,7 @@ data ScriptMessage
     | MsgIsNeighborOf {scriptMessageWhom :: Text}
     | MsgIsSubjectOf {scriptMessageWhom :: Text}
     | MsgIsOwnedBy {scriptMessageWhom :: Text}
+    | MsgPuppet {scriptMessageWhom :: Text}
     | MsgCountryIs {scriptMessageWho :: Text}
     | MsgHasWarWith {scriptMessageWhom :: Text}
     | MsgHasWarTogetherWith {scriptMessageWhom :: Text}
@@ -1174,6 +1175,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "State is owned by "
                 , _whom
                 ]
+        MsgPuppet {scriptMessageWhom = _whom}
+            -> mconcat
+                [ _whom
+                , " becomes a puppet of the current scope"
+                ]
         MsgCountryIs {scriptMessageWho = _who}
             -> mconcat
                 [ "Is "
@@ -1756,7 +1762,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _what
                 , ": "
-                , toMessage (reducedNum plainPcSign _amt)
+                , toMessage (bold (reducedNum plainPcSign _amt))
                 ]
         MsgModifierPcPos {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
@@ -2652,10 +2658,8 @@ instance RenderMessage Script ScriptMessage where
                 [ _comp
                 , " "
                 , _month
-                , " "
-                , toMessage (plainNum _day)
-                , " of "
-                , toMessage (plainNum _year)
+                , ifThenElseT (_day /= 0) (" " <> toMessage (plainNum _day)) ""
+                , ifThenElseT (_day /= 0) (" of " <> toMessage (plainNum _year)) (toMessage (plainNum _year))
                 ]
         MsgSendEquipment {scriptMessageAmtT = _amtT, scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageYn = _yn}
             -> mconcat
