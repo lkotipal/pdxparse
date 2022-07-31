@@ -94,6 +94,7 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * maybe load history/units/ for load_OOB
 * maybe load technology for has_tech
 * maybe load country_leader for traits
+* handle or ignore add_ai_strategy?
 
 ## Thanks
 * Thanks the functional programming discord community for helping me out in specific:
