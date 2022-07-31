@@ -140,13 +140,13 @@ writeHOI4OpinionModifiers = do
                            , featureId = Just "opinion_modifier.txt"
                            , theFeature = Right (HM.elems opinionModifiers)
                            }]
-                  ppopinionmodifiers
+                  ppOpinionModifiers
 
 -- Based on https://hoi4.paradoxwikis.com/Template:Opinion
-ppopinionmodifiers :: (HOI4Info g, Monad m) => [HOI4OpinionModifier] -> PPT g m Doc
-ppopinionmodifiers modifiers = do
+ppOpinionModifiers :: (HOI4Info g, Monad m) => [HOI4OpinionModifier] -> PPT g m Doc
+ppOpinionModifiers modifiers = do
     version <- gets (gameVersion . getSettings)
-    modifiers_pp'd <- mapM ppopinionmodifier (sortOn omodName modifiers)
+    modifiers_pp'd <- mapM ppOpinionModifier (sortOn omodName modifiers)
     return . mconcat $ ["<includeonly>{{#switch:{{ lc:{{{1}}} }}", PP.line
         ,"| #default = <span style=\"color: red; font-size: 11px;\">(unrecognized string \"{{{1}}}\" for [[Template:Opinion_modifier]])</span>[[Category:Pages with unrecognized opinion modifier strings]]", PP.line]
         ++ modifiers_pp'd ++
@@ -162,8 +162,8 @@ ppopinionmodifiers modifiers = do
 
 
 
-ppopinionmodifier :: (HOI4Info g, Monad m) => HOI4OpinionModifier -> PPT g m Doc
-ppopinionmodifier mod = do
+ppOpinionModifier :: (HOI4Info g, Monad m) => HOI4OpinionModifier -> PPT g m Doc
+ppOpinionModifier mod = do
     locName <- getGameL10n (omodName mod)
     return . mconcat $
         [ "| "
@@ -177,13 +177,13 @@ ppopinionmodifier mod = do
         ] ++
         intersperse " / " (
             if isTrade then
-                (modText "" " Trade relation" (omodValue mod))
+                modText "" " Trade relation" (omodValue mod)
                 else
-                   (modText "{{icon|opinion}} " " Opinion" (omodValue mod))
-            ++ (monthlyDecay (omodValue mod) (omodDecay mod))
-            ++ (modText "" " Min" (omodMin mod))
-            ++ (modText "" " Max" (omodMax mod))
-            ++ (duration (omodDays mod) (omodMonths mod) (omodYears mod))
+                   modText "{{icon|opinion}} " " Opinion" (omodValue mod)
+            ++ monthlyDecay (omodValue mod) (omodDecay mod)
+            ++ modText "" " Min" (omodMin mod)
+            ++ modText "" " Max" (omodMax mod)
+            ++ duration (omodDays mod) (omodMonths mod) (omodYears mod)
         ) ++
         [ ") }}"
         , PP.line

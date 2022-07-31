@@ -600,59 +600,14 @@ tryLocAndIconTitle t = tryLocAndIcon (t <> "_title")
 -- $textvalue
 handlersTextValue :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextValue = Tr.fromList
-        [("add_great_project_tier"      , textValue "type" "tier" MsgAddGreatProjectTier MsgAddGreatProjectTier tryLocAndIcon)
-        ,("add_incident_variable_value" , textValue "incident" "value" MsgAddIncidentVariableValue MsgAddIncidentVariableValue tryLocAndIconTitle)
-        ,("add_institution_embracement" , textValue "which" "value" MsgAddInstitutionEmbracement MsgAddInstitutionEmbracement tryLocAndIcon)
-        ,("add_estate_loyalty"          , textValue "estate" "loyalty" MsgAddEstateLoyalty MsgAddEstateLoyalty tryLocAndIcon)
-        ,("add_named_unrest"            , textValue "name" "value" MsgAddNamedUnrest MsgAddNamedUnrest tryLocAndIcon)
-
-        ,("add_offsite_building"        , textValue "type" "level" MsgAddOffsiteBuilding  MsgAddOffsiteBuilding tryLocAndIcon) --hoi4
-        ,("add_popularity"              , textValue "ideology" "popularity" MsgAddPopularity MsgAddPopularity tryLocAndIcon) --hoi4
-
-        ,("add_power_projection"        , textValue "type" "amount" MsgAddPowerProjection MsgAddPowerProjection tryLocAndIcon)
-        ,("add_spy_network_from"        , textValue "who" "value" MsgAddSpyNetworkFrom MsgAddSpyNetworkFrom flagTextMaybe)
-        ,("add_spy_network_in"          , textValue "who" "value" MsgAddSpyNetworkIn MsgAddSpyNetworkIn flagTextMaybe)
-        ,("army_strength"               , textValue "who" "value" MsgArmyStrength MsgArmyStrength flagTextMaybe)
-        ,("border_distance"             , textValue "who" "distance" MsgBorderDistance MsgBorderDistance flagTextMaybe)
-        ,("estate_influence"            , textValue "estate" "influence" MsgEstateInfluence MsgEstateInfluence tryLocAndIcon)
-        ,("estate_loyalty"              , textValue "estate" "loyalty" MsgEstateLoyalty MsgEstateLoyalty tryLocAndIcon)
-        ,("estate_territory"            , textValue "estate" "territory" MsgEstateTerritory MsgEstateTerritory tryLocAndIcon)
-        ,("has_global_modifier_value"   , textValue "which" "value" MsgHasGlobalModifierValue MsgHasGlobalModifierValue tryLocAndLocMod)
-        ,("has_spy_network_from"        , textValue "who" "value" MsgHasSpyNetworkFrom MsgHasSpyNetworkFrom flagTextMaybe)
-        ,("has_spy_network_in"          , textValue "who" "value" MsgHasSpyNetworkIn MsgHasSpyNetworkIn flagTextMaybe)
-
-        ,("has_volunteers_amount_from"  , textValueCompare "tag" "count" "more than" "less than" MsgHasVolunteersAmountFrom MsgHasVolunteersAmountFrom flagTextMaybe) --hoi4
-
-        ,("has_won_war_against"         , textValue "who" "max_years_since" MsgHasWonWarAgainst MsgHasWonWarAgainst flagTextMaybe)
-        ,("incident_variable_value"     , textValue "incident" "value" MsgIncidentVariableValue MsgIncidentVariableValue tryLocAndIconTitle)
-        ,("institution_difference"      , textValue "who" "value" MsgInstitutionDifference MsgInstitutionDifference flagTextMaybe)
-        ,("military_strength"           , textValue "who" "value" MsgMilitaryStrength MsgMilitaryStrength flagTextMaybe)
-
-        ,("modify_tech_sharing_bonus"   , textValue "id" "bonus" MsgModifyTechSharingBonus MsgModifyTechSharingBonus tryLocMaybe) -- hoi4
-
-        ,("num_of_estate_privileges"    , textValue "estate" "value" MsgNumEstatePrivileges MsgNumEstatePrivileges tryLocAndIcon)
-        ,("num_of_units_in_province"    , textValue "who" "amount" MsgNumUnitsInProvince MsgNumUnitsInProvince flagTextMaybe) -- TODO: Support type
-        ,("num_investments_in_trade_company_region" , textValue "investment" "value" MsgNumInvestmentsInTradeCompanyReigion MsgNumInvestmentsInTradeCompanyReigion tryLocAndIcon)
-        ,("naval_strength"              , textValue "who" "value" MsgNavalStrength MsgNavalStrength flagTextMaybe)
-        ,("province_distance"           , textValue "who" "distance" MsgProvinceDistance MsgProvinceDistance flagTextMaybe)
-        ,("school_opinion"              , textValue "who" "opinion" MsgSchoolOpinion MsgSchoolOpinion flagTextMaybe)
-
-        ,("set_province_name"           , textValue "name" "id" MsgSetProvinceName MsgSetProvinceName tryLocMaybe) -- hoi4
-
-        ,("set_school_opinion"          , textValue "who" "opinion" MsgSetSchoolOpinion MsgSetSchoolOpinion flagTextMaybe)
-
-        ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPoints)-- hoi4
-        ,("strength_ratio"              , textValueCompare "tag" "ratio" "more than" "less than" MsgStrengthRatio MsgStrengthRatio flagTextMaybe)-- hoi4
-        ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuilding tryLocAndIcon)-- hoi4
-
-        ,("remove_loot"                 , textValue "who" "amount" MsgRemoveLoot MsgRemoveLoot flagTextMaybe)
-        ,("trade_goods_produced_amount" , textValue "trade_goods" "amount" MsgTradeGoodsProduced MsgTradeGoodsProduced tryLocAndIcon)
-        ,("trading_part"                , textValue "trade_goods" "value" MsgTradingPart MsgTradingPart tryLocAndIcon)
-        ,("trade_share"                 , textValue "country" "share" MsgTradeShare MsgTradeShare flagTextMaybe)
-        ,("trust"                       , textValue "who" "value" MsgTrust MsgTrust flagTextMaybe)
-        ,("war_score_against"           , textValue "who" "value" MsgWarscoreAgainst MsgWarscoreAgainst flagTextMaybe)
-        ,("years_in_union_under"        , textValue "who" "years" MsgYearsInUnionUnder MsgYearsInUnionUnder flagTextMaybe)
-
+        [("add_offsite_building"        , textValue "type" "level" MsgAddOffsiteBuilding  MsgAddOffsiteBuilding tryLocAndIcon)
+        ,("add_popularity"              , textValue "ideology" "popularity" MsgAddPopularity MsgAddPopularity tryLocAndIcon)
+        ,("has_volunteers_amount_from"  , textValueCompare "tag" "count" "more than" "less than" MsgHasVolunteersAmountFrom MsgHasVolunteersAmountFrom flagTextMaybe)
+        ,("modify_tech_sharing_bonus"   , textValue "id" "bonus" MsgModifyTechSharingBonus MsgModifyTechSharingBonus tryLocMaybe) --icon ignored
+        ,("set_province_name"           , textValue "name" "id" MsgSetProvinceName MsgSetProvinceName tryLocMaybe)
+        ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPoints)
+        ,("strength_ratio"              , textValueCompare "tag" "ratio" "more than" "less than" MsgStrengthRatio MsgStrengthRatio flagTextMaybe)
+        ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuilding tryLocAndIcon)
         ,("modify_character_flag"       , withNonlocTextValue "flag" "value" MsgCharacterFlag MsgModifyFlag) -- Localization/icon ignored
         ,("modify_country_flag"         , withNonlocTextValue "flag" "value" MsgCountryFlag MsgModifyFlag) -- Localization/icon ignored
         ,("modify_global_flag"          , withNonlocTextValue "flag" "value" MsgGlobalFlag MsgModifyFlag) -- Localization/icon ignored

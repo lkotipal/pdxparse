@@ -142,7 +142,7 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
                     ,if fieldCompulsory fieldspec
                         then [p| Just $patvar |] -- :: <fieldtype>
                         else [p| $patvar |]) -- :: Maybe <fieldtype>
-    sequence $ [
+    sequence [
         -- Accumulator type
         -- data <AccType> = AccType
         --  { <prefix>_<field1Name> :: {Maybe} <field1Type>
