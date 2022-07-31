@@ -16,7 +16,7 @@ import Control.Monad.State (gets)
 
 import Data.Maybe (isJust, fromJust, fromMaybe, catMaybes)
 import Data.Monoid ((<>))
-import Data.List (sortOn, intersperse, foldl')
+import Data.List ( sortOn, intersperse, foldl', intercalate )
 import Data.Set (toList, fromList)
 
 import Data.HashMap.Strict (HashMap)
@@ -42,53 +42,7 @@ import HOI4.Messages
 import MessageTools
 
 import Debug.Trace (trace, traceM)
-{-
-parseHOI4Modifiers :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
-    HashMap String GenericScript -> PPT g m (HashMap Text HOI4Modifier)
-parseHOI4Modifiers scripts = HM.unions . HM.elems <$> do
-    tryParse <- hoistExceptions $
-        HM.traverseWithKey
-            (\sourceFile scr ->
-                setCurrentFile sourceFile $ mapM parseHOI4Modifier scr)
-            scripts
-    case tryParse of
-        Left err -> do
-            traceM $ "Completely failed parsing modifiers: " ++ T.unpack err
-            return HM.empty
-        Right modifiersFilesOrErrors ->
-            flip HM.traverseWithKey modifiersFilesOrErrors $ \sourceFile emods ->
-                fmap (mkModMap . catMaybes) . forM emods $ \case
-                    Left err -> do
-                        traceM $ "Error parsing modifiers in " ++ sourceFile
-                                 ++ ": " ++ T.unpack err
-                        return Nothing
-                    Right mmod -> return mmod
-                where mkModMap :: [HOI4Modifier] -> HashMap Text HOI4Modifier
-                      mkModMap = HM.fromList . map (modName &&& id)
 
-parseHOI4Modifier :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
-    GenericStatement -> PPT g m (Either Text (Maybe HOI4Modifier))
-parseHOI4Modifier [pdx| $modid = @effects |]
-    = withCurrentFile $ \file -> do
-        mlocid <- getGameL10nIfPresent modid
-
-        -- Handle religions modifiers
-        let (mrelstmt, rest) = extractStmt (matchExactText "religion" "yes") effects
-        return . Right . Just $ HOI4Modifier {
-                modName = modid
-            ,   modLocName = mlocid
-            ,   modPath = file
-            ,   modReligious = isJust mrelstmt
-            ,   modEffects = rest
-            }
-parseHOI4Modifier _ = withCurrentFile $ \file ->
-    throwError ("unrecognised form for modifier in " <> T.pack file)
-
--- | Present the parsed modifiers as wiki text and write them to the
--- appropriate files.
-writeHOI4Modifiers :: (HOI4Info g, MonadError Text m, MonadIO m) => PPT g m ()
-writeHOI4Modifiers = throwError "Sorry, writing all modifiers currently not supported."
--}
 parseHOI4OpinionModifiers :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
     HashMap String GenericScript -> PPT g m (HashMap Text HOI4OpinionModifier)
 parseHOI4OpinionModifiers scripts = HM.unions . HM.elems <$> do
@@ -113,6 +67,7 @@ parseHOI4OpinionModifiers scripts = HM.unions . HM.elems <$> do
                 where mkModMap :: [HOI4OpinionModifier] -> HashMap Text HOI4OpinionModifier
                       mkModMap = HM.fromList . map (omodName &&& id)
 
+newHOI4OpinionModifier :: Text -> Maybe Text -> FilePath -> HOI4OpinionModifier
 newHOI4OpinionModifier id locid path = HOI4OpinionModifier id locid path Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- | Parse a statement in an opinion modifiers file. Some statements aren't
@@ -175,7 +130,7 @@ opinionModifierAddSection mmod stmt
         opinionModifierAddSection' mod [pdx| $other = %_ |]
             = trace ("unknown opinion modifier section: " ++ T.unpack other) $ return mod
         opinionModifierAddSection' mod _
-            = trace ("unrecognised form for opinion modifier section") $ return mod
+            = trace "unrecognised form for opinion modifier section" $ return mod
 
 writeHOI4OpinionModifiers :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4OpinionModifiers = do
@@ -185,20 +140,20 @@ writeHOI4OpinionModifiers = do
                            , featureId = Just "opinion_modifier.txt"
                            , theFeature = Right (HM.elems opinionModifiers)
                            }]
-                  pp_opinion_modifers
+                  ppopinionmodifiers
 
 -- Based on https://hoi4.paradoxwikis.com/Template:Opinion
-pp_opinion_modifers :: (HOI4Info g, Monad m) => [HOI4OpinionModifier] -> PPT g m Doc
-pp_opinion_modifers modifiers = do
+ppopinionmodifiers :: (HOI4Info g, Monad m) => [HOI4OpinionModifier] -> PPT g m Doc
+ppopinionmodifiers modifiers = do
     version <- gets (gameVersion . getSettings)
-    modifiers_pp'd <- mapM pp_opinion_modifer (sortOn omodName modifiers)
+    modifiers_pp'd <- mapM ppopinionmodifier (sortOn omodName modifiers)
     return . mconcat $ ["<includeonly>{{#switch:{{ lc:{{{1}}} }}", PP.line
         ,"| #default = <span style=\"color: red; font-size: 11px;\">(unrecognized string \"{{{1}}}\" for [[Template:Opinion_modifier]])</span>[[Category:Pages with unrecognized opinion modifier strings]]", PP.line]
         ++ modifiers_pp'd ++
         ["}}</includeonly><noinclude>{{Version|", Doc.strictText version, "}}"
         , PP.line
         , "Automatically generated from the file(s): "
-        , Doc.strictText $ T.pack $ concat $ intersperse ", " (map (\p -> "{{path|"++p++"}}") ((toList . fromList) (map omodPath modifiers)))
+        , Doc.strictText $ T.pack $ intercalate ", " (map (\p -> "{{path|"++p++"}}") ((toList . fromList) (map omodPath modifiers)))
         , PP.line, PP.line
         , "{{template doc}}", PP.line
         , "[[Category:Templates]]</noinclude>"
@@ -207,8 +162,8 @@ pp_opinion_modifers modifiers = do
 
 
 
-pp_opinion_modifer :: (HOI4Info g, Monad m) => HOI4OpinionModifier -> PPT g m Doc
-pp_opinion_modifer mod = do
+ppopinionmodifier :: (HOI4Info g, Monad m) => HOI4OpinionModifier -> PPT g m Doc
+ppopinionmodifier mod = do
     locName <- getGameL10n (omodName mod)
     return . mconcat $
         [ "| "
@@ -305,11 +260,11 @@ parseHOI4DynamicModifier [pdx| $modid = @effects |]
         addSection dmd stmt@[pdx| $lhs = @scr |] = case lhs of
             "enable"       -> dmd { dmodEnable = scr }
             "remove_trigger" -> dmd { dmodRemoveTrigger = Just scr }
-            _ -> (trace $ "Urecognized statement in dynamic modifier: " ++ show stmt) $ dmd
+            _ -> trace ("Urecognized statement in dynamic modifier: " ++ show stmt) dmd
         addSection dmd stmt@[pdx| icon = $txt |] = dmd  { dmodIcon = Just txt }
          -- Must be an effect
-        addSection dmd stmt = dmd { dmodEffects = (dmodEffects dmd) ++ [stmt] }
-parseHOI4DynamicModifier stmt = (trace $ show stmt) $ withCurrentFile $ \file ->
+        addSection dmd stmt = dmd { dmodEffects = dmodEffects dmd ++ [stmt] }
+parseHOI4DynamicModifier stmt = trace (show stmt) $ withCurrentFile $ \file ->
     throwError ("unrecognised form for dynamic modifier in " <> T.pack file)
 
 writeHOI4DynamicModifiers :: (HOI4Info g, MonadIO m) => PPT g m ()

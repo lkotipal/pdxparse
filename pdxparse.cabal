@@ -20,6 +20,9 @@ extra-source-files:  README.md
 data-files:          settings.yml
 cabal-version:       >=1.10
 
+program-default-options
+  ghc-options: -haddock
+
 executable pdxparse
 
   main-is:             Main.hs

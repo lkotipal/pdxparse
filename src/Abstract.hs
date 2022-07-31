@@ -102,9 +102,9 @@ type GenericStatement = Statement Void Void
 --  operator ::= \"=\" | \"<\" | \">\"
 -- @
 data Operator
-    = OpEq -- | \"=\", the most common
-    | OpLT -- | \"<\"
-    | OpGT -- | \">\"
+    = OpEq -- ^ \"=\", the most common
+    | OpLT -- ^ \"<\"
+    | OpGT -- ^ \">\"
     deriving (Eq, Ord, Show, Read)
 
 -- | Produce text representation of an Operator.

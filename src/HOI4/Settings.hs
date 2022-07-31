@@ -34,8 +34,6 @@ import SettingsTypes ( PPT, Settings (..), Game (..), L10nScheme (..)
                      , getGameL10nIfPresent
                      , safeIndex, safeLast, CLArgs (..))
 import HOI4.Types -- everything
---import Text.PrettyPrint.Leijen.Text (Doc)
---import qualified Text.PrettyPrint.Leijen.Text as PP
 import Yaml (LocEntry (..))
 
 -- Handlers
@@ -47,10 +45,8 @@ import HOI4.Ideas (parseHOI4Ideas
     --, writeHOI4Ideas
     )
 import HOI4.Modifiers (
---                    parseHOI4Modifiers, writeHOI4Modifiers,
                       parseHOI4OpinionModifiers, writeHOI4OpinionModifiers
                     , parseHOI4DynamicModifiers, writeHOI4DynamicModifiers)
---import HOI4.Missions (parseHOI4Missions , writeHOI4Missions)
 import HOI4.NationalFocus(parseHOI4NationalFocuses, writeHOI4NationalFocuses)
 import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
@@ -98,16 +94,11 @@ instance IsGame HOI4 where
                 ,   hoi4decisionScripts = HM.empty
                 ,   hoi4ideas = HM.empty
                 ,   hoi4ideaScripts = HM.empty
---                ,   hoi4modifiers = HM.empty
---                ,   hoi4modifierScripts = HM.empty
                 ,   hoi4opmods = HM.empty
                 ,   hoi4opmodScripts = HM.empty
---                ,   hoi4missionScripts = HM.empty
---                ,   hoi4missions = HM.empty
                 ,   hoi4eventTriggers = HM.empty
                 ,   hoi4decisionTriggers = HM.empty
                 ,   hoi4onactionsScripts = HM.empty
---                ,   hoi4disasterScripts = HM.empty
                 ,   hoi4geoData = HM.empty
                 ,   hoi4dynamicmodifiers = HM.empty
                 ,   hoi4dynamicmodifierScripts = HM.empty
@@ -178,24 +169,12 @@ instance HOI4Info HOI4 where
     getDecisions = do
         HOI4D ed <- get
         return (hoi4decisions ed)
---    getModifierScripts = do
---        HOI4D ed <- get
---        return (hoi4modifierScripts ed)
---    getModifiers = do
---        HOI4D ed <- get
---        return (hoi4modifiers ed)
     getOpinionModifierScripts = do
         HOI4D ed <- get
         return (hoi4opmodScripts ed)
     getOpinionModifiers = do
         HOI4D ed <- get
         return (hoi4opmods ed)
---    getMissionScripts = do
---        HOI4D ed <- get
---        return (hoi4missionScripts ed)
---    getMissions = do
---        HOI4D ed <- get
---        return (hoi4missions ed)
     getEventTriggers = do
         HOI4D ed <- get
         return (hoi4eventTriggers ed)
@@ -205,9 +184,6 @@ instance HOI4Info HOI4 where
     getOnActionsScripts = do
         HOI4D ed <- get
         return (hoi4onactionsScripts ed)
---    getDisasterScripts = do
---        HOI4D ed <- get
---        return (hoi4disasterScripts ed)
     getGeoData = do
         HOI4D ed <- get
         return (hoi4geoData ed)
@@ -288,12 +264,8 @@ readHOI4Scripts = do
             let sourceSubdir = case category of
                     "policies" -> "common" </> "policies"
                     "ideas" -> "common" </> "ideas"
---                    "modifiers" -> "common" </> "event_modifiers"
                     "opinion_modifiers" -> "common" </> "opinion_modifiers"
                     "on_actions" -> "common" </> "on_actions"
---                    "disasters" -> "common" </> "disasters"
---                    "tradenodes" -> "common" </> "tradenodes"
---                    "trade_companies" -> "common" </> "trade_companies"
                     "country_history" -> "history" </> "countries"
                     "colonial_regions" -> "common" </> "colonial_regions"
                     "dynamic_modifiers" -> "common" </> "dynamic_modifiers"
@@ -351,59 +323,13 @@ readHOI4Scripts = do
         buildCompletePath path = liftIO (filterM (doesFileExist . (path </>))
                                     =<< filterM (pure . isExtensionOf ".gfx")
                                      =<< getDirectoryContents path)
-{-
-        getOnlyLhs :: GenericStatement -> Maybe Text
-        getOnlyLhs (Statement (GenericLhs lhs _) _ _) = Just (toLower lhs)
-        getOnlyLhs stmt = trace $ "Unsupported statement: " ++ show stmt $ Nothing
 
-        toHashMap :: HOI4GeoType -> [Text] -> HashMap Text HOI4GeoType
-        toHashMap gt l = foldr (\t -> HM.insert t gt) HM.empty l
-
-        geoDirs = [ (HOI4GeoTradeCompany, "trade_companies")
-                  , (HOI4GeoColonialRegion, "colonial_regions")
-                  -- Tradenodes handled below
-                  ]
-
-        mapGeoFiles = [ (HOI4GeoArea, "area.txt")
-                      , (HOI4GeoContinent, "continent.txt")
-                      , (HOI4GeoRegion, "region.txt")
-                      , (HOI4GeoSuperRegion, "superregion.txt")]
-
-        readGeoData :: (HOI4GeoType, String) -> PPT HOI4 m (HashMap Text HOI4GeoType)
-        readGeoData (gt, dir) = do
-            hm <- readHOI4Script dir
-            return $ toHashMap gt (catMaybes $ map getOnlyLhs (concat (HM.elems hm)))
-
-
-        processTradeNode [pdx| $name = @scr |] = case findPrimary scr of
-            Just id -> Just (id, name)
-            _ -> (trace $ "Warning: Could not determine main province id for " ++ show name) $ Nothing
-            where
-                findPrimary :: GenericScript -> Maybe Int
-                findPrimary ([pdx| location = !id |]:_) = Just id
-                findPrimary (s:ss) = findPrimary ss
-                findPrimary _ = Nothing
-        processTradeNode stmt = (trace $ "Not handled in processTradeNode: " ++ show stmt) $ Nothing
-
-        getFileFromOpts (ProcessFile f) = [f]
-        getFileFromOpts _ = []
-
-        getCountryScopeFileFromOpts (ProcessCountryScopeFile c) = [c]
-        getCountryScopeFileFromOpts _ = []
-        getProvinceScopeFileFromOpts (ProcessProvinceScopeFile s) = [s]
-        getProvinceScopeFileFromOpts _ = []
-        getModifierFileFromOpts (ProcessModifierFile m) = [m]
-        getModifierFileFromOpts _ = []
--}
     ideasScripts <- readHOI4Script "ideas"
     decisioncats <- readHOI4Script "decisioncats"
     decisions <- readHOI4Script "decisions"
     events <- readHOI4Script "events"
---    modifiers <- readHOI4Script "modifiers"
     opinion_modifiers <- readHOI4Script "opinion_modifiers"
---    missions <- readHOI4Script "missions"
     on_actions <- readHOI4Script "on_actions"
---    disasters <- readHOI4Script "disasters"
     dynamic_modifiers <- readHOI4Script "dynamic_modifiers"
     national_focus <- readHOI4Script "national_focus"
     country_history <- readHOI4Script "country_history"
@@ -413,35 +339,16 @@ readHOI4Scripts = do
 --    extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
 --    extraProvinceScope <- mapM (readOneScript "extraProvinceScope") (concatMap getProvinceScopeFileFromOpts (clargs settings))
 --    extraModifier <- mapM (readOneScript "extraModifier") (concatMap getModifierFileFromOpts (clargs settings))
-    ---------------------
-    -- Geographic data --
-    ---------------------
-    --
-    -- Arguably this shouldn't be parsed here, but we don't care
-    -- about the actual script data.
-    --
-    {-}
-    geoData <- forM geoDirs readGeoData
-    geoMapData <- forM mapGeoFiles  $ \(geoType, filename) -> do
-        (_, d) <- readOneScript "map" (buildPath settings "map" </> filename)
-        return $ toHashMap geoType (catMaybes $ map getOnlyLhs d)
 
-    tradeNodeScripts <- readHOI4Script "tradenodes"
--}
     modify $ \(HOI4D s) -> HOI4D $ s {
             hoi4ideaScripts = ideasScripts
         ,   hoi4decisioncatScripts = decisioncats
         ,   hoi4decisionScripts = decisions
         ,   hoi4eventScripts = events
---        ,   hoi4modifierScripts = modifiers
         ,   hoi4opmodScripts = opinion_modifiers
---        ,   hoi4missionScripts = missions
         ,   hoi4onactionsScripts = on_actions
---        ,   hoi4disasterScripts = disasters
---        ,   hoi4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
         ,   hoi4dynamicmodifierScripts = dynamic_modifiers
         ,   hoi4countryHistoryScripts = country_history
---        ,   hoi4tradeNodes = HM.fromList (catMaybes (map processTradeNode (concatMap snd (HM.toList tradeNodeScripts))))
 --        ,   hoi4extraScripts = foldl (flip (uncurry HM.insert)) HM.empty extra
 --        ,   hoi4extraScriptsCountryScope = foldl (flip (uncurry HM.insert)) HM.empty extraCountryScope
 --        ,   hoi4extraScriptsProvinceScope = foldl (flip (uncurry HM.insert)) HM.empty extraProvinceScope
@@ -456,24 +363,18 @@ parseHOI4Scripts :: Monad m => PPT HOI4 m ()
 parseHOI4Scripts = do
     -- Need idea groups and modifiers before everything else
     ideas <- parseHOI4Ideas =<< getIdeaScripts
---    modifiers <- parseHOI4Modifiers =<< getModifierScripts
-
     opinionModifiers <- parseHOI4OpinionModifiers =<< getOpinionModifierScripts
     dynamicModifiers <- parseHOI4DynamicModifiers =<< getDynamicModifierScripts
     decisioncats <- parseHOI4Decisioncats =<< getDecisioncatScripts
     decisions <- parseHOI4Decisions =<< getDecisionScripts
     events <- parseHOI4Events =<< getEventScripts
---    missions <- parseHOI4Missions =<< getMissionScripts
     on_actions <- getOnActionsScripts
     nationalFocus <- parseHOI4NationalFocuses =<< getNationalFocusScripts
     countryHistory <- parseHOI4CountryHistory =<< getCountryHistoryScripts
---    disasters <- getDisasterScripts
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
         te3 = findTriggeredEventsInOnActions te2 (concat (HM.elems on_actions))
         te4 = findTriggeredEventsInNationalFocus te3 (HM.elems nationalFocus)
---        te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
---        te5 = findTriggeredEventsInMissions te4 (HM.elems missions)
     let td1 = findActivatedDecisionsInEvents HM.empty (HM.elems events)
         td2 = findActivatedDecisionsInDecisions td1 (HM.elems decisions)
         td3 = findActivatedDecisionsInOnActions td2 (concat (HM.elems on_actions))
@@ -484,10 +385,8 @@ parseHOI4Scripts = do
             ,   hoi4decisioncats = decisioncats
             ,   hoi4decisions = decisions
             ,   hoi4ideas = ideas
---            ,   hoi4modifiers = modifiers
             ,   hoi4opmods = opinionModifiers
             ,   hoi4nationalfocus = nationalFocus
---            ,   hoi4missions = missions
             ,   hoi4eventTriggers = te4
             ,   hoi4decisionTriggers = td4
             ,   hoi4dynamicmodifiers = dynamicModifiers
@@ -510,7 +409,6 @@ writeHOI4Scripts = do
         writeHOI4Decisions
         liftIO $ putStrLn "Writing national focuses."
         writeHOI4NationalFocuses
---        writeHOI4Missions
         liftIO $ putStrLn "Writing opinion modifiers."
         writeHOI4OpinionModifiers
         liftIO $ putStrLn "Writing dynamic modifiers."

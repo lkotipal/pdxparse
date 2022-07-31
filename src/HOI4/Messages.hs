@@ -273,17 +273,10 @@ data ScriptMessage
     | MsgHasWarSupportVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
     | MsgNumOfFactories {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgNumOfFactoriesVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
-    | MsgNumCities {scriptMessageAmt :: Double}
-    | MsgNumCitiesThan {scriptMessageWhom :: Text}
-    | MsgToleranceToThis {scriptMessageAmt :: Double}
     | MsgCreateAdmiral {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCreateConquistador {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCreateExplorer {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCreateGeneral {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgTotalDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgTotalDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgInflation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgInflationAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgHasIdeaGroup {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgIsControlledBy {scriptMessageWhom :: Text}
     | MsgHasDefensiveWarWith {scriptMessageWhom :: Text}
@@ -430,8 +423,6 @@ data ScriptMessage
     | MsgHasDLC {scriptMessageIcon :: Text, scriptMessageDlc :: Text}
     | MsgHasEquipment {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text}
     | MsgNumOfReligion {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
-    | MsgReligiousSchool {scriptSchoolIcon :: Text, scriptSchoolName :: Text, scriptGroupName :: Text}
-    | MsgSetReligiousSchool {scriptSchoolIcon :: Text, scriptSchoolName :: Text, scriptGroupName :: Text}
     | MsgAreaIs {scriptMessageWhat :: Text}
     | MsgAreaIsAs {scriptMessageWhat :: Text}
     | MsgSetDemilitarizedZone {scriptMessageYn :: Bool}
@@ -446,8 +437,6 @@ data ScriptMessage
     | MsgEffectBox {scriptMessageLoc :: Text, scriptMessageKey :: Text, scriptMessageIcon :: Text, scriptMessageDesc :: Text}
     | MsgEffectBoxEnd
     | MsgHasReformTier {scriptMessageAmt :: Double}
-    | MsgReligionProvinces {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
-    | MsgGoodsProvinces {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
     | MsgHasAristocraticIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
     | MsgHasEconomicIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
     | MsgHasDefensiveIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
@@ -646,8 +635,6 @@ data ScriptMessage
     | MsgAddThreat {scriptMessageAmt :: Double}
     | MsgGainSailors {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainSailorsFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgArmyProfessionalism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgArmyProfessionalismAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgNationalSailorsMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddIncidentVariableValue {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgIncidentVariableValue {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
@@ -863,10 +850,6 @@ data ScriptMessage
     | MsgRandomAdvisorScaledSkill
     | MsgRandomAdvisorNonState { scriptMessageIcon :: Text, scriptMessageText :: Text }
     | MsgIsHistoricalFocusOn { scriptMessageYn :: Bool }
-    | MsgNumCavalry {scriptMessageAmt :: Double}
-    | MsgNumCavalryThan {scriptMessageWhom :: Text}
-    | MsgNumArtillery {scriptMessageAmt :: Double}
-    | MsgNumArtilleryThan {scriptMessageWhom :: Text}
     | MsgAirBase {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgAirBaseVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
     | MsgAmountResearchSlots {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
@@ -988,8 +971,6 @@ data ScriptMessage
     | MsgBuildRailwayPath {scriptMessageAmt :: Double, scriptMessageWhat :: Text}
     | MsgCanBuildRailway {scriptMessageStart :: Text, scriptMessageEnd :: Text}
     | MsgCanBuildRailwayProv {scriptMessageStartProv :: Double, scriptMessageEndProv :: Double}
-    | MsgCreateNamedShip {scriptMessageText :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgCreateFlagShip {scriptMessageText :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgTradingPart {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgGenerateTraitorAdvisor {scriptMessageSkill :: Double}
     | MsgGenerateExileAdvisor {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -1024,13 +1005,11 @@ data ScriptMessage
     | MsgStartCivilWar {scriptMessageWhat :: Text, scriptMessageAmtText :: Text}
     | MsgSetPartyName {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageWhat :: Text}
     | MsgRegion
-    | MsgAddDisasterProgress {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgYearsInUnionUnder {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgIsInTechSharingGroup {scriptMessageWhat :: Text}
     | MsgAddToTechSharingGroup {scriptMessageWhat :: Text}
     | MsgInstitutionPresence {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgIsStateCore {scriptMessageWhat :: Text}
-    | MsgPickRandomEstateIfPresent {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgHasRule {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgExpulsionTarget {scriptMessageWhat :: Text}
     | MsgHasOffensiveWar {scriptMessageYn :: Bool}
@@ -1051,8 +1030,6 @@ data ScriptMessage
     | MsgRandomListTrigger
     | MsgRandomListModifier {scriptMessageAmt :: Double}
     | MsgRandomListAddModifier {scriptMessageAmt :: Double}
-    | MsgOwnOrNonTribSubjectDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgOwnOrNonTribSubjectDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgHasOneOfBuildings {scriptMessageYn :: Bool, scriptMessageWhat :: Text}
     | MsgUnlockDecisionCategoryTooltip {scriptMessageWhat :: Text}
     | MsgUnlockDecisionTooltip {scriptMessageWhat :: Text}
@@ -1810,23 +1787,6 @@ instance RenderMessage Script ScriptMessage where
                 , boldText _amtT
                 , " factories"
                 ]
-        MsgNumCities {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Owns at least "
-                , toMessage (roundNum _amt)
-                , " non-colony "
-                , plural _amt "province" "provinces"
-                ]
-        MsgNumCitiesThan {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Owns at least as many cities as "
-                , _whom
-                ]
-        MsgToleranceToThis {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Tolerance to this religion is at least "
-                , toMessage (colourNum True _amt)
-                ]
         MsgCreateAdmiral {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Gain "
@@ -1858,32 +1818,6 @@ instance RenderMessage Script ScriptMessage where
                 , " general with "
                 , toMessage (roundNum _amt)
                 , " army tradition"
-                ]
-        MsgTotalDevelopment {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Country's total "
-                , _icon
-                , " development is at least "
-                , toMessage (roundNum _amt)
-                ]
-        MsgTotalDevelopmentAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Country's total "
-                , _icon
-                , " development is at least that of "
-                , _whom
-                ]
-        MsgInflation {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " Inflation is at least "
-                , toMessage (colourPc False _amt)
-                ]
-        MsgInflationAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ _icon
-                , " Inflation is at least that of "
-                , _whom
                 ]
         MsgHasIdeaGroup {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
@@ -2820,26 +2754,6 @@ instance RenderMessage Script ScriptMessage where
                 , _name
                 , " religion"
                 ]
-        MsgSetReligiousSchool {scriptSchoolIcon = _icon, scriptSchoolName = _name, scriptGroupName = _group}
-            -> mconcat
-                [ "The country begins following the "
-                , toMessage _group
-                , " "
-                , toMessage _icon
-                , " "
-                , toMessage _name
-                , " religious school"
-                ]
-        MsgReligiousSchool {scriptSchoolIcon = _icon, scriptSchoolName = _name, scriptGroupName = _group}
-            -> mconcat
-                [ "Has the "
-                , toMessage _group
-                , " "
-                , toMessage _icon
-                , " "
-                , toMessage _name
-                , " religious school"
-                ]
         MsgAreaIs {scriptMessageWhat = _what}
             -> mconcat
                 [ "Is in "
@@ -2995,29 +2909,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has enacted a tier "
                 , toMessage (plainNum _amt)
                 , " government reform"
-                ]
-        MsgReligionProvinces {scriptMessageIcon = _icon, scriptMessageName = _name, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Country has at least "
-                , toMessage (roundNum _amt)
-                , " "
-                , plural (round _amt) "province" "provinces"
-                , " following the "
-                , _icon
-                , " "
-                , _name
-                , " religion"
-                ]
-        MsgGoodsProvinces {scriptMessageIcon = _icon, scriptMessageName = _name, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Country has at least "
-                , toMessage (roundNum _amt)
-                , " "
-                , plural (round _amt) "province" "provinces"
-                , " producing "
-                , _icon
-                , " "
-                , _name
                 ]
         MsgHasAristocraticIdea {scriptMessageName = _name, scriptMessageNum = _num}
             -> mconcat
@@ -4301,18 +4192,6 @@ instance RenderMessage Script ScriptMessage where
                 , " sailors equal to "
                 , toMessage (reducedNum (colourPc True) _amt)
                 , " of maximum"
-                ]
-        MsgArmyProfessionalism {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " Army professionalism is at least "
-                , toMessage (reducedNum plainPc _amt)
-                ]
-        MsgArmyProfessionalismAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ _icon
-                , " Army professionalism is at least that of "
-                , _whom
                 ]
         MsgNationalSailorsMod {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5872,30 +5751,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Historical Focus is "
                 , toMessage (ifThenElseT _yn "'''on'''" "'''off'''")
                 ]
-        MsgNumCavalry {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Owns at least "
-                , toMessage (roundNum _amt)
-                , " cavalry "
-                , plural _amt "regiment" "regiments"
-                ]
-        MsgNumCavalryThan {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Owns at least as many cavalry regiments as "
-                , _whom
-                ]
-        MsgNumArtillery {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Owns at least "
-                , toMessage (roundNum _amt)
-                , " artillery "
-                , plural _amt "regiment" "regiments"
-                ]
-        MsgNumArtilleryThan {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Owns at least as many artillery regiments as "
-                , _whom
-                ]
         MsgAirBase {scriptMessageAmt = _amt, scriptMessageCompare = _comp}
             -> mconcat
                 [ "Has "
@@ -6775,24 +6630,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _end)
                 , ")"
                 ]
-        MsgCreateNamedShip {scriptMessageText = _name, scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Create "
-                , _icon
-                , " "
-                , _what
-                , " named "
-                , toMessage (iquotes _name)
-                ]
-        MsgCreateFlagShip {scriptMessageText = _name, scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Create a flagship of type "
-                , _icon
-                , " "
-                , _what
-                , " named "
-                , toMessage (iquotes _name)
-                ]
         MsgTradingPart {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has access to at least "
@@ -7020,16 +6857,6 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgRegion
             -> "All provinces in this region:"
-        MsgAddDisasterProgress {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Add "
-                , toMessage (colourPcSign False _amt)
-                , " progress to the "
-                , _icon
-                , " "
-                , _what
-                , " disaster"
-                ]
         MsgYearsInUnionUnder {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
             -> mconcat
                 [ "The country has been in a [[personal union]] under "
@@ -7061,14 +6888,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is a core state of "
                 , _what
-                ]
-        MsgPickRandomEstateIfPresent {scriptMessageWhom = _whom, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Pick a random estate that's present and doesn't have the flag "
-                , _whom
-                , " and perform the action <tt>"
-                , _what
-                , "</tt>"
                 ]
         MsgHasRule {scriptMessageWhom = _whom, scriptMessageWhat = _what}
             -> mconcat
@@ -7205,20 +7024,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Chance base weight changes by '''"
                 , toMessage (plainNumSign _amt)
                 , "''' if:"
-                ]
-        MsgOwnOrNonTribSubjectDevelopment {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Own or non-tributary subject "
-                , _icon
-                , " development is at least "
-                , toMessage (plainNum _amt)
-                ]
-        MsgOwnOrNonTribSubjectDevelopmentAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Own or non-tributary subject "
-                , _icon
-                , " development is at least that of "
-                , _whom
                 ]
         MsgHasOneOfBuildings {scriptMessageYn = _yn, scriptMessageWhat = _what}
             -> mconcat

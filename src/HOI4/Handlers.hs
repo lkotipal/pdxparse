@@ -26,7 +26,7 @@ module HOI4.Handlers (
     ,   withState
     ,   withNonlocAtom
     ,   withNonlocAtom2
-    ,   withNonlocTextValue2
+    ,   withNonlocTextValue
     ,   iconKey
     ,   iconFile
     ,   iconFileB
@@ -1345,7 +1345,7 @@ numericOrTag numMsg tagMsg stmt@[pdx| %_ = %rhs |] = msgToPP =<<
                 tflag <- flag (Just HOI4Country) t
                 return $ tagMsg (Doc.doc2text tflag)
             Nothing -> return (preMessage stmt)
-numericOrTag _ _ stmt = preStatement stmt
+numericOrTag _ _ stmt = preStatement stmt -- CHECK FOR USEFULNESS
 
 -- | Handler for statements where the RHS is either a number or a tag, that
 -- also require an icon.
@@ -1362,7 +1362,7 @@ numericOrTagIcon icon numMsg tagMsg stmt@[pdx| %_ = %rhs |] = msgToPP =<<
                 tflag <- flag (Just HOI4Country) t
                 return $ tagMsg (iconText icon) (Doc.doc2text tflag)
             Nothing -> return (preMessage stmt)
-numericOrTagIcon _ _ _ stmt = preStatement stmt
+numericOrTagIcon _ _ _ stmt = preStatement stmt -- CHECK FOR USEFULNESS
 
 -- | Handler for a statement referring to a country. Use a flag.
 withFlag :: (HOI4Info g, Monad m) =>
@@ -1662,13 +1662,13 @@ textValueCompare whatlabel vallabel gt lt smallmsg bigmsg loc stmt@[pdx| %_ = @s
             _ -> return $ preMessage stmt
 textValueCompare _ _ _ _ _ _ _ stmt = preStatement stmt
 
-withNonlocTextValue2 :: forall g m. (HOI4Info g, Monad m) =>
+withNonlocTextValue :: forall g m. (HOI4Info g, Monad m) =>
     Text                                             -- ^ Label for "what"
         -> Text                                      -- ^ Label for "how much"
         -> ScriptMessage                             -- ^ submessage to send
         -> (Text -> Text -> Double -> ScriptMessage) -- ^ Message constructor
         -> StatementHandler g m
-withNonlocTextValue2 whatlabel vallabel submsg msg stmt@[pdx| %_ = @scr |]
+withNonlocTextValue whatlabel vallabel submsg msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_tv (parseTV whatlabel vallabel scr)
     where
         pp_tv :: TextValue -> PPT g m ScriptMessage
@@ -1677,7 +1677,7 @@ withNonlocTextValue2 whatlabel vallabel submsg msg stmt@[pdx| %_ = @scr |]
                 extratext <- messageText submsg
                 return $ msg extratext what value
             _ -> return $ preMessage stmt
-withNonlocTextValue2 _ _ _ _ stmt = preStatement stmt
+withNonlocTextValue _ _ _ _ stmt = preStatement stmt
 
 data ValueValue = ValueValue
         {   vv_what :: Maybe Double
@@ -2231,21 +2231,6 @@ triggerEvent evtType stmt@[pdx| %_ = ?!rid |]
                 _ -> return $ preMessage stmt
 triggerEvent _ stmt = preStatement stmt
 
--- Specific values
-{-
-gainMen :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-gainMen [pdx| $head = !amt |]
-    | "add_manpower" <- head = gainMen' ("manpower"::Text) MsgGainMPFrac MsgGainMP 1000
-    | "add_sailors" <- head = gainMen' ("sailors"::Text) MsgGainSailorsFrac MsgGainSailors 1
-    where
-        gainMen' theicon msgFrac msgWhole mult = msgToPP =<<
-            if abs (amt::Double) < 1
-            --  interpret amt as a fraction of max
-            then return $ msgFrac (iconText theicon) amt
-            --  interpret amt as exact number, multiplied by mult
-            else return $ msgWhole (iconText theicon) (amt*mult)
-gainMen stmt = preStatement stmt
--}
 -- Casus belli
 
 data AddCB = AddCB
@@ -3171,7 +3156,7 @@ numProvinces :: (HOI4Info g, Monad m) =>
 numProvinces micon msg [pdx| $what = !amt |] = do
     what_loc <- getGameL10n what
     msgToPP (msg (iconText micon) what_loc amt)
-numProvinces _ _ stmt = preStatement stmt
+numProvinces _ _ stmt = preStatement stmt -- CHECK FOR USEFULNESS
 
 withFlagOrState :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage)
@@ -4360,41 +4345,6 @@ killHeir stmt@(Statement _ OpEq (CompoundRhs [])) = msgToPP $ MsgHeirDies True
 killHeir stmt@(Statement _ OpEq (CompoundRhs [Statement (GenericLhs "allow_new_heir" []) OpEq (GenericRhs "no" [])])) = msgToPP $ MsgHeirDies False
 killHeir stmt = (trace $ "Not handled in killHeir: " ++ show stmt) $ preStatement stmt
 
-
-----------------------------------------------
--- Handler for create_colony_mission_reward --
-----------------------------------------------
-{-
-createColonyMissionReward :: (HOI4Info g, Monad m) => StatementHandler g m
-createColonyMissionReward stmt =
-    case getEffectArg "province" stmt of
-        Just (IntRhs num) -> do
-            prov <- getStateLoc num
-            msgToPP $ MsgColonyMissionReward prov
-        _ -> (trace $ "warning: Not handled by createColonyMissionReward: " ++ (show stmt)) $ preStatement stmt
--}
---------------------------------
--- Handler for has_idea_group --
---------------------------------
-{-
-hasIdeaGroup :: (HOI4Info g, Monad m) => StatementHandler g m
-hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
-    -- TODO: Improve
-    -- Dirty check, if of the form XXX_ideas (where XXX are upper caes letters) assume national ideas..
-    if  ((T.length ig) > 4) && ((T.index ig 3) == '_') && (isUpper (T.index ig 0)) && (isUpper (T.index ig 1)) && (isUpper (T.index ig 2)) then do
-        countryLoc <- getGameL10n (T.take 3 ig)
-        textLoc <- getGameL10n ig
-        -- Show flag (again, dirty)
-        msgToPP $ MsgHasIdeaGroup ("[[File:" <> countryLoc <> ".png|20px]]") textLoc
-    else do -- "normal" idea group or group national idea
-        igs <- getIdeaGroups
-        textLoc <- getGameL10n ig
-        if maybe False ig_free (HM.lookup ig igs) then
-            msgToPP $ MsgHasIdeaGroup "" textLoc -- group national idea -> no icon
-        else
-            msgToPP $ MsgHasIdeaGroup (iconText ig) textLoc
-hasIdeaGroup stmt = (trace $ "Not handled in hasIdeaGroup: " ++ show stmt) $ preStatement stmt
--}
 ----------------------------
 -- Handler for kill_units --
 ----------------------------

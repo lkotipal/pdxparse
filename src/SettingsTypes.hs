@@ -44,7 +44,7 @@ import Text.PrettyPrint.Leijen.Text (Doc)
 
 import qualified Data.HashMap.Strict as HM
 
-import Abstract -- everything
+import Abstract () -- everything
 import Yaml (L10n, L10nLang, LocEntry (..))
 
 -- | Command line arguments.

@@ -11,7 +11,7 @@ import HOI4.Types (HOI4Info) -- HACK :/
 import Data.Text (Text)
 
 import Data.List (unzip5)
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, fromMaybe)
 
 import Abstract
 import HOI4.Messages
@@ -97,7 +97,7 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
         defaultsName = mkName ("new" ++ s_tyname)
     -- Variables. These are evaluated and immediately put back in Q to make
     -- sure every instance is the same.
-    [tvar_g, tvar_m] <- mapM (\n -> return . varT =<< newName n) ["g","m"]
+    [tvar_g, tvar_m] <- mapM (fmap varT . newName) ["g","m"]
     [var_acc, var_addLine, var_defaults, var_pp, var_scr, var_stmt, var_x]
         <- mapM (return . varE) [name_acc, name_addLine, defaultsName
                                 ,name_pp, name_scr, name_stmt, name_x]
@@ -116,7 +116,7 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
                     do  thetype <- ftype
                         thedefault <- case fieldDefault fieldspec of
                             Nothing -> return Nothing
-                            Just def -> return . Just =<< def
+                            Just def -> Just <$> def
                         varBangType rfname
                             (bangType (bang noSourceUnpackedness noSourceStrictness)
                                 (if hasDefault
@@ -125,7 +125,7 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
                                 )
                             )
                     -- Initial value for accumulator
-                    ,maybe [| Nothing |] id def
+                    ,fromMaybe [| Nothing |] def
                     -- Clause for addLine
                     ,clause [varP name_acc
                             ,[p| Statement (GenericLhs $(litP (stringL (fieldName fieldspec))) [])
@@ -173,7 +173,7 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
         -- <funName> _1 ... stmt = preStatement stmt
         ,   sigD name_fun
                 (forallT [] (sequence [[t|HOI4Info $tvar_g |], [t|Monad $tvar_m |]]) $
-                    foldr funT [t| StatementHandler $tvar_g $tvar_m |] (map snd extraArgs))
+                    foldr (funT . snd) [t| StatementHandler $tvar_g $tvar_m |] extraArgs)
         ,   funD name_fun [
                     clause (map (varP . mkName . fst) extraArgs
                                 ++ [asP name_stmt [p| [pdx| %_ = @scr |] |]])
@@ -183,7 +183,7 @@ foldCompound funname s_tyname prefix extraArgs fieldspecs eval = do
                            ,funD name_addLine (lineclauses ++
                                 [clause [varP name_acc, wildP]
                                         -- TODO: Print actual line that doesn't match
-                                        (normalB $ [| (trace $ funname ++ ": Unhandled line found in " ++ show stmt) $ $var_acc |])
+                                        (normalB [| trace (funname ++ ": Unhandled line found in " ++ show stmt) $ $var_acc |])
                                         []
                                 ])
                            ,funD name_pp

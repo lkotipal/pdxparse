@@ -111,7 +111,7 @@ processPoliticsAddSection cohi stmt
         processPoliticsAddSection' cohi [pdx| $other = %_ |]
             = trace ("unknown set_politics in history: " ++ T.unpack other) $ return cohi
         processPoliticsAddSection' cohi _
-            = trace ("unrecognised form for set_politics in history") $ return cohi
+            = trace "unrecognised form for set_politics in history" $ return cohi
 
 
 parseHOI4Interface :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>

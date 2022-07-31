@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 {-|
 Module      : HOI4.Common
 Description : Message handler for Europa Hearts of Iron IV
@@ -28,6 +29,7 @@ import Data.List (foldl', intersperse)
 import Data.Maybe (isJust, fromMaybe, listToMaybe)
 import Data.Monoid ((<>))
 import Data.Foldable (fold)
+import Data.Void (Void)
 
 import Data.ByteString (ByteString)
 
@@ -65,7 +67,7 @@ ppScript [] = return "(Nothing)"
 ppScript script = imsg2doc =<< ppMany script
 
 flagTextMaybe :: (HOI4Info g, Monad m) => Text -> PPT g m (Text,Text)
-flagTextMaybe = fmap (\t -> (mempty, t)) . flagText (Just HOI4Country)
+flagTextMaybe = fmap (mempty,) . flagText (Just HOI4Country)
 
 -- | Extract the appropriate message(s) from a script.
 ppMany :: (HOI4Info g, Monad m) => GenericScript -> PPT g m IndentedMessages
@@ -98,7 +100,6 @@ ppHandlers = foldl' Tr.unionL Tr.empty
     , handlersIconFlagOrPronoun
     , handlersYesNo
     , handlersNumericOrTag
-    , handlersSignedNumeric
     , handlersNumStates
     , handlersTextValue
     , handlersTextAtom
@@ -161,6 +162,12 @@ handlersNumericIcons = Tr.fromList
         ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgAirExperience)
         ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgArmyExperience)
         ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgNavyExperience)
+        ]
+
+-- | Handlers for statements pertaining to modifiers
+handlersModifiers :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
+handlersModifiers = Tr.fromList
+        [("add_dynamic_modifier"           , addDynamicModifier)
         -- Used in ideas and other bonuses, omit "gain/lose" in l10n
         --Country Scope
             --general modifiers
@@ -302,12 +309,6 @@ handlersNumericIcons = Tr.fromList
         ,("trait_panzer_leader_xp_gain_factor" , numericLoc "modifier_trait_panzer_leader_xp_gain_factor" MsgModifierPcPosReduced)
         ]
 
--- | Handlers for statements pertaining to modifiers
-handlersModifiers :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
-handlersModifiers = Tr.fromList
-        [("add_dynamic_modifier"           , addDynamicModifier)
-        ]
-
 -- | Handlers for simple compound statements
 handlersCompound :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersCompound = Tr.fromList
@@ -421,7 +422,9 @@ handlersCompound = Tr.fromList
         -- random and random_list are also part of flow control but are more complicated
         ]
 
-withLocAtomName msg = withLocAtom' msg (\t -> t <> "_name")
+withLocAtomName :: (HOI4Info g, Monad m) =>
+    (Text -> ScriptMessage) -> StatementHandler g m
+withLocAtomName msg = withLocAtom' msg (<> "_name")
 
 -- | Handlers for simple statements where RHS is a localizable atom
 handlersLocRhs :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
@@ -578,19 +581,7 @@ handlersYesNo = Tr.fromList
 -- | Handlers for statements that may be numeric or a tag
 handlersNumericOrTag :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericOrTag = Tr.fromList
-        [("num_of_cities"       , numericOrTag MsgNumCities MsgNumCitiesThan)
-        ,("army_professionalism", numericOrTagIcon "army professionalism" MsgArmyProfessionalism MsgArmyProfessionalismAs)
-        ,("inflation"           , numericOrTagIcon "inflation" MsgInflation MsgInflationAs)
-        ,("total_development"   , numericOrTagIcon "development" MsgTotalDevelopment MsgTotalDevelopmentAs)
-        ,("total_own_and_non_tributary_subject_development" , numericOrTagIcon "development" MsgOwnOrNonTribSubjectDevelopment MsgOwnOrNonTribSubjectDevelopmentAs)
-        ,("num_of_artillery"    , numericOrTag MsgNumArtillery MsgNumArtilleryThan)
-        ,("num_of_cavalry"      , numericOrTag MsgNumCavalry MsgNumCavalryThan)
-        ]
-
--- | Handlers for signed numeric statements
-handlersSignedNumeric :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
-handlersSignedNumeric = Tr.fromList
-        [("tolerance_to_this", numeric MsgToleranceToThis)
+        [
         ]
 
 -- | Handlers querying the number of provinces of some kind, mostly religions
@@ -598,53 +589,10 @@ handlersSignedNumeric = Tr.fromList
 handlersNumStates :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumStates = Tr.fromList
         [
-        -- Religions
-         ("animism"       , numProvinces "animism" MsgReligionProvinces)
-        ,("catholic"      , numProvinces "catholic" MsgReligionProvinces)
-        ,("confucianism"  , numProvinces "confucianism" MsgReligionProvinces)
-        ,("coptic"        , numProvinces "coptic" MsgReligionProvinces)
-        ,("hinduism"      , numProvinces "hinduism" MsgReligionProvinces)
-        ,("ibadi"         , numProvinces "ibadi" MsgReligionProvinces)
-        ,("mahayana"      , numProvinces "mahayana" MsgReligionProvinces)
-        ,("orthodox"      , numProvinces "orthodox" MsgReligionProvinces)
-        ,("protestant"    , numProvinces "protestant" MsgReligionProvinces)
-        ,("reformed"      , numProvinces "reformed" MsgReligionProvinces)
-        ,("shamanism"     , numProvinces "fetishism" MsgReligionProvinces) -- Old name for fetishism
-        ,("shiite"        , numProvinces "shiite" MsgReligionProvinces)
-        ,("shinto"        , numProvinces "shinto" MsgReligionProvinces)
-        ,("sikhism"       , numProvinces "sikhism" MsgReligionProvinces)
-        ,("sunni"         , numProvinces "sunni" MsgReligionProvinces)
-        ,("totemism"      , numProvinces "totemism" MsgReligionProvinces)
-
-        -- Trade goods
-        ,("coal"          , numProvinces "coal" MsgGoodsProvinces)
-        ,("chinaware"     , numProvinces "chinaware" MsgGoodsProvinces)
-        ,("cloth"         , numProvinces "cloth" MsgGoodsProvinces)
-        ,("cocoa"         , numProvinces "cocoa" MsgGoodsProvinces)
-        ,("coffee"        , numProvinces "coffee" MsgGoodsProvinces)
-        ,("copper"        , numProvinces "copper" MsgGoodsProvinces)
-        ,("cotton"        , numProvinces "cotton" MsgGoodsProvinces)
-        ,("fish"          , numProvinces "fish" MsgGoodsProvinces)
-        ,("fur"           , numProvinces "fur" MsgGoodsProvinces)
-        ,("glass"         , numProvinces "glass" MsgGoodsProvinces)
-        ,("gold"          , numProvinces "gold" MsgGoodsProvinces)
-        ,("grain"         , numProvinces "grain" MsgGoodsProvinces)
-        ,("iron"          , numProvinces "iron" MsgGoodsProvinces)
-        ,("ivory"         , numProvinces "ivory" MsgGoodsProvinces)
-        ,("livestock"     , numProvinces "livestock" MsgGoodsProvinces)
-        ,("naval_supplies", numProvinces "naval supplies" MsgGoodsProvinces)
-        ,("salt"          , numProvinces "salt" MsgGoodsProvinces)
-        ,("silk"          , numProvinces "silk" MsgGoodsProvinces)
-        ,("slaves"        , numProvinces "slaves" MsgGoodsProvinces)
-        ,("spices"        , numProvinces "spices" MsgGoodsProvinces)
-        ,("sugar"         , numProvinces "sugar" MsgGoodsProvinces)
-        ,("tea"           , numProvinces "tea" MsgGoodsProvinces)
-        ,("tobacco"       , numProvinces "tobacco" MsgGoodsProvinces)
-        ,("wine"          , numProvinces "wine" MsgGoodsProvinces)
-        ,("wool"          , numProvinces "wool" MsgGoodsProvinces)
         ]
 
 -- Helpers for text/value pairs
+tryLocAndIconTitle :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text, Text)
 tryLocAndIconTitle t = tryLocAndIcon (t <> "_title")
 
 -- | Handlers for text/value pairs.
@@ -655,11 +603,12 @@ handlersTextValue = Tr.fromList
         [("add_great_project_tier"      , textValue "type" "tier" MsgAddGreatProjectTier MsgAddGreatProjectTier tryLocAndIcon)
         ,("add_incident_variable_value" , textValue "incident" "value" MsgAddIncidentVariableValue MsgAddIncidentVariableValue tryLocAndIconTitle)
         ,("add_institution_embracement" , textValue "which" "value" MsgAddInstitutionEmbracement MsgAddInstitutionEmbracement tryLocAndIcon)
---        ,("add_disaster_progress"       , textValue "disaster" "value" MsgAddDisasterProgress MsgAddDisasterProgress tryLocAndIcon)
         ,("add_estate_loyalty"          , textValue "estate" "loyalty" MsgAddEstateLoyalty MsgAddEstateLoyalty tryLocAndIcon)
         ,("add_named_unrest"            , textValue "name" "value" MsgAddNamedUnrest MsgAddNamedUnrest tryLocAndIcon)
-        ,("add_offsite_building"        , textValue "type" "level" MsgAddOffsiteBuilding  MsgAddOffsiteBuilding tryLocAndIcon)
-        ,("add_popularity"              , textValue "ideology" "popularity" MsgAddPopularity MsgAddPopularity tryLocAndIcon)
+
+        ,("add_offsite_building"        , textValue "type" "level" MsgAddOffsiteBuilding  MsgAddOffsiteBuilding tryLocAndIcon) --hoi4
+        ,("add_popularity"              , textValue "ideology" "popularity" MsgAddPopularity MsgAddPopularity tryLocAndIcon) --hoi4
+
         ,("add_power_projection"        , textValue "type" "amount" MsgAddPowerProjection MsgAddPowerProjection tryLocAndIcon)
         ,("add_spy_network_from"        , textValue "who" "value" MsgAddSpyNetworkFrom MsgAddSpyNetworkFrom flagTextMaybe)
         ,("add_spy_network_in"          , textValue "who" "value" MsgAddSpyNetworkIn MsgAddSpyNetworkIn flagTextMaybe)
@@ -671,23 +620,31 @@ handlersTextValue = Tr.fromList
         ,("has_global_modifier_value"   , textValue "which" "value" MsgHasGlobalModifierValue MsgHasGlobalModifierValue tryLocAndLocMod)
         ,("has_spy_network_from"        , textValue "who" "value" MsgHasSpyNetworkFrom MsgHasSpyNetworkFrom flagTextMaybe)
         ,("has_spy_network_in"          , textValue "who" "value" MsgHasSpyNetworkIn MsgHasSpyNetworkIn flagTextMaybe)
-        ,("has_volunteers_amount_from"  , textValueCompare "tag" "count" "more than" "less than" MsgHasVolunteersAmountFrom MsgHasVolunteersAmountFrom flagTextMaybe)
+
+        ,("has_volunteers_amount_from"  , textValueCompare "tag" "count" "more than" "less than" MsgHasVolunteersAmountFrom MsgHasVolunteersAmountFrom flagTextMaybe) --hoi4
+
         ,("has_won_war_against"         , textValue "who" "max_years_since" MsgHasWonWarAgainst MsgHasWonWarAgainst flagTextMaybe)
         ,("incident_variable_value"     , textValue "incident" "value" MsgIncidentVariableValue MsgIncidentVariableValue tryLocAndIconTitle)
         ,("institution_difference"      , textValue "who" "value" MsgInstitutionDifference MsgInstitutionDifference flagTextMaybe)
         ,("military_strength"           , textValue "who" "value" MsgMilitaryStrength MsgMilitaryStrength flagTextMaybe)
-        ,("modify_tech_sharing_bonus"   , textValue "id" "bonus" MsgModifyTechSharingBonus MsgModifyTechSharingBonus tryLocMaybe)
+
+        ,("modify_tech_sharing_bonus"   , textValue "id" "bonus" MsgModifyTechSharingBonus MsgModifyTechSharingBonus tryLocMaybe) -- hoi4
+
         ,("num_of_estate_privileges"    , textValue "estate" "value" MsgNumEstatePrivileges MsgNumEstatePrivileges tryLocAndIcon)
         ,("num_of_units_in_province"    , textValue "who" "amount" MsgNumUnitsInProvince MsgNumUnitsInProvince flagTextMaybe) -- TODO: Support type
         ,("num_investments_in_trade_company_region" , textValue "investment" "value" MsgNumInvestmentsInTradeCompanyReigion MsgNumInvestmentsInTradeCompanyReigion tryLocAndIcon)
         ,("naval_strength"              , textValue "who" "value" MsgNavalStrength MsgNavalStrength flagTextMaybe)
         ,("province_distance"           , textValue "who" "distance" MsgProvinceDistance MsgProvinceDistance flagTextMaybe)
         ,("school_opinion"              , textValue "who" "opinion" MsgSchoolOpinion MsgSchoolOpinion flagTextMaybe)
-        ,("set_province_name"           , textValue "name" "id" MsgSetProvinceName MsgSetProvinceName tryLocMaybe)
+
+        ,("set_province_name"           , textValue "name" "id" MsgSetProvinceName MsgSetProvinceName tryLocMaybe) -- hoi4
+
         ,("set_school_opinion"          , textValue "who" "opinion" MsgSetSchoolOpinion MsgSetSchoolOpinion flagTextMaybe)
-        ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPoints)
-        ,("strength_ratio"              , textValueCompare "tag" "ratio" "more than" "less than" MsgStrengthRatio MsgStrengthRatio flagTextMaybe)
-        ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuilding tryLocAndIcon)
+
+        ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPoints)-- hoi4
+        ,("strength_ratio"              , textValueCompare "tag" "ratio" "more than" "less than" MsgStrengthRatio MsgStrengthRatio flagTextMaybe)-- hoi4
+        ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuilding tryLocAndIcon)-- hoi4
+
         ,("remove_loot"                 , textValue "who" "amount" MsgRemoveLoot MsgRemoveLoot flagTextMaybe)
         ,("trade_goods_produced_amount" , textValue "trade_goods" "amount" MsgTradeGoodsProduced MsgTradeGoodsProduced tryLocAndIcon)
         ,("trading_part"                , textValue "trade_goods" "value" MsgTradingPart MsgTradingPart tryLocAndIcon)
@@ -695,22 +652,18 @@ handlersTextValue = Tr.fromList
         ,("trust"                       , textValue "who" "value" MsgTrust MsgTrust flagTextMaybe)
         ,("war_score_against"           , textValue "who" "value" MsgWarscoreAgainst MsgWarscoreAgainst flagTextMaybe)
         ,("years_in_union_under"        , textValue "who" "years" MsgYearsInUnionUnder MsgYearsInUnionUnder flagTextMaybe)
-        ,("modify_character_flag"       , withNonlocTextValue2 "flag" "value" MsgCharacterFlag MsgModifyFlag) -- Localization/icon ignored
-        ,("modify_country_flag"         , withNonlocTextValue2 "flag" "value" MsgCountryFlag MsgModifyFlag) -- Localization/icon ignored
-        ,("modify_global_flag"          , withNonlocTextValue2 "flag" "value" MsgGlobalFlag MsgModifyFlag) -- Localization/icon ignored
-        ,("modify_state_flag"           , withNonlocTextValue2 "flag" "value" MsgStateFlag MsgModifyFlag) -- Localization/icon ignored
-        ,("modify_unit_leader_flag"     , withNonlocTextValue2 "flag" "value" MsgUnitLeaderFlag MsgModifyFlag) -- Localization/icon ignored
+
+        ,("modify_character_flag"       , withNonlocTextValue "flag" "value" MsgCharacterFlag MsgModifyFlag) -- Localization/icon ignored
+        ,("modify_country_flag"         , withNonlocTextValue "flag" "value" MsgCountryFlag MsgModifyFlag) -- Localization/icon ignored
+        ,("modify_global_flag"          , withNonlocTextValue "flag" "value" MsgGlobalFlag MsgModifyFlag) -- Localization/icon ignored
+        ,("modify_state_flag"           , withNonlocTextValue "flag" "value" MsgStateFlag MsgModifyFlag) -- Localization/icon ignored
+        ,("modify_unit_leader_flag"     , withNonlocTextValue "flag" "value" MsgUnitLeaderFlag MsgModifyFlag) -- Localization/icon ignored
         ]
 
 -- | Handlers for text/atom pairs
 handlersTextAtom :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextAtom = Tr.fromList
-        [("create_flagship"             , taDescAtomIcon "name" "type" MsgCreateNamedShip)
-        ,("create_named_ship"           , taDescAtomIcon "name" "type" MsgCreateFlagShip)
-        ,("has_game_rule"               , textAtom "rule" "option" MsgHasRule tryLoc)
-        ,("pick_random_estate_if_present" , textAtom "flag" "estate_action" MsgPickRandomEstateIfPresent tryLoc) -- Localization/icon ignored
-        ,("religious_school"            , textAtom "school" "group" MsgReligiousSchool tryLoc)
-        ,("set_religious_school"        , textAtom "school" "group" MsgSetReligiousSchool tryLoc)
+        [("has_game_rule"               , textAtom "rule" "option" MsgHasRule tryLoc)
         ]
 
 -- | Handlers for special complex statements
@@ -1012,6 +965,11 @@ ppOne stmt@[pdx| %lhs = %rhs |] = ppOne' stmt lhs rhs
 ppOne stmt@[pdx| %lhs > %rhs |] = ppOne' stmt lhs rhs
 ppOne stmt@[pdx| %lhs < %rhs |] = ppOne' stmt lhs rhs
 ppOne stmt = preStatement stmt
+ppOne' :: (HOI4Info g, Monad m) =>
+    GenericStatement
+    -> Lhs lhs
+    -> Rhs Void Void
+    -> PPT g m IndentedMessages
 ppOne' stmt lhs rhs = case lhs of
     GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
         Just handler -> handler stmt
@@ -1020,7 +978,7 @@ ppOne' stmt lhs rhs = case lhs of
              then case rhs of
                 CompoundRhs scr ->
                     withCurrentIndent $ \_ -> do -- force indent level at least 1
-                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just HOI4Country) label
+                        lflag <- plainMsg' . (<> ":") =<< flagText (Just HOI4Country) label
                         scriptMsgs <- scope HOI4Country $ ppMany scr
                         return (lflag : scriptMsgs)
                 _ -> preStatement stmt

@@ -95,7 +95,7 @@ parseHOI4NationalFocus [pdx| %left = %right |] = case right of
             else
                 withCurrentFile $ \file -> do
                     nfNameLoc <- getGameL10n $ fromMaybe (getNFId parts) (getNFTxt parts)
-                    nfNameDesc <- getGameL10nIfPresent $ (fromMaybe (getNFId parts) (getNFTxt parts)) <> "_desc"
+                    nfNameDesc <- getGameL10nIfPresent $ fromMaybe (getNFId parts) (getNFTxt parts) <> "_desc"
                     nnf <- hoistErrors $ foldM nationalFocusAddSection
                                                 (Just newHOI4NationalFocus {nf_path = file
                                                                             ,nf_name_loc = nfNameLoc
@@ -137,7 +137,7 @@ nationalFocusAddSection nf stmt
                 CompoundRhs [] ->
                     nf
                 CompoundRhs scr -> nf { nf_completion_reward = Just scr }
-                _-> trace ("bad nf completion_reward") nf
+                _-> trace "bad nf completion_reward" nf
             "icon" -> case rhs of
                 GenericRhs txt [] ->
                     let txtd = if "GFX_" `T.isPrefixOf` txt then txt else "GFX_" <> txt in
@@ -150,67 +150,52 @@ nationalFocusAddSection nf stmt
                 CompoundRhs [] ->
                     nf
                 CompoundRhs scr -> nf { nf_allow_branch = Just scr }
-                _-> trace ("bad nf allow_branch") nf
-            "x" -> case rhs of
-                _-> nf
-            "y" -> case rhs of
-                _-> nf
+                _-> trace "bad nf allow_branch" nf
+            "x" -> nf
+            "y" -> nf
             "prerequisite" -> case rhs of
                 CompoundRhs [] ->
                     nf
                 CompoundRhs scr ->
-                    nf { nf_prerequisite = (nf_prerequisite nf) ++ [Just scr] }
-                _-> trace ("bad nf prerequisite") nf
+                    nf { nf_prerequisite = nf_prerequisite nf ++ [Just scr] }
+                _-> trace "bad nf prerequisite" nf
             "mutually_exclusive" -> case rhs of
                 CompoundRhs [] ->
                     nf
                 CompoundRhs scr ->
                     nf { nf_mutually_exclusive = Just scr }
-                _-> trace ("bad nf mutually_exclusive") nf
+                _-> trace "bad nf mutually_exclusive" nf
             "available" -> case rhs of
                 CompoundRhs [] ->
                     nf
                 CompoundRhs scr -> nf { nf_available = Just scr }
-                _-> trace ("bad nf available") nf
+                _-> trace "bad nf available" nf
             "bypass" -> case rhs of
                 CompoundRhs [] ->
                     nf
                 CompoundRhs scr -> nf { nf_bypass = Just scr }
-                _-> trace ("bad nf bypass") nf
-            "cancel" -> case rhs of
-                _-> nf
-            "cancelable" -> case rhs of --bool
-                _-> nf
-            "historical_ai" -> case rhs of
-                _-> nf
-            "available_if_capitulated" -> case rhs of --bool
-                _-> nf
-            "cancel_if_invalid" -> case rhs of --bool
-                _-> nf
-            "continue_if_invalid" -> case rhs of --bool
-                _-> nf
-            "will_lead_to_war_with" -> case rhs of
-                _-> nf
-            "search_filters" -> case rhs of
-                _-> nf
+                _-> trace "bad nf bypass" nf
+            "cancel" -> nf
+            "cancelable" -> nf --bool
+            "historical_ai" -> nf
+            "available_if_capitulated" -> nf --bool
+            "cancel_if_invalid" -> nf --bool
+            "continue_if_invalid" -> nf --bool
+            "will_lead_to_war_with" ->  nf
+            "search_filters" -> nf
             "select_effect" -> case rhs of
                 CompoundRhs [] ->
                     nf
                 CompoundRhs scr -> nf {nf_select_effect = Just scr}
                 _-> trace ("bad nf select_effect in: " ++ show stmt) nf
-            "ai_will_do" -> case rhs of --Do we want to deal with aistuff with focus' ?
-                _-> nf
-            "complete_tooltip" -> case rhs of
-                _-> nf
-            "offset" -> case rhs of
-                _-> nf
-            "relative_position_id" -> case rhs of
-                _-> nf
-            "dynamic" -> case rhs of
-                _-> nf
+            "ai_will_do" -> nf --Do we want to deal with aistuff with focus' ?
+            "complete_tooltip" -> nf
+            "offset" -> nf
+            "relative_position_id" -> nf
+            "dynamic" -> nf
             other -> trace ("unknown national focus section: " ++ show other ++ " for " ++ show stmt) nf
         nationalFocusAddSection' nf _
-            = trace ("unrecognised form for national focus section") nf
+            = trace "unrecognised form for national focus section" nf
 
 writeHOI4NationalFocuses :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4NationalFocuses = do
@@ -225,17 +210,17 @@ writeHOI4NationalFocuses = do
                               (HM.elems pathNF)
     writeFeatures "national_focus"
                   pathedNationalFocus
-                  (pp_national_focuses interface)
+                  (ppNationalFocuses interface)
     where
         mkNfPathMap :: [HOI4NationalFocus] -> HashMap FilePath [HOI4NationalFocus]
         mkNfPathMap nf =
             let xs = reverse $ map (nf_path &&& id) nf in
             HM.fromListWith (++) [ (k, [v]) | (k, v) <- xs ]
 
-pp_national_focuses :: forall g m. (HOI4Info g, Monad m) => HashMap Text Text -> [HOI4NationalFocus] -> PPT g m Doc
-pp_national_focuses gfx nfs = do
+ppNationalFocuses :: forall g m. (HOI4Info g, Monad m) => HashMap Text Text -> [HOI4NationalFocus] -> PPT g m Doc
+ppNationalFocuses gfx nfs = do
     version <- gets (gameVersion . getSettings)
-    nfDoc <- mapM (scope HOI4Country . pp_national_focus gfx) (sortOn (sortName . nf_name_loc) nfs)
+    nfDoc <- mapM (scope HOI4Country . ppnationalfocus gfx) (sortOn (sortName . nf_name_loc) nfs)
     return . mconcat $
         [ "{{Version|", Doc.strictText version, "}}", PP.line
         , "{| class=\"mildtable\"", PP.line
@@ -247,13 +232,14 @@ pp_national_focuses gfx nfs = do
         [ "|}", PP.line
         ]
 
+sortName :: Text -> Text
 sortName n =
     let ln = T.toLower n
         nn = T.stripPrefix "the " ln
     in fromMaybe ln nn
 
-pp_national_focus :: forall g m. (HOI4Info g, Monad m) => HashMap Text Text -> HOI4NationalFocus -> PPT g m Doc
-pp_national_focus gfx nf = do
+ppnationalfocus :: forall g m. (HOI4Info g, Monad m) => HashMap Text Text -> HOI4NationalFocus -> PPT g m Doc
+ppnationalfocus gfx nf = do
     let nfArg :: (HOI4NationalFocus -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
         nfArg field fmt
             = maybe (return [])
@@ -274,7 +260,7 @@ pp_national_focus gfx nf = do
                         ,"}}"
                         ,PP.line])
             (field nf)
-    icon_pp <- return $ HM.findWithDefault "GFX_goal_unknown" (nf_icon nf) gfx
+        icon_pp = HM.findWithDefault "GFX_goal_unknown" (nf_icon nf) gfx
     prerequisite_pp <- ppPrereq $ catMaybes $ nf_prerequisite nf
     allowBranch_pp <- ppAllowBranch $ nf_allow_branch nf
     mutuallyExclusive_pp <- ppMutuallyExclusive $ nf_mutually_exclusive nf

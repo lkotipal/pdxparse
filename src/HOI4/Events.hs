@@ -93,7 +93,7 @@ writeHOI4Events = do
                             (HM.elems events)
     writeFeatures "events"
                   pathedEvents
-                  (\e -> scope (hoi4evt_scope e) $ pp_event e)
+                  (\e -> scope (hoi4evt_scope e) $ ppevent e)
 
 -- | Parse a statement in an events file. Some statements aren't events; for
 -- those, and for any obvious errors, return Right Nothing.
@@ -324,7 +324,7 @@ ppTitles _ titles eid = (("| event_name = " <> Doc.strictText eid <> PP.line <>"
         ]
     ppTitle (HOI4EvtTitleCompound scr) =
         imsg2doc =<< ppMany scr
-    fmtTitle key = flip liftM (getGameL10nIfPresent key) $ \case
+    fmtTitle key = flip fmap (getGameL10nIfPresent key) $ \case
         Nothing -> Doc.strictText key
         Just txt -> "''" <> Doc.strictText (Doc.nl2br txt) <> "''"
 
@@ -343,7 +343,7 @@ ppDescs _ descs = (("| cond_event_text = yes" <> PP.line <> "| event_text = ") <
         ]
     ppDesc (HOI4EvtDescCompound scr) =
         imsg2doc =<< ppMany scr
-    fmtDesc key = flip liftM (getGameL10nIfPresent key) $ \case
+    fmtDesc key = flip fmap (getGameL10nIfPresent key) $ \case
         Nothing -> Doc.strictText key
         Just txt -> "''" <> Doc.strictText (Doc.nl2br txt) <> "''"
 
@@ -442,20 +442,20 @@ ppTriggeredBy eventId trig = do
             let ts' = if length ts < 2 then
                     ts
                 else
-                    map (\d -> Doc.strictText $ "* " <> (Doc.doc2text d)) ts
-            return $ mconcat $ [PP.line] ++ (intersperse PP.line ts')
+                    map (\d -> Doc.strictText $ "* " <> Doc.doc2text d) ts
+            return $ mconcat $ PP.line : intersperse PP.line ts'
         _ -> if null trig then return $ Doc.strictText "(No triggers)" else return $ Doc.strictText "(Triggers in event)"
 
 -- | Pretty-print an event. If some essential parts are missing from the data,
 -- throw an exception.
-pp_event :: forall g m. (HOI4Info g, MonadError Text m) =>
+ppevent :: forall g m. (HOI4Info g, MonadError Text m) =>
     HOI4Event -> PPT g m Doc
-pp_event evt = case hoi4evt_id evt of
+ppevent evt = case hoi4evt_id evt of
     Just eid -> setCurrentFile (hoi4evt_path evt) $ do
         -- Valid event
         version <- gets (gameVersion . getSettings)
         (conditional, options_pp'd) <- case hoi4evt_options evt of
-            Just opts -> pp_options (hoi4evt_hide_window evt) eid opts
+            Just opts -> ppoptions (hoi4evt_hide_window evt) eid opts
             _ -> fixForNoOptions eid  --BC: less ugly fix for having no options for an event
         titleLoc <- ppTitles (hoi4evt_hide_window evt) (hoi4evt_title evt) eid -- get localisation of title
         descLoc <- ppDescs (hoi4evt_hide_window evt) (hoi4evt_desc evt)
@@ -528,22 +528,23 @@ pp_event evt = case hoi4evt_id evt of
 
     Nothing -> throwError "hoi4evt_id missing"
 
+fixForNoOptions :: Monad m => Text -> m (Bool, Doc)
 fixForNoOptions eid = do --BC: less ugly fix for having no options for an event
     let evtId = Doc.strictText eid
-        message = mconcat $ ["(no options for event ", evtId, ")"]
+        message = mconcat ["(no options for event ", evtId, ")"]
     return (False, message)
 -- | Present the options of an event.
-pp_options :: (HOI4Info g, MonadError Text m) =>
+ppoptions :: (HOI4Info g, MonadError Text m) =>
     Bool -> Text -> [HOI4Option] -> PPT g m (Bool, Doc)
-pp_options hidden evtid opts = do
+ppoptions hidden evtid opts = do
     let triggered = any (isJust . hoi4opt_trigger) opts
-    options_pp'd <- mapM (pp_option evtid hidden triggered) opts
+    options_pp'd <- mapM (ppoption evtid hidden triggered) opts
     return (triggered, mconcat . (PP.line:) . intersperse PP.line $ options_pp'd)
 
 -- | Present a single event option.
-pp_option :: (HOI4Info g, MonadError Text m) =>
+ppoption :: (HOI4Info g, MonadError Text m) =>
     Text -> Bool -> Bool -> HOI4Option -> PPT g m Doc
-pp_option evtid hidden triggered opt = do
+ppoption evtid hidden triggered opt = do
     optNameLoc <- getGameL10n `mapM` hoi4opt_name opt
     case optNameLoc of
         -- NB: some options have no effect, e.g. start of Peasants' War.
@@ -554,7 +555,7 @@ pp_option evtid hidden triggered opt = do
                 --old thing-throwError $ "some required option sections missing in " <> evtid <> " - dumping: " <> T.pack (show opt)
     where
         ok name_loc = let mtrigger = hoi4opt_trigger opt in do
-            mawd_pp'd   <- mapM ((imsg2doc =<<) . ppAiWillDo) (hoi4opt_ai_chance opt)
+            mawd_pp'd   <- mapM (imsg2doc <=< ppAiWillDo) (hoi4opt_ai_chance opt)
             effects_pp'd <- setIsInEffect True (ppScript (fromMaybe [] (hoi4opt_effects opt)))
             mtrigger_pp'd <- sequence (ppScript <$> mtrigger)
             return . mconcat $
@@ -570,9 +571,9 @@ pp_option evtid hidden triggered opt = do
                         ) mtrigger_pp'd
                     else [])
                 ++
-                flip (maybe []) mawd_pp'd (\awd_pp'd ->
+                maybe [] (\awd_pp'd ->
                     ["| aichance = ", PP.line
-                    ,awd_pp'd, PP.line]) ++
+                    ,awd_pp'd, PP.line]) mawd_pp'd ++
                 -- 1 = no
                 ["}}"
                 ]
@@ -580,14 +581,14 @@ pp_option evtid hidden triggered opt = do
 findInStmt :: GenericStatement -> [(HOI4EventWeight, Text)]
 findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "news_event" || lhs == "unit_leader_event" || lhs == "state_event" || lhs == "operative_leader_event" = case getId scr of
     Just triggeredId -> [(Nothing, triggeredId)]
-    _ -> (trace $ "Unrecognized event trigger: " ++ show stmt) $ []
+    _ -> trace ("Unrecognized event trigger: " ++ show stmt) []
     where
         getId :: [GenericStatement] -> Maybe Text
         getId [] = Nothing
         getId (stmt@[pdx| id = ?!id |] : _) = case id of
             Just (Left n) -> Just $ T.pack (show (n :: Int))
             Just (Right t) -> Just t
-            _ -> (trace $ "Invalid event id statement: " ++ show stmt) $ Nothing
+            _ -> trace ("Invalid event id statement: " ++ show stmt) Nothing
         getId (_ : ss) = getId ss
 findInStmt stmt@[pdx| $lhs = $id |] | lhs == "country_event" || lhs == "news_event" || lhs == "unit_leader_event" || lhs == "state_event" || lhs == "operative_leader_event" = [(Nothing, id)]
 findInStmt [pdx| events = @scr |]  = mapMaybe extractEvent scr
@@ -595,7 +596,7 @@ findInStmt [pdx| events = @scr |]  = mapMaybe extractEvent scr
         extractEvent :: GenericStatement -> Maybe (HOI4EventWeight, Text)
         extractEvent (StatementBare (GenericLhs e [])) = Just (Nothing, e)
         extractEvent (StatementBare (IntLhs e)) = Just (Nothing, T.pack (show e))
-        extractEvent stmt = (trace $ "Unknown in events statement: " ++ show stmt) $ Nothing
+        extractEvent stmt = trace ("Unknown in events statement: " ++ show stmt) Nothing
 findInStmt [pdx| random_events = @scr |] =
     let evts = mapMaybe extractRandomEvent scr
         total = sum $ map fst evts
@@ -605,28 +606,28 @@ findInStmt [pdx| random_events = @scr |] =
         extractRandomEvent stmt@[pdx| !weight = ?!id |] = case id of
             Just (Left n) -> Just (fromIntegral weight, T.pack (show (n :: Int)))
             Just (Right t) -> Just (fromIntegral weight, t)
-            _ -> (trace $ "Invalid event id in random_events: " ++ show stmt) $ Nothing
-        extractRandomEvent stmt = (trace $ "Unknown in random_events statement: " ++ show stmt) $ Nothing
+            _ -> trace ("Invalid event id in random_events: " ++ show stmt) Nothing
+        extractRandomEvent stmt = trace ("Unknown in random_events statement: " ++ show stmt) Nothing
 findInStmt [pdx| %lhs = @scr |] = findInStmts scr
 findInStmt _ = []
 
 findInStmts :: [GenericStatement] -> [(HOI4EventWeight, Text)]
-findInStmts stmts = concatMap findInStmt stmts
+findInStmts = concatMap findInStmt
 
 addEventSource :: (HOI4EventWeight -> HOI4EventSource) -> [(HOI4EventWeight, Text)] -> [(Text, HOI4EventSource)]
-addEventSource es l = map (\t -> (snd t, es (fst t))) l
+addEventSource es = map (\t -> (snd t, es (fst t)))
 
 findInOptions :: Text -> [HOI4Option] -> [(Text, HOI4EventSource)]
-findInOptions eventId opts = concatMap (\o -> case hoi4opt_name o of
+findInOptions eventId = concatMap (\o -> case hoi4opt_name o of
     Just optName -> addEventSource (const (HOI4EvtSrcOption eventId optName)) (maybe [] (concatMap findInStmt) (hoi4opt_effects o))
     _ -> []
-    ) opts
+    )
 
 addEventTriggers :: HOI4EventTriggers -> [(Text, HOI4EventSource)] -> HOI4EventTriggers
 addEventTriggers hm l = foldl' ins hm l
     where
         ins :: HOI4EventTriggers -> (Text, HOI4EventSource) -> HOI4EventTriggers
-        ins hm (k, v) = HM.alter (\orig -> case orig of
+        ins hm (k, v) = HM.alter (\case
             Just l -> Just $ l ++ [v]
             Nothing -> Just [v]) k hm
 
@@ -638,7 +639,7 @@ findTriggeredEventsInEvents hm evts = addEventTriggers hm (concatMap findInEvent
             (case hoi4evt_options evt of
                 Just opts -> findInOptions eventId opts
                 _ -> []) ++
-            (addEventSource (const (HOI4EvtSrcImmediate eventId)) (maybe [] findInStmts (hoi4evt_immediate evt)))
+            addEventSource (const (HOI4EvtSrcImmediate eventId)) (maybe [] findInStmts (hoi4evt_immediate evt))
         findInEvent _ = []
 
 findTriggeredEventsInDecisions :: HOI4EventTriggers -> [HOI4Decision] -> HOI4EventTriggers
@@ -646,10 +647,10 @@ findTriggeredEventsInDecisions hm ds = addEventTriggers hm (concatMap findInDeci
     where
         findInDecision :: HOI4Decision -> [(Text, HOI4EventSource)]
         findInDecision d =
-            (addEventSource (const (HOI4EvtSrcDecComplete (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_complete_effect d))) ++
-            (addEventSource (const (HOI4EvtSrcDecRemove (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_remove_effect d))) ++
-            (addEventSource (const (HOI4EvtSrcDecCancel (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_cancel_effect d))) ++
-            (addEventSource (const (HOI4EvtSrcDecTimeout (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_timeout_effect d)))
+            addEventSource (const (HOI4EvtSrcDecComplete (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_complete_effect d)) ++
+            addEventSource (const (HOI4EvtSrcDecRemove (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_remove_effect d)) ++
+            addEventSource (const (HOI4EvtSrcDecCancel (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_cancel_effect d)) ++
+            addEventSource (const (HOI4EvtSrcDecTimeout (dec_name d) (dec_name_loc d))) (maybe [] findInStmts (dec_timeout_effect d))
 
 findTriggeredEventsInOnActions :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers
 findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr -- needs editing
@@ -657,7 +658,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr -- needs edit
         findInAction :: HOI4EventTriggers -> GenericStatement -> HOI4EventTriggers
         findInAction hm [pdx|on_actions = @stmts |] = foldl' findInAction hm stmts
         findInAction hm stmt@[pdx| $lhs = @scr |] = addEventTriggers hm (addEventSource (HOI4EvtSrcOnAction (actionName lhs)) (findInStmts scr))
-        findInAction hm stmt = (trace $ "Unknown on_actions statement: " ++ show stmt) $ hm
+        findInAction hm stmt = trace ("Unknown on_actions statement: " ++ show stmt) hm
 
         actionName :: Text -> Text
         actionName n = HM.findWithDefault ("<pre>" <> n <> "</pre>") n actionNameTable
@@ -707,30 +708,11 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr -- needs edit
             ,("on_war_relation_added","<!-- on_war_relation_added -->On nation joined war")
             ,("on_wargoal_expire","<!-- on_wargoal_expire -->On wargoal expired")
             ]
-{-
-findTriggeredEventsInDisasters :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers
-findTriggeredEventsInDisasters hm scr = foldl' findInDisaster hm scr
-    where
-        findInDisaster :: HOI4EventTriggers -> GenericStatement -> HOI4EventTriggers
-        findInDisaster hm stmt@[pdx| $id = @scr |] = foldl' (findInDisaster' id) hm scr
-        findInDisaster hm stmt = (trace $ "Unknown top-level disaster statement: " ++ show stmt) $ hm
 
-        findInDisaster' :: Text -> HOI4EventTriggers -> GenericStatement -> HOI4EventTriggers
-        findInDisaster' id hm [pdx| on_start = $event |] = addEventTriggers hm [(event, HOI4EvtSrcDisaster id "Start" Nothing)]
-        findInDisaster' id hm [pdx| on_end = $event |] = addEventTriggers hm [(event, HOI4EvtSrcDisaster id "End" Nothing)]
-        findInDisaster' id hm [pdx| on_monthly = @scr |] = addEventTriggers hm ((addEventSource (HOI4EvtSrcDisaster id "Monthly pulse")) (findInStmts scr))
-        findInDisaster' _ hm _ = hm
-
-findTriggeredEventsInMissions :: HOI4EventTriggers -> [HOI4MissionTreeBranch] -> HOI4EventTriggers
-findTriggeredEventsInMissions hm mtbs = foldl' (\h -> \m -> foldl' findInMission h (hoi4mtb_missions m)) hm mtbs
-    where
-        findInMission :: HOI4EventTriggers -> HOI4Mission -> HOI4EventTriggers
-        findInMission hm m = addEventTriggers hm $ addEventSource (const (HOI4EvtSrcMission (hoi4m_id m))) (findInStmts (hoi4m_effect m))
--}
 findTriggeredEventsInNationalFocus :: HOI4EventTriggers -> [HOI4NationalFocus] -> HOI4EventTriggers
 findTriggeredEventsInNationalFocus hm nf = addEventTriggers hm (concatMap findInFocus nf)
     where
         findInFocus :: HOI4NationalFocus -> [(Text, HOI4EventSource)]
         findInFocus f =
-            (addEventSource (const (HOI4EvtSrcNFComplete (nf_id f) (nf_name_loc f) (nf_icon f))) (maybe [] findInStmts (nf_completion_reward f))) ++
-            (addEventSource (const (HOI4EvtSrcNFSelect (nf_id f) (nf_name_loc f) (nf_icon f))) (maybe [] findInStmts (nf_select_effect f)))
+            addEventSource (const (HOI4EvtSrcNFComplete (nf_id f) (nf_name_loc f) (nf_icon f))) (maybe [] findInStmts (nf_completion_reward f)) ++
+            addEventSource (const (HOI4EvtSrcNFSelect (nf_id f) (nf_name_loc f) (nf_icon f))) (maybe [] findInStmts (nf_select_effect f))

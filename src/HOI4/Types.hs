@@ -12,9 +12,7 @@ module HOI4.Types (
     ,   HOI4Decision (..), HOI4DecisionCost(..), HOI4DecisionIcon(..), HOI4Decisioncat (..)
     ,   HOI4DecisionSource (..), HOI4DecisionTriggers, HOI4DecisionWeight
     ,   HOI4Idea (..)
---    ,   HOI4Modifier (..)
     ,   HOI4OpinionModifier (..)
---    ,   HOI4MissionTreeBranch (..), HOI4Mission (..)
     ,   HOI4DynamicModifier (..)
     ,   HOI4NationalFocus (..)
     ,   HOI4CountryHistory (..)
@@ -26,8 +24,6 @@ module HOI4.Types (
     ,   HOI4GeoType (..)
     ,   aiWillDo
     ,   isGeographic
-    -- utilities that can't go anywhere else
---    ,   getModifier
     ) where
 
 import Data.List (foldl')
@@ -55,9 +51,7 @@ data HOI4Data = HOI4Data {
     ,   hoi4decisioncats :: HashMap Text HOI4Decisioncat
     ,   hoi4decisions :: HashMap Text HOI4Decision
     ,   hoi4ideas :: HashMap Text HOI4Idea
---    ,   hoi4modifiers :: HashMap Text HOI4Modifier
     ,   hoi4opmods :: HashMap Text HOI4OpinionModifier
---    ,   hoi4missions :: HashMap Text HOI4MissionTreeBranch
     ,   hoi4eventTriggers :: HOI4EventTriggers
     ,   hoi4decisionTriggers :: HOI4DecisionTriggers
     ,   hoi4geoData :: HashMap Text HOI4GeoType
@@ -69,11 +63,8 @@ data HOI4Data = HOI4Data {
     ,   hoi4decisioncatScripts :: HashMap FilePath GenericScript
     ,   hoi4decisionScripts :: HashMap FilePath GenericScript
     ,   hoi4ideaScripts :: HashMap FilePath GenericScript
---    ,   hoi4modifierScripts :: HashMap FilePath GenericScript
     ,   hoi4opmodScripts :: HashMap FilePath GenericScript
---    ,   hoi4missionScripts :: HashMap FilePath GenericScript
     ,   hoi4onactionsScripts :: HashMap FilePath GenericScript
---    ,   hoi4disasterScripts :: HashMap FilePath GenericScript
     ,   hoi4dynamicmodifierScripts :: HashMap FilePath GenericScript
     ,   hoi4countryHistoryScripts :: HashMap FilePath GenericScript -- Country Tag -> country tag + ideology
     ,   hoi4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
@@ -116,10 +107,6 @@ class (IsGame g,
     getIdeaScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed idea groups table (keyed on idea group ID).
     getIdeas :: Monad m => PPT g m (HashMap Text HOI4Idea)
-    -- | Get the contents of all modifier script files.
---    getModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | Get the parsed modifiers table (keyed on modifier ID).
---    getModifiers :: Monad m => PPT g m (HashMap Text HOI4Modifier)
     -- | Get the contents of all opinion modifier script files.
     getOpinionModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed opinion modifiers table (keyed on modifier ID).
@@ -132,18 +119,12 @@ class (IsGame g,
     getDecisioncats :: Monad m => PPT g m (HashMap Text HOI4Decisioncat)
     -- | Get the parsed decisions table (keyed on decision ID).
     getDecisions :: Monad m => PPT g m (HashMap Text HOI4Decision)
-    -- | Get the contents of all mission script files
---    getMissionScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | Get the parsed mission trees
---    getMissions :: Monad m => PPT g m (HashMap Text HOI4MissionTreeBranch)
     -- | Get the (known) event triggers
     getEventTriggers :: Monad m => PPT g m HOI4EventTriggers
     -- | Get the (known) event triggers
     getDecisionTriggers :: Monad m => PPT g m HOI4DecisionTriggers
     -- | Get the on actions script files
     getOnActionsScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | Get the on disaster script files
---    getDisasterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed geographic data
     getGeoData :: Monad m => PPT g m (HashMap Text HOI4GeoType)
     -- | Get the contents of all dynamic modifier script files.
@@ -199,8 +180,6 @@ data HOI4Event = HOI4Event {
     ,   hoi4evt_title :: [HOI4EvtTitle]
     -- | Description
     ,   hoi4evt_desc :: [HOI4EvtDesc]
---  -- | Event picture
---  ,   hoi4evt_picture :: Maybe Text
     -- | Type of thing the event happens to (e.g.  for a @country_event@ this
     -- is 'HOI4Country'). This is used to set the top level scope for its
     -- scripts.
@@ -360,15 +339,7 @@ data HOI4Decision = HOI4Decision
     ,   dec_path :: FilePath -- ^ Source file
     ,   dec_cat :: Text -- ^ Category of the decision
     } deriving (Show)
-{-
-data HOI4Modifier = HOI4Modifier
-    {   modName :: Text
-    ,   modLocName :: Maybe Text
-    ,   modPath :: FilePath
-    ,   modReligious :: Bool
-    ,   modEffects :: GenericScript
-    } deriving (Show)
--}
+
 data HOI4DynamicModifier = HOI4DynamicModifier
     {   dmodName :: Text
     ,   dmodLocName :: Maybe Text
@@ -394,25 +365,6 @@ data HOI4OpinionModifier = HOI4OpinionModifier
     ,   omodTarget :: Maybe Bool
     } deriving (Show)
 
-{-
-data HOI4Mission = HOI4Mission
-    {   hoi4m_id :: Text
-    ,   hoi4m_icon :: Text
-    ,   hoi4m_slot :: Int -- Which column (1..5) does the mission tree branch appear in?
-    ,   hoi4m_position :: Int -- Which row the mission appears in. 1 is top.
-    ,   hoi4m_prerequisites :: [Text]
-    ,   hoi4m_trigger :: GenericScript
-    ,   hoi4m_effect :: GenericScript
-    } deriving (Show)
-
-data HOI4MissionTreeBranch = HOI4MissionTreeBranch
-    {   hoi4mtb_path :: FilePath
-    ,   hoi4mtb_id :: Text
-    ,   hoi4mtb_slot :: Int -- Which column (1..5) does the mission tree branch appear in?
-    ,   hoi4mtb_potential :: Maybe GenericScript
-    ,   hoi4mtb_missions :: [HOI4Mission]
-    } deriving (Show)
--}
 data HOI4NationalFocus = HOI4NationalFocus
     {   nf_id :: Text
     ,   nf_name_loc :: Text
@@ -537,10 +489,3 @@ isGeographic HOI4ScopeState = True
 isGeographic HOI4TradeNode = True
 isGeographic HOI4Geographic = True
 isGeographic _ = False
-
------------------------------
--- Miscellaneous utilities --
------------------------------
-
---getModifier :: (HOI4Info g, Monad m) => Text -> PPT g m (Maybe HOI4Modifier)
---getModifier id = HM.lookup id <$> getModifiers

@@ -146,7 +146,8 @@ endspace = Ap.option mempty startspace *> Ap.option mempty hspace *> nothing
 stringLit :: Parser Text
 stringLit = T.init . handleEmpty . T.dropWhileEnd (/='"') . T.pack <$> (Ap.char '"' *> many stringChar)
     <?> "string literal"
-handleEmpty t = if T.null t then "e" else t -- in case an entry isn't properly closed with a "
+    where
+        handleEmpty t = if T.null t then "e" else t -- in case an entry isn't properly closed with a "
 
 -- | Characters within a string. Process backslash escapes (apostrophes,
 -- newlines and tabs).
