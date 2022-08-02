@@ -113,7 +113,9 @@ handlersRhsIrrelevant :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersRhsIrrelevant = Tr.fromList
         [("dismantle_faction"       , rhsAlwaysYes MsgDismantleFaction)
         ,("drop_cosmetic_tag"       , rhsAlwaysYes MsgDropCosmeticTag)
-        ,("kill_country_leader"    , rhsAlwaysYes MsgKillCountryLeader)
+        ,("kill_country_leader"     , rhsAlwaysYes MsgKillCountryLeader)
+        ,("leave_faction"           , rhsAlwaysYes MsgLeaveFaction)
+        ,("mark_focus_tree_layout_dirty" , rhsAlwaysYes MsgMarkFocusTreeLayoutDirty)
         ,("retire_country_leader"       , rhsAlwaysYes MsgRetireCountryLeader)
         ]
 
@@ -141,7 +143,10 @@ handlersNumericCompare = Tr.fromList
         ,("has_manpower"                     , numericCompare "more than" "less than" MsgHasManpower MsgHasManpowerVar)
         ,("has_stability"                    , numericCompare "more than" "less than" MsgHasStability MsgHasStabilityVar)
         ,("has_war_support"                  , numericCompare "more than" "less than" MsgHasWarSupport MsgHasWarSupportVar)
-        ,("num_of_factories"                 , numericCompare "more than" "less than" MsgNumOfFactories MsgNumOfFactoriesVar)
+        ,("industrial_complex"               , numericCompare "more than" "fewer than" MsgIndustrialComplex MsgIndustrialComplexVar)
+        ,("num_of_controlled_factories"      , numericCompare "more than" "fewer than" MsgNumOfControlledFactories MsgNumOfControlledFactoriesVar)
+        ,("num_of_factories"                 , numericCompare "more than" "fewer than" MsgNumOfFactories MsgNumOfFactoriesVar)
+        ,("num_of_nukes"                     , numericCompare "more than" "fewer than" MsgNumOfNukes MsgNumOfNukesVar)
         ,("surrender_progress"               , numericCompare "more than" "less than" MsgSurrenderProgress MsgSurrenderProgressVar)
         ,("threat"                           , numericCompare "more than" "less than" MsgThreat MsgThreatVar)
         ,("fascism"                          , numericCompare "more than" "less than" MsgFascismCompare MsgFascismCompareVar)
@@ -176,6 +181,40 @@ handlersModifiers = Tr.fromList
         ,("research_sharing_per_country_bonus_factor" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS_FACTOR" MsgModifier) -- % pos
         ,("research_speed_factor"       , numericLoc "MODIFIER_RESEARCH_SPEED_FACTOR" MsgModifierPcPosReduced)
         ,("local_resources_factor"      , numericLoc "MODIFIER_LOCAL_RESOURCES_FACTOR" MsgModifierPcPosReduced)
+                -- research stuff?
+        ,("light_air"                   , numericLoc "light_air_research" MsgModifierPcPosReduced)
+        ,("medium_air"                  , numericLoc "medium_air_research" MsgModifierPcPosReduced)
+        ,("heavy_air"                   , numericLoc "heavy_air_research" MsgModifierPcPosReduced)
+        ,("cas_bomber"                  , numericLoc "cas_bomber_research" MsgModifierPcPosReduced)
+        ,("tactical_bomber"             , numericLoc "tactical_bomber_research" MsgModifierPcPosReduced)
+        ,("armor"                       , numericLoc "armor_research" MsgModifierPcPosReduced)
+        ,("artillery"                   , numericLoc "artillery_research" MsgModifierPcPosReduced)
+        ,("naval_air"                   , numericLoc "naval_air_research" MsgModifierPcPosReduced)
+        ,("naval_mines"                 , numericLoc "naval_mines_research" MsgModifierPcPosReduced)
+        ,("radar_tech"                  , numericLoc "radar_tech_research" MsgModifierPcPosReduced)
+        ,("infantry_weapons"            , numericLoc "infantry_weapons_research" MsgModifierPcPosReduced)
+        ,("motorized_equipment"         , numericLoc "motorized_equipment_research" MsgModifierPcPosReduced)
+        ,("naval_equipment"             , numericLoc "naval_equipment_research" MsgModifierPcPosReduced)
+        ,("ship_modules_tech"           , numericLoc "ship_modules_tech_research" MsgModifierPcPosReduced)
+        ,("bb_tech"                     , numericLoc "bb_tech_research" MsgModifierPcPosReduced)
+        ,("shbb_tech"                   , numericLoc "shbb_tech_research" MsgModifierPcPosReduced)
+        ,("ca_tech"                     , numericLoc "ca_tech_research" MsgModifierPcPosReduced)
+        ,("cl_tech"                     , numericLoc "cl_tech_research" MsgModifierPcPosReduced)
+        ,("bc_tech"                     , numericLoc "bc_tech_research" MsgModifierPcPosReduced)
+        ,("tp_tech"                     , numericLoc "tp_tech_research" MsgModifierPcPosReduced)
+        ,("ss_tech"                     , numericLoc "ss_tech_research" MsgModifierPcPosReduced)
+        ,("dd_tech"                     , numericLoc "dd_tech_research" MsgModifierPcPosReduced)
+        ,("cv_tech"                     , numericLoc "cv_tech_research" MsgModifierPcPosReduced)
+        ,("rocketry"                    , numericLoc "rocketry_research" MsgModifierPcPosReduced)
+        ,("nuclear"                     , numericLoc "nuclear_research" MsgModifierPcPosReduced)
+        ,("industry"                    , numericLoc "industry_research" MsgModifierPcPosReduced)
+        ,("electronics"                 , numericLoc "electronics_research" MsgModifierPcPosReduced)
+        ,("land_doctrine"               , numericLoc "land_doctrine_research" MsgModifierPcPosReduced)
+        ,("naval_doctrine"              , numericLoc "naval_doctrine_research" MsgModifierPcPosReduced)
+        ,("air_doctrine"                , numericLoc "air_doctrine_research" MsgModifierPcPosReduced)
+        ,("strategic_destruction_tree"  , numericLoc "strategic_destruction_tree_research" MsgModifierPcPosReduced)
+        ,("jet_technology"              , numericLoc "jet_technology_research" MsgModifierPcPosReduced)
+        ,("train_tech"                  , numericLoc "train_tech_research" MsgModifierPcPosReduced)
             -- Politics modifiers
         ,("min_export"                  , numericLoc "MODIFIER_MIN_EXPORT_FACTOR" MsgModifierPcReducedSign) -- yellow
         ,("trade_opinion_factor"        , numericLoc "MODIFIER_TRADE_OPINION_FACTOR" MsgModifierPcReducedSign)
@@ -267,7 +306,7 @@ handlersModifiers = Tr.fromList
         ,("consumer_goods_factor"       , numericLoc "MODIFIER_CONSUMER_GOODS_FACTOR" MsgModifierPcReduced)
         ,("conversion_cost_civ_to_mil_factor" , numericLoc "MODIFIER_CONVERSION_COST_CIV_TO_MIL_FACTOR" MsgModifierPcNegReduced)
         ,("conversion_cost_mil_to_civ_factor" , numericLoc "MODIFIER_CONVERSION_COST_MIL_TO_CIV_FACTOR" MsgModifierPcNegReduced)
-        ,("global_building_slots"       , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS" MsgModifier) -- flat
+        ,("global_building_slots"       , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS" MsgModifierPcPosReduced) -- flat
         ,("global_building_slots_factor" , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS_FACTOR" MsgModifierPcPosReduced)
         ,("industrial_capacity_dockyard" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_DOCKYARD_FACTOR" MsgModifierPcPosReduced)
         ,("industrial_capacity_factory" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_FACTOR" MsgModifierPcPosReduced)
@@ -321,7 +360,7 @@ handlersCompound = Tr.fromList
         -- trigger scopes
          ("all_allied_country" {- sic -}, scope HOI4Country     . compoundMessage MsgAllAlliedCountry)
         ,("all_army_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAllArmyLeader)
-        ,("all_character"               , scope HOI4Character   . compoundMessage MsgAllCharacter)
+        ,("all_character"               , scope HOI4ScopeCharacter   . compoundMessage MsgAllCharacter)
         ,("all_controlled_state"        , scope HOI4ScopeState  . compoundMessage MsgAllControlledState)
         ,("all_core_state"              , scope HOI4ScopeState  . compoundMessage MsgAllCoreState)
         ,("all_country"                 , scope HOI4Country     . compoundMessage MsgAllCountry)
@@ -340,7 +379,7 @@ handlersCompound = Tr.fromList
         ,("all_unit_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAllUnitLeader)
         ,("any_allied_country"          , scope HOI4Country     . compoundMessage MsgAnyAlliedCountry)
         ,("any_army_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAnyArmyLeader)
-        ,("any_character"               , scope HOI4Character   . compoundMessage MsgAnyCharacter)
+        ,("any_character"               , scope HOI4ScopeCharacter   . compoundMessage MsgAnyCharacter)
         ,("any_controlled_state"        , scope HOI4ScopeState  . compoundMessage MsgAnyControlledState)
         ,("any_core_state"              , scope HOI4ScopeState  . compoundMessage MsgAnyCoreState)
         ,("any_country"                 , scope HOI4Country     . compoundMessage MsgAnyCountry)
@@ -360,7 +399,7 @@ handlersCompound = Tr.fromList
         ,("any_unit_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAnyUnitLeader)
         -- effect scopes
         ,("every_army_leader"           , scope HOI4UnitLeader  . compoundMessage MsgEveryArmyLeader)
-        ,("every_character"             , scope HOI4Character   . compoundMessage MsgEveryCharacter)
+        ,("every_character"             , scope HOI4ScopeCharacter   . compoundMessage MsgEveryCharacter)
         ,("every_controlled_state"      , scope HOI4ScopeState  . compoundMessage MsgEveryControlledState)
         ,("every_core_state"            , scope HOI4ScopeState  . compoundMessage MsgEveryCoreState)
         ,("every_country"               , scope HOI4Country     . compoundMessage MsgEveryCountry)
@@ -378,7 +417,7 @@ handlersCompound = Tr.fromList
         ,("every_unit_leader"           , scope HOI4UnitLeader  . compoundMessage MsgEveryUnitLeader)
         ,("global_every_army_leader"    , scope HOI4UnitLeader  . compoundMessage MsgGlobalEveryArmyLeader)
         ,("random_army_leader"          , scope HOI4UnitLeader  . compoundMessage MsgRandomArmyLeader)
-        ,("random_character"            , scope HOI4Character   . compoundMessage MsgRandomCharacter)
+        ,("random_character"            , scope HOI4ScopeCharacter   . compoundMessage MsgRandomCharacter)
         ,("random_controlled_state"     , scope HOI4ScopeState  . compoundMessage MsgRandomControlledState)
         ,("random_core_state"           , scope HOI4ScopeState  . compoundMessage MsgRandomCoreState)
         ,("random_country"              , scope HOI4Country     . compoundMessage MsgRandomCountry)
@@ -404,8 +443,8 @@ handlersCompound = Tr.fromList
         ,("owner"                       , scope HOI4Country   . compoundMessage MsgOwner)
         ,("controller"                  , scope HOI4Country   . compoundMessage MsgController)
         ,("capital_scope"               , scope HOI4ScopeState  . compoundMessage MsgCapital)
-        ,("event_target"        , compoundMessageTagged MsgSCOPEEventTarget (Just HOI4From)) -- Tagged blocks
-        ,("var"                 , compoundMessageTagged MsgSCOPEVariable (Just HOI4From)) -- Tagged blocks
+        ,("event_target"        , compoundMessageTagged MsgSCOPEEventTarget (Just HOI4Misc)) -- Tagged blocks
+        ,("var"                 , compoundMessageTagged MsgSCOPEVariable (Just HOI4Misc)) -- Tagged blocks
         -- flow control
         ,("and"                         , compoundMessage MsgAnd) --AND
         ,("not"                         , compoundMessage MsgNot) --NOT
@@ -435,12 +474,14 @@ handlersLocRhs = Tr.fromList
         ,("set_state_name"        , withLocAtom MsgSetStateName)
         ,("set_state_category"    , withLocAtom MsgSetStateCategory)
         ,("custom_effect_tooltip" , withLocAtom MsgCustomEffectTooltip)
+        ,("has_dynamic_modifier"  , withLocAtom MsgHasDynamicMod)
         ,("has_opinion_modifier"  , withLocAtom MsgHasOpinionMod)
         ,("has_tech"              , withLocAtom MsgHasTech)
         ,("is_character"          , withLocAtom MsgIsCharacter)
         ,("is_on_continent"       , withLocAtom MsgIsOnContinent)
         ,("is_in_tech_sharing_group" , withLocAtomName MsgIsInTechSharingGroup)
         ,("add_to_tech_sharing_group" , withLocAtomName MsgAddToTechSharingGroup)
+        ,("remove_dynamic_modifier" , withLocAtom MsgRemoveDynamicMod)
         ,("tooltip"               , withLocAtom MsgTooltip)
         ,("unlock_decision_category_tooltip" , withLocAtom MsgUnlockDecisionCategoryTooltip)
         ,("unlock_decision_tooltip" , withLocAtom MsgUnlockDecisionTooltip)
@@ -456,7 +497,7 @@ handlersState = Tr.fromList
         ,("owns_state"          , withState MsgOwnsState)
         ,("remove_state_claim"  , withState MsgRemoveStateClaim)
         ,("remove_state_core"   , withState MsgRemoveStateCore)
-        ,("set_capital"         , withState MsgSetCapital)
+        ,("state"               , withState MsgStateId)
         ,("transfer_state"      , withState MsgTransferState)
         ]
 
@@ -654,8 +695,9 @@ handlersSpecialComplex = Tr.fromList
         ,("load_focus_tree"              , loadFocusTree)
         ,("modify_building_resources"    , modifyBuildingResources)
         ,("news_event"                   , scope HOI4Country . triggerEvent MsgNewsEvent)
+        ,("Release_autonomy"             , setAutonomy MsgReleaseAutonomy)
         ,("remove_opinion_modifier"      , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
-        ,("set_autonomy"                 , setAutonomy)
+        ,("set_autonomy"                 , setAutonomy MsgSetAutonomy)
         ,("set_politics"                 , setPolitics)
         ,("set_party_name"               , setPartyName)
         ,("start_civil_war"              , startCivilWar)
@@ -711,6 +753,7 @@ handlersMisc :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersMisc = Tr.fromList
         [("add_ai_strategy"             , rhsIgnored MsgAddAiStrategy)
         ,("add_autonomy_ratio"          , addAutonomyRatio)
+        ,("add_field_marshal_role"      , addFieldMarshalRole)
         ,("add_resource"                , addResource)
         ,("date"                        , handleDate "After" "Before")
         ,("has_start_date"              , handleDate "Game initially started after" "Game initially started before")
@@ -722,7 +765,9 @@ handlersMisc = Tr.fromList
         ,("has_equipment"       , hasEquipment)
         ,("has_wargoal_against" , hasWarGoalAgainst)
         ,("send_equipment"      , sendEquipment)
+        ,("set_capital"         , setCapital MsgSetCapital)
         ,("set_rule"            , setRule MsgSetRule)
+        ,("set_technology"      , setTechnology)
         ]
 
 -- | Handlers for ignored statements
@@ -762,7 +807,16 @@ ppOne' stmt lhs rhs = case lhs of
                         scriptMsgs <- scope HOI4Country $ ppMany scr
                         return (lflag : scriptMsgs)
                 _ -> preStatement stmt
-             else preStatement stmt
+             else case rhs of
+                CompoundRhs scr -> do
+                    characters <- getCharacters
+                    case HM.lookup label characters of
+                        Just charid -> withCurrentIndent $ \_ -> do  -- force indent level at least 1
+                            lchar <- plainMsg' (chaName charid <> ":")
+                            scriptMsgs <- scope HOI4ScopeCharacter $ ppMany scr
+                            return (lchar : scriptMsgs)
+                        _ -> preStatement stmt
+                _ -> preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
     IntLhs n -> do -- Treat as a province tag
         case rhs of

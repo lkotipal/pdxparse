@@ -29,7 +29,7 @@ settings:
     version: "1.11.12" #required
 
     # All Platforms where mod files are kept
-    #   Windows: C:\Users\<Username>\Documents\Paradox Interactive\Hearts of Iron IV\mod\nameofmod
+    #   Windows: C:\Users\<Username>\Documents\Paradox Interactive\Hearts of Iron IV\mod\nameofmod (use / instead of \ )
     #   Mac OS: ~/Documents/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
     #   Linux: ~/.local/share/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
     #

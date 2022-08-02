@@ -51,7 +51,7 @@ import HOI4.NationalFocus(parseHOI4NationalFocuses, writeHOI4NationalFocuses)
 import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
                    , findTriggeredEventsInOnActions, findTriggeredEventsInNationalFocus)
-import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface)
+import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface, parseHOI4Characters)
 
 -- | Temporary (?) fix for CHI and PRC both localizing to "China"
 -- Can be extended/removed as necessary
@@ -106,6 +106,8 @@ instance IsGame HOI4 where
                 ,   hoi4countryHistoryScripts = HM.empty
                 ,   hoi4interfacegfxScripts = HM.empty
                 ,   hoi4interfacegfx = HM.empty
+                ,   hoi4characterScripts = HM.empty
+                ,   hoi4characters = HM.empty
                 -- unused
                 ,   hoi4extraScripts = HM.empty
                 ,   hoi4extraScriptsCountryScope = HM.empty
@@ -193,6 +195,7 @@ instance HOI4Info HOI4 where
     getNationalFocus = do
         HOI4D ed <- get
         return (hoi4nationalfocus ed)
+
     getCountryHistoryScripts = do
         HOI4D ed <- get
         return (hoi4countryHistoryScripts ed)
@@ -205,6 +208,12 @@ instance HOI4Info HOI4 where
     getInterfaceGFX = do
         HOI4D ed <- get
         return (hoi4interfacegfx ed)
+    getCharacterScripts = do
+        HOI4D ed <- get
+        return (hoi4characterScripts ed)
+    getCharacters = do
+        HOI4D ed <- get
+        return (hoi4characters ed)
 -- unused
     getExtraScripts = do
         HOI4D ed <- get
@@ -253,17 +262,16 @@ readHOI4Scripts = do
         readHOI4Script :: String -> PPT HOI4 m (HashMap String GenericScript)
         readHOI4Script category = do
             let sourceSubdir = case category of
-                    "policies" -> "common" </> "policies"
                     "ideas" -> "common" </> "ideas"
                     "opinion_modifiers" -> "common" </> "opinion_modifiers"
                     "on_actions" -> "common" </> "on_actions"
-                    "country_history" -> "history" </> "countries"
-                    "colonial_regions" -> "common" </> "colonial_regions"
                     "dynamic_modifiers" -> "common" </> "dynamic_modifiers"
                     "decisions" -> "common" </> "decisions"
                     "decisioncats" -> "common" </> "decisions" </> "categories"
                     "national_focus" -> "common" </> "national_focus"
 
+                    "country_history" -> "history" </> "countries"
+                    "characters" -> "common" </> "characters"
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
@@ -323,7 +331,9 @@ readHOI4Scripts = do
     on_actions <- readHOI4Script "on_actions"
     dynamic_modifiers <- readHOI4Script "dynamic_modifiers"
     national_focus <- readHOI4Script "national_focus"
+
     country_history <- readHOI4Script "country_history"
+    characterScripts <- readHOI4Script "characters"
     interface_gfx <- readHOI4SpecificScript "interfacegfx"
 
     modify $ \(HOI4D s) -> HOI4D $ s {
@@ -335,7 +345,9 @@ readHOI4Scripts = do
         ,   hoi4onactionsScripts = on_actions
         ,   hoi4dynamicmodifierScripts = dynamic_modifiers
         ,   hoi4countryHistoryScripts = country_history
+
         ,   hoi4nationalfocusScripts = national_focus
+        ,   hoi4characterScripts = characterScripts
         ,   hoi4interfacegfxScripts = interface_gfx
         }
 
@@ -352,7 +364,11 @@ parseHOI4Scripts = do
     events <- parseHOI4Events =<< getEventScripts
     on_actions <- getOnActionsScripts
     nationalFocus <- parseHOI4NationalFocuses =<< getNationalFocusScripts
+
     countryHistory <- parseHOI4CountryHistory =<< getCountryHistoryScripts
+    interfaceGFX <- parseHOI4Interface =<< getInterfaceGFXScripts
+    characters <- parseHOI4Characters =<< getCharacterScripts
+
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
         te3 = findTriggeredEventsInOnActions te2 (concat (HM.elems on_actions))
@@ -361,7 +377,6 @@ parseHOI4Scripts = do
         td2 = findActivatedDecisionsInDecisions td1 (HM.elems decisions)
         td3 = findActivatedDecisionsInOnActions td2 (concat (HM.elems on_actions))
         td4 = findActivatedDecisionsInNationalFocus td3 (HM.elems nationalFocus)
-    interfaceGFX <- parseHOI4Interface =<< getInterfaceGFXScripts
     modify $ \(HOI4D s) -> HOI4D $
             s { hoi4events = events
             ,   hoi4decisioncats = decisioncats
@@ -372,7 +387,9 @@ parseHOI4Scripts = do
             ,   hoi4eventTriggers = te4
             ,   hoi4decisionTriggers = td4
             ,   hoi4dynamicmodifiers = dynamicModifiers
+
             ,   hoi4countryHistory = countryHistory
+            ,   hoi4characters = characters
             ,   hoi4interfacegfx = interfaceGFX
             }
 

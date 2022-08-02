@@ -86,7 +86,7 @@ parseHOI4IdeaGroup _ = withCurrentFile $ \file ->
 -- | Empty idea. Starts off Nothing everywhere, except id and name
 -- (should get filled in immediately).
 newIdea :: HOI4Idea
-newIdea = HOI4Idea undefined undefined Nothing undefined "GFX_idea_unknown" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined undefined
+newIdea = HOI4Idea undefined undefined "<!-- Check Script -->" undefined "GFX_idea_unknown" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined undefined
 
 -- | Parse one idea script into a idea data structure.
 parseHOI4Idea :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
@@ -100,7 +100,7 @@ parseHOI4Idea [pdx| $ideaName = %rhs |] category = case rhs of
             foldM ideaAddSection
                   (Just (newIdea { id_id = ideaName
                               , id_name = ideaName
-                              , id_name_loc = Just idName_loc
+                              , id_name_loc = idName_loc
                               , id_desc_loc = idDesc
                               , id_picture = idPicture
                               , id_path = sourcePath </> T.unpack category -- so ideas are divided into maps for the cateogry, should I loc or not?
@@ -166,11 +166,11 @@ ideaAddSection iidea stmt
                 CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_on_remove = Just scr }
                 _-> trace "bad idea on_remove" iidea
-            "cancel" -> case rhs of
+            "cancel" -> case rhs of --removes idea if true
                 CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_cancel = Just scr }
                 _-> trace "bad idea cancel" iidea
-            "do_effect" -> case rhs of
+            "do_effect" -> case rhs of --disabled modifiers if False
                 CompoundRhs [] -> iidea
                 CompoundRhs scr -> iidea { id_do_effect = Just scr }
                 _-> trace "bad idea do_effect" iidea

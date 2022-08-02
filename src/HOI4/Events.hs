@@ -49,7 +49,7 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
 newHOI4Event :: HOI4Scope -> FilePath -> HOI4Event
-newHOI4Event escope = HOI4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False Nothing Nothing
+newHOI4Event escope = HOI4Event Nothing [] [] escope Nothing Nothing Nothing Nothing False False False Nothing Nothing Nothing
 -- | Empty event option vaule. Starts off Nothing everywhere.
 newHOI4Option :: HOI4Option
 newHOI4Option = HOI4Option Nothing Nothing Nothing Nothing
@@ -258,8 +258,16 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
     eventAddSection' evt stmt@[pdx| fire_only_once = %rhs |]
         | GenericRhs "yes" [] <- rhs = return evt { hoi4evt_fire_only_once = True }
         | GenericRhs "no"  [] <- rhs = return evt { hoi4evt_fire_only_once = False }
-    eventAddSection' evt stmt@[pdx| major = %_ |] = return evt -- do nothing
-    eventAddSection' evt stmt@[pdx| show_major = %_ |] = return evt -- do nothing
+    eventAddSection' evt stmt@[pdx| major = %rhs |] = case rhs of
+        GenericRhs "yes" [] -> return evt { hoi4evt_major = True }
+        -- No is the default
+        GenericRhs "no"  [] -> return evt { hoi4evt_major = False }
+        _ -> throwError "bad major"
+    eventAddSection' evt stmt@[pdx| show_major = %rhs |] = case rhs of
+        CompoundRhs show_major_script -> case show_major_script of
+            [] -> return evt -- empty, treat as if it wasn't there
+            _ -> return evt { hoi4evt_show_major = Just show_major_script }
+        _ -> throwError "bad event show_major"
     eventAddSection' evt stmt@[pdx| $hidden = %rhs |] | T.toLower hidden == "hidden" = case rhs of
         GenericRhs "yes" [] -> return evt { hoi4evt_hide_window = True }
         -- No is the default
@@ -270,6 +278,7 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
         GenericRhs "yes" [] -> return evt { hoi4evt_fire_for_sender = Just False }
         GenericRhs "no" [] -> return evt { hoi4evt_fire_for_sender = Just True }
         _ -> throwError "bad fire_for_sender"
+    eventAddSection' evt stmt@[pdx| timeout_days = %_ |] = return evt
     eventAddSection' evt stmt@[pdx| $label = %_ |] =
         withCurrentFile $ \file ->
             throwError $ "unrecognized event section in " <> T.pack file <> ": " <> label
@@ -404,28 +413,73 @@ ppEventSource (HOI4EvtSrcNFComplete id loc icon) = do
     iconnf <-
         let iconname = HM.findWithDefault icon icon gfx in
         return $ "[[File:" <> iconname <> ".png|28px]]"
-    nfloc <- getGameL10n loc
     return $ Doc.strictText $ mconcat ["Completing the national focus "
         , iconnf
         , " <!-- "
         , id
         , " -->"
-        , iquotes't nfloc
+        , iquotes't loc
         ]
 ppEventSource (HOI4EvtSrcNFSelect id loc icon) = do
     gfx <- getInterfaceGFX
     iconnf <-
         let iconname = HM.findWithDefault icon icon gfx in
         return $ "[[File:" <> iconname <> ".png|28px]]"
-    nfloc <- getGameL10n loc
     return $ Doc.strictText $ mconcat ["Selecting the national focus "
         , iconnf
         , " <!-- "
         , id
         , " -->"
-        , iquotes't nfloc
+        , iquotes't loc
         ]
-
+ppEventSource (HOI4EvtSrcIdeaOnAdd id loc icon categ) = do
+    gfx <- getInterfaceGFX
+    iconnf <-
+        let iconname = HM.findWithDefault icon icon gfx in
+        return $ "[[File:" <> iconname <> ".png|28px]]"
+    catloc <- getGameL10n categ
+    return $ Doc.strictText $ mconcat ["When the "
+        , catloc
+        , " "
+        , iconnf
+        , " <!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        , " is added"
+        ]
+ppEventSource (HOI4EvtSrcIdeaOnRemove id loc icon categ) = do
+    gfx <- getInterfaceGFX
+    iconnf <-
+        let iconname = HM.findWithDefault icon icon gfx in
+        return $ "[[File:" <> iconname <> ".png|28px]]"
+    catloc <- getGameL10n categ
+    return $ Doc.strictText $ mconcat ["When the "
+        , catloc
+        , " "
+        , iconnf
+        , " <!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        , " is removed"
+        ]
+ppEventSource (HOI4EvtSrcCharacterOnAdd id loc) =
+    return $ Doc.strictText $ mconcat ["When the advisor "
+        , " <!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        , " is added"
+        ]
+ppEventSource (HOI4EvtSrcCharacterOnRemove id loc) =
+    return $ Doc.strictText $ mconcat ["When the advisor "
+        , " <!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        , " is removed"
+        ]
 
 ppTriggeredBy :: (HOI4Info g, Monad m) => Text -> [Doc] -> PPT g m Doc
 ppTriggeredBy eventId trig = do
@@ -469,9 +523,11 @@ ppEvent evt = maybe
                     (field evt)
             isTriggeredOnly = fromMaybe False $ hoi4evt_is_triggered_only evt
             isFireOnlyOnce = hoi4evt_fire_only_once evt
+            isMajor = hoi4evt_major evt
             isFireForSender = fromMaybe False $ hoi4evt_fire_for_sender evt
             evtId = Doc.strictText eid
         trigger_pp'd <- evtArg "trigger" hoi4evt_trigger ppScript
+        showmajor_pp'd <- evtArg "trigger" hoi4evt_show_major ppScript
         mmtth_pp'd <- mapM (ppMtth isTriggeredOnly) (hoi4evt_mean_time_to_happen evt)
         immediate_pp'd <- setIsInEffect True (evtArg "immediate" hoi4evt_immediate ppScript)
         triggered_pp <- ppTriggeredBy eid trigger_pp'd
@@ -482,6 +538,9 @@ ppEvent evt = maybe
         when (isTriggeredOnly && Doc.doc2text triggered_pp == "(No triggers)" && isNothing mmtth_pp'd && null trigger_pp'd) $
             -- TODO: use logging instead of trace
             traceM ("warning: Event is is_triggered_only but no triggers or mean_time_to_hapen found for event id " ++ T.unpack eid)
+        when (isFireOnlyOnce && isMajor) $
+            -- TODO: use logging instead of trace
+            traceM ("warning: Event is fire_only_once and major " ++ T.unpack eid)
         return . mconcat $
             ["<section begin=", evtId, "/>", PP.line
             ,"{{Event", PP.line
@@ -492,6 +551,9 @@ ppEvent evt = maybe
             ] ++
             ( if isFireOnlyOnce then
                 ["| fire_only_once = yes", PP.line]
+            else []) ++
+            ( if isMajor then
+                ["| major = yes", PP.line]
             else []) ++
             ( if isFireForSender then
                 ["| fire_for_sender = no", PP.line]
@@ -713,3 +775,19 @@ findTriggeredEventsInNationalFocus hm nf = addEventTriggers hm (concatMap findIn
         findInFocus f =
             addEventSource (const (HOI4EvtSrcNFComplete (nf_id f) (nf_name_loc f) (nf_icon f))) (maybe [] findInStmts (nf_completion_reward f)) ++
             addEventSource (const (HOI4EvtSrcNFSelect (nf_id f) (nf_name_loc f) (nf_icon f))) (maybe [] findInStmts (nf_select_effect f))
+
+findTriggeredEventsInIdeas :: HOI4EventTriggers -> [HOI4Idea] -> HOI4EventTriggers
+findTriggeredEventsInIdeas hm idea = addEventTriggers hm (concatMap findInFocus idea)
+    where
+        findInFocus :: HOI4Idea -> [(Text, HOI4EventSource)]
+        findInFocus idea =
+            addEventSource (const (HOI4EvtSrcIdeaOnAdd (id_id idea) (id_name_loc idea) (id_picture idea) (id_category idea))) (maybe [] findInStmts (id_on_add idea)) ++
+            addEventSource (const (HOI4EvtSrcIdeaOnRemove (id_id idea) (id_name_loc idea) (id_picture idea) (id_category idea))) (maybe [] findInStmts (id_on_remove idea))
+
+findTriggeredEventsInCharacters :: HOI4EventTriggers -> [HOI4Character] -> HOI4EventTriggers
+findTriggeredEventsInCharacters hm hChar = addEventTriggers hm (concatMap findInFocus hChar)
+    where
+        findInFocus :: HOI4Character -> [(Text, HOI4EventSource)]
+        findInFocus hChar =
+            addEventSource (const (HOI4EvtSrcCharacterOnAdd (chaTag hChar) (chaName hChar))) (maybe [] findInStmts (chaOn_add hChar)) ++
+            addEventSource (const (HOI4EvtSrcCharacterOnRemove (chaTag hChar) (chaName hChar))) (maybe [] findInStmts (chaOn_remove hChar))

@@ -5,6 +5,7 @@ Description : Feature handler for miscellaneous features in Hearts of Iron IV
 module HOI4.Misc (
          parseHOI4CountryHistory
         ,parseHOI4Interface
+        ,parseHOI4Characters
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -16,7 +17,7 @@ import Control.Monad.State (MonadState (..), gets)
 import Control.Monad.Trans (MonadIO (..))
 
 import Data.Char (toLower)
-import Data.Maybe (catMaybes, fromMaybe)
+import Data.Maybe (catMaybes, fromMaybe, mapMaybe)
 import Data.Monoid ((<>))
 
 import System.FilePath (takeFileName, takeBaseName)
@@ -162,3 +163,127 @@ processInterface stmt@[pdx| $spriteType = @spr |] | T.toLower spriteType == "spr
             | T.toLower texturefile == "texturefile" = Just $ T.pack $ takeBaseName $ T.unpack id
         getPic (_ : ss) = getPic ss
 processInterface stmt = return (Right Nothing)
+
+----------------
+-- Characters --
+----------------
+
+newHOI4Character :: Text -> Text -> FilePath -> HOI4Character
+newHOI4Character chatag locname = HOI4Character chatag locname Nothing Nothing Nothing Nothing
+
+parseHOI4Characters :: (HOI4Info g, IsGameData (GameData g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4Character)
+parseHOI4Characters scripts = HM.unions . HM.elems <$> do
+    tryParse <- hoistExceptions $
+        HM.traverseWithKey
+            (\sourceFile scr -> setCurrentFile sourceFile $ mapM character $ case scr of
+                [[pdx| characters = @chars |]] -> chars
+                _ -> scr)
+            scripts
+    case tryParse of
+        Left err -> do
+            traceM $ "Completely failed parsing characters: " ++ T.unpack err
+            return HM.empty
+        Right characterFilesOrErrors ->
+            flip HM.traverseWithKey characterFilesOrErrors $ \sourceFile ecchar ->
+                fmap (mkChaMap . catMaybes) . forM ecchar $ \case
+                    Left err -> do
+                        traceM $ "Error parsing characters in " ++ sourceFile
+                                 ++ ": " ++ T.unpack err
+                        return Nothing
+                    Right cchar -> return cchar
+    where
+        mkChaMap :: [HOI4Character] -> HashMap Text HOI4Character
+        mkChaMap = HM.fromList . map (chaTag &&& id)
+
+character :: (HOI4Info g, IsGameData (GameData g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe HOI4Character))
+character (StatementBare _) = throwError "bare statement at top level"
+character [pdx| %left = %right |] = case right of
+    CompoundRhs parts -> case left of
+        CustomLhs _ -> throwError "internal error: custom lhs"
+        IntLhs _ -> throwError "int lhs at top level"
+        AtLhs _ -> return (Right Nothing)
+        GenericLhs id [] -> withCurrentFile $ \file -> do
+            locname <- getGameL10n id
+            cchar <- hoistErrors $ foldM characterAddSection
+                                        (Just (newHOI4Character id locname file))
+                                        parts
+            case cchar of
+                Left err -> return (Left err)
+                Right Nothing -> return (Right Nothing)
+                Right (Just char) -> withCurrentFile $ \file ->
+                    return (Right (Just char))
+        _ -> throwError "unrecognized form for characters"
+    _ -> throwError "unrecognized form for characters@content"
+character _ = withCurrentFile $ \file ->
+    throwError ("unrecognised form for characters in " <> T.pack file)
+
+characterAddSection :: (HOI4Info g, MonadError Text m) =>
+    Maybe HOI4Character -> GenericStatement -> PPT g m (Maybe HOI4Character)
+characterAddSection Nothing _ = return Nothing
+characterAddSection hChar stmt
+    = sequence (characterAddSection' <$> hChar <*> pure stmt)
+    where
+        characterAddSection' hChar stmt@[pdx| name = %name |] = case name of
+            StringRhs name -> return hChar {chaName = name}
+            GenericRhs name [] -> do
+                nameLoc <- getGameL10n name
+                return hChar {chaName = nameLoc}
+            _ -> trace "Bad name in characters" $ return hChar
+        characterAddSection' hChar stmt@[pdx| advisor = @adv |] = do
+            let  (onAdd, onRemove, advtraits) = getAdvinfo adv
+            return hChar {chaAdvisorTraits = advtraits, chaOn_add = onAdd, chaOn_remove = onRemove}
+        characterAddSection' hChar stmt@[pdx| country_leader = @clead |] =
+            let cleadtraits = concatMap getTraits clead in
+            return hChar {chaLeaderTraits = Just cleadtraits}
+        characterAddSection' hChar [pdx| portraits = %_ |] =
+            return hChar
+        characterAddSection' hChar [pdx| corps_commander = %_ |] =
+            return hChar
+        characterAddSection' hChar [pdx| field_marshal = %_ |] =
+            return hChar
+        characterAddSection' hChar [pdx| navy_leader = %_ |] =
+            return hChar
+        characterAddSection' hChar [pdx| gender = %_ |] =
+            return hChar
+        characterAddSection' hChar [pdx| instance = %_ |] =
+            return hChar
+        characterAddSection' hChar [pdx| allowed_civil_war = %_ |] =
+            return hChar
+        characterAddSection' hChar [pdx| $other = %_ |]
+            = trace ("unknown section in character: " ++ T.unpack other) $ return hChar
+        characterAddSection' hChar _
+            = trace "unrecognised form for in character" $ return hChar
+
+        getTraits stmt@[pdx| traits = @traits |] = map
+            (\case
+                StatementBare (GenericLhs trait []) -> trait
+                _ -> trace ("different trait list in" ++ show stmt) "")
+            traits
+        getTraits stmt = []
+
+        getAdvinfo :: [GenericStatement] -> (Maybe GenericScript,Maybe GenericScript, Maybe [Text])
+        getAdvinfo adv = do
+            let (onadd, rest) = extractStmt (matchLhsText "on_add") adv
+                (onremove, resttrait) = extractStmt (matchLhsText "on_remove") rest
+                (traits,_ ) = extractStmt (matchLhsText "traits") rest
+                onaddscr = case onadd of
+                    Just [pdx| on_add = %rhs |] -> case rhs of
+                        CompoundRhs [] -> Nothing
+                        CompoundRhs scr -> Just scr
+                        _-> Nothing
+                    _ -> Nothing
+                onremovescr = case onremove of
+                    Just [pdx| on_remove = %rhs |] -> case rhs of
+                        CompoundRhs [] -> Nothing
+                        CompoundRhs scr -> Just scr
+                        _-> Nothing
+                    _ -> Nothing
+                traitsl = case traits of
+                    Just [pdx| traits = @rhs |] -> Just (mapMaybe traitFromArray rhs)
+                    _-> Nothing
+            (onaddscr, onremovescr, traitsl)
+        traitFromArray :: GenericStatement -> Maybe Text
+        traitFromArray (StatementBare (GenericLhs e [])) = Just e
+        traitFromArray stmt = trace ("Unknown in character trait array: " ++ show stmt) Nothing

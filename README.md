@@ -87,7 +87,8 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * In localization automatically change color of words, add icons, get nested localization etc.
 * make set_politics more elaborate maybe?
 * maybe load scripted_effects, scripted_triggers for parsing?
-* maybe load characters for parsing? also useful for has_idea, remove_idea etc.
+* ~~maybe load characters for parsing?~~
+    * create hashmap er edit idea hashmap based of idea_token in characters, also useful for has_idea, remove_idea etc.
 * maybe load buildings for parsing?
 * ~~deal with add_ideas, remove_ideas having multiple ideas in them~~
 * set_autonomy make it also deal with vars and pronouns for the target (outside foldcompound?)
@@ -96,6 +97,7 @@ Feel extremely free to help with any of these or the issues, I honestly doubt I 
 * maybe load technology for has_tech
 * maybe load country_leader for traits
 * handle or ignore add_ai_strategy?
+* Expand info on add_field_marshal_role ?
 
 ## Thanks
 * Thanks the functional programming discord community for helping me out in specific:

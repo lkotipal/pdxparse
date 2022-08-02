@@ -15,6 +15,7 @@ module HOI4.Handlers (
     ,   compoundMessageTagged
     ,   withLocAtom
     ,   withLocAtom'
+    ,   withLocAtomCompound
     ,   withLocAtom2
     ,   withLocAtomIcon
     ,   withLocAtomIconHOI4Scope
@@ -106,6 +107,9 @@ module HOI4.Handlers (
     ,   addResource
     ,   modifyBuildingResources
     ,   handleDate
+    ,   setTechnology
+    ,   setCapital
+    ,   addFieldMarshalRole
     -- testing
     ,   isPronoun
     ,   flag
@@ -314,10 +318,11 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
                 | expectedScope `matchScope` HOI4Operative -> message MsgPREVOperative
                 | expectedScope `matchScope` HOI4Country -> message MsgPREVOperativeOwner
                 | otherwise                             -> message MsgPREVOperativeAsOther
-            Just HOI4Character
-                | expectedScope `matchScope` HOI4Character -> message MsgPREVCharacter
+            Just HOI4ScopeCharacter
+                | expectedScope `matchScope` HOI4ScopeCharacter -> message MsgPREVCharacter
                 | expectedScope `matchScope` HOI4Country -> message MsgPREVCharacterOwner
                 | otherwise                             -> message MsgPREVCharacterAsOther
+            Just HOI4Misc -> message MsgMISC
             _ -> return "PREV"
     "this" -> getCurrentScope >>= \case -- will need editing
         Just HOI4Country
@@ -335,10 +340,11 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
             | expectedScope `matchScope` HOI4Operative -> message MsgTHISOperative
             | expectedScope `matchScope` HOI4Country -> message MsgTHISOperativeOwner
             | otherwise                             -> message MsgTHISOperativeAsOther
-        Just HOI4Character
-            | expectedScope `matchScope` HOI4Character -> message MsgTHISCharacter
+        Just HOI4ScopeCharacter
+            | expectedScope `matchScope` HOI4ScopeCharacter -> message MsgTHISCharacter
             | expectedScope `matchScope` HOI4Country -> message MsgTHISCharacterOwner
             | otherwise                             -> message MsgTHISCharacterAsOther
+        Just HOI4Misc -> message MsgMISC
         _ -> return "THIS"
     "from" -> message MsgFROM -- TODO: Handle this properly (if possible)
     _ -> return $ Doc.strictText name -- something else; regurgitate untouched
@@ -532,19 +538,20 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
                 newscope <- getRootScope
                 return (newscope, case newscope of
                     Just HOI4Country -> Just MsgROOTSCOPECountry
+                    Just HOI4ScopeCharacter -> Just MsgROOTSCOPECharacter
+                    Just HOI4Operative -> Just MsgROOTSCOPEOperative
                     Just HOI4ScopeState -> Just MsgROOTSCOPEState
                     Just HOI4UnitLeader -> Just MsgROOTSCOPEUnitLeader
-                    Just HOI4Operative -> Just MsgROOTSCOPEOperative
-                    Just HOI4Character -> Just MsgROOTSCOPECharacter
                     _ -> Nothing) -- warning printed below
         "prev" -> do --PREV
                 newscope <- getCurrentScope
                 return (newscope, case newscope of
                     Just HOI4Country -> Just MsgPREVSCOPECountry
-                    Just HOI4ScopeState -> Just MsgPREVSCOPEState
+                    Just HOI4ScopeCharacter -> Just MsgPREVSCOPECharacter
                     Just HOI4Operative -> Just MsgPREVSCOPEOperative
+                    Just HOI4ScopeState -> Just MsgPREVSCOPEState
                     Just HOI4UnitLeader -> Just MsgPREVSCOPEUnitLeader
-                    Just HOI4Character -> Just MsgPREVSCOPECharacter
+                    Just HOI4Misc -> Just MsgPREVSCOPEMisc
                     Just HOI4From -> Just MsgFROMSCOPE -- Roll with it
                     _ -> Nothing) -- warning printed below
         "from" -> return (Just HOI4From, Just MsgFROMSCOPE) -- FROM / Should be some way to have different message depending on if it is event or decison, etc.
@@ -582,6 +589,14 @@ withLocAtom :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage)
     -> GenericStatement -> PPT g m IndentedMessages
 withLocAtom msg = withLocAtom' msg id
+
+withLocAtomCompound :: (HOI4Info g, Monad m) =>
+    (Text -> ScriptMessage)
+        -> StatementHandler g m
+withLocAtomCompound msg stmt@[pdx| %_ = %rhs |] = case rhs of
+    CompoundRhs [scr] -> withLocAtom msg scr
+    _ -> preStatement stmt
+withLocAtomCompound _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom and we
 -- need a second one (passed to message as first arg).
@@ -1903,30 +1918,32 @@ getMaybeRhsText _ = Nothing
 -------------------------------------------------
 data AddDynamicModifier = AddDynamicModifier
     { adm_modifier :: Text
-    , adm_scope :: Text
+    , adm_scope :: Either Text (Text, Text)
     , adm_days :: Maybe Double
     }
 newADM :: AddDynamicModifier
-newADM = AddDynamicModifier undefined "our country" Nothing
+newADM = AddDynamicModifier undefined (Left "ROOT") Nothing
 addDynamicModifier :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 addDynamicModifier stmt@[pdx| %_ = @scr |] =
     pp_adm (foldl' addLine newADM scr)
     where
         addLine adm [pdx| modifier = $mod |] = adm { adm_modifier = mod }
-        addLine adm [pdx| scope = $tag |] = adm { adm_scope = tag }
+        addLine adm [pdx| scope = $tag |] = adm { adm_scope = Left tag }
+        addLine adm [pdx| scope = $vartag:$var |] = adm { adm_scope = Right (vartag, var) }
         addLine adm [pdx| days = !amt |] = adm { adm_days = Just amt }
         addLine adm stmt = trace ("Unknown in add_dynamic_modifier: " ++ show stmt) adm
         pp_adm adm = do
             let days = maybe "" formatDays (adm_days adm)
             mmod <- HM.lookup (adm_modifier adm) <$> getDynamicModifiers
-            dynflag <- flagText (Just HOI4Country) $ adm_scope adm
+            dynflag <- eflag (Just HOI4Country) $ adm_scope adm
+            let dynflagd = fromMaybe "<!-- Check Script -->" dynflag
             case mmod of
                 Just mod -> withCurrentIndent $ \i -> do
                     effect <- ppMany (dmodEffects mod)
                     trigger <- indentUp $ ppMany (dmodEnable mod)
                     let name = dmodLocName mod
                         locName = maybe ("<tt>" <> adm_modifier adm <> "</tt>") (Doc.doc2text . iquotes) name
-                    return $ ((i, MsgAddDynamicModifier locName dynflag days) : effect) ++ (if null trigger then [] else (i+1, MsgLimit) : trigger)
+                    return $ ((i, MsgAddDynamicModifier locName dynflagd days) : effect) ++ (if null trigger then [] else (i+1, MsgLimit) : trigger)
                 Nothing -> trace ("add_dynamic_modifier: Modifier " ++ T.unpack (adm_modifier adm) ++ " not found") $ preStatement stmt
 addDynamicModifier stmt = trace ("Not handled in addDynamicModifier: " ++ show stmt) $ preStatement stmt
 
@@ -1965,6 +1982,7 @@ addBuildingConstruction stmt@[pdx| %_ = @scr |] =
             case rhs of
                 (floatRhs -> Just amount) -> abc { addbc_level = Just (HOI4ABCLevelSimple amount) }
                 GenericRhs amount [] -> abc { addbc_level = Just (HOI4ABCLevelVariable amount) }
+                GenericRhs vartag [amount] -> abc { addbc_level = Just (HOI4ABCLevelVariable amount) }
                 _ -> trace ("Unknown leveltype in add_building_construction: " ++ show stmt) abc
         addLine abc [pdx| instant_build = yes |] = abc { addbc_instantbuild = True } --default is no an doesn't exist
         addLine abc [pdx| province = %rhs |] =
@@ -2351,8 +2369,9 @@ data SetAutonomy = SetAutonomy
 
 newSA :: SetAutonomy
 newSA = SetAutonomy Nothing Nothing Nothing True True
-setAutonomy :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-setAutonomy stmt@[pdx| %_ = @scr |]
+setAutonomy :: forall g m. (HOI4Info g, Monad m) =>
+    (Text -> Text -> Text -> Double -> Text -> ScriptMessage) -> StatementHandler g m
+setAutonomy msg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_sa =<< foldM addLine newSA scr
     where
         addLine :: SetAutonomy -> GenericStatement -> PPT g m SetAutonomy
@@ -2384,8 +2403,8 @@ setAutonomy stmt@[pdx| %_ = @scr |]
                 autonomy_state = fromMaybe "<!-- Check Script -->" (sa_autonomy_state sa)
                 target = fromMaybe "<!-- Check Script -->" (sa_target sa)
             autonomy <- getGameL10n autonomy_state
-            return $ MsgSetAutonomy target (iconText autonomy) autonomy freedom endwar
-setAutonomy stmt = preStatement stmt
+            return $ msg target (iconText autonomy) autonomy freedom endwar
+setAutonomy _ stmt = preStatement stmt
 
 ------------------------------
 -- Handler for set_politics --
@@ -2919,3 +2938,45 @@ isMonth month
             0 -> "" -- no programmer counting, is used when only year is used to check
             14 -> "14th month for some reason" -- for some reason there is a month 14, but not idea why and what for.
             _ -> error ("impossible: tried to localize bad month number" ++ show month)
+
+setTechnology :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+setTechnology stmt@[pdx| %_ = @scr |] =
+        let (_, rest) = extractStmt (matchLhsText "popup") scr in
+        case rest of
+            [[pdx| $tech = !addrm |]] -> do
+                techloc <- getGameL10n tech
+                msgToPP $ MsgSetTechnology addrm techloc
+            _ -> preStatement stmt
+setTechnology stmt = preStatement stmt
+
+setCapital :: forall g m. (HOI4Info g, Monad m) =>
+    (Text -> ScriptMessage) -> StatementHandler g m
+setCapital msg stmt@[pdx| %_ = @scr |] =
+        let (_, rest) = extractStmt (matchLhsText "remember_old_capital") scr in
+        case rest of
+            [[pdx| state = !state |]] -> do
+                stateloc <- getStateLoc state
+                msgToPP $ msg stateloc
+            [[pdx| state = $state |]] -> do
+                stated <- eGetState (Left state)
+                let stateloc = fromMaybe "<!-- Check Script -->"  stated
+                msgToPP $ msg stateloc
+            [[pdx| state = $vartag:$var |]] -> do
+                stated <- eGetState (Right (vartag, var))
+                let stateloc = fromMaybe "<!-- Check Script -->"  stated
+                msgToPP $ msg stateloc
+            _ -> preStatement stmt
+setCapital msg stmt = withFlag msg stmt
+
+addFieldMarshalRole :: (Monad m, HOI4Info g) => StatementHandler g m
+addFieldMarshalRole stmt@[pdx| %_ = @scr |] = do
+        let (name, _) = extractStmt (matchLhsText "character") scr
+        nameloc <- case name of
+            Just [pdx| character = $id |] -> do
+                characters <- getCharacters
+                case HM.lookup id characters of
+                    Just charid -> return $ chaName charid
+                    _ -> return ""
+            _ -> return ""
+        msgToPP $ MsgAddFieldMarshalRole nameloc
+addFieldMarshalRole stmt = preStatement stmt

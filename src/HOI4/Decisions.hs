@@ -109,13 +109,22 @@ decisioncatAddSection ddeccat stmt
     where
         decisioncatAddSection' decc stmt = case stmt of
             [pdx| icon           = $txt  |] -> decc { decc_icon = Just txt }
-            [pdx| visible        = @scr  |] -> decc { decc_visible = Just scr } -- can check from and root if target_root_trigger is true (or allowed if it's not present)
-            [pdx| available      = @scr  |] -> decc { decc_available = Just scr } -- checks visible, if it's false the decision is greyed out but still visible
+            [pdx| visible        = %rhs  |] -> case rhs of
+                CompoundRhs [] -> decc -- empty, treat as if it wasn't there
+                CompoundRhs scr -> decc { decc_visible = Just scr } -- can check from and root if target_root_trigger is true (or allowed if it's not present)
+                _ -> trace "bade decision category allowed" decc
+            [pdx| available      = %rhs  |] -> case rhs of
+                CompoundRhs [] -> decc -- empty, treat as if it wasn't there
+                CompoundRhs scr -> decc { decc_available = Just scr } -- checks visible, if it's false the decision is greyed out but still visible
+                _ -> trace "bade decision category allowed" decc
             [pdx| picture        = $txt  |] -> decc { decc_picture = Just txt }
             [pdx| custom_icon    = %_    |] -> decc
             [pdx| visibility_type = %_   |] -> decc
             [pdx| priority       = %_    |] -> decc
-            [pdx| allowed        = @scr  |] -> decc { decc_allowed = Just scr } -- Checks only once on start/load an is used to restrict which countries have/not have it
+            [pdx| allowed        = %rhs  |] -> case rhs of
+                CompoundRhs [] -> decc -- empty, treat as if it wasn't there
+                CompoundRhs scr -> decc { decc_allowed = Just scr } -- Checks only once on start/load an is used to restrict which countries have/not have it
+                _ -> trace "bade decision category allowed" decc
             [pdx| visible_when_empty = %_ |] -> decc
             [pdx| scripted_gui   = %_    |] -> decc
             [pdx| highlight_states = %_  |] -> decc
@@ -254,23 +263,28 @@ decisionAddSection dec stmt
                 GenericRhs txt _ ->
                     dec { dec_icon = Just (HOI4DecisionIconSimple txt) }
                 CompoundRhs scr -> dec { dec_icon = Just (HOI4DecisionIconScript scr) }
-                _ -> trace "DEBUG: bad decions icon" dec
+                _ -> trace "DEBUG: bad decisions icon" dec
             "allowed" -> case rhs of -- Checks only once on start/load an is used to restrict which countries have/not have it
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_allowed = Just scr }
                 _ -> dec
             "complete_effect" -> case rhs of -- effect when selecting decision, or when mission starts
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_complete_effect = Just scr }
                 _ -> dec
             "ai_will_do" -> case rhs of
                 CompoundRhs scr -> dec { dec_ai_will_do = Just (aiWillDo scr) }
                 _ -> dec
             "target_root_trigger" -> case rhs of -- can only check root for targeted decisions if allowed is true
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_target_root_trigger = Just scr }
                 _ -> dec
             "visible" -> case rhs of -- can check from and root if target_root_trigger is true (or allowed if it's not present)
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_visible = Just scr }
                 _ -> dec
             "available" -> case rhs of -- checks visible, if it's false the decision is greyed out but still visible
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_available = Just scr }
                 _ -> dec
             "priority" -> dec
@@ -289,6 +303,7 @@ decisionAddSection dec stmt
                 FloatRhs num -> dec { dec_cost = Just (HOI4DecisionCostSimple num) }
                 _ -> dec
             "custom_cost_trigger" -> case rhs of
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_custom_cost_trigger = Just scr }
                 _ -> dec
             "custom_cost_text" -> case rhs of
@@ -299,12 +314,15 @@ decisionAddSection dec stmt
                 FloatRhs num -> dec { dec_days_remove = Just num }
                 _ -> dec
             "remove_effect" -> case rhs of -- effect when decision completes
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_remove_effect = Just scr }
                 _ -> dec
             "cancel_trigger" -> case rhs of -- trigger for canceling missions
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_cancel_trigger = Just scr }
                 _ -> dec
             "cancel_effect" -> case rhs of -- effect when mission is canceled
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_cancel_effect = Just scr }
                 _ -> dec
             "war_with_on_remove" -> dec -- used to inform if a decison declares war when finished
@@ -316,10 +334,12 @@ decisionAddSection dec stmt
             "activation" -> dec -- checks for if a mission starts
             "selectable_mission" -> dec --bool, standard false
             "timeout_effect" -> case rhs of -- effect for mission completing
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_timeout_effect = Just scr }
                 _ -> dec
             "is_good" -> dec --bool, standard false but not really, says wether finishing the mission is good or bad
             "targets" -> case rhs of -- weirdo array , checks countries for which decision can be targeted to, turn decisions into targeted decision
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_targets = Just scr }
                 _ -> dec
             "target_array" -> case rhs of -- uses variables to create targets for decision, turn decisions into targeted decision
@@ -331,6 +351,7 @@ decisionAddSection dec stmt
                 GenericRhs "no" [] -> dec { dec_targets_dynamic = False }
                 _ -> dec
             "target_trigger" -> case rhs of -- alternate to visible for targeted decision
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_target_trigger = Just scr }
                 _ -> dec
             "war_with_target_on_complete" -> dec --bool, standard false
@@ -343,9 +364,11 @@ decisionAddSection dec stmt
                 _ -> dec
             "on_map_mode" -> dec
             "modifier" -> case rhs of -- effects that apply when decision is active (timer/mission?)
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_modifier = Just scr }
                 _ -> dec
             "targeted_modifier" -> case rhs of -- effects for country/state targeted and duration?
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_targeted_modifier = Just scr }
                 _ -> dec
             "cancel_if_not_visible" -> case rhs of -- cancels mission if visible is false
@@ -360,6 +383,7 @@ decisionAddSection dec stmt
             "cosmetic_tag" -> dec -- no clue
             "cosmetic_ideology" -> dec -- no clue
             "remove_trigger" -> case rhs of -- used to cancel timed decision
+                CompoundRhs [] -> dec -- empty, treat as if it wasn't there
                 CompoundRhs scr -> dec { dec_remove_trigger = Just scr }
                 _ -> dec
             "target_non_existing" -> dec -- no clue
