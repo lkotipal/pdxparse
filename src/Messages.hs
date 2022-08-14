@@ -85,7 +85,6 @@ data ScriptMessage
     | MsgGainMIL {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainNavyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainPapalInfluence {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgGainPoliticalPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainStability {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainWarExhaustion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -108,8 +107,6 @@ data ScriptMessage
     | MsgGainLocalAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgReformDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainReformDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgGainManpower {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
-    | MsgGainLocPC {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgGainMercantilism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMPFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -132,46 +129,28 @@ data ScriptMessage
     | MsgRemoveModifier {scriptMessageModid :: Text, scriptMessageKind :: Text, scriptMessageName :: Text}
     | MsgAllOf
     | MsgFROM
-    | MsgFROMSCOPE
     | MsgROOT
     | MsgROOTCountry
-    | MsgROOTSCOPECountry
     | MsgROOTCountryAsOther
     | MsgROOTProvince
-    | MsgROOTState
-    | MsgROOTSCOPEState
-    | MsgROOTOperative
-    | MsgROOTSCOPEOperative
-    | MsgROOTUnitLeader
-    | MsgROOTSCOPEUnitLeader
     | MsgROOTProvinceOwner
     | MsgROOTProvinceAsOther
     | MsgROOTTradeNode
     | MsgROOTGeographic
     | MsgPREV
     | MsgPREVCountry
-    | MsgPREVSCOPECountry
     | MsgPREVCountryAsOther
     | MsgPREVProvince
-    | MsgPREVState
-    | MsgPREVSCOPEState
     | MsgPREVProvinceOwner
     | MsgPREVProvinceAsOther
-    | MsgPREVOperative
-    | MsgPREVSCOPEOperative
-    | MsgPREVUnitLeader
-    | MsgPREVSCOPEUnitLeader
     | MsgPREVTradeNode
     | MsgPREVGeographic
     | MsgTHISCountry
     | MsgTHISCountryAsOther
     | MsgTHISProvince
-    | MsgTHISState
     | MsgTHISProvinceOwner
     | MsgTHISProvinceAsOther
     | MsgTHISTradeNode
-    | MsgTHISOperative
-    | MsgTHISUnitLeader
     | MsgTHISGeographic
     | MsgController
     | MsgEmperor
@@ -211,7 +190,6 @@ data ScriptMessage
     | MsgEveryCoreCountry
     | MsgEveryCoreProvince
     | MsgEveryCountry
-    | MsgEveryOtherCountry
     | MsgEveryEnemyCountry
     | MsgEveryHereticProvince
     | MsgEveryKnownCountry
@@ -240,9 +218,7 @@ data ScriptMessage
     | MsgRandomList
     | MsgRandomNeighborCountry
     | MsgRandomNeighborProvince
-    | MsgRandomOwnedControlledState
     | MsgRandomOwnedProvince
-    | MsgRandomOtherCountry
     | MsgRandomPrivateeringCountry
     | MsgRandomProvince
     | MsgRandomRival
@@ -251,8 +227,6 @@ data ScriptMessage
     | MsgStrongestTradePower
     | MsgWhile
     | MsgRandomChance {scriptMessageChance :: Double}
-    | MsgRandomVarChance {scriptMessageWhat :: Text}
-    | MsgRandomChanceHOI4 {scriptMessageChance :: Double, scriptMessageAmt :: Double}
     | MsgRandom
     | MsgChangeGovernment {scriptMessageWhat :: Text}
     | MsgContinentIs {scriptMessageWhat :: Text}
@@ -299,7 +273,6 @@ data ScriptMessage
     | MsgHasFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text}
     | MsgSetFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text}
     | MsgHadFlag {scriptMessageCategory :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
-    | MsgModifyCountryFlag {scriptMessageFlag :: Text, scriptMessageAmtText :: Text}
     | MsgCountryFlag
     | MsgProvinceFlag
     | MsgRulerFlag
@@ -497,9 +470,6 @@ data ScriptMessage
     | MsgReverseAddOpinionDur {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageYears :: Double}
     | MsgMutualOpinion {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgMutualOpinionDur {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageDays :: Double}
-    | MsgAddNamedThreat {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageWhom :: Text}
-    | MsgCreateWG {scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageStates :: Text}
-    | MsgCreateWGDuration {scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double, scriptMessageStates :: Text}
     | MsgHasOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgReverseHasOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgRemoveOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
@@ -517,15 +487,9 @@ data ScriptMessage
     | MsgBuildToForcelimit {scriptMessageInficon :: Text, scriptMessageInfantry :: Double, scriptMessageCavicon :: Text, scriptMessageCavalry :: Double, scriptMessageArticon :: Text, scriptMessageArtillery :: Double, scriptMessageHeavyicon :: Text, scriptMessageHeavy :: Double, scriptMessageLighticon :: Text, scriptMessageLight :: Double, scriptMessageGallicon :: Text, scriptMessageGalley :: Double, scriptMessageTranspicon :: Text, scriptMessageTransport :: Double}
     | MsgProvinceEvent
     | MsgCountryEvent
-    | MsgNewsEvent
-    | MsgStateEvent
-    | MsgOperativeEvent
-    | MsgUnitLeaderEvent
     | MsgTriggerEvent {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text}
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
-    | MsgTriggerEventTime {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageTime :: Text}
     | MsgDeclareWarWithCB {scriptMessageWhom :: Text, scriptMessageCb :: Text}
-    | MsgDeclareWarOn {scriptMessageWhom :: Text, scriptMessageWg :: Text, scriptMessageStates :: Text}
     | MsgGainAdvisor {scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
     | MsgGainAdvisorLoc {scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
     | MsgGainAdvisorName {scriptMessageName :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
@@ -590,7 +554,6 @@ data ScriptMessage
     | MsgGainCoreOnProvince {scriptMessageProv :: Text}
     | MsgHasDLC {scriptMessageIcon :: Text, scriptMessageDlc :: Text}
     | MsgProvince {scriptMessageWhere :: Text}
-    | MsgState {scriptMessageWhere :: Text}
     | MsgTechGroup {scriptMessageIcon :: Text, scriptMessageName :: Text}
     | MsgUnlockCult {scriptMessageIcon :: Text, scriptMessageName :: Text}
     | MsgNumOfReligion {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
@@ -679,7 +642,6 @@ data ScriptMessage
     | MsgMissionaryStrengthVsHeretics {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCultureConvCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
-    | MsgHasOpinionHOI4 {scriptMessageAmt :: Double, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
     | MsgReverseHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
     | MsgNormalOrHistoricalNations {scriptMessageYn :: Bool}
     | MsgIsCustomNation {scriptMessageYn :: Bool}
@@ -717,9 +679,7 @@ data ScriptMessage
     | MsgNoBaseWeight
     | MsgAIBaseWeight {scriptMessageAmt :: Double}
     | MsgAIFactorOneline {scriptMessageFactor :: Text, scriptMessageMultiplier :: Double}
-    | MsgAIAddOneline {scriptMessageFactor :: Text, scriptMessageMultiplier :: Double}
     | MsgAIFactorHeader {scriptMessageMultiplier :: Double}
-    | MsgAIAddHeader {scriptMessageMultiplier :: Double}
     | MsgLucky {scriptMessageYn :: Bool}
     | MsgHasAdvisorLevel {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageLevel :: Double}
     | MsgNumRoyalMarriages {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -880,7 +840,6 @@ data ScriptMessage
     | MsgTradeRange {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTradeSteering {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTextIs {scriptMessageWhat :: Text}
-    | MsgModifier {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgAnyOwnedPlanet
     | MsgAnyOwnedShip
     | MsgAnyPop
@@ -1271,7 +1230,6 @@ data ScriptMessage
     | MsgAddCuriaTreasury {scriptMessageAmt :: Double}
     | MsgReduceCuriaTreasury {scriptMessageAmt :: Double}
     | MsgHasClimate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHasGovernment {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgTradingBonus {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgNumSubjects {scriptMessageAmt :: Double}
     | MsgApplyEstateModifer {scriptMessageWhat :: Text}
@@ -1304,7 +1262,6 @@ data ScriptMessage
     | MsgConvertHeirGeneral { scriptMessageYn :: Bool, scriptMessageAmt :: Double }
     | MsgHeirRemoved
     | MsgIsHeirLeader { scriptMessageYn :: Bool }
-    | MsgIsHistoricalFocusOn { scriptMessageYn :: Bool }
     | MsgAtWarWithReligiousEnemy { scriptMessageYn :: Bool }
     | MsgHasAdvisorCategory { scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
     | MsgHasAdvisorCategoryLevel { scriptMessageAmt :: Double, scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
@@ -1346,7 +1303,6 @@ data ScriptMessage
     | MsgTrust {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgTechDifference {scriptMessageAmt :: Double}
     | MsgAiAttitude {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
-    | MsgAnnexCountry {scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgAllAllies
     | MsgAllElectors
     | MsgAllKnownCountries
@@ -1587,7 +1543,6 @@ data ScriptMessage
     | MsgHasTradeCompanyInvestmentInState {scriptMessageWhom :: Text}
     | MsgRandomListTrigger
     | MsgRandomListModifier {scriptMessageAmt :: Double}
-    | MsgRandomListAddModifier {scriptMessageAmt :: Double}
     | MsgOwnOrNonTribSubjectDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgOwnOrNonTribSubjectDevelopmentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgHasOneOfBuildings {scriptMessageYn :: Bool, scriptMessageWhat :: Text}
@@ -1730,7 +1685,6 @@ data ScriptMessage
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
-    | MsgAddBuildingConstruction {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageVar :: Text, scriptMessageProv :: Text}
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSwitchTag {scriptMessageWho :: Text}
@@ -1958,22 +1912,13 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNum True _amt)
                 , " {{DLC-only|revolutionary zeal}}"
                 ]
-        MsgGainPoliticalPower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ gainOrLose _amt
-                , " "
-                , _icon
-                , " "
-                , toMessage (colourNum True _amt)
-                , " Political power"
-                ]
         MsgGainStability {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
                 , " "
                 , _icon
                 , " "
-                , toMessage (colourPc True _amt)
+                , toMessage (colourNum True _amt)
                 , " stability"
                 ]
         MsgGainWarExhaustion {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -2140,26 +2085,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPc False) _amt)
                 , " reform desire"
                 ]
-        MsgGainManpower {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
-            -> mconcat
-                [ gainOrLose _amt
-                , " "
-                , _icon
-                , " "
-                , toMessage (colourNum True _amt)
-                , " "
-                , _loc
-                ]
-        MsgGainLocPC {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
-            -> mconcat
-                [ gainOrLose _amt
-                , " "
-                , _icon
-                , " "
-                , toMessage (colourPc True _amt)
-                , " "
-                , _loc
-                ]
         MsgGainMercantilism {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
@@ -2235,7 +2160,7 @@ instance RenderMessage Script ScriptMessage where
                 , " <!-- "
                 , _modid
                 , " --> for "
-                , if _days < 0
+                , if (_days < 0)
                     then if _type == "ruler"
                         then "the duration of the current ruler's reign"
                         else "the rest of the game"
@@ -2341,33 +2266,17 @@ instance RenderMessage Script ScriptMessage where
         MsgAllOf
             -> "All of:"
         MsgFROM
-            -> "FROM, for events the country that sent the events, for decisions the target of the decision:"
-        MsgFROMSCOPE
-            -> "[SCOPE]FROM, for events the country that sent the events, for decisions the target of the decision:"
+            -> "FROM:"
         MsgROOT
-            -> "[SCOPE]ROOT"
+            -> "ROOT"
         MsgROOTCountry
-            -> "our country"
-        MsgROOTSCOPECountry
-            -> "[SCOPE]Our country"
+            -> "Our country"
         MsgROOTCountryAsOther
-            -> "[SCOPE]same as our country"
+            -> "same as our country"
         MsgROOTProvince
-            -> "[SCOPE]The currently considered province"
-        MsgROOTState
-            -> "the currently considered state"
-        MsgROOTSCOPEState
-            -> "[SCOPE]The currently considered state"
-        MsgROOTOperative
-            -> "the currently considered operative"
-        MsgROOTSCOPEOperative
-            -> "[SCOPE]The currently considered operative"
-        MsgROOTUnitLeader
-            -> "the currently considered unit leader"
-        MsgROOTSCOPEUnitLeader
-            -> "[SCOPE]The currently considered unit leader"
+            -> "The currently considered province"
         MsgROOTProvinceOwner
-            -> "[SCOPE]the owner of the currently considered province"
+            -> "the owner of the currently considered province"
         MsgROOTProvinceAsOther
             -> "same as the currently considered province"
         MsgROOTTradeNode
@@ -2375,19 +2284,13 @@ instance RenderMessage Script ScriptMessage where
         MsgROOTGeographic
             -> "The currently considered location"
         MsgPREV
-            -> "[SCOPE]PREV"
+            -> "PREV"
         MsgPREVCountry
-            -> "previously mentioned country scope"
-        MsgPREVSCOPECountry
-            -> "[SCOPE]Previously mentioned country scope"
+            -> "Previously mentioned country"
         MsgPREVCountryAsOther
             -> "same as the previously mentioned country"
         MsgPREVProvince
             -> "The previously mentioned province"
-        MsgPREVState
-            -> "the previously mentioned state scope"
-        MsgPREVSCOPEState
-            -> "[SCOPE]The previously mentioned state scope"
         MsgPREVProvinceOwner
             -> "the owner of the previously mentioned province"
         MsgPREVProvinceAsOther
@@ -2396,30 +2299,16 @@ instance RenderMessage Script ScriptMessage where
             -> "The previously mentioned trade node"
         MsgPREVGeographic
             -> "The previously mentioned location"
-        MsgPREVOperative
-            -> "the previously mentioned operative scope"
-        MsgPREVSCOPEOperative
-            -> "[SCOPE]The previously mentioned operative scope"
-        MsgPREVUnitLeader
-            -> "the previously mentioned unit leader scope"
-        MsgPREVSCOPEUnitLeader
-            -> "[SCOPE]The previously mentioned unit leader scope"
         MsgTHISCountry
-            -> "the current country scope"
+            -> "this country"
         MsgTHISCountryAsOther
             -> "same as this country"
         MsgTHISProvince
             -> "this province"
-        MsgTHISState
-            -> "the current state scope"
         MsgTHISProvinceOwner
             -> "the owner of this province"
         MsgTHISProvinceAsOther
             -> "same as this province"
-        MsgTHISOperative
-            -> "the current operative scope"
-        MsgTHISUnitLeader
-            -> "the current unit leader scope"
         MsgTHISTradeNode
             -> "This trade node"
         MsgTHISGeographic
@@ -2495,9 +2384,7 @@ instance RenderMessage Script ScriptMessage where
         MsgEveryAlly
             -> "Every ally:"
         MsgEveryCountry
-            -> "[SCOPE]Every country in the world:"
-        MsgEveryOtherCountry
-            -> "[SCOPE]Every other country in the world:"
+            -> "Every country in the world:"
         MsgEveryCoreCountry
             -> "Every country with a core:"
         MsgEveryCoreProvince
@@ -2558,12 +2445,8 @@ instance RenderMessage Script ScriptMessage where
             -> "One random neighbouring country:"
         MsgRandomNeighborProvince
             -> "One random neighbouring province:"
-        MsgRandomOwnedControlledState
-            -> "One random owned and controlled state:"
         MsgRandomOwnedProvince
             -> "One random owned province:"
-        MsgRandomOtherCountry
-            -> "One random country other than your own:"
         MsgRandomPrivateeringCountry
             -> "One random country privateering in this node:"
         MsgRandomProvince
@@ -2581,18 +2464,6 @@ instance RenderMessage Script ScriptMessage where
         MsgRandomChance {scriptMessageChance = _chance}
             -> mconcat
                 [ toMessage (plainPc _chance)
-                , " chance of:"
-                ]
-        MsgRandomChanceHOI4 {scriptMessageChance = _chance, scriptMessageAmt = _amt}
-            -> mconcat
-                [ toMessage (plainPc _chance)
-                ," (",toMessage (plainNum _amt),")"
-                , " chance of:"
-                ]
-        MsgRandomVarChance {scriptMessageWhat = _what}
-            -> mconcat
-                [ "Based on "
-                , _what
                 , " chance of:"
                 ]
         MsgRandom
@@ -2858,13 +2729,6 @@ instance RenderMessage Script ScriptMessage where
                 , _name
                 , " for "
                 , toMessage (formatDays _days)
-                ]
-        MsgModifyCountryFlag {scriptMessageFlag = _flag, scriptMessageAmtText = _amttext}
-            -> mconcat
-                [ "Modify country flag <tt>"
-                , _flag
-                , "</tt> by "
-                , _amttext
                 ]
         MsgCountryFlag
             -> "country"
@@ -4121,7 +3985,7 @@ instance RenderMessage Script ScriptMessage where
                 [ _whom
                 , " has opinion modifier {{opinion_modifier|"
                 , _modid
-                , "}} towards this country scope"
+                , "}} towards this country"
                 ]
         MsgRemoveOpinionMod {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom}
             -> mconcat
@@ -4237,14 +4101,6 @@ instance RenderMessage Script ScriptMessage where
             -> "province event"
         MsgCountryEvent
             -> "country event"
-        MsgNewsEvent
-            -> "news event"
-        MsgStateEvent
-            -> "state event"
-        MsgOperativeEvent
-            -> "operative event"
-        MsgUnitLeaderEvent
-            -> "unit leader event"
         MsgTriggerEvent {scriptMessageEvttype = _evttype, scriptMessageEvtid = _evtid, scriptMessageName = _name}
             -> mconcat
                 [ "Trigger "
@@ -4266,33 +4122,13 @@ instance RenderMessage Script ScriptMessage where
                 , " --> in "
                 , toMessage (formatDays _days)
                 ]
-        MsgTriggerEventTime {scriptMessageEvttype = _evttype, scriptMessageEvtid = _evtid, scriptMessageName = _name, scriptMessageTime = _time}
-            -> mconcat
-                [ "Trigger "
-                , _evttype
-                , " "
-                , toMessage (iquotes _name)
-                , " <!-- "
-                , _evtid
-                , " --> in "
-                , _time
-                ]
-        MsgDeclareWarWithCB {scriptMessageWhom = _whom, scriptMessageCb = _wgtype}
+        MsgDeclareWarWithCB {scriptMessageWhom = _whom, scriptMessageCb = _cbtype}
             -> mconcat
                 [ "Declare war on "
                 , _whom
                 , " using "
-                , _wgtype
+                , _cbtype
                 , " casus belli"
-                ]
-        MsgDeclareWarOn {scriptMessageWhom = _whom, scriptMessageWg = _war, scriptMessageStates = _states}
-            -> mconcat
-                [ "Declare a "
-                , toMessage (italicText _war)
-                , " war "
-                , _states
-                , " against "
-                , _whom
                 ]
         MsgGainAdvisor {scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
             -> mconcat
@@ -4719,12 +4555,6 @@ instance RenderMessage Script ScriptMessage where
         MsgProvince {scriptMessageWhere = _where}
             -> mconcat
                 [ "Province "
-                , _where
-                , ":"
-                ]
-        MsgState {scriptMessageWhere = _where}
-            -> mconcat
-                [ "[Scope] "
                 , _where
                 , ":"
                 ]
@@ -5313,13 +5143,6 @@ instance RenderMessage Script ScriptMessage where
                 , " is at least {{icon|opinion}} "
                 , toMessage (colourNumSign True _amt)
                 ]
-        MsgHasOpinionHOI4 {scriptMessageAmt = _amt, scriptMessageWhom = _whom, scriptMessageYn = _yn}
-            -> mconcat
-                [ "Opinion of "
-                , _whom
-                , toMessage (ifThenElseT _yn " is at least {{icon|opinion}} " " is less than {{icon|opinion}} ")
-                , toMessage (colourNumSign True _amt)
-                ]
         MsgReverseHasOpinion {scriptMessageAmt = _amt, scriptMessageWhom = _whom}
             -> mconcat
                 [ _whom
@@ -5528,23 +5351,10 @@ instance RenderMessage Script ScriptMessage where
                 , " if the following is true: "
                 ,_factor
                 ]
-        MsgAIAddOneline {scriptMessageFactor = _factor, scriptMessageMultiplier = _multiplier}
-            -> mconcat
-                [ "Base weight "
-                , toMessage (bold (plainNumSign _multiplier))
-                , " if the following is true: "
-                ,_factor
-                ]
         MsgAIFactorHeader {scriptMessageMultiplier = _multiplier}
             -> mconcat
                 [ "* Base weight * "
                 , toMessage (bold (plainNum _multiplier))
-                , " if the following are true:"
-                ]
-        MsgAIAddHeader {scriptMessageMultiplier = _multiplier}
-            -> mconcat
-                [ "* Base weight "
-                , toMessage (bold (plainNumSign _multiplier))
                 , " if the following are true:"
                 ]
         MsgLucky {scriptMessageYn = _yn}
@@ -6568,12 +6378,6 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , "''"
                 ]
-        MsgModifier {scriptMessageWhat = _what, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _what
-                , " : "
-                , toMessage (plainNum _amt)
-                ]
         MsgAnyOwnedPlanet
             -> "Any owned planet:"
         MsgAnyOwnedShip
@@ -7011,39 +6815,6 @@ instance RenderMessage Script ScriptMessage where
                 , _modid
                 , "}} towards each other for "
                 , toMessage (formatDays _days)
-                ]
-        MsgAddNamedThreat {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageWhom = _whom}
-            -> mconcat
-                [ "{{icon|world tension}} "
-                , _icon
-                , " is "
-                , toMessage (increasedOrDecreased _amt)
-                , " by "
-                , toMessage (colourNumSign False _amt)
-                , " ("
-                , toMessage (italicText _whom)
-                , ")"
-                ]
-        MsgCreateWG {scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageStates = _state}
-            -> mconcat
-                [ "Get a "
-                , toMessage (italicText _what)
-                , " wargoal"
-                , _state
-                , " against "
-                , _whom
-                ]
-        MsgCreateWGDuration {scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageAmt = _amt, scriptMessageStates = _state}
-            -> mconcat
-                [ "Get a "
-                , toMessage (italicText _what)
-                , " wargoal "
-                , _state
-                , " against "
-                , _whom
-                , " for "
-                , toMessage (plainNum _amt)
-                , " days"
                 ]
         MsgAddNextInstitutionEmbracement {scriptMessageAmt = _amt}
             -> mconcat
@@ -8970,13 +8741,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgHasGovernment {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Current ruling party is "
-                , _icon
-                , " "
-                , _what
-                ]
         MsgTradingBonus {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Country has the [[trading in]] bonus for "
@@ -9155,11 +8919,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Heir is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " a general"
-                ]
-        MsgIsHistoricalFocusOn { scriptMessageYn = _yn }
-            -> mconcat
-                [ "Historical Focus is "
-                , toMessage (ifThenElseT _yn "'''on'''" "'''off'''")
                 ]
         MsgAtWarWithReligiousEnemy { scriptMessageYn = _yn }
             -> mconcat
@@ -9432,12 +9191,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgAnnexCountry {scriptMessageWhom = _whom, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Annex "
-                , _whom
-                , _what
-                ]
         MsgAllAllies
             -> "All allies:"
         MsgAllElectors
@@ -9526,7 +9279,7 @@ instance RenderMessage Script ScriptMessage where
         MsgCrownlandShare {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
-                , toMessage (plainPc _amt)
+                , toMessage $ (plainPc _amt)
                 , " [[crown land]] ownership"
                 ]
         MsgNumEstatePrivileges {scriptMessageIcon = _icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
@@ -10862,12 +10615,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , "''' if:"
                 ]
-        MsgRandomListAddModifier {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Chance base weight changes by '''"
-                , toMessage (plainNumSign _amt)
-                , "''' if:"
-                ]
         MsgOwnOrNonTribSubjectDevelopment {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Own or non-tributary subject "
@@ -11728,16 +11475,6 @@ instance RenderMessage Script ScriptMessage where
                 , " of normal cost, taking "
                 , toMessage (reducedNum plainPc _speed)
                 , " of normal time"
-                ]
-        MsgAddBuildingConstruction {scriptMessageIcon = _icon, scriptMessageWhat = _type, scriptMessageAmt = _amt, scriptMessageVar = _var, scriptMessageProv = _prov}
-            -> mconcat
-                [ "Add "
-                , if _var == "" then toMessage (plainNum _amt) else _var
-                , " "
-                , _icon
-                , " "
-                , _type
-                ,_prov
                 ]
         MsgAllowBaselineInviteScholar {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat

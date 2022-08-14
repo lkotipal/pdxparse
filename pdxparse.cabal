@@ -53,6 +53,7 @@ executable pdxparse
                        HOI4.Modifiers,
                        HOI4.NationalFocus,
                        HOI4.Settings,
+                       HOI4.SpecialHandlers,
                        HOI4.Templates,
                        HOI4.Types,
                        Localization,

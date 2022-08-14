@@ -161,6 +161,7 @@ data ScriptMessage
     | MsgPREVSCOPEState
     | MsgPREVSCOPEUnitLeader
     | MsgPREVSCOPEMisc
+    | MsgPREVSCOPECustom
     | MsgPREVCharacter
     | MsgPREVCharacterOwner
     | MsgPREVCharacterAsOther
@@ -268,12 +269,16 @@ data ScriptMessage
     | MsgHasWarSupportVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
     | MsgIndustrialComplex {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgIndustrialComplexVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
+    | MsgNumOfControlledFactories {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
+    | MsgNumOfControlledFactoriesVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
+    | MsgNumOfControlledStates {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
+    | MsgNumOfControlledStatesVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
     | MsgNumOfFactories {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgNumOfFactoriesVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
     | MsgNumOfNukes {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgNumOfNukesVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
-    | MsgNumOfControlledFactories {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
-    | MsgNumOfControlledFactoriesVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
+    | MsgOriginalResearchSlots {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
+    | MsgOriginalResearchSlotsVar {scriptMessageAmtT :: Text, scriptMessageCompare :: Text}
     | MsgIsControlledBy {scriptMessageWhom :: Text}
     | MsgHasDefensiveWarWith {scriptMessageWhom :: Text}
     | MsgAddClaimBy {scriptMessageWho :: Text}
@@ -380,6 +385,7 @@ data ScriptMessage
     | MsgModifierPcNeg {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcPosReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcNegReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierVar {scriptMessageWhat :: Text, scriptMessageAmtText :: Text}
     | MsgAddResearchSlot {scriptMessageAmt :: Double}
     | MsgAddThreat {scriptMessageAmt :: Double}
     | MsgSaveEventTargetAs {scriptMessageName :: Text}
@@ -742,6 +748,8 @@ instance RenderMessage Script ScriptMessage where
             -> "[SCOPE]The previously mentioned unit leader"
         MsgPREVSCOPEMisc
             -> "[SCOPE]The previously mentioned var or event_target"
+        MsgPREVSCOPECustom
+            -> "[SCOPE]Custom Scope<!-- check script for where it points to -->"
         MsgPREVCharacter
             -> "the previously mentioned character"
         MsgPREVCharacterOwner
@@ -801,9 +809,9 @@ instance RenderMessage Script ScriptMessage where
             -> "same as this unit leader"
 
         MsgFROM
-            -> "FROM"
+            -> "FROM<!-- check script for where it points to -->"
         MsgFROMSCOPE
-            -> "[SCOPE]FROM"
+            -> "[SCOPE]FROM<!-- check script for where it points to -->"
 
         MsgMISC
             -> "MISC (scope of variable or event_target)"
@@ -815,7 +823,7 @@ instance RenderMessage Script ScriptMessage where
         MsgOverlord
             -> "[SCOPE]Overlord:"
         MsgOwner
-            -> "[SCOPE]State owner:"
+            -> "[SCOPE]State owner/Unit owner:"
         MsgState {scriptMessageWhere = _where}
             -> mconcat
                 [ "[Scope]"
@@ -1157,7 +1165,7 @@ instance RenderMessage Script ScriptMessage where
                 , _comp
                 , " "
                 , toMessage (bold (plainNum _amt))
-                , " {{icon|civ|1}}"
+                , " {{icon|cic|1}}"
                 ]
         MsgIndustrialComplexVar {scriptMessageAmtT = _amtT, scriptMessageCompare = _comp}
             -> mconcat
@@ -1165,7 +1173,7 @@ instance RenderMessage Script ScriptMessage where
                 , _comp
                 , " "
                 , boldText _amtT
-                , " {{icon|civ|1}}"
+                , " {{icon|cic|1}}"
                 ]
         MsgNumOfControlledFactories {scriptMessageAmt = _amt, scriptMessageCompare = _comp}
             -> mconcat
@@ -1182,6 +1190,22 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , boldText _amtT
                 , " controlled factories"
+                ]
+        MsgNumOfControlledStates {scriptMessageAmt = _amt, scriptMessageCompare = _comp}
+            -> mconcat
+                [ "Has "
+                , _comp
+                , " "
+                , toMessage (bold (plainNum _amt))
+                , plural _amt " controlled state" " controlled states"
+                ]
+        MsgNumOfControlledStatesVar {scriptMessageAmtT = _amtT, scriptMessageCompare = _comp}
+            -> mconcat
+                [ "Has "
+                , _comp
+                , " "
+                , boldText _amtT
+                , " controlled states"
                 ]
         MsgNumOfFactories {scriptMessageAmt = _amt, scriptMessageCompare = _comp}
             -> mconcat
@@ -1214,6 +1238,22 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , boldText _amtT
                 , " nukes"
+                ]
+        MsgOriginalResearchSlots {scriptMessageAmt = _amt, scriptMessageCompare = _comp}
+            -> mconcat
+                [ "Starts with "
+                , _comp
+                , " "
+                , toMessage (bold (plainNum _amt))
+                , plural _amt " research slot" " research slots"
+                ]
+        MsgOriginalResearchSlotsVar {scriptMessageAmtT = _amtT, scriptMessageCompare = _comp}
+            -> mconcat
+                [ "Starts with "
+                , _comp
+                , " "
+                , boldText _amtT
+                , " research slots"
                 ]
         MsgIsControlledBy {scriptMessageWhom = _whom}
             -> mconcat
@@ -1888,6 +1928,12 @@ instance RenderMessage Script ScriptMessage where
                 [ _what
                 , ": "
                 , toMessage (reducedNum (colourPcSign False) _amt)
+                ]
+        MsgModifierVar {scriptMessageWhat = _what, scriptMessageAmtText = _amtT}
+            -> mconcat
+                [ _what
+                , ": "
+                , toMessage (boldText _amtT)
                 ]
         MsgAddResearchSlot {scriptMessageAmt = _amt}
             -> mconcat

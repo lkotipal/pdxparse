@@ -62,9 +62,6 @@ module HOI4.Handlers (
     ,   hasDlc
     ,   withFlagOrState
     ,   customTriggerTooltip
-    ,   handleIdeas
-    ,   handleTimedIdeas
-    ,   handleSwapIdeas
     ,   handleFocus
     ,   focusProgress
     ,   setVariable
@@ -74,7 +71,6 @@ module HOI4.Handlers (
     ,   rhsAlwaysEmptyCompound
     ,   exportVariable
 --    ,   aiAttitude
-    ,   addDynamicModifier
     ,   addBuildingConstruction
     ,   addNamedThreat
     ,   createWargoal
@@ -113,6 +109,12 @@ module HOI4.Handlers (
     -- testing
     ,   isPronoun
     ,   flag
+    --specihandler exports
+    ,   TextAtom(..)
+    ,   TextValue(..)
+    ,   parseTA
+    ,   parseTV
+    ,   eflag
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -544,7 +546,7 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
                     Just HOI4UnitLeader -> Just MsgROOTSCOPEUnitLeader
                     _ -> Nothing) -- warning printed below
         "prev" -> do --PREV
-                newscope <- getCurrentScope
+                newscope <- getPrevScope
                 return (newscope, case newscope of
                     Just HOI4Country -> Just MsgPREVSCOPECountry
                     Just HOI4ScopeCharacter -> Just MsgPREVSCOPECharacter
@@ -553,6 +555,7 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
                     Just HOI4UnitLeader -> Just MsgPREVSCOPEUnitLeader
                     Just HOI4Misc -> Just MsgPREVSCOPEMisc
                     Just HOI4From -> Just MsgFROMSCOPE -- Roll with it
+                    Nothing -> Just MsgPREVSCOPECustom
                     _ -> Nothing) -- warning printed below
         "from" -> return (Just HOI4From, Just MsgFROMSCOPE) -- FROM / Should be some way to have different message depending on if it is event or decison, etc.
         _ -> trace (f ++ ": compoundMessagePronoun: don't know how to handle head " ++ T.unpack head)
@@ -560,6 +563,9 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
     case params of
         (Just newscope, Just scopemsg) -> do
             script_pp'd <- scope newscope $ ppMany scr
+            return $ (i, scopemsg) : script_pp'd
+        (Nothing, Just scopemsg) -> do
+            script_pp'd <- scope HOI4Custom $ ppMany scr
             return $ (i, scopemsg) : script_pp'd
         _ -> do
             withCurrentFile $ \f -> do
@@ -700,7 +706,9 @@ withNonlocAtom2 _ _ stmt = preStatement stmt
 -- | Table of script atom -> icon key. Only ones that are different are listed.
 scriptIconTable :: HashMap Text Text
 scriptIconTable = HM.fromList
-    [
+    [("industrial_complex"  , "cic")
+    ,("arms_factory"        , "mic")
+    ,("dockyard"            , "nic")
     ]
 
 -- | Table of script atom -> file. For things that don't have icons and should instead just
@@ -1615,150 +1623,6 @@ customTriggerTooltip [pdx| %_ = @scr |]
     = ppMany scr
 customTriggerTooltip stmt = preStatement stmt
 
------------------
--- handle idea --
------------------
-
-handleSwapIdeas :: forall g m. (HOI4Info g, Monad m) =>
-        StatementHandler g m
-handleSwapIdeas stmt@[pdx| %_ = @scr |]
-    = pp_si (parseTA "add_idea" "remove_idea" scr)
-    where
-        pp_si :: TextAtom -> PPT g m IndentedMessages
-        pp_si ta = case (ta_what ta, ta_atom ta) of
-            (Just what, Just atom) -> do
-                add_loc <- handleIdea True what
-                remove_loc <- handleIdea False atom
-                case (add_loc, remove_loc) of
-                    (Just (addcategory, addideaIcon, addideaKey, addidea_loc, Just addeffectbox),
-                     Just (category, ideaIcon, ideaKey, idea_loc, _)) ->
-                        if addidea_loc == idea_loc then do
-                                idmsg <- msgToPP $ MsgModifyIdea category ideaIcon ideaKey idea_loc
-                                                    addcategory addideaIcon addideaKey addidea_loc
-                                return $ idmsg ++ addeffectbox
-                        else do
-                            idmsg <- msgToPP $ MsgReplaceIdea category ideaIcon ideaKey idea_loc
-                                                addcategory addideaIcon addideaKey addidea_loc
-                            return $ idmsg ++ addeffectbox
-                    (Just (addcategory, addideaIcon, addideaKey, addidea_loc, Nothing),
-                     Just (category, ideaIcon, ideaKey, idea_loc, _)) ->
-                        if addidea_loc == idea_loc then
-                            msgToPP $ MsgModifyIdea category ideaIcon ideaKey idea_loc
-                                addcategory addideaIcon addideaKey addidea_loc
-                        else
-                            msgToPP $ MsgReplaceIdea category ideaIcon ideaKey idea_loc
-                                addcategory addideaIcon addideaKey addidea_loc
-                    _ -> preStatement stmt
-            _ -> preStatement stmt
-handleSwapIdeas stmt = preStatement stmt
-
-handleTimedIdeas :: forall g m. (HOI4Info g, Monad m) =>
-        (Text -> Text -> Text -> Text -> Double -> ScriptMessage) -- ^ Message constructor, if abs value >= 1
-        -> StatementHandler g m
-handleTimedIdeas msg stmt@[pdx| %_ = @scr |]
-    = pp_idda (parseTV "idea" "days" scr)
-    where
-        pp_idda :: TextValue -> PPT g m IndentedMessages
-        pp_idda tv = case (tv_what tv, tv_value tv) of
-            (Just what, Just value) -> do
-                ideashandled <- handleIdea True what
-                case ideashandled of
-                    Just (category, ideaIcon, ideaKey, idea_loc, Just effectbox) -> do
-                        idmsg <- msgToPP $ msg category ideaIcon ideaKey idea_loc value
-                        return $ idmsg ++ effectbox
-                    Just (category, ideaIcon, ideaKey, idea_loc, Nothing) -> msgToPP $ msg category ideaIcon ideaKey idea_loc value
-                    Nothing -> preStatement stmt
-            _ -> preStatement stmt
-handleTimedIdeas _ stmt = preStatement stmt
-
-handleIdeas :: forall g m. (HOI4Info g, Monad m) =>
-    Bool ->
-    (Text -> Text -> Text -> Text -> ScriptMessage)
-        -> StatementHandler g m
-handleIdeas addIdea msg stmt@[pdx| $lhs = %idea |] = case idea of
-    CompoundRhs ideas -> if length ideas == 1 then do
-                ideashandled <- handleIdea addIdea (mconcat $ map getbareidea ideas)
-                case ideashandled of
-                    Just (category, ideaIcon, ideaKey, idea_loc, Just effectbox) -> do
-                        idmsg <- msgToPP $ msg category ideaIcon ideaKey idea_loc
-                        return $ idmsg ++ effectbox
-                    Just (category, ideaIcon, ideaKey, idea_loc, Nothing) -> msgToPP $ msg category ideaIcon ideaKey idea_loc
-                    Nothing -> preStatement stmt
-            else do
-                ideashandle <- mapM (handleIdea addIdea . getbareidea) ideas
-                let ideashandled = catMaybes ideashandle
-                    ideasmsgd :: [(Text, Text, Text, Text, Maybe IndentedMessages)] -> PPT g m [IndentedMessages]
-                    ideasmsgd ihs = mapM (\ih ->
-                            let (category, ideaIcon, ideaKey, idea_loc, effectbox) = ih in
-                            withCurrentIndent $ \i -> case effectbox of
-                                    Just boxNS -> return ((i, msg category ideaIcon ideaKey idea_loc):boxNS)
-                                    _-> return [(i, msg category ideaIcon ideaKey idea_loc)]
-                                ) ihs
-                ideasmsgdd <- ideasmsgd ideashandled
-                return $ mconcat ideasmsgdd
-    GenericRhs txt [] -> do
-        ideashandled <- handleIdea addIdea txt
-        case ideashandled of
-            Just (category, ideaIcon, ideaKey, idea_loc, Just effectbox) -> do
-                idmsg <- msgToPP $ msg category ideaIcon ideaKey idea_loc
-                return $ idmsg ++ effectbox
-            Just (category, ideaIcon, ideaKey, idea_loc, Nothing) -> msgToPP $ msg category ideaIcon ideaKey idea_loc
-            Nothing -> preStatement stmt
-    _ -> preStatement stmt
-handleIdeas _ _ stmt = preStatement stmt
-
-getbareidea :: GenericStatement -> Text
-getbareidea (StatementBare (GenericLhs e [])) = e
-getbareidea _ = "<!-- Check Script -->"
-
-handleIdea :: (HOI4Info g, Monad m) =>
-        Bool -> Text ->
-           PPT g m (Maybe (Text, Text, Text, Text, Maybe IndentedMessages))
-handleIdea addIdea ide = do
-    ides <- getIdeas
-    gfx <- getInterfaceGFX
-    let midea = HM.lookup ide ides
-    case midea of
-        Nothing -> return Nothing -- unknown idea
-        Just iidea -> do
-            let ideaKey = id_name iidea
-                ideaIcon = HM.findWithDefault "GFX_idea_unknown" (id_picture iidea) gfx
-            idea_loc <- getGameL10n ideaKey
-            category <- if id_category iidea == "country" then getGameL10n "FE_COUNTRY_SPIRIT" else getGameL10n $ id_category iidea
-            effectbox <- modmessage iidea idea_loc ideaKey ideaIcon
-            effectboxNS <- if id_category iidea == "country" && addIdea then return $ Just effectbox else return  Nothing
-            return $ Just (category, ideaIcon, ideaKey, idea_loc, effectboxNS)
-
-modmessage :: forall g m. (HOI4Info g, Monad m) => HOI4Idea -> Text -> Text -> Text -> PPT g m IndentedMessages
-modmessage iidea idea_loc ideaKey ideaIcon = do
-        curind <- getCurrentIndent
-        curindent <- case curind of
-            Just curindt -> return curindt
-            _ -> return 1
-        withCurrentIndentCustom 0 $ \_ -> do
-            ideaDesc <- case id_desc_loc iidea of
-                Just desc -> return $ Doc.nl2br desc
-                _ -> return ""
-            modifier <- maybe (return []) ppMany (id_modifier iidea)
-            targeted_modifier <-
-                maybe (return [])
-                    (\tarmod -> do
-                        let (scrt,scrr) = extractStmt (matchLhsText "tag") tarmod
-                            tag = case scrt of
-                                Just [pdx| tag = $tag |] -> tag
-                                _ -> "CHECK SCRIPT"
-                        lflag <- plainMsg' . (<> ":") =<< flagText (Just HOI4Country) tag
-                        scriptMsgs <- scope HOI4Country $ ppMany scrr
-                        return (lflag : scriptMsgs))
-                    (id_targeted_modifier iidea)
-            research_bonus <- maybe (return []) ppMany (id_research_bonus iidea)
-            equipment_bonus <- maybe (return []) ppMany (id_equipment_bonus iidea)
-            let boxend = [(0, MsgEffectBoxEnd)]
-            withCurrentIndentCustom curindent $ \_ -> do
-                let ideamods = modifier ++ targeted_modifier ++ research_bonus ++ equipment_bonus ++ boxend
-                return $ (0, MsgEffectBox idea_loc ideaKey ideaIcon ideaDesc) : ideamods
-
-
 ---------------
 -- has focus --
 ---------------
@@ -1912,40 +1776,6 @@ exportVariable stmt = trace ("Not handled in export_to_variable: " ++ show stmt)
 getMaybeRhsText :: Maybe GenericStatement -> Maybe Text
 getMaybeRhsText (Just [pdx| %_ = $t |]) = Just t
 getMaybeRhsText _ = Nothing
-
--------------------------------------------------
--- Handler for add_dynamic_modifier --
--------------------------------------------------
-data AddDynamicModifier = AddDynamicModifier
-    { adm_modifier :: Text
-    , adm_scope :: Either Text (Text, Text)
-    , adm_days :: Maybe Double
-    }
-newADM :: AddDynamicModifier
-newADM = AddDynamicModifier undefined (Left "ROOT") Nothing
-addDynamicModifier :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-addDynamicModifier stmt@[pdx| %_ = @scr |] =
-    pp_adm (foldl' addLine newADM scr)
-    where
-        addLine adm [pdx| modifier = $mod |] = adm { adm_modifier = mod }
-        addLine adm [pdx| scope = $tag |] = adm { adm_scope = Left tag }
-        addLine adm [pdx| scope = $vartag:$var |] = adm { adm_scope = Right (vartag, var) }
-        addLine adm [pdx| days = !amt |] = adm { adm_days = Just amt }
-        addLine adm stmt = trace ("Unknown in add_dynamic_modifier: " ++ show stmt) adm
-        pp_adm adm = do
-            let days = maybe "" formatDays (adm_days adm)
-            mmod <- HM.lookup (adm_modifier adm) <$> getDynamicModifiers
-            dynflag <- eflag (Just HOI4Country) $ adm_scope adm
-            let dynflagd = fromMaybe "<!-- Check Script -->" dynflag
-            case mmod of
-                Just mod -> withCurrentIndent $ \i -> do
-                    effect <- ppMany (dmodEffects mod)
-                    trigger <- indentUp $ ppMany (dmodEnable mod)
-                    let name = dmodLocName mod
-                        locName = maybe ("<tt>" <> adm_modifier adm <> "</tt>") (Doc.doc2text . iquotes) name
-                    return $ ((i, MsgAddDynamicModifier locName dynflagd days) : effect) ++ (if null trigger then [] else (i+1, MsgLimit) : trigger)
-                Nothing -> trace ("add_dynamic_modifier: Modifier " ++ T.unpack (adm_modifier adm) ++ " not found") $ preStatement stmt
-addDynamicModifier stmt = trace ("Not handled in addDynamicModifier: " ++ show stmt) $ preStatement stmt
 
 -------------------------------------------
 -- Handler for add_building_construction --

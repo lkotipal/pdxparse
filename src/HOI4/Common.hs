@@ -5,6 +5,7 @@ Description : Message handler for Europa Hearts of Iron IV
 -}
 module HOI4.Common (
         ppScript
+    ,   ppStatement
     ,   ppMtth
     ,   ppOne
     ,   ppMany
@@ -55,6 +56,7 @@ import MessageTools (plural)
 import QQ (pdx)
 import SettingsTypes -- everything
 import HOI4.Handlers -- everything
+import HOI4.SpecialHandlers -- everything
 import HOI4.Types -- everything
 
 -- no particular order from here... TODO: organize this!
@@ -64,6 +66,11 @@ ppScript :: (HOI4Info g, Monad m) =>
     GenericScript -> PPT g m Doc
 ppScript [] = return "(Nothing)"
 ppScript script = imsg2doc =<< ppMany script
+
+-- | Format a single statement as wiki text.
+ppStatement :: (HOI4Info g, Monad m) =>
+    GenericStatement -> PPT g m Doc
+ppStatement statement = imsg2doc =<< ppOne statement
 
 flagTextMaybe :: (HOI4Info g, Monad m) => Text -> PPT g m (Text,Text)
 flagTextMaybe = fmap (mempty,) . flagText (Just HOI4Country)
@@ -145,8 +152,10 @@ handlersNumericCompare = Tr.fromList
         ,("has_war_support"                  , numericCompare "more than" "less than" MsgHasWarSupport MsgHasWarSupportVar)
         ,("industrial_complex"               , numericCompare "more than" "fewer than" MsgIndustrialComplex MsgIndustrialComplexVar)
         ,("num_of_controlled_factories"      , numericCompare "more than" "fewer than" MsgNumOfControlledFactories MsgNumOfControlledFactoriesVar)
+        ,("num_of_controlled_states"         , numericCompare "more than" "fewer than" MsgNumOfControlledStates MsgNumOfControlledStatesVar)
         ,("num_of_factories"                 , numericCompare "more than" "fewer than" MsgNumOfFactories MsgNumOfFactoriesVar)
         ,("num_of_nukes"                     , numericCompare "more than" "fewer than" MsgNumOfNukes MsgNumOfNukesVar)
+        ,("original_research_slots"          , numericCompare "more than" "fewer than" MsgOriginalResearchSlots MsgOriginalResearchSlotsVar)
         ,("surrender_progress"               , numericCompare "more than" "less than" MsgSurrenderProgress MsgSurrenderProgressVar)
         ,("threat"                           , numericCompare "more than" "less than" MsgThreat MsgThreatVar)
         ,("fascism"                          , numericCompare "more than" "less than" MsgFascismCompare MsgFascismCompareVar)
@@ -171,183 +180,11 @@ handlersNumericIcons = Tr.fromList
 -- | Handlers for statements pertaining to modifiers
 handlersModifiers :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersModifiers = Tr.fromList
-        [("add_dynamic_modifier"           , addDynamicModifier)
-        -- Used in ideas and other bonuses, omit "gain/lose" in l10n
-        --Country Scope
-            --general modifiers
-        ,("monthly_population"          , numericLoc "MODIFIER_GLOBAL_MONTHLY_POPULATION" MsgModifierPcPosReduced)
-        ,("nuclear_production_factor"   , numericLoc "MODIFIER_NUCLEAR_PRODUCTION_FACTOR" MsgModifierPcPosReduced)
-        ,("research_sharing_per_country_bonus" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS" MsgModifierPcPosReduced)
-        ,("research_sharing_per_country_bonus_factor" , numericLoc "MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS_FACTOR" MsgModifier) -- % pos
-        ,("research_speed_factor"       , numericLoc "MODIFIER_RESEARCH_SPEED_FACTOR" MsgModifierPcPosReduced)
-        ,("local_resources_factor"      , numericLoc "MODIFIER_LOCAL_RESOURCES_FACTOR" MsgModifierPcPosReduced)
-                -- research stuff?
-        ,("light_air"                   , numericLoc "light_air_research" MsgModifierPcPosReduced)
-        ,("medium_air"                  , numericLoc "medium_air_research" MsgModifierPcPosReduced)
-        ,("heavy_air"                   , numericLoc "heavy_air_research" MsgModifierPcPosReduced)
-        ,("cas_bomber"                  , numericLoc "cas_bomber_research" MsgModifierPcPosReduced)
-        ,("tactical_bomber"             , numericLoc "tactical_bomber_research" MsgModifierPcPosReduced)
-        ,("armor"                       , numericLoc "armor_research" MsgModifierPcPosReduced)
-        ,("artillery"                   , numericLoc "artillery_research" MsgModifierPcPosReduced)
-        ,("naval_air"                   , numericLoc "naval_air_research" MsgModifierPcPosReduced)
-        ,("naval_mines"                 , numericLoc "naval_mines_research" MsgModifierPcPosReduced)
-        ,("radar_tech"                  , numericLoc "radar_tech_research" MsgModifierPcPosReduced)
-        ,("infantry_weapons"            , numericLoc "infantry_weapons_research" MsgModifierPcPosReduced)
-        ,("motorized_equipment"         , numericLoc "motorized_equipment_research" MsgModifierPcPosReduced)
-        ,("naval_equipment"             , numericLoc "naval_equipment_research" MsgModifierPcPosReduced)
-        ,("ship_modules_tech"           , numericLoc "ship_modules_tech_research" MsgModifierPcPosReduced)
-        ,("bb_tech"                     , numericLoc "bb_tech_research" MsgModifierPcPosReduced)
-        ,("shbb_tech"                   , numericLoc "shbb_tech_research" MsgModifierPcPosReduced)
-        ,("ca_tech"                     , numericLoc "ca_tech_research" MsgModifierPcPosReduced)
-        ,("cl_tech"                     , numericLoc "cl_tech_research" MsgModifierPcPosReduced)
-        ,("bc_tech"                     , numericLoc "bc_tech_research" MsgModifierPcPosReduced)
-        ,("tp_tech"                     , numericLoc "tp_tech_research" MsgModifierPcPosReduced)
-        ,("ss_tech"                     , numericLoc "ss_tech_research" MsgModifierPcPosReduced)
-        ,("dd_tech"                     , numericLoc "dd_tech_research" MsgModifierPcPosReduced)
-        ,("cv_tech"                     , numericLoc "cv_tech_research" MsgModifierPcPosReduced)
-        ,("rocketry"                    , numericLoc "rocketry_research" MsgModifierPcPosReduced)
-        ,("nuclear"                     , numericLoc "nuclear_research" MsgModifierPcPosReduced)
-        ,("industry"                    , numericLoc "industry_research" MsgModifierPcPosReduced)
-        ,("electronics"                 , numericLoc "electronics_research" MsgModifierPcPosReduced)
-        ,("land_doctrine"               , numericLoc "land_doctrine_research" MsgModifierPcPosReduced)
-        ,("naval_doctrine"              , numericLoc "naval_doctrine_research" MsgModifierPcPosReduced)
-        ,("air_doctrine"                , numericLoc "air_doctrine_research" MsgModifierPcPosReduced)
-        ,("strategic_destruction_tree"  , numericLoc "strategic_destruction_tree_research" MsgModifierPcPosReduced)
-        ,("jet_technology"              , numericLoc "jet_technology_research" MsgModifierPcPosReduced)
-        ,("train_tech"                  , numericLoc "train_tech_research" MsgModifierPcPosReduced)
-            -- Politics modifiers
-        ,("min_export"                  , numericLoc "MODIFIER_MIN_EXPORT_FACTOR" MsgModifierPcReducedSign) -- yellow
-        ,("trade_opinion_factor"        , numericLoc "MODIFIER_TRADE_OPINION_FACTOR" MsgModifierPcReducedSign)
-        ,("economy_cost_factor"         , numericLoc "economy_cost_factor" MsgModifierPcNegReduced)
-        ,("mobilization_laws_cost_factor" , numericLoc "mobilization_laws_cost_factor" MsgModifierPcNegReduced)
-        ,("political_advisor_cost_factor" , numericLoc "political_advisor_cost_factor" MsgModifierPcNegReduced)
-        ,("trade_laws_cost_factor"      , numericLoc "trade_laws_cost_factor" MsgModifierPcNegReduced)
-        ,("improve_relations_maintain_cost_factor" , numericLoc "MODIFIER_IMPROVE_RELATIONS_MAINTAIN_COST_FACTOR" MsgModifierPcNegReduced)
-        ,("party_popularity_stability_factor" , numericLoc "MODIFIER_STABILITY_POPULARITY_FACTOR" MsgModifierPcPosReduced)
-        ,("political_power_cost"        , numericLoc "MODIFIER_POLITICAL_POWER_COST" MsgModifierColourNeg)
-        ,("political_power_gain"        , numericLoc "MODIFIER_POLITICAL_POWER_GAIN" MsgModifierColourPos)
-        ,("political_power_factor"      , numericLoc "MODIFIER_POLITICAL_POWER_FACTOR" MsgModifierPcPosReduced)
-        ,("stability_factor"            , numericLoc "MODIFIER_STABILITY_FACTOR" MsgModifierPcPosReduced)
-        ,("stability_weekly"            , numericLoc "MODIFIER_STABILITY_WEEKLY" MsgModifierPcPosReduced)
-        ,("stability_weekly_factor"     , numericLoc "MODIFIER_STABILITY_WEEKLY_FACTOR" MsgModifierPcPosReduced)
-        ,("war_support_factor"          , numericLoc "MODIFIER_WAR_SUPPORT_FACTOR" MsgModifierPcPosReduced)
-        ,("war_support_weekly"          , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY" MsgModifierPcPosReduced)
-        ,("war_support_weekly_factor"   , numericLoc "MODIFIER_WAR_SUPPORT_WEEKLY_FACTOR" MsgModifierPcPosReduced)
-        ,("drift_defence_factor"        , numericLoc "MODIFIER_DRIFT_DEFENCE_FACTOR" MsgModifierPcPosReduced)
-        ,("communism_drift"             , numericLoc "communism_drift" MsgModifierColourPos)
-        ,("democratic_drift"            , numericLoc "democratic_drift" MsgModifierColourPos)
-        ,("fascism_drift"               , numericLoc "fascism_drift" MsgModifierColourPos)
-        ,("neutrality_drift"            , numericLoc "neutrality_drift" MsgModifierColourPos)
-        ,("communism_acceptance"        , numericLoc "communism_acceptance" MsgModifierColourPos)
-        ,("democratic_acceptance"       , numericLoc "democratic_acceptance" MsgModifierColourPos)
-        ,("fascism_acceptance"          , numericLoc "fascism_acceptance" MsgModifierColourPos)
-        ,("neutrality_acceptance"       , numericLoc "neutrality_acceptance" MsgModifierColourPos)
-            -- Diplomacy
-        ,("generate_wargoal_tension"    , numericLoc "MODIFIER_GENERATE_WARGOAL_TENSION_LIMIT" MsgModifierPcReduced) -- yellow
-        ,("guarantee_cost"              , numericLoc "MODIFIER_GUARANTEE_COST" MsgModifierPcNegReduced)
-        ,("guarantee_tension"           , numericLoc "MODIFIER_GUARANTEE_TENSION_LIMIT" MsgModifierPcNegReduced)
-        ,("join_faction_tension"        , numericLoc "MODIFIER_JOIN_FACTION_TENSION_LIMIT" MsgModifierPcNegReduced)
-        ,("justify_war_goal_time"       , numericLoc "MODIFIER_JUSTIFY_WAR_GOAL_TIME" MsgModifierPcNegReduced)
-        ,("lend_lease_tension"          , numericLoc "MODIFIER_LEND_LEASE_TENSION_LIMIT" MsgModifierPcNegReduced)
-        ,("opinion_gain_monthly"        , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY" MsgModifier) -- flat pos
-        ,("opinion_gain_monthly_factor" , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY_FACTOR" MsgModifierPcPosReduced)
-        ,("opinion_gain_monthly_same_ideology_factor" , numericLoc "MODIFIER_OPINION_GAIN_MONTHLY_SAME_IDEOLOGY_FACTOR" MsgModifierPcPosReduced)
-        ,("request_lease_tension"       , numericLoc "MODIFIER_REQUEST_LEASE_TENSION_LIMIT" MsgModifierPcNegReduced)
-        ,("surrender_limit"             , numericLoc "MODIFIER_SURRENDER_LIMIT" MsgModifierPcPosReduced)
-        ,("send_volunteer_divisions_required" , numericLoc "MODIFIER_SEND_VOLUNTEER_DIVISIONS_REQUIRED" MsgModifierPcNegReduced)
-        ,("send_volunteer_size"         , numericLoc "MODIFIER_SEND_VOLUNTEER_SIZE" MsgModifierColourPos)
-        ,("send_volunteers_tension"     , numericLoc "MODIFIER_SEND_VOLUNTEERS_TENSION_LIMIT" MsgModifierPcNegReduced)
-            -- autonomy
-        ,("subjects_autonomy_gain"      , numericLoc "MODIFIER_AUTONOMY_SUBJECT_GAIN" MsgModifierColourPos)
-            -- Governments in exile
-            -- Equipment
-        ,("equipment_conversion_speed"  , numericLoc "EQUIPMENT_CONVERSION_SPEED_MODIFIERS" MsgModifierPcPosReduced)
-        ,("equipment_upgrade_xp_cost"   , numericLoc "MODIFIER_EQUIPMENT_UPGRADE_XP_COST" MsgModifier) -- % neg
-        ,("license_armor_purchase_cost" , numericLoc "MODIFIER_LICENSE_ARMOR_PURCHASE_COST" MsgModifierPcNegReduced)
-        ,("production_factory_efficiency_gain_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_EFFICIENCY_GAIN_FACTOR" MsgModifierPcPosReduced)
-        ,("production_factory_max_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_MAX_EFFICIENCY_FACTOR" MsgModifierPcPosReduced)
-        ,("production_factory_start_efficiency_factor" , numericLoc "MODIFIER_PRODUCTION_FACTORY_START_EFFICIENCY_FACTOR" MsgModifierPcPosReduced)
-            -- Military outside of combat
-        ,("command_power_gain"          , numericLoc "MODIFIER_COMMAND_POWER_GAIN" MsgModifierColourPos)
-        ,("command_power_gain_mult"     , numericLoc "MODIFIER_COMMAND_POWER_GAIN_MULT" MsgModifierPcPosReduced)
-        ,("conscription"                , numericLoc "MODIFIER_CONSCRIPTION_FACTOR" MsgModifierPcReducedSign) --yellow
-        ,("conscription_factor"         , numericLoc "MODIFIER_CONSCRIPTION_TOTAL_FACTOR" MsgModifierPcPosReduced)
-        ,("training_time_factor"        , numericLoc "MODIFIER_TRAINING_TIME_FACTOR" MsgModifierPcNegReduced)
-        ,("max_command_power"           , numericLoc "MODIFIER_MAX_COMMAND_POWER" MsgModifierColourPos)
-        ,("max_command_power_mult"      , numericLoc "MODIFIER_MAX_COMMAND_POWER_MULT" MsgModifier)  -- % pos
-        ,("training_time_army_factor"   , numericLoc "MODIFIER_TRAINING_TIME_ARMY_FACTOR" MsgModifierPcReducedSign) --yellow
-        ,("cat_battlefield_support_cost_factor" , numericLoc "cat_battlefield_support_cost_factor" MsgModifierPcNegReduced)
-        ,("unit_light_armor_design_cost_factor" , numericLoc "modifier_unit_light_armor_design_cost_factor" MsgModifierPcNegReduced)
-        ,("weekly_manpower"             , numericLoc "MODIFIER_WEEKLY_MANPOWER" MsgModifierColourPos)
-            -- Fuel
-        ,("base_fuel_gain"              , numericLoc "MODIFIER_BASE_FUEL_GAIN_ADD" MsgModifier) -- flat neutr?
-        ,("base_fuel_gain_factor"       , numericLoc "MODIFIER_BASE_FUEL_GAIN_FACTOR" MsgModifier) -- % pos
-        ,("fuel_cost"                   , numericLoc "MODIFIER_FUEL_COST" MsgModifier) -- flat neg
-        ,("fuel_gain"                   , numericLoc "MODIFIER_FUEL_GAIN_ADD" MsgModifier) -- flat pos
-        ,("fuel_gain_factor"            , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifierPcPosReduced)
-        ,("max_fuel"                    , numericLoc "MODIFIER_MAX_FUEL_ADD" MsgModifier) -- flat
-        ,("max_fuel_factor"             , numericLoc "MODIFIER_MAX_FUEL_FACTOR" MsgModifierPcPosReduced)
-            -- buildings
-        ,("civilian_factory_use"        , numericLoc "MODIFIER_CIVILIAN_FACTORY_USE" MsgModifierPc) -- yellow
-        ,("industry_free_repair_factor" , numericLoc "MODIFIER_INDUSTRY_FREE_REPAIR_FACTOR" MsgModifierPcPosReduced)
-        ,("production_speed_air_base_factor" , numericLoc "modifier_production_speed_air_base_factor" MsgModifierPcPosReduced)
-        ,("production_speed_anti_air_building_factor" , numericLoc "modifier_production_speed_anti_air_building_factor" MsgModifierPcPosReduced)
-        ,("production_speed_arms_factory_factor" , numericLoc "modifier_production_speed_arms_factory_factor" MsgModifierPcPosReduced)
-        ,("production_speed_bunker_factor" , numericLoc "modifier_production_speed_bunker_factor" MsgModifierPcPosReduced)
-        ,("production_speed_coastal_bunker_factor" , numericLoc "modifier_production_speed_coastal_bunker_factor" MsgModifierPcPosReduced)
-        ,("production_speed_dockyard_factor" , numericLoc "modifier_production_speed_dockyard_factor" MsgModifierPcPosReduced)
-        ,("production_speed_infrastructure_factor" , numericLoc "modifier_production_speed_infrastructure_factor" MsgModifierPcPosReduced)
-        ,("production_speed_industrial_complex_factor" , numericLoc "modifier_production_speed_industrial_complex_factor" MsgModifierPcPosReduced)
-        ,("production_speed_nuclear_reactor_factor" , numericLoc "modifier_production_speed_nuclear_reactor_factor" MsgModifierPcPosReduced)
-        ,("production_speed_radar_station_factor" , numericLoc "modifier_production_speed_radar_station_factor" MsgModifierPcPosReduced)
-        ,("production_speed_rail_way_factor" , numericLoc "modifier_production_speed_rail_way_factor" MsgModifierPcPosReduced)
-        ,("production_speed_rocket_site_factor" , numericLoc "modifier_speed_rocket_site_factor" MsgModifierPcPosReduced)
-        ,("production_speed_synthetic_refinery_factor" , numericLoc "modifier_production_speed_synthetic_refinery_factor" MsgModifierPcPosReduced)
-        ,("consumer_goods_factor"       , numericLoc "MODIFIER_CONSUMER_GOODS_FACTOR" MsgModifierPcReduced)
-        ,("conversion_cost_civ_to_mil_factor" , numericLoc "MODIFIER_CONVERSION_COST_CIV_TO_MIL_FACTOR" MsgModifierPcNegReduced)
-        ,("conversion_cost_mil_to_civ_factor" , numericLoc "MODIFIER_CONVERSION_COST_MIL_TO_CIV_FACTOR" MsgModifierPcNegReduced)
-        ,("global_building_slots"       , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS" MsgModifierPcPosReduced) -- flat
-        ,("global_building_slots_factor" , numericLoc "MODIFIER_GLOBAL_BUILDING_SLOTS_FACTOR" MsgModifierPcPosReduced)
-        ,("industrial_capacity_dockyard" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_DOCKYARD_FACTOR" MsgModifierPcPosReduced)
-        ,("industrial_capacity_factory" , numericLoc "MODIFIER_INDUSTRIAL_CAPACITY_FACTOR" MsgModifierPcPosReduced)
-        ,("industry_repair_factor"      , numericLoc "MODIFIER_INDUSTRY_REPAIR_FACTOR" MsgModifierPcPosReduced)
-        ,("line_change_production_efficiency_factor" , numericLoc "MODIFIER_LINE_CHANGE_PRODUCTION_EFFICIENCY_FACTOR" MsgModifierPcPosReduced)
-        ,("production_oil_factor"       , numericLoc "MODIFIER_PRODUCTION_OIL_FACTOR" MsgModifierPcPosReduced)
-        ,("production_speed_buildings_factor" , numericLoc "MODIFIER_PRODUCTION_SPEED_BUILDINGS_FACTOR" MsgModifierPcPosReduced)
-            -- resistance and compliance
-        ,("civilian_intel_to_others"    , numericLoc "MODIFIER_CIVILIAN_INTEL_TO_OTHERS" MsgModifierPcNeg)
-            -- Intelligence
-        ,("foreign_subversive_activites" , numericLoc "MODIFIER_FOREIGN_SUBVERSIVE_ACTIVITIES" MsgModifierPcNegReduced)
-            -- Operatives
-        ,("enemy_operative_detection_chance_factor" , numericLoc "MODIFIER_ENEMY_OPERATIVE_DETECTION_CHANCE_FACTOR" MsgModifierPcPosReduced)
-            -- AI
-        ,("ai_focus_defense_factor"     , numericLoc "MODIFIER_AI_FOCUS_DEFENSE_FACTOR" MsgModifierPcReducedSign)
-        ,("ai_focus_peaceful_factor"    , numericLoc "MODIFIER_AI_FOCUS_PEACEFUL_FACTOR" MsgModifierPcReducedSign)
-        ,("ai_get_ally_desire_factor"   , numericLoc "MODIFIER_AI_GET_ALLY_DESIRE_FACTOR" MsgModifierSign)
-            -- Unit Leaders
-        ,("military_leader_cost_factor" , numericLoc "MODIFIER_MILITARY_LEADER_COST_FACTOR" MsgModifierPcNegReduced)
-            -- General Combat
-        ,("offence"                     , numericLoc "MODIFIER_OFFENCE" MsgModifierPcPosReduced)
-        ,("defence"                     , numericLoc "MODIFIER_DEFENCE" MsgModifierPcPosReduced)
-            -- Land Combat
-        ,("army_attack_factor"          , numericLoc "MODIFIERS_ARMY_ATTACK_FACTOR" MsgModifierPcPosReduced)
-        ,("army_core_attack_factor"     , numericLoc "MODIFIERS_ARMY_CORE_ATTACK_FACTOR" MsgModifierPcPosReduced)
-        ,("army_defence_factor"         , numericLoc "MODIFIERS_ARMY_DEFENCE_FACTOR" MsgModifierPcPosReduced)
-        ,("army_core_defence_factor"    , numericLoc "MODIFIERS_ARMY_CORE_DEFENCE_FACTOR" MsgModifierPcPosReduced)
-        ,("army_morale_factor"          , numericLoc "MODIFIER_ARMY_MORALE_FACTOR" MsgModifierPcPosReduced)
-        ,("experience_gain_motorized_combat_factor" , numericLoc "modifier_experience_gain_motorized_combat_factor" MsgModifierPcPosReduced)
-        ,("max_dig_in_factor"           , numericLoc "MODIFIER_MAX_DIG_IN_FACTOR" MsgModifierPcPosReduced)
-        ,("land_night_attack"           , numericLoc "MODIFIER_LAND_NIGHT_ATTACK" MsgModifierPcPosReduced)
-            -- Naval combat
-            -- Air combat
-            -- targeted
-        -- State Scope
-        ,("compliance_gain"             , numericLoc "MODIFIER_GLOBAL_NON_CORE_MANPOWER" MsgModifierPcReduced)
-        ,("mobilization_speed"          , numericLoc "MODIFIER_MOBILIZATION_SPEED" MsgModifierPcPosReduced)
-        ,("non_core_manpower"           , numericLoc "MODIFIER_GLOBAL_NON_CORE_MANPOWER" MsgModifierPcPosReduced)
-        ,("resistance_damage_to_garrison" , numericLoc "MODIFIER_RESISTANCE_DAMAGE_TO_GARRISONS" MsgModifierPcNegReduced)
-        -- Unit Leader Scope
-        ,("trait_panzer_leader_xp_gain_factor" , numericLoc "modifier_trait_panzer_leader_xp_gain_factor" MsgModifierPcPosReduced)
+        [("add_dynamic_modifier"        , addDynamicModifier)
+        ,("modifier"                    , handleModifier)
+        ,("research_bonus"              , handleResearchBonus)
+        ,("targeted_modifier"           , handleTargetedModifier)
+        ,("equipment_bonus"             , handleEquipmentBonus)
         ]
 
 -- | Handlers for simple compound statements

@@ -267,10 +267,10 @@ data HOI4Idea = HOI4Idea
     ,   id_allowed :: Maybe GenericScript
     ,   id_visible :: Maybe GenericScript
     ,   id_available :: Maybe GenericScript
-    ,   id_modifier :: Maybe GenericScript
-    ,   id_targeted_modifier :: Maybe GenericScript
-    ,   id_research_bonus :: Maybe GenericScript
-    ,   id_equipment_bonus :: Maybe GenericScript
+    ,   id_modifier :: Maybe GenericStatement
+    ,   id_targeted_modifier :: Maybe GenericStatement
+    ,   id_research_bonus :: Maybe GenericStatement
+    ,   id_equipment_bonus :: Maybe GenericStatement
     ,   id_rule :: Maybe GenericScript
     ,   id_on_add :: Maybe GenericScript  -- ^ effects when the idea is added
     ,   id_on_remove :: Maybe GenericScript  -- ^ effects when the idea is removed
@@ -437,6 +437,8 @@ data HOI4Scope
     | HOI4From -- ^ Usually country or state, varies by context
     | HOI4Misc -- ^ custom for the parser, is used for var and event_target,
                --   because the scope depends on what is loaded into the var
+    | HOI4Custom -- ^ custom for the parser, is usually defined by the code
+                 --   example for ace_killed_by_ace events in on_actions PREV = enemy ace
     deriving (Show, Eq, Ord, Enum, Bounded)
 
 -- | AI decision factors.

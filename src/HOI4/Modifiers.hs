@@ -14,6 +14,7 @@ import Control.Monad.Except (MonadError (..))
 import Control.Monad.Trans (MonadIO (..))
 import Control.Monad.State (gets)
 
+import Data.Foldable (fold)
 import Data.Maybe (isJust, fromJust, fromMaybe, catMaybes)
 import Data.Monoid ((<>))
 import Data.List ( sortOn, intersperse, foldl', intercalate )
@@ -30,7 +31,7 @@ import QQ (pdx)
 import SettingsTypes ( PPT, Settings (..){-, Game (..)-}
                      {-, IsGame (..)-}, IsGameData (..), IsGameState (..), GameState (..)
                      , getGameL10n, getGameL10nIfPresent
-                     , setCurrentFile, withCurrentFile
+                     , setCurrentFile, withCurrentFile, withCurrentIndent
                      , hoistErrors, hoistExceptions)
 import HOI4.Types -- everything
 import HOI4.Common (extractStmt, matchExactText, ppMany)
@@ -42,6 +43,7 @@ import HOI4.Messages
 import MessageTools
 
 import Debug.Trace (trace, traceM)
+import HOI4.SpecialHandlers (modifierMSG)
 
 parseHOI4OpinionModifiers :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
     HashMap String GenericScript -> PPT g m (HashMap Text HOI4OpinionModifier)
@@ -300,7 +302,7 @@ writeHOI4DynamicModifiers = do
         pp_dynamic_modifier :: (HOI4Info g, Monad m) => HOI4DynamicModifier -> PPT g m Doc
         pp_dynamic_modifier mod = do
             req <- imsg2doc =<< ppMany (dmodEnable mod)
-            eff <- imsg2doc =<< ppMany (dmodEffects mod)
+            eff <- withCurrentIndent $ \_ -> do imsg2doc . fold =<< traverse modifierMSG (dmodEffects mod)
             return $ mconcat
                 [ "|- style=\"vertical-align:top;\"", PP.line
                 , "| ", PP.line
