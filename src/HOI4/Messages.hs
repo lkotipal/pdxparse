@@ -233,8 +233,7 @@ data ScriptMessage
     | MsgLeaveFaction
     | MsgMarkFocusTreeLayoutDirty
     | MsgRetireCountryLeader
-    | MsgGainPoliticalPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgAddManpower {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
+    | MsgGainLosePos {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgAddExtraStateSharedBuildingSlots {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainLocPC {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgCreateFaction {scriptMessageWhat :: Text}
@@ -359,7 +358,6 @@ data ScriptMessage
     | MsgAIAddOneline {scriptMessageFactor :: Text, scriptMessageMultiplier :: Double}
     | MsgAIFactorHeader {scriptMessageMultiplier :: Double}
     | MsgAIAddHeader {scriptMessageMultiplier :: Double}
-    | MsgExperience {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgResetProvinceName {scriptMessageAmt :: Double}
     | MsgHasCompletedFocus {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageLoc :: Text}
     | MsgCompleteNationalFocus {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageLoc :: Text}
@@ -930,16 +928,7 @@ instance RenderMessage Script ScriptMessage where
             -> "Refresh the focus tree restarting the checks in allow_branch"
         MsgRetireCountryLeader
             -> "Retire the current country leader"
-        MsgGainPoliticalPower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ gainOrLose _amt
-                , " "
-                , _icon
-                , " "
-                , toMessage (colourNum True _amt)
-                , " Political power"
-                ]
-        MsgAddManpower {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
+        MsgGainLosePos {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
                 , " "
@@ -1681,6 +1670,7 @@ instance RenderMessage Script ScriptMessage where
                 , plural _amt " use" " uses"
                 , " of "
                 , toMessage (reducedNum (colourPcSign True) _amt2)
+                , " "
                 , _what
                 , "doctrine cost reduction for:"
                 ]
@@ -1747,16 +1737,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "* Base weight "
                 , toMessage (bold (plainNumSign _multiplier))
                 , " if the following are true:"
-                ]
-        MsgExperience {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
-            -> mconcat
-                [ gainOrLose _amt
-                , " "
-                , toMessage (colourNum True _amt)
-                , " "
-                , _icon
-                , " "
-                , _what
                 ]
         MsgResetProvinceName {scriptMessageAmt = _amt}
             -> mconcat
@@ -2000,7 +1980,7 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNum True _year)
                 , plural _year " year" " years"
                 , " ahead of time penalty reduction "
-                , if T.null _name then "" else toMessage (italicText _name)
+                , if T.null _name then "" else toMessage  _name
                 , "("
                 , toMessage (colourNum True  _uses)
                 , " "

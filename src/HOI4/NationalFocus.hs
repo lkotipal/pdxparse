@@ -271,16 +271,16 @@ ppnationalfocus gfx nf = do
     return . mconcat $
         [ "|- id = \"", Doc.strictText (nf_name_loc nf),"\"" , PP.line
         , "|style=\"text-align:center\"| [[File:", Doc.strictText icon_pp, ".png|center|bottom|70px]] ", Doc.strictText (nf_name_loc nf) , " <!-- ", Doc.strictText (nf_id nf), " -->", PP.line
-        , "| ",PP.line]++
+        , "| ", PP.line]++
         allowBranch_pp ++
         prerequisite_pp ++
         mutuallyExclusive_pp ++
         available_pp ++
         bypass_pp ++
-        [ "| ",PP.line]++
+        [ "| ", PP.line]++
         completionReward_pp ++
         selectEffect_pp ++
-        [ "| ",PP.line
+        [ "| "
         , maybe mempty (Doc.strictText . italicText . Doc.nl2br)  (nf_name_desc nf), PP.line
         ]
 

@@ -167,14 +167,14 @@ handlersNumericCompare = Tr.fromList
 -- | Handlers for numeric statements with icons
 handlersNumericIcons :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericIcons = Tr.fromList
-        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgAddManpower)
+        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgGainLosePos)
         ,("add_extra_state_shared_building_slots", numericIcon "building slot" MsgAddExtraStateSharedBuildingSlots)
-        ,("add_political_power"      , numericIcon "political power" MsgGainPoliticalPower)
+        ,("add_political_power"      , numericIconLoc "political power" "POLITICAL_POWER" MsgGainLosePos)
         ,("add_stability"            , numericIconLoc "stability" "STABILITY" MsgGainLocPC)
         ,("add_war_support"          , numericIconLoc "war support" "WAR_SUPPORT" MsgGainLocPC)
-        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgExperience)
-        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgExperience)
-        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgExperience)
+        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgGainLosePos)
+        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgGainLosePos)
+        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgGainLosePos)
         ]
 
 -- | Handlers for statements pertaining to modifiers
