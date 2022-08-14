@@ -176,6 +176,7 @@ data ScriptMessage
     | MsgPREVUnitLeader
     | MsgPREVUnitLeaderOwner
     | MsgPREVUnitLeaderAsOther
+    | MsgPREVCustom
     | MsgTHISCharacter
     | MsgTHISCharacterOwner
     | MsgTHISCharacterAsOther
@@ -190,6 +191,7 @@ data ScriptMessage
     | MsgTHISUnitLeader
     | MsgTHISUnitLeaderOwner
     | MsgTHISUnitLeaderAsOther
+    | MsgTHISCustom
 
     | MsgFROM
     | MsgFROMSCOPE
@@ -778,6 +780,8 @@ instance RenderMessage Script ScriptMessage where
             -> "the employer of the previously mentioned unit leader"
         MsgPREVUnitLeaderAsOther
             -> "same as the previously mentioned unit leader"
+        MsgPREVCustom
+            -> "previously mentioned custom scope<!-- check script for where it points to -->"
 
         MsgTHISCharacter
             -> "this character"
@@ -807,6 +811,8 @@ instance RenderMessage Script ScriptMessage where
             -> "the employer of this unit leader"
         MsgTHISUnitLeaderAsOther
             -> "same as this unit leader"
+        MsgTHISCustom
+            -> "current custom scope<!-- check script for where it points to -->"
 
         MsgFROM
             -> "FROM<!-- check script for where it points to -->"

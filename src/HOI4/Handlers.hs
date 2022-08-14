@@ -325,6 +325,7 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
                 | expectedScope `matchScope` HOI4Country -> message MsgPREVCharacterOwner
                 | otherwise                             -> message MsgPREVCharacterAsOther
             Just HOI4Misc -> message MsgMISC
+            Just HOI4Custom -> message MsgPREVCustom
             _ -> return "PREV"
     "this" -> getCurrentScope >>= \case -- will need editing
         Just HOI4Country
@@ -347,6 +348,7 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
             | expectedScope `matchScope` HOI4Country -> message MsgTHISCharacterOwner
             | otherwise                             -> message MsgTHISCharacterAsOther
         Just HOI4Misc -> message MsgMISC
+        Just HOI4Custom -> message MsgPREVCustom
         _ -> return "THIS"
     "from" -> message MsgFROM -- TODO: Handle this properly (if possible)
     _ -> return $ Doc.strictText name -- something else; regurgitate untouched
