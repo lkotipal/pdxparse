@@ -218,6 +218,7 @@ comment = "#" >> restOfLine >> return ()
 restOfLine :: Parser Text
 restOfLine = (Ap.many1' Ap.endOfLine >> return "")
          <|> (T.cons <$> Ap.anyChar <*> restOfLine)
+         <|> (Ap.atEnd >> return "")
 
 -- | An identifier, or atom. An atom can start with a letter, an underscore or
 -- a number (or an @ in weird cases?) (and dots in case of floats) and continue with letters, numbers, underscores, at-signs, dashes, question marks (for variables) and full stops.
