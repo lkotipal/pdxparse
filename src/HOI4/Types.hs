@@ -268,7 +268,7 @@ data HOI4Idea = HOI4Idea
     ,   id_visible :: Maybe GenericScript
     ,   id_available :: Maybe GenericScript
     ,   id_modifier :: Maybe GenericStatement
-    ,   id_targeted_modifier :: Maybe GenericStatement
+    ,   id_targeted_modifier :: Maybe GenericScript
     ,   id_research_bonus :: Maybe GenericStatement
     ,   id_equipment_bonus :: Maybe GenericStatement
     ,   id_rule :: Maybe GenericScript

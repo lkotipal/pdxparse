@@ -123,7 +123,8 @@ handlersRhsIrrelevant = Tr.fromList
         ,("kill_country_leader"     , rhsAlwaysYes MsgKillCountryLeader)
         ,("leave_faction"           , rhsAlwaysYes MsgLeaveFaction)
         ,("mark_focus_tree_layout_dirty" , rhsAlwaysYes MsgMarkFocusTreeLayoutDirty)
-        ,("retire_country_leader"       , rhsAlwaysYes MsgRetireCountryLeader)
+        ,("retire"                  , rhsAlwaysYes MsgRetire)
+        ,("retire_country_leader"   , rhsAlwaysYes MsgRetireCountryLeader)
         ]
 
 -- | Handlers for numeric statements
@@ -151,6 +152,7 @@ handlersNumericCompare = Tr.fromList
         ,("has_stability"                    , numericCompare "more than" "less than" MsgHasStability MsgHasStabilityVar)
         ,("has_war_support"                  , numericCompare "more than" "less than" MsgHasWarSupport MsgHasWarSupportVar)
         ,("industrial_complex"               , numericCompare "more than" "fewer than" MsgIndustrialComplex MsgIndustrialComplexVar)
+        ,("num_of_civilian_factories"        , numericCompare "more than" "fewer than" MsgNumOfControlledFactories MsgNumOfControlledFactoriesVar)
         ,("num_of_controlled_factories"      , numericCompare "more than" "fewer than" MsgNumOfControlledFactories MsgNumOfControlledFactoriesVar)
         ,("num_of_controlled_states"         , numericCompare "more than" "fewer than" MsgNumOfControlledStates MsgNumOfControlledStatesVar)
         ,("num_of_factories"                 , numericCompare "more than" "fewer than" MsgNumOfFactories MsgNumOfFactoriesVar)
@@ -569,7 +571,7 @@ handlersSpecialComplex = Tr.fromList
         ,("multiply_temp_variable"       , setVariable MsgMulTempVariable MsgMulTempVariableVal)
         ,("divide_variable"              , setVariable MsgDivVariable MsgDivVariableVal)
         ,("divide_temp_variable"         , setVariable MsgDivTempVariable MsgDivTempVariableVal)
-        ,("check_variable"               , setVariable MsgChkVariable MsgChkVariableVal)
+        ,("check_variable"               , checkVariable MsgCheckVariable MsgCheckVariableVal)
         ,("is_variable_equal"            , setVariable MsgEquVariable MsgEquVariableVal)
         ,("export_to_variable"           , exportVariable)
         ]
@@ -603,6 +605,7 @@ handlersMisc = Tr.fromList
         ,("has_wargoal_against" , hasWarGoalAgainst)
         ,("send_equipment"      , sendEquipment)
         ,("set_capital"         , setCapital MsgSetCapital)
+        ,("set_character_name"  , setCharacterName)
         ,("set_rule"            , setRule MsgSetRule)
         ,("set_technology"      , setTechnology)
         ]

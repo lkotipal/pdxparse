@@ -232,6 +232,7 @@ data ScriptMessage
     | MsgKillCountryLeader
     | MsgLeaveFaction
     | MsgMarkFocusTreeLayoutDirty
+    | MsgRetire
     | MsgRetireCountryLeader
     | MsgGainLosePos {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgAddExtraStateSharedBuildingSlots {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -351,7 +352,6 @@ data ScriptMessage
     | MsgFreeBuildingSlots {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
     | MsgChangeTagFrom {scriptMessageWho :: Text}
     | MsgIsDemilitarizedZone {scriptMessageYn :: Bool}
-    | MsgCheckVariable {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgNoBaseWeight
     | MsgAIBaseWeight {scriptMessageAmt :: Double}
     | MsgAIFactorOneline {scriptMessageFactor :: Text, scriptMessageMultiplier :: Double}
@@ -367,6 +367,8 @@ data ScriptMessage
     | MsgGiveGuarantee {scriptMessageWhom :: Text}
     | MsgGiveMilitaryAccess {scriptMessageWhom :: Text}
     | MsgSetCapital {scriptMessageWhat :: Text}
+    | MsgSetCharacterName {scriptMessageWhat :: Text}
+    | MsgSetCharacterNameType {scriptMessageWho :: Text, scriptMessageWhat :: Text}
     | MsgStateId {scriptMessageWhat :: Text}
     | MsgTransferState {scriptMessageWhat :: Text}
     | MsgSetStateName {scriptMessageWhat :: Text}
@@ -418,8 +420,8 @@ data ScriptMessage
     | MsgDivTempVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgDivVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgDivTempVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
-    | MsgChkVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
-    | MsgChkVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgCheckVariable { scriptMessageCompare :: Text, scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
+    | MsgCheckVariableVal { scriptMessageCompare :: Text, scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgEquVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgEquVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgHasDefensiveWar { scriptMessageYn :: Bool }
@@ -928,6 +930,8 @@ instance RenderMessage Script ScriptMessage where
             -> "Leave faction"
         MsgMarkFocusTreeLayoutDirty
             -> "Refresh the focus tree restarting the checks in allow_branch"
+        MsgRetire
+            -> "Retires"
         MsgRetireCountryLeader
             -> "Retire the current country leader"
         MsgGainLosePos {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
@@ -1700,13 +1704,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " a demilitiarized zone"
                 ]
-        MsgCheckVariable {scriptMessageIcon = __icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Value of variable "
-                , _what
-                , " is at least "
-                , toMessage (plainNum _amt)
-                ]
         MsgNoBaseWeight
             -> "(no base weight?)"
         MsgAIBaseWeight {scriptMessageAmt = _amt}
@@ -1815,6 +1812,18 @@ instance RenderMessage Script ScriptMessage where
         MsgSetCapital {scriptMessageWhat = _what}
             -> mconcat
                 [ "Change capital to "
+                , _what
+                ]
+        MsgSetCharacterName {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Change name to "
+                , _what
+                ]
+        MsgSetCharacterNameType {scriptMessageWho = _who, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Changes "
+                , _who
+                , "'s name to "
                 , _what
                 ]
         MsgStateId {scriptMessageWhat = _what}
@@ -2219,18 +2228,22 @@ instance RenderMessage Script ScriptMessage where
                 , " by "
                 , toMessage (plainNum _amt)
                 ]
-        MsgChkVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
+        MsgCheckVariable { scriptMessageCompare = _comp, scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
                 [ "Value of variable "
                 , _var1
-                , " is at least that of "
+                , " is "
+                , _comp
+                , " "
                 , _var2
                 ]
-        MsgChkVariableVal { scriptMessageVar = _var, scriptMessageAmt = _amt}
+        MsgCheckVariableVal { scriptMessageCompare = _comp, scriptMessageVar = _var, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Value of variable "
                 , _var
-                , " is at least "
+                , " is "
+                , _comp
+                , " "
                 , toMessage (plainNum _amt)
                 ]
         MsgEquVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}

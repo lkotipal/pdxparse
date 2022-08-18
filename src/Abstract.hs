@@ -347,7 +347,7 @@ lhs :: Parser lhs -> Parser (Lhs lhs)
 lhs custom = CustomLhs <$> custom
          <|> AtLhs <$> ("@" *> ident) -- guessing at the syntax here...
          <|> GenericLhs <$> ident <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")
-         <|> GenericLhs <$> stringLit <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")-- in case of a literal string lhs, ugly solution
+         <|> GenericLhs <$> stringLit <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")-- in case of a literal string lhs
          <|> IntLhs <$> Ap.decimal
     <?> "statement LHS"
 

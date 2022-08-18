@@ -180,7 +180,7 @@ modmessage iidea idea_loc ideaKey ideaIcon = do
                 _ -> return ""
             modifier <- maybe (return []) ppOne (id_modifier iidea)
             targeted_modifier <-
-                maybe (return []) handleTargetedModifier (id_targeted_modifier iidea)
+                maybe (return []) (fmap concat . mapM handleTargetedModifier) (id_targeted_modifier iidea)
             research_bonus <- maybe (return []) ppOne (id_research_bonus iidea)
             equipment_bonus <- maybe (return []) ppOne (id_equipment_bonus iidea)
             let boxend = [(0, MsgEffectBoxEnd)]
@@ -199,16 +199,48 @@ handleModifier stmt = preStatement stmt
 
 modifierMSG :: forall g m. (HOI4Info g, Monad m) =>
         StatementHandler g m
-modifierMSG stmt@[pdx| $mod = !num|] = case HM.lookup (T.toLower mod) modifiersTable of
+modifierMSG stmt@[pdx| $mod = !num|] = let lmod = T.toLower mod in case HM.lookup lmod modifiersTable of
     Just (loc, msg) ->
         let bonus = num :: Double in
         numericLoc loc msg stmt
-    Nothing -> preStatement stmt
-modifierMSG stmt@[pdx| $mod = $var|] = case HM.lookup (T.toLower mod) modifiersTable of
+    Nothing
+        | "cat_" `T.isPrefixOf` lmod -> do
+            mloc <- getGameL10nIfPresent lmod
+            case mloc of
+                Just loc -> numericLoc loc MsgModifierPcNegReduced stmt
+                Nothing -> preStatement stmt
+        | ("production_speed_" `T.isPrefixOf` lmod && "_factor" `T.isSuffixOf` lmod) ||
+            ("experience_gain_" `T.isPrefixOf` lmod && "_combat_factor" `T.isSuffixOf` lmod) ||
+            ("trait_" `T.isPrefixOf` lmod && "_xp_gain_factor" `T.isSuffixOf` lmod) -> do
+            mloc <- getGameL10nIfPresent ("modifier_" <> lmod)
+            case mloc of
+                Just loc -> numericLoc loc MsgModifierPcPosReduced stmt
+                Nothing -> preStatement stmt
+        | "unit_" `T.isPrefixOf` lmod && "_design_cost_factor" `T.isSuffixOf` lmod -> do
+            mloc <- getGameL10nIfPresent ("modifier_" <> lmod)
+            case mloc of
+                Just loc -> numericLoc loc MsgModifierPcNegReduced stmt
+                Nothing -> preStatement stmt
+        | otherwise -> preStatement stmt
+modifierMSG stmt@[pdx| $mod = $var|] =  let lmod = T.toLower mod in case HM.lookup lmod modifiersTable of
     Just (loc, msg) -> do
         locced <- getGameL10n loc
         msgToPP $ MsgModifierVar locced var
-    Nothing -> preStatement stmt
+    Nothing
+        | "cat_" `T.isPrefixOf` lmod -> do
+            mloc <- getGameL10nIfPresent lmod
+            case mloc of
+                Just locced -> msgToPP $ MsgModifierVar locced var
+                Nothing -> preStatement stmt
+        | ("production_speed_" `T.isPrefixOf` lmod && "_factor" `T.isSuffixOf` lmod) ||
+            ("unit_" `T.isPrefixOf` lmod && "_design_cost_factor" `T.isSuffixOf` lmod) ||
+            ("experience_gain_" `T.isPrefixOf` lmod && "_combat_factor" `T.isSuffixOf` lmod) ||
+            ("trait_" `T.isPrefixOf` lmod && "_xp_gain_factor" `T.isSuffixOf` lmod ) -> do
+            mloc <- getGameL10nIfPresent ("modifier_" <> lmod)
+            case mloc of
+                Just locced -> msgToPP $ MsgModifierVar locced var
+                Nothing -> preStatement stmt
+        | otherwise -> preStatement stmt
 modifierMSG stmt = preStatement stmt
 
 handleResearchBonus :: forall g m. (HOI4Info g, Monad m) =>
@@ -224,15 +256,14 @@ handleTargetedModifier :: forall g m. (HOI4Info g, Monad m) =>
 handleTargetedModifier stmt@[pdx| %_ = @scr |] = do
     let (tag, rest) = extractStmt (matchLhsText "tag") scr
     tagmsg <- case tag of
-        Just [pdx| tag = $country |] -> plainMsg' . (<> ":") =<< flagText (Just HOI4Country) country
-        _ -> plainMsg' "CHECK SCRIPT"
-    modmsg <- fold <$> traverse modifierMSG rest
-    return $ tagmsg : modmsg
+        Just [pdx| tag = $country |] ->  flagText (Just HOI4Country) country
+        _ -> return "CHECK SCRIPT"
+    fold <$> traverse (modifierMSG tagmsg) rest
         where
-            modifierMSG stmt@[pdx| $mod = !num |] = case HM.lookup (T.toLower mod) targetedModifiersTable of
-                Just (loc, msg) -> let bonus = num :: Double in numericLoc loc msg stmt
+            modifierMSG tagmsg stmt@[pdx| $mod = !num |]  = case HM.lookup (T.toLower mod) targetedModifiersTable of
+                Just (loc, msg) -> let bonus = num :: Double in numericLoc ("(" <> tagmsg <> ")" <> loc) msg stmt
                 Nothing -> preStatement stmt
-            modifierMSG stmt = preStatement stmt
+            modifierMSG _ stmt = preStatement stmt
 handleTargetedModifier stmt = preStatement stmt
 
 
@@ -261,7 +292,7 @@ modifiersTable = HM.fromList
          ("monthly_population"              , ("MODIFIER_GLOBAL_MONTHLY_POPULATION", MsgModifierPcPosReduced))
         ,("nuclear_production_factor"       , ("MODIFIER_NUCLEAR_PRODUCTION_FACTOR", MsgModifierPcPosReduced))
         ,("research_sharing_per_country_bonus" , ("MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS", MsgModifierPcPosReduced))
-        --,("research_sharing_per_country_bonus_factor" , ("MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS_FACTOR", MsgModifier)) -- % pos
+        ,("research_sharing_per_country_bonus_factor" , ("MODIFIER_RESEARCH_SHARING_PER_COUNTRY_BONUS_FACTOR", MsgModifierPcPosReduced))
         ,("research_speed_factor"           , ("MODIFIER_RESEARCH_SPEED_FACTOR", MsgModifierPcPosReduced))
         ,("local_resources_factor"          , ("MODIFIER_LOCAL_RESOURCES_FACTOR", MsgModifierPcPosReduced))
             -- Politics modifiers
@@ -292,6 +323,7 @@ modifiersTable = HM.fromList
         ,("fascism_acceptance"              , ("fascism_acceptance", MsgModifierColourPos))
         ,("neutrality_acceptance"           , ("neutrality_acceptance", MsgModifierColourPos))
             -- Diplomacy
+        ,("enemy_justify_war_goal_time"     , ("MODIFIER_ENEMY_JUSTIFY_WAR_GOAL_TIME", MsgModifierPcPosReduced))
         ,("generate_wargoal_tension"        , ("MODIFIER_GENERATE_WARGOAL_TENSION_LIMIT", MsgModifierPcReduced)) -- yellow
         ,("guarantee_cost"                  , ("MODIFIER_GUARANTEE_COST", MsgModifierPcNegReduced))
         ,("guarantee_tension"               , ("MODIFIER_GUARANTEE_TENSION_LIMIT", MsgModifierPcNegReduced))
@@ -313,7 +345,7 @@ modifiersTable = HM.fromList
         ,("equipment_conversion_speed"      , ("EQUIPMENT_CONVERSION_SPEED_MODIFIERS", MsgModifierPcPosReduced))
         ,("equipment_upgrade_xp_cost"       , ("MODIFIER_EQUIPMENT_UPGRADE_XP_COST", MsgModifierPcNegReduced))
         ,("license_armor_purchase_cost"     , ("MODIFIER_LICENSE_ARMOR_PURCHASE_COST", MsgModifierPcNegReduced))
-        ,("griffon_air_licenses"            , ("MODIFIER_LICENSE_AIR_PURCHASE_COST", MsgModifierPcNegReduced))
+        ,("license_air_purchase_cost"       , ("MODIFIER_LICENSE_AIR_PURCHASE_COST", MsgModifierPcNegReduced))
         ,("production_factory_efficiency_gain_factor" , ("MODIFIER_PRODUCTION_FACTORY_EFFICIENCY_GAIN_FACTOR", MsgModifierPcPosReduced))
         ,("production_factory_max_efficiency_factor" , ("MODIFIER_PRODUCTION_FACTORY_MAX_EFFICIENCY_FACTOR", MsgModifierPcPosReduced))
         ,("production_factory_start_efficiency_factor" , ("MODIFIER_PRODUCTION_FACTORY_START_EFFICIENCY_FACTOR", MsgModifierPcPosReduced))
@@ -324,35 +356,38 @@ modifiersTable = HM.fromList
         ,("conscription_factor"             , ("MODIFIER_CONSCRIPTION_TOTAL_FACTOR", MsgModifierPcPosReduced))
         ,("training_time_factor"            , ("MODIFIER_TRAINING_TIME_FACTOR", MsgModifierPcNegReduced))
         ,("max_command_power"               , ("MODIFIER_MAX_COMMAND_POWER", MsgModifierColourPos))
-        ,("max_command_power_mult"          , ("MODIFIER_MAX_COMMAND_POWER_MULT", MsgModifier))  -- % pos
+--        ,("max_command_power_mult"          , ("MODIFIER_MAX_COMMAND_POWER_MULT", MsgModifier))  -- % pos
         ,("training_time_army_factor"       , ("MODIFIER_TRAINING_TIME_ARMY_FACTOR", MsgModifierPcReducedSign)) --yellow
-        ,("cat_battlefield_support_cost_factor" , ("cat_battlefield_support_cost_factor", MsgModifierPcNegReduced))
-        ,("unit_light_armor_design_cost_factor" , ("modifier_unit_light_armor_design_cost_factor", MsgModifierPcNegReduced))
+--        ,("cat_battlefield_support_cost_factor" , ("cat_battlefield_support_cost_factor", MsgModifierPcNegReduced))
+--        ,("unit_light_armor_design_cost_factor" , ("modifier_unit_light_armor_design_cost_factor", MsgModifierPcNegReduced))
         ,("weekly_manpower"                 , ("MODIFIER_WEEKLY_MANPOWER", MsgModifierColourPos))
             -- Fuel
-        --,("base_fuel_gain"                  , ("MODIFIER_BASE_FUEL_GAIN_ADD", MsgModifier)) -- flat neutr?
-        --,("base_fuel_gain_factor"           , ("MODIFIER_BASE_FUEL_GAIN_FACTOR", MsgModifier)) -- % pos
+        ,("base_fuel_gain"                  , ("MODIFIER_BASE_FUEL_GAIN_ADD", MsgModifierColourPos))
+        ,("base_fuel_gain_factor"           , ("MODIFIER_BASE_FUEL_GAIN_FACTOR", MsgModifierPcPosReduced))
         --,("fuel_cost"                       , ("MODIFIER_FUEL_COST", MsgModifier)) -- flat neg
         --,("fuel_gain"                       , ("MODIFIER_FUEL_GAIN_ADD", MsgModifier)) -- flat pos
         ,("fuel_gain_factor"                , ("MODIFIER_MAX_FUEL_FACTOR", MsgModifierPcPosReduced))
         --,("max_fuel"                        , ("MODIFIER_MAX_FUEL_ADD", MsgModifier)) -- flat
         ,("max_fuel_factor"                 , ("MODIFIER_MAX_FUEL_FACTOR", MsgModifierPcPosReduced))
+        ,("army_fuel_consumption_factor"    , ("MODIFIER_ARMY_FUEL_CONSUMPTION_FACTOR", MsgModifierPcNegReduced))
+        ,("air_fuel_consumption_factor"     , ("MODIFIER_AIR_FUEL_CONSUMPTION_FACTOR", MsgModifierPcNegReduced))
+        ,("navy_fuel_consumption_factor"    , ("MODIFIER_NAVY_FUEL_CONSUMPTION_FACTOR", MsgModifierPcNegReduced))
             -- buildings
         ,("civilian_factory_use"            , ("MODIFIER_CIVILIAN_FACTORY_USE", MsgModifierPc)) -- yellow
         ,("industry_free_repair_factor"     , ("MODIFIER_INDUSTRY_FREE_REPAIR_FACTOR", MsgModifierPcPosReduced))
-        ,("production_speed_air_base_factor" , ("modifier_production_speed_air_base_factor", MsgModifierPcPosReduced))
-        ,("production_speed_anti_air_building_factor" , ("modifier_production_speed_anti_air_building_factor", MsgModifierPcPosReduced))
-        ,("production_speed_arms_factory_factor" , ("modifier_production_speed_arms_factory_factor", MsgModifierPcPosReduced))
-        ,("production_speed_bunker_factor"  , ("modifier_production_speed_bunker_factor", MsgModifierPcPosReduced))
-        ,("production_speed_coastal_bunker_factor" , ("modifier_production_speed_coastal_bunker_factor", MsgModifierPcPosReduced))
-        ,("production_speed_dockyard_factor" , ("modifier_production_speed_dockyard_factor", MsgModifierPcPosReduced))
-        ,("production_speed_infrastructure_factor" , ("modifier_production_speed_infrastructure_factor", MsgModifierPcPosReduced))
-        ,("production_speed_industrial_complex_factor" , ("modifier_production_speed_industrial_complex_factor", MsgModifierPcPosReduced))
-        ,("production_speed_nuclear_reactor_factor" , ("modifier_production_speed_nuclear_reactor_factor", MsgModifierPcPosReduced))
-        ,("production_speed_radar_station_factor" , ("modifier_production_speed_radar_station_factor", MsgModifierPcPosReduced))
-        ,("production_speed_rail_way_factor" , ("modifier_production_speed_rail_way_factor", MsgModifierPcPosReduced))
-        ,("production_speed_rocket_site_factor" , ("modifier_speed_rocket_site_factor", MsgModifierPcPosReduced))
-        ,("production_speed_synthetic_refinery_factor" , ("modifier_production_speed_synthetic_refinery_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_air_base_factor" , ("modifier_production_speed_air_base_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_anti_air_building_factor" , ("modifier_production_speed_anti_air_building_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_arms_factory_factor" , ("modifier_production_speed_arms_factory_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_bunker_factor"  , ("modifier_production_speed_bunker_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_coastal_bunker_factor" , ("modifier_production_speed_coastal_bunker_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_dockyard_factor" , ("modifier_production_speed_dockyard_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_infrastructure_factor" , ("modifier_production_speed_infrastructure_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_industrial_complex_factor" , ("modifier_production_speed_industrial_complex_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_nuclear_reactor_factor" , ("modifier_production_speed_nuclear_reactor_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_radar_station_factor" , ("modifier_production_speed_radar_station_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_rail_way_factor" , ("modifier_production_speed_rail_way_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_rocket_site_factor" , ("modifier_speed_rocket_site_factor", MsgModifierPcPosReduced))
+--        ,("production_speed_synthetic_refinery_factor" , ("modifier_production_speed_synthetic_refinery_factor", MsgModifierPcPosReduced))
         ,("consumer_goods_factor"           , ("MODIFIER_CONSUMER_GOODS_FACTOR", MsgModifierPcReduced))
         ,("conversion_cost_civ_to_mil_factor" , ("MODIFIER_CONVERSION_COST_CIV_TO_MIL_FACTOR", MsgModifierPcNegReduced))
         ,("conversion_cost_mil_to_civ_factor" , ("MODIFIER_CONVERSION_COST_MIL_TO_CIV_FACTOR", MsgModifierPcNegReduced))
@@ -371,6 +406,7 @@ modifiersTable = HM.fromList
             -- Operatives
         ,("enemy_operative_detection_chance_factor" , ("MODIFIER_ENEMY_OPERATIVE_DETECTION_CHANCE_FACTOR", MsgModifierPcPosReduced))
             -- AI
+        ,("ai_focus_aggressive_factor"      , ("MODIFIER_AI_FOCUS_AGGRESSIVE_FACTOR", MsgModifierPcReducedSign))
         ,("ai_focus_defense_factor"         , ("MODIFIER_AI_FOCUS_DEFENSE_FACTOR", MsgModifierPcReducedSign))
         ,("ai_focus_peaceful_factor"        , ("MODIFIER_AI_FOCUS_PEACEFUL_FACTOR", MsgModifierPcReducedSign))
         ,("ai_get_ally_desire_factor"       , ("MODIFIER_AI_GET_ALLY_DESIRE_FACTOR", MsgModifierSign))
@@ -386,7 +422,7 @@ modifiersTable = HM.fromList
         ,("army_defence_factor"             , ("MODIFIERS_ARMY_DEFENCE_FACTOR", MsgModifierPcPosReduced))
         ,("army_core_defence_factor"        , ("MODIFIERS_ARMY_CORE_DEFENCE_FACTOR", MsgModifierPcPosReduced))
         ,("army_morale_factor"              , ("MODIFIER_ARMY_MORALE_FACTOR", MsgModifierPcPosReduced))
-        ,("experience_gain_motorized_combat_factor" , ("modifier_experience_gain_motorized_combat_factor", MsgModifierPcPosReduced))
+--        ,("experience_gain_motorized_combat_factor" , ("modifier_experience_gain_motorized_combat_factor", MsgModifierPcPosReduced))
         ,("max_dig_in_factor"               , ("MODIFIER_MAX_DIG_IN_FACTOR", MsgModifierPcPosReduced))
         ,("land_night_attack"               , ("MODIFIER_LAND_NIGHT_ATTACK", MsgModifierPcPosReduced))
             -- Naval combat
@@ -398,7 +434,7 @@ modifiersTable = HM.fromList
         ,("non_core_manpower"               , ("MODIFIER_GLOBAL_NON_CORE_MANPOWER", MsgModifierPcPosReduced))
         ,("resistance_damage_to_garrison"   , ("MODIFIER_RESISTANCE_DAMAGE_TO_GARRISONS", MsgModifierPcNegReduced))
         -- Unit Leader Scope
-        ,("trait_panzer_leader_xp_gain_factor" , ("modifier_trait_panzer_leader_xp_gain_factor", MsgModifierPcPosReduced))
+--        ,("trait_panzer_leader_xp_gain_factor" , ("modifier_trait_panzer_leader_xp_gain_factor", MsgModifierPcPosReduced))
         ]
 
 -- | Handlers for numeric statements with icons

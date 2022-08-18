@@ -104,21 +104,20 @@ readScript settings file = do
         Left err -> do
             putStrLn $ "Couldn't parse " ++ file ++ ": " ++ err
             return []
-    where
-        contentsparse = Ap.parseOnly (Ap.option undefined (Ap.char '\xFEFF') -- BOM
-                        *> skipSpace
-                        *> genericScript)
 
 readSpecificScript :: Settings -> FilePath -> IO GenericScript
 readSpecificScript settings filepath = do
     contents <- readFileRetry filepath
-    case Ap.parseOnly (Ap.option undefined (Ap.char '\xFEFF') -- BOM
-                        *> skipSpace
-                        *> genericScript) contents of
+    case contentsparse contents of
         Right result -> return result
         Left err -> do
             putStrLn $ "Couldn't parse " ++ filepath ++ ": " ++ err
             return []
+
+contentsparse :: Text -> Either String GenericScript
+contentsparse = Ap.parseOnly (Ap.option undefined (Ap.char '\xFEFF') -- BOM
+                *> skipSpace
+                *> genericScript)
 ------------------------------
 -- Writing features to file --
 ------------------------------

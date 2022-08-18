@@ -65,6 +65,7 @@ module HOI4.Handlers (
     ,   handleFocus
     ,   focusProgress
     ,   setVariable
+    ,   checkVariable
     ,   rhsAlways
     ,   rhsAlwaysYes
     ,   rhsIgnored
@@ -106,10 +107,11 @@ module HOI4.Handlers (
     ,   setTechnology
     ,   setCapital
     ,   addFieldMarshalRole
+    ,   setCharacterName
     -- testing
     ,   isPronoun
     ,   flag
-    --specihandler exports
+    --specialhandler exports
     ,   TextAtom(..)
     ,   TextValue(..)
     ,   parseTA
@@ -1719,6 +1721,54 @@ setVariable msgWW msgWV stmt@[pdx| %_ = @scr |]
             _ ->  do return $ preMessage stmt
 setVariable _ _ stmt = preStatement stmt
 
+data CheckVariable = CheckVariable
+        { cv_which  :: Maybe Text
+        , cv_which2 :: Maybe Text
+        , cv_value  :: Maybe Double
+        , cv_comp   :: Text
+        }
+
+newCV :: CheckVariable
+newCV = CheckVariable Nothing Nothing Nothing "greater than or equals"
+
+checkVariable :: forall g m. (HOI4Info g, Monad m) =>
+    (Text -> Text -> Text -> ScriptMessage) ->
+    (Text -> Text -> Double -> ScriptMessage) ->
+    StatementHandler g m
+checkVariable msgWW msgWV stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_cv (foldl' addLine newCV scr)
+    where
+        addLine :: CheckVariable -> GenericStatement -> CheckVariable
+        addLine cv [pdx| var = $val |]
+            = cv { cv_which = Just val }
+        addLine cv [pdx| value = !val |]
+            = cv { cv_value = Just val }
+        addLine cv [pdx| value = $val |]
+            = cv { cv_which2 = Just val }
+        addLine cv [pdx| compare = $comp |]
+            = cv { cv_comp = T.replace "_" " " comp}
+        addLine cv [pdx| $var = !val |]
+            = cv { cv_which = Just var, cv_value = Just val, cv_comp = "equals" }
+        addLine cv [pdx| $var < !val |]
+            = cv { cv_which = Just var, cv_value = Just val, cv_comp = "less than" }
+        addLine cv [pdx| $var > !val |]
+            = cv { cv_which = Just var, cv_value = Just val, cv_comp = "greater than" }
+        addLine cv [pdx| $var = $val |]
+            = cv { cv_which = Just var, cv_which2 = Just val, cv_comp = "equals" }
+        addLine cv [pdx| $var < $val |]
+            = cv { cv_which = Just var, cv_which2 = Just val, cv_comp = "less than" }
+        addLine cv [pdx| $var > $val |]
+            = cv { cv_which = Just var, cv_which2 = Just val, cv_comp = "greater than" }
+        addLine cv _ = cv
+        toTT :: Text -> Text
+        toTT t = "<tt>" <> t <> "</tt>"
+        pp_cv :: CheckVariable -> PPT g m ScriptMessage
+        pp_cv cv = case (cv_which cv, cv_which2 cv, cv_value cv, cv_comp cv) of
+            (Just v1, Just v2, Nothing, comp) -> do return $ msgWW comp (toTT v1) (toTT v2)
+            (Just v,  Nothing, Just val, comp) -> do return $ msgWV comp (toTT v) val
+            _ -> do return $ preMessage stmt
+checkVariable _ _ stmt = preStatement stmt
+
 -------------------------------------
 -- Handler for export_to_variable  --
 -------------------------------------
@@ -2314,9 +2364,17 @@ foldCompound "setPartyName" "SetPartyName" "spn"
         return $ MsgSetPartyName ideo_loc short_loc long_loc
     |]
 
+---------------------------------
+-- Handler for load_focus_tree --
+---------------------------------
+
 loadFocusTree :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 loadFocusTree stmt@[pdx| %_ = $txt |] = withLocAtom MsgLoadFocusTree stmt
-loadFocusTree stmt@[pdx| %_ = @scr |] = textAtom "tree" "keep_completed" MsgLoadFocusTreeKeep tryLoc stmt
+loadFocusTree stmt@[pdx| %_ = @scr |] = case extractStmt (matchLhsText "keep_completed") scr of
+    (Just keep,_)-> textAtom "tree" "keep_completed" MsgLoadFocusTreeKeep tryLoc stmt
+    _-> case extractStmt (matchLhsText "tree") scr of
+        (Just tree,_) -> withLocAtom MsgLoadFocusTree tree
+        _-> preStatement stmt
 loadFocusTree stmt = preStatement stmt
 
 setNationality :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
@@ -2851,3 +2909,18 @@ addFieldMarshalRole stmt@[pdx| %_ = @scr |] = do
             _ -> return ""
         msgToPP $ MsgAddFieldMarshalRole nameloc
 addFieldMarshalRole stmt = preStatement stmt
+
+setCharacterName :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+setCharacterName stmt@[pdx| %_ = ?txt |] = withLocAtom MsgSetCharacterName stmt
+setCharacterName stmt@[pdx| %_ = $txt |] = withLocAtom MsgSetCharacterName stmt
+setCharacterName stmt@[pdx| %_ = @scr |] = case scr of
+    [[pdx| $who = $name |]] -> do
+        wholoc <- getGameL10n who
+        nameloc <- getGameL10n name
+        msgToPP $ MsgSetCharacterNameType wholoc nameloc
+    [[pdx| $who = ?name |]] -> do
+        wholoc <- getGameL10n who
+        nameloc <- getGameL10n name
+        msgToPP $ MsgSetCharacterNameType wholoc nameloc
+    _ -> preStatement stmt
+setCharacterName stmt = preStatement stmt
