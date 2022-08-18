@@ -52,6 +52,7 @@ data CLArgs
     = Paths
     | Version
     | Onlyextra
+    | Nowait
     | ProcessFile String
     | ProcessCountryScopeFile String
     | ProcessProvinceScopeFile String
