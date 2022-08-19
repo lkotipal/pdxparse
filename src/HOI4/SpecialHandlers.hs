@@ -222,6 +222,11 @@ modifierMSG stmt@[pdx| $mod = !num|] = let lmod = T.toLower mod in case HM.looku
                 Just loc -> numericLoc loc MsgModifierPcNegReduced stmt
                 Nothing -> preStatement stmt
         | otherwise -> preStatement stmt
+modifierMSG stmt@[pdx| custom_modifier_tooltip = $key|] = do
+    loc <- getGameL10nIfPresent key
+    maybe (preStatement stmt)
+        (msgToPP . MsgCustomModifierTooltip)
+        loc
 modifierMSG stmt@[pdx| $mod = $var|] =  let lmod = T.toLower mod in case HM.lookup lmod modifiersTable of
     Just (loc, msg) -> do
         locced <- getGameL10n loc
@@ -260,9 +265,15 @@ handleTargetedModifier stmt@[pdx| %_ = @scr |] = do
         _ -> return "CHECK SCRIPT"
     fold <$> traverse (modifierMSG tagmsg) rest
         where
-            modifierMSG tagmsg stmt@[pdx| $mod = !num |]  = case HM.lookup (T.toLower mod) targetedModifiersTable of
-                Just (loc, msg) -> let bonus = num :: Double in numericLoc ("(" <> tagmsg <> ")" <> loc) msg stmt
-                Nothing -> preStatement stmt
+            modifierMSG tagmsg stmt@[pdx| $mod = !num |] = let bonus = num :: Double in case HM.lookup (T.toLower mod) targetedModifiersTable of
+                Just (loc, msg) -> do
+                    locced <- getGameL10n loc
+                    numericLoc ("(" <> tagmsg <> ")" <> locced) msg stmt
+                Nothing -> case HM.lookup (T.toLower mod) modifiersTable of -- has to be some way to do this eligantly?
+                    Just (loc, msg) -> do
+                        locced <- getGameL10n loc
+                        numericLoc ("(" <> tagmsg <> ")" <> locced) msg stmt
+                    Nothing -> preStatement stmt
             modifierMSG _ stmt = preStatement stmt
 handleTargetedModifier stmt = preStatement stmt
 
@@ -354,12 +365,11 @@ modifiersTable = HM.fromList
         ,("command_power_gain_mult"         , ("MODIFIER_COMMAND_POWER_GAIN_MULT", MsgModifierPcPosReduced))
         ,("conscription"                    , ("MODIFIER_CONSCRIPTION_FACTOR", MsgModifierPcReducedSign)) --yellow
         ,("conscription_factor"             , ("MODIFIER_CONSCRIPTION_TOTAL_FACTOR", MsgModifierPcPosReduced))
+        ,("experience_gain_army_factor"     , ("MODIFIER_XP_GAIN_ARMY", MsgModifierPcPosReduced))
         ,("training_time_factor"            , ("MODIFIER_TRAINING_TIME_FACTOR", MsgModifierPcNegReduced))
         ,("max_command_power"               , ("MODIFIER_MAX_COMMAND_POWER", MsgModifierColourPos))
 --        ,("max_command_power_mult"          , ("MODIFIER_MAX_COMMAND_POWER_MULT", MsgModifier))  -- % pos
         ,("training_time_army_factor"       , ("MODIFIER_TRAINING_TIME_ARMY_FACTOR", MsgModifierPcReducedSign)) --yellow
---        ,("cat_battlefield_support_cost_factor" , ("cat_battlefield_support_cost_factor", MsgModifierPcNegReduced))
---        ,("unit_light_armor_design_cost_factor" , ("modifier_unit_light_armor_design_cost_factor", MsgModifierPcNegReduced))
         ,("weekly_manpower"                 , ("MODIFIER_WEEKLY_MANPOWER", MsgModifierColourPos))
             -- Fuel
         ,("base_fuel_gain"                  , ("MODIFIER_BASE_FUEL_GAIN_ADD", MsgModifierColourPos))
@@ -375,19 +385,6 @@ modifiersTable = HM.fromList
             -- buildings
         ,("civilian_factory_use"            , ("MODIFIER_CIVILIAN_FACTORY_USE", MsgModifierPc)) -- yellow
         ,("industry_free_repair_factor"     , ("MODIFIER_INDUSTRY_FREE_REPAIR_FACTOR", MsgModifierPcPosReduced))
---        ,("production_speed_air_base_factor" , ("modifier_production_speed_air_base_factor", MsgModifierPcPosReduced))
---        ,("production_speed_anti_air_building_factor" , ("modifier_production_speed_anti_air_building_factor", MsgModifierPcPosReduced))
---        ,("production_speed_arms_factory_factor" , ("modifier_production_speed_arms_factory_factor", MsgModifierPcPosReduced))
---        ,("production_speed_bunker_factor"  , ("modifier_production_speed_bunker_factor", MsgModifierPcPosReduced))
---        ,("production_speed_coastal_bunker_factor" , ("modifier_production_speed_coastal_bunker_factor", MsgModifierPcPosReduced))
---        ,("production_speed_dockyard_factor" , ("modifier_production_speed_dockyard_factor", MsgModifierPcPosReduced))
---        ,("production_speed_infrastructure_factor" , ("modifier_production_speed_infrastructure_factor", MsgModifierPcPosReduced))
---        ,("production_speed_industrial_complex_factor" , ("modifier_production_speed_industrial_complex_factor", MsgModifierPcPosReduced))
---        ,("production_speed_nuclear_reactor_factor" , ("modifier_production_speed_nuclear_reactor_factor", MsgModifierPcPosReduced))
---        ,("production_speed_radar_station_factor" , ("modifier_production_speed_radar_station_factor", MsgModifierPcPosReduced))
---        ,("production_speed_rail_way_factor" , ("modifier_production_speed_rail_way_factor", MsgModifierPcPosReduced))
---        ,("production_speed_rocket_site_factor" , ("modifier_speed_rocket_site_factor", MsgModifierPcPosReduced))
---        ,("production_speed_synthetic_refinery_factor" , ("modifier_production_speed_synthetic_refinery_factor", MsgModifierPcPosReduced))
         ,("consumer_goods_factor"           , ("MODIFIER_CONSUMER_GOODS_FACTOR", MsgModifierPcReduced))
         ,("conversion_cost_civ_to_mil_factor" , ("MODIFIER_CONVERSION_COST_CIV_TO_MIL_FACTOR", MsgModifierPcNegReduced))
         ,("conversion_cost_mil_to_civ_factor" , ("MODIFIER_CONVERSION_COST_MIL_TO_CIV_FACTOR", MsgModifierPcNegReduced))
@@ -400,17 +397,20 @@ modifiersTable = HM.fromList
         ,("production_oil_factor"           , ("MODIFIER_PRODUCTION_OIL_FACTOR", MsgModifierPcPosReduced))
         ,("production_speed_buildings_factor" , ("MODIFIER_PRODUCTION_SPEED_BUILDINGS_FACTOR", MsgModifierPcPosReduced))
             -- resistance and compliance
-        ,("civilian_intel_to_others"        , ("MODIFIER_CIVILIAN_INTEL_TO_OTHERS", MsgModifierPcNeg))
+        ,("required_garrison_factor"        , ("MODIFIER_REQUIRED_GARRISON_FACTOR", MsgModifierPcNegReduced))
             -- Intelligence
+        ,("civilian_intel_to_others"        , ("MODIFIER_CIVILIAN_INTEL_TO_OTHERS", MsgModifierPcNeg))
         ,("foreign_subversive_activites"    , ("MODIFIER_FOREIGN_SUBVERSIVE_ACTIVITIES", MsgModifierPcNegReduced))
             -- Operatives
         ,("enemy_operative_detection_chance_factor" , ("MODIFIER_ENEMY_OPERATIVE_DETECTION_CHANCE_FACTOR", MsgModifierPcPosReduced))
             -- AI
+        ,("ai_badass_factor"                , ("MODIFIER_AI_BADASS_FACTOR", MsgModifierPcReduced))
+        ,("ai_join_ally_desire_factor"      , ("MODIFIER_AI_JOIN_ALLY_DESIRE_FACTOR", MsgModifierSign))
         ,("ai_focus_aggressive_factor"      , ("MODIFIER_AI_FOCUS_AGGRESSIVE_FACTOR", MsgModifierPcReducedSign))
         ,("ai_focus_defense_factor"         , ("MODIFIER_AI_FOCUS_DEFENSE_FACTOR", MsgModifierPcReducedSign))
         ,("ai_focus_peaceful_factor"        , ("MODIFIER_AI_FOCUS_PEACEFUL_FACTOR", MsgModifierPcReducedSign))
+        ,("ai_call_ally_desire_factor"      , ("MODIFIER_AI_GET_ALLY_DESIRE_FACTOR", MsgModifierSign))
         ,("ai_get_ally_desire_factor"       , ("MODIFIER_AI_GET_ALLY_DESIRE_FACTOR", MsgModifierSign))
-        ,("ai_badass_factor"                , ("MODIFIER_AI_BADASS_FACTOR", MsgModifierPcReduced))
             -- Unit Leaders
         ,("military_leader_cost_factor"     , ("MODIFIER_MILITARY_LEADER_COST_FACTOR", MsgModifierPcNegReduced))
             -- General Combat
@@ -422,25 +422,30 @@ modifiersTable = HM.fromList
         ,("army_defence_factor"             , ("MODIFIERS_ARMY_DEFENCE_FACTOR", MsgModifierPcPosReduced))
         ,("army_core_defence_factor"        , ("MODIFIERS_ARMY_CORE_DEFENCE_FACTOR", MsgModifierPcPosReduced))
         ,("army_morale_factor"              , ("MODIFIER_ARMY_MORALE_FACTOR", MsgModifierPcPosReduced))
---        ,("experience_gain_motorized_combat_factor" , ("modifier_experience_gain_motorized_combat_factor", MsgModifierPcPosReduced))
         ,("max_dig_in_factor"               , ("MODIFIER_MAX_DIG_IN_FACTOR", MsgModifierPcPosReduced))
         ,("land_night_attack"               , ("MODIFIER_LAND_NIGHT_ATTACK", MsgModifierPcPosReduced))
+        ,("planning_speed"                  , ("MODIFIER_PLANNING_SPEED", MsgModifierPcPosReduced))
             -- Naval combat
             -- Air combat
             -- targeted
         -- State Scope
         ,("compliance_gain"                 , ("MODIFIER_GLOBAL_NON_CORE_MANPOWER", MsgModifierPcReduced))
+        ,("compliance_growth"               , ("MODIFIER_COMPLIANCE_GROWTH", MsgModifierPcPosReduced))
+        ,("local_factories"                 , ("MODIFIER_LOCAL_FACTORIES", MsgModifierPcPosReduced))
         ,("mobilization_speed"              , ("MODIFIER_MOBILIZATION_SPEED", MsgModifierPcPosReduced))
         ,("non_core_manpower"               , ("MODIFIER_GLOBAL_NON_CORE_MANPOWER", MsgModifierPcPosReduced))
         ,("resistance_damage_to_garrison"   , ("MODIFIER_RESISTANCE_DAMAGE_TO_GARRISONS", MsgModifierPcNegReduced))
+        ,("resistance_decay"                , ("MODIFIER_RESISTANCE_DECAY", MsgModifierPcPosReduced))
+        ,("starting_compliance"             , ("MODIFIER_COMPLIANCE_STARTING_VALUE", MsgModifierPcPosReduced))
         -- Unit Leader Scope
---        ,("trait_panzer_leader_xp_gain_factor" , ("modifier_trait_panzer_leader_xp_gain_factor", MsgModifierPcPosReduced))
         ]
 
 -- | Handlers for numeric statements with icons
 targetedModifiersTable :: HashMap Text (Text, Text -> Double -> ScriptMessage)
 targetedModifiersTable = HM.fromList
-        []
+        [("extra_trade_to_target_factor"    ,("MODIFIER_TRADE_TO_TARGET_FACTOR", MsgModifierPcPosReduced))
+        ,("trade_cost_for_target_factor"    ,("MODIFIER_TRADE_COST_TO_TARGET_FACTOR", MsgModifierPcNegReduced))
+        ]
 
 -- | Handlers for numeric statements with icons
 equipmentBonusTable :: HashMap Text (Text, Text -> Double -> ScriptMessage)
@@ -458,7 +463,7 @@ data AddDynamicModifier = AddDynamicModifier
     , adm_days :: Maybe Double
     }
 newADM :: AddDynamicModifier
-newADM = AddDynamicModifier undefined (Left "ROOT") Nothing
+newADM = AddDynamicModifier undefined (Left "THIS") Nothing
 addDynamicModifier :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 addDynamicModifier stmt@[pdx| %_ = @scr |] =
     pp_adm (foldl' addLine newADM scr)
@@ -471,8 +476,13 @@ addDynamicModifier stmt@[pdx| %_ = @scr |] =
         pp_adm adm = do
             let days = maybe "" formatDays (adm_days adm)
             mmod <- HM.lookup (adm_modifier adm) <$> getDynamicModifiers
-            dynflag <- eflag (Just HOI4Country) $ adm_scope adm
-            let dynflagd = fromMaybe "<!-- Check Script -->" dynflag
+            thescope <- getCurrentScope
+            dynflag <- case thescope of
+                Just HOI4Country -> eflag (Just HOI4Country) $ adm_scope adm
+                Just HOI4ScopeState -> eGetState $ adm_scope adm
+                Just HOI4From -> return $ Just "FROM"
+                _ -> return $ Just "<!-- check script -->"
+            let dynflagd = fromMaybe "<!-- check script -->" dynflag
             case mmod of
                 Just mod -> withCurrentIndent $ \i -> do
                     effect <- fold <$> traverse modifierMSG (dmodEffects mod)

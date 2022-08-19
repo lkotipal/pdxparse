@@ -108,9 +108,12 @@ module HOI4.Handlers (
     ,   setCapital
     ,   addFieldMarshalRole
     ,   setCharacterName
+    ,   hasCharacter
+    ,   setPopularities
     -- testing
     ,   isPronoun
     ,   flag
+    ,   eGetState
     --specialhandler exports
     ,   TextAtom(..)
     ,   TextValue(..)
@@ -1511,7 +1514,14 @@ random stmt = preStatement stmt
 toPct :: Double -> Double
 toPct num = fromIntegral (round (num * 1000)) / 10 -- round to one digit after the point
 
-randomList :: (HOI4Info g, Monad m) => StatementHandler g m
+data RandomMod = RandomMod{
+     rm_mod  :: GenericScript
+    ,rm_rest :: GenericScript
+}
+newRM :: RandomMod
+newRM = RandomMod [] []
+
+randomList :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 randomList stmt@[pdx| %_ = @scr |] = if all chk scr then -- Ugly solution for vars in random list
         fmtRandomList $ map entry scr
     else
@@ -1532,28 +1542,12 @@ randomList stmt@[pdx| %_ = @scr |] = if all chk scr then -- Ugly solution for va
         fmtRandomList' total (wt, what) = do
             -- TODO: Could probably be simplified.
             let (mtrigger, rest) = extractStmt (matchLhsText "trigger") what
-                (mmodifier, rest') = extractStmt (matchLhsText "modifier") rest
+            rm <- foldM foldModifiers newRM rest
             trig <- (case mtrigger of
                 Just s -> indentUp (compoundMessage MsgRandomListTrigger s)
                 _ -> return [])
-            mod <- indentUp (case mmodifier of
-                Just s@[pdx| %_ = @scr |] ->
-                    let
-                        (mfactor, s') = extractStmt (matchLhsText "factor") scr
-                        (madd, sa') = extractStmt (matchLhsText "add") scr
-                    in
-                        case mfactor of
-                            Just [pdx| %_ = !factor |] -> do
-                                cond <- ppMany s'
-                                liftA2 (++) (msgToPP $ MsgRandomListModifier factor) (pure cond)
-                            _ -> case madd of
-                                    Just [pdx| %_ = !add |] -> do
-                                        cond <- ppMany sa'
-                                        liftA2 (++) (msgToPP $ MsgRandomListAddModifier add) (pure cond)
-                                    _ -> preStatement s
-                Just s -> preStatement s
-                _ -> return [])
-            body <- ppMany rest' -- has integral indentUp
+            mod <- ppMods rm
+            body <- ppMany (rm_rest rm) -- has integral indentUp
             liftA2 (++)
                 (msgToPP $ MsgRandomChanceHOI4 (toPct (wt / total)) wt)
                 (pure (trig ++ mod ++ body))
@@ -1563,12 +1557,18 @@ randomList stmt@[pdx| %_ = @scr |] = if all chk scr then -- Ugly solution for va
         fmtRandomVarList' (wt, what) = do
             -- TODO: Could probably be simplified.
             let (mtrigger, rest) = extractStmt (matchLhsText "trigger") what
-                (mmodifier, rest') = extractStmt (matchLhsText "modifier") rest
+            rm <- foldM foldModifiers newRM rest
             trig <- (case mtrigger of
                 Just s -> indentUp (compoundMessage MsgRandomListTrigger s)
                 _ -> return [])
-            mod <- indentUp (case mmodifier of
-                Just s@[pdx| %_ = @scr |] ->
+            mod <- ppMods rm
+            body <- ppMany (rm_rest rm) -- has integral indentUp
+            liftA2 (++)
+                (msgToPP $ MsgRandomVarChance wt)
+                (pure (trig ++ mod ++ body))
+
+        ppMods rm = concat <$> indentUp (mapM (\case
+                s@[pdx| %_ = @scr |] ->
                     let
                         (mfactor, s') = extractStmt (matchLhsText "factor") scr
                         (madd, sa') = extractStmt (matchLhsText "add") scr
@@ -1582,12 +1582,11 @@ randomList stmt@[pdx| %_ = @scr |] = if all chk scr then -- Ugly solution for va
                                         cond <- ppMany sa'
                                         liftA2 (++) (msgToPP $ MsgRandomListAddModifier add) (pure cond)
                                     _ -> preStatement s
-                Just s -> preStatement s
-                _ -> return [])
-            body <- ppMany rest' -- has integral indentUp
-            liftA2 (++)
-                (msgToPP $ MsgRandomVarChance wt)
-                (pure (trig ++ mod ++ body))
+                s -> preStatement s) (rm_mod rm))
+
+        foldModifiers :: RandomMod -> GenericStatement -> PPT g m RandomMod
+        foldModifiers rm stmt@[pdx| modifier = %s |] = return rm {rm_mod = rm_mod rm ++ [stmt]}
+        foldModifiers rm stmt = return rm {rm_rest = rm_rest rm ++ [stmt]}
 randomList _ = withCurrentFile $ \file ->
     error ("randomList sent strange statement in " ++ file)
 
@@ -2901,26 +2900,47 @@ addFieldMarshalRole :: (Monad m, HOI4Info g) => StatementHandler g m
 addFieldMarshalRole stmt@[pdx| %_ = @scr |] = do
         let (name, _) = extractStmt (matchLhsText "character") scr
         nameloc <- case name of
-            Just [pdx| character = $id |] -> do
-                characters <- getCharacters
-                case HM.lookup id characters of
-                    Just charid -> return $ chaName charid
-                    _ -> return ""
+            Just [pdx| character = $id |] -> getCharacterName id
             _ -> return ""
         msgToPP $ MsgAddFieldMarshalRole nameloc
 addFieldMarshalRole stmt = preStatement stmt
 
 setCharacterName :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 setCharacterName stmt@[pdx| %_ = ?txt |] = withLocAtom MsgSetCharacterName stmt
-setCharacterName stmt@[pdx| %_ = $txt |] = withLocAtom MsgSetCharacterName stmt
 setCharacterName stmt@[pdx| %_ = @scr |] = case scr of
     [[pdx| $who = $name |]] -> do
-        wholoc <- getGameL10n who
+        whochar <- getCharacterName who
         nameloc <- getGameL10n name
-        msgToPP $ MsgSetCharacterNameType wholoc nameloc
-    [[pdx| $who = ?name |]] -> do
-        wholoc <- getGameL10n who
-        nameloc <- getGameL10n name
-        msgToPP $ MsgSetCharacterNameType wholoc nameloc
+        msgToPP $ MsgSetCharacterNameType whochar nameloc
     _ -> preStatement stmt
 setCharacterName stmt = preStatement stmt
+
+hasCharacter :: (HOI4Info g, Monad m) => StatementHandler g m
+hasCharacter stmt@[pdx| %_ = ?txt |] = do
+    chaname <- getCharacterName txt
+    msgToPP $ MsgHasCharacter chaname
+hasCharacter stmt = preStatement stmt
+
+getCharacterName :: (Monad m, HOI4Info g) =>
+    Text -> PPT g m Text
+getCharacterName idn = do
+    characters <- getCharacters
+    case HM.lookup idn characters of
+            Just charid -> return $ chaName charid
+            _ -> getGameL10n idn
+
+setPopularities :: (HOI4Info g, Monad m) => StatementHandler g m
+setPopularities [pdx| %_ = @scr |] = do
+    basemsg <- plainMsg "Party Popularities will change:"
+    popmsg <- fold <$> indentUp (traverse getpops scr)
+    return $ basemsg ++ popmsg
+    where
+        getpops stmt@[pdx| $ideo = !num |] = do
+            ideoloc <- getGameL10n ideo
+            let numpc = Doc.doc2text $ plainPc num
+            msgToPP $ MsgSetPopularities ideo ideoloc numpc
+        getpops stmt@[pdx| $ideo = ?txt |] = do
+            ideoloc <- getGameL10n ideo
+            msgToPP $ MsgSetPopularities ideo ideoloc txt
+        getpops stmt = preStatement stmt
+setPopularities stmt = preStatement stmt

@@ -6,6 +6,7 @@ module HOI4.Misc (
          parseHOI4CountryHistory
         ,parseHOI4Interface
         ,parseHOI4Characters
+        ,parseHOI4CountryLeaderTraits
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -17,6 +18,7 @@ import Control.Monad.State (MonadState (..), gets)
 import Control.Monad.Trans (MonadIO (..))
 
 import Data.Char (toLower)
+import Data.List (foldl')
 import Data.Maybe (catMaybes, fromMaybe, mapMaybe)
 import Data.Monoid ((<>))
 
@@ -287,3 +289,59 @@ characterAddSection hChar stmt
         traitFromArray :: GenericStatement -> Maybe Text
         traitFromArray (StatementBare (GenericLhs e [])) = Just e
         traitFromArray stmt = trace ("Unknown in character trait array: " ++ show stmt) Nothing
+
+parseHOI4CountryLeaderTraits :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4CountryLeaderTrait)
+parseHOI4CountryLeaderTraits scripts = HM.unions . HM.elems <$> do
+    tryParse <- hoistExceptions $
+        HM.traverseWithKey
+            (\sourceFile scr ->
+                setCurrentFile sourceFile $ mapM parseHOI4CountryLeaderTrait $ concatMap (\case
+                [pdx| leader_traits = @traits |] -> traits
+                _ -> [])
+                scr)
+            scripts
+    case tryParse of
+        Left err -> do
+            traceM $ "Completely failed parsing countryleadertraits: " ++ T.unpack err
+            return HM.empty
+        Right countryleadertraitsFilesOrErrors ->
+            flip HM.traverseWithKey countryleadertraitsFilesOrErrors $ \sourceFile eclts ->
+                fmap (mkCltMap . catMaybes) . forM eclts $ \case
+                    Left err -> do
+                        traceM $ "Error parsing countryleadertraits in " ++ sourceFile
+                                 ++ ": " ++ T.unpack err
+                        return Nothing
+                    Right cclt -> return cclt
+                where mkCltMap :: [HOI4CountryLeaderTrait] -> HashMap Text HOI4CountryLeaderTrait
+                      mkCltMap = HM.fromList . map (clt_id &&& id)
+
+parseHOI4CountryLeaderTrait :: (IsGameData (GameData g), IsGameState (GameState g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe HOI4CountryLeaderTrait))
+parseHOI4CountryLeaderTrait [pdx| $id = @effects |]
+    = withCurrentFile $ \file -> do
+        mlocid <- getGameL10nIfPresent id
+        let cclt = foldl' addSection (HOI4CountryLeaderTrait {
+                clt_id = id
+            ,   clt_loc_name = mlocid
+            ,   clt_path = file
+            ,   clt_targeted_modifier = Nothing
+            ,   clt_equipment_bonus = Nothing
+            ,   clt_modifier = Nothing
+            }) effects
+        return $ Right (Just cclt)
+    where
+        addSection :: HOI4CountryLeaderTrait -> GenericStatement -> HOI4CountryLeaderTrait
+        addSection clt stmt@[pdx| $lhs = @scr |] = case lhs of
+            "targeted_modifier" -> clt { clt_targeted_modifier = Just stmt }
+            "equipment_bonus" -> clt { clt_equipment_bonus = Just stmt }
+            "ai_will_do" -> clt
+            "random" -> clt
+            _ -> trace ("Urecognized statement in dynamic modifier: " ++ show stmt) clt
+         -- Must be an effect
+        addSection clt stmt@[pdx| random = %_ |] = clt
+        addSection clt stmt =
+            let oldmod = fromMaybe [] (clt_modifier clt) in
+            clt { clt_modifier = Just (oldmod ++ [stmt]) }
+parseHOI4CountryLeaderTrait stmt = trace (show stmt) $ withCurrentFile $ \file ->
+    throwError ("unrecognised form for dynamic modifier in " <> T.pack file)

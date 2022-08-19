@@ -350,6 +350,7 @@ lhs custom = CustomLhs <$> custom
          <|> GenericLhs <$> ident <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")
          <|> GenericLhs <$> stringLit <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")-- in case of a literal string lhs
          <|> IntLhs <$> Ap.decimal
+         <|> IntLhs <$> intLit
     <?> "statement LHS"
 
 -- | An operator.

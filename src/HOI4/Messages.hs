@@ -361,6 +361,7 @@ data ScriptMessage
     | MsgResetProvinceName {scriptMessageAmt :: Double}
     | MsgHasCompletedFocus {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageLoc :: Text}
     | MsgCompleteNationalFocus {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageLoc :: Text}
+    | MsgUnlockNationalFocus {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageLoc :: Text}
     | MsgFocus {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageLoc :: Text}
     | MsgFocusProgress {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageLoc :: Text, scriptMessageCompare :: Text}
     | MsgHasArmySize {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text}
@@ -369,6 +370,8 @@ data ScriptMessage
     | MsgSetCapital {scriptMessageWhat :: Text}
     | MsgSetCharacterName {scriptMessageWhat :: Text}
     | MsgSetCharacterNameType {scriptMessageWho :: Text, scriptMessageWhat :: Text}
+    | MsgHasCharacter {scriptMessageWho :: Text}
+    | MsgSetPopularities {scriptMessageWhat :: Text, scriptMessageIcon :: Text, scriptMessageAmtText :: Text}
     | MsgStateId {scriptMessageWhat :: Text}
     | MsgTransferState {scriptMessageWhat :: Text}
     | MsgSetStateName {scriptMessageWhat :: Text}
@@ -388,7 +391,10 @@ data ScriptMessage
     | MsgModifierPcPosReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcNegReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierVar {scriptMessageWhat :: Text, scriptMessageAmtText :: Text}
+    | MsgCustomModifierTooltip {scriptMessageLoc :: Text}
+    | MsgAddCompliance {scriptMessageAmt :: Double}
     | MsgAddResearchSlot {scriptMessageAmt :: Double}
+    | MsgAddResistance {scriptMessageAmt :: Double}
     | MsgAddThreat {scriptMessageAmt :: Double}
     | MsgSaveEventTargetAs {scriptMessageName :: Text}
     | MsgSaveGlobalEventTargetAs {scriptMessageName :: Text}
@@ -518,6 +524,7 @@ data ScriptMessage
     | MsgIsFactionLeader {scriptMessageYn :: Bool}
     | MsgIsOwnedAndControlledBy {scriptMessageWhom :: Text}
     | MsgIsPuppetOf {scriptMessageWhom :: Text}
+    | MsgIsClaimedBy {scriptMessageWhom :: Text}
     | MsgHasWargoalAgainst {scriptMessageWhom :: Text}
     | MsgHasWargoalAgainstType {scriptMessage_icon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgAddBuildingConstruction {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageVar :: Text, scriptMessageProv :: Text}
@@ -1765,6 +1772,17 @@ instance RenderMessage Script ScriptMessage where
                 , " -->"
                 , toMessage (iquotes _loc)
                 ]
+        MsgUnlockNationalFocus {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageLoc = _loc}
+            -> mconcat
+                [ "Unlock national focus "
+                , "[[File:"
+                , _icon
+                , ".png|28px]]"
+                , " <!-- "
+                , _what
+                , " -->"
+                , toMessage (iquotes _loc)
+                ]
         MsgFocus {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageLoc = _loc}
             -> mconcat
                 [ "[[File:"
@@ -1825,6 +1843,20 @@ instance RenderMessage Script ScriptMessage where
                 , _who
                 , "'s name to "
                 , _what
+                ]
+        MsgHasCharacter {scriptMessageWho = _who}
+            -> mconcat
+                [ _who
+                , " is active in this country"
+                ]
+        MsgSetPopularities {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmtText = _amtT}
+            -> mconcat
+                [ "{{icon|"
+                , _icon
+                ,"}} "
+                , _what
+                , ": "
+                , boldText _amtT
                 ]
         MsgStateId {scriptMessageWhat = _what}
             -> mconcat
@@ -1932,12 +1964,27 @@ instance RenderMessage Script ScriptMessage where
                 , ": "
                 , toMessage (boldText _amtT)
                 ]
+        MsgCustomModifierTooltip {scriptMessageLoc = _what}
+            -> mconcat
+                [ "Custom modifier tooltip: "
+                , _what
+                ]
+        MsgAddCompliance {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Compliance:"
+                , toMessage (colourPcSign True _amt)
+                ]
         MsgAddResearchSlot {scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
                 , " "
                 , toMessage (colourNum True _amt)
                 , plural _amt " research slot" " research slots"
+                ]
+        MsgAddResistance {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Resistance: "
+                , toMessage (colourPcSign False _amt)
                 ]
         MsgAddThreat {scriptMessageAmt = _amt}
             -> mconcat
@@ -2926,6 +2973,11 @@ instance RenderMessage Script ScriptMessage where
         MsgIsPuppetOf {scriptMessageWhom = _whom}
             -> mconcat
                 [ "Is a subject of "
+                , _whom
+                ]
+        MsgIsClaimedBy {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is claimed by "
                 , _whom
                 ]
         MsgHasWargoalAgainst {scriptMessageWhom = _whom}

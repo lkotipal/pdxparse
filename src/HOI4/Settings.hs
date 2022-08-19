@@ -51,7 +51,7 @@ import HOI4.NationalFocus(parseHOI4NationalFocuses, writeHOI4NationalFocuses)
 import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
                    , findTriggeredEventsInOnActions, findTriggeredEventsInNationalFocus)
-import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface, parseHOI4Characters)
+import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface, parseHOI4Characters, parseHOI4CountryLeaderTraits)
 
 -- | Temporary (?) fix for CHI and PRC both localizing to "China"
 -- Can be extended/removed as necessary
@@ -108,6 +108,8 @@ instance IsGame HOI4 where
                 ,   hoi4interfacegfx = HM.empty
                 ,   hoi4characterScripts = HM.empty
                 ,   hoi4characters = HM.empty
+                ,   hoi4countryleadertraitScripts = HM.empty
+                ,   hoi4countryleadertraits = HM.empty
                 -- unused
                 ,   hoi4extraScripts = HM.empty
                 ,   hoi4extraScriptsCountryScope = HM.empty
@@ -214,6 +216,12 @@ instance HOI4Info HOI4 where
     getCharacters = do
         HOI4D ed <- get
         return (hoi4characters ed)
+    getCountryLeaderTraitScripts = do
+        HOI4D ed <- get
+        return (hoi4countryleadertraitScripts ed)
+    getCountryLeaderTraits = do
+        HOI4D ed <- get
+        return (hoi4countryleadertraits ed)
 -- unused
     getExtraScripts = do
         HOI4D ed <- get
@@ -252,11 +260,11 @@ readHOI4Scripts = do
         readOneScript specific category target = do
             content <- if specific then liftIO $ readScript settings target else liftIO $ readSpecificScript settings target
             --traceM (show target)
-            when (null content) $
-                liftIO $ hPutStrLn stderr $
-                    "Warning: " ++ target
-                        ++ " contains no scripts - failed parse? Expected feature type "
-                        ++ category
+            --when (null content) $
+                --liftIO $ hPutStrLn stderr $
+                    --"Warning: " ++ target
+                       -- ++ " contains no scripts - failed parse? Expected feature type "
+                       -- ++ category
             return (target, content)
 
         readHOI4Script :: String -> PPT HOI4 m (HashMap String GenericScript)
@@ -272,6 +280,7 @@ readHOI4Scripts = do
 
                     "country_history" -> "history" </> "countries"
                     "characters" -> "common" </> "characters"
+                    "country_leader_trait" -> "common" </> "country_leader"
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
@@ -334,6 +343,7 @@ readHOI4Scripts = do
 
     country_history <- readHOI4Script "country_history"
     characterScripts <- readHOI4Script "characters"
+    countryleadertraitScripts <- readHOI4Script "country_leader_trait"
     interface_gfx <- readHOI4SpecificScript "interfacegfx"
 
     modify $ \(HOI4D s) -> HOI4D $ s {
@@ -348,6 +358,7 @@ readHOI4Scripts = do
 
         ,   hoi4nationalfocusScripts = national_focus
         ,   hoi4characterScripts = characterScripts
+        ,   hoi4countryleadertraitScripts = countryleadertraitScripts
         ,   hoi4interfacegfxScripts = interface_gfx
         }
 
@@ -368,6 +379,7 @@ parseHOI4Scripts = do
     countryHistory <- parseHOI4CountryHistory =<< getCountryHistoryScripts
     interfaceGFX <- parseHOI4Interface =<< getInterfaceGFXScripts
     characters <- parseHOI4Characters =<< getCharacterScripts
+    countryleadertraits <- parseHOI4CountryLeaderTraits =<< getCountryLeaderTraitScripts
 
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
@@ -390,6 +402,7 @@ parseHOI4Scripts = do
 
             ,   hoi4countryHistory = countryHistory
             ,   hoi4characters = characters
+            ,   hoi4countryleadertraits = countryleadertraits
             ,   hoi4interfacegfx = interfaceGFX
             }
 

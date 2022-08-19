@@ -18,6 +18,7 @@ module HOI4.Types (
 
     ,   HOI4CountryHistory (..)
     ,   HOI4Character (..)
+    ,   HOI4CountryLeaderTrait (..)
         -- * Low level types
     ,   HOI4Scope (..)
     ,   AIWillDo (..)
@@ -71,6 +72,8 @@ data HOI4Data = HOI4Data {
     ,   hoi4interfacegfx :: HashMap Text Text
     ,   hoi4characterScripts :: HashMap FilePath GenericScript
     ,   hoi4characters :: HashMap Text HOI4Character
+    ,   hoi4countryleadertraitScripts :: HashMap FilePath GenericScript
+    ,   hoi4countryleadertraits :: HashMap Text HOI4CountryLeaderTrait
 
     ,   hoi4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -144,9 +147,13 @@ class (IsGame g,
     -- | Get the interface, for icon paths, parsed
     getInterfaceGFX :: Monad m => PPT g m (HashMap Text Text)
     -- | Get character script
-    getCharacters :: Monad m => PPT g m (HashMap Text HOI4Character)
-    -- | Get the characters parsed
     getCharacterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the characters parsed
+    getCharacters :: Monad m => PPT g m (HashMap Text HOI4Character)
+    -- | Get leader traits script
+    getCountryLeaderTraitScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the leader traits parsed
+    getCountryLeaderTraits :: Monad m => PPT g m (HashMap Text HOI4CountryLeaderTrait)
 
     -- | Get extra scripts parsed from command line arguments
     getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
@@ -419,6 +426,15 @@ data HOI4Character = HOI4Character
     ,   chaOn_add :: Maybe GenericScript
     ,   chaOn_remove :: Maybe GenericScript
     ,   chaPath :: FilePath -- ^ Source file
+    } deriving (Show)
+
+data HOI4CountryLeaderTrait = HOI4CountryLeaderTrait
+    {   clt_id :: Text
+    ,   clt_loc_name :: Maybe Text
+    ,   clt_path :: FilePath
+    ,   clt_targeted_modifier :: Maybe GenericStatement
+    ,   clt_equipment_bonus :: Maybe GenericStatement
+    ,   clt_modifier :: Maybe GenericScript
     } deriving (Show)
 
 
