@@ -1576,8 +1576,8 @@ handlersTextValue = Tr.fromList
 -- | Handlers for text/atom pairs
 handlersTextAtom :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextAtom = Tr.fromList
-        [("create_flagship"      , taDescAtomIcon "name" "type" MsgCreateNamedShip)
-        ,("create_named_ship"    , taDescAtomIcon "name" "type" MsgCreateFlagShip)
+        [("create_flagship"      , taDescAtomIcon "name" "type" MsgCreateFlagShip)
+        ,("create_named_ship"    , taDescAtomIcon "name" "type" MsgCreateNamedShip)
         ,("pick_random_estate_if_present" , textAtom "flag" "estate_action" MsgPickRandomEstateIfPresent tryLoc) -- Localization/icon ignored
         ,("religious_school"     , textAtom "school" "group" MsgReligiousSchool tryLoc)
         ,("set_religious_school" , textAtom "school" "group" MsgSetReligiousSchool tryLoc)

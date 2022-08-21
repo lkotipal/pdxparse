@@ -10068,6 +10068,7 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " named "
                 , toMessage (iquotes _name)
+                , " with random modifications"
                 ]
         MsgTradingPart {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
