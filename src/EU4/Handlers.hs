@@ -153,12 +153,15 @@ module EU4.Handlers (
     ,   isPronoun
     ,   flag
     ,   estatePrivilege
+    ,   isOrAcceptsReligion
+    ,   isOrAcceptsReligionGroup
+    ,   genericTextLines
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as B
-import Data.Text (Text)
+import Data.Text (Text, stripPrefix)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Encoding as TE
@@ -4161,3 +4164,38 @@ hasGovernmentReforTier :: (EU4Info g, Monad m) => StatementHandler g m
 hasGovernmentReforTier stmt@(Statement _ OpEq (CompoundRhs [Statement (GenericLhs tier []) OpEq (GenericRhs "yes" [])])) | T.isPrefixOf "tier_" tier =
     msgToPP $ MsgHasReformTier $ (read (T.unpack $ T.drop 5 tier) :: Double)
 hasGovernmentReforTier stmt = (trace $ "Not handled in hasGovernmentReforTier: " ++ show stmt) $ preStatement stmt
+
+isOrAcceptsReligion :: (EU4Info g, Monad m) => StatementHandler g m
+isOrAcceptsReligion stmt =
+    case getEffectArg "religion" stmt of
+        Just (GenericRhs atom _) -> do
+            loc <- getGameL10n atom
+            genericTextLines ["Either:"
+                , mconcat ["*The province religion is ", (iconText atom), " ", loc, " which is either the state or syncretic religion of its owner"]
+                , mconcat ["* The province has the state religion of its owner who has ", (iconText atom), " ", loc, " as a syncretic religion"]
+                ] stmt
+        _ -> (trace $ "warning: Not handled by isOrAcceptsReligion: " ++ (show stmt)) $ preStatement stmt
+
+isOrAcceptsReligionGroup :: (EU4Info g, Monad m) => StatementHandler g m
+isOrAcceptsReligionGroup stmt =
+    case getEffectArg "religion_group" stmt of
+        Just (GenericRhs atom _) -> do
+            loc <- getGameL10n atom
+            genericTextLines ["Either:"
+                , mconcat ["*The province religion is the state religion of its owner ''and'' in the ", loc," group"]
+                , "*All of the following:"
+                , mconcat ["** The owner has a syncretic religion in the ", loc, " group"]
+                , mconcat ["** The province religion is the state religion of its owner ''or'' is is in the ", loc, " group"]
+                ] stmt
+        _ -> (trace $ "warning: Not handled by isOrAcceptsReligionGroup: " ++ (show stmt)) $ preStatement stmt
+
+-- | statement handler for a list of lines.
+-- Lines which are prefixed with one or more *, will be indented accordingly
+-- the rest of the lines will be passed on unchanged
+genericTextLines :: forall g m. (EU4Info g, Monad m) => [Text] -> StatementHandler g m
+genericTextLines lines stmt  = mapM handleLine lines
+    where
+        handleLine :: Text -> PPT g m IndentedMessage
+        handleLine (stripPrefix "* " -> Just suf) = indentUp (handleLine suf)
+        handleLine (stripPrefix "*" -> Just suf) = indentUp (handleLine suf)
+        handleLine x = msgToPP' $ MsgGenericText x

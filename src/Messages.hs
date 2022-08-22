@@ -916,6 +916,7 @@ data ScriptMessage
     | MsgStreltsyProgress {scriptMessageAmt :: Double}
     | MsgAddLootFromProvinceEffect
     | MsgGenericTemplate {scriptMessageTemplate :: Text}
+    | MsgGenericText {text :: Text}
     | MsgAddStabilityOrAdm
     | MsgAddTrust {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAddTrustMutual {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
@@ -1674,6 +1675,7 @@ data ScriptMessage
     | MsgPrestigePerDevelopmentFromConversion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgStateGoverningCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgToleranceOfHeathensCapacity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgToleranceOfHereticsCapacity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgColonyMissionReward {scriptMessageProv :: Text}
     | MsgClearPreviousPrimaryCults
@@ -6877,6 +6879,8 @@ instance RenderMessage Script ScriptMessage where
             -> "Gain {{icon|ducats}} ducats and {{icon|mil}} military power scaling with province development"
         MsgGenericTemplate {scriptMessageTemplate = _template}
             -> "{{" <> _template <> "}}"
+        MsgGenericText {text = _text}
+            -> _text
         MsgAddStabilityOrAdm
             -> "{{add stability or adm power}}"
         MsgAddTrust {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
@@ -11396,6 +11400,13 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNumSign True _amt)
                 , " Maximum tolerance of heathens"
+                ]
+        MsgToleranceOfHereticsCapacity {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " "
+                , toMessage (colourNumSign True _amt)
+                , " Maximum tolerance of heretics"
                 ]
         MsgYearlyAuthority {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
