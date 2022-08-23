@@ -29,20 +29,22 @@ and the steam_ folders if you don't use HOI4 in the default steam location.
 directory, except that the `.txt` files are directories. Each file in these
 directories is one "object": one event, one decision, etc. Normally it will
 wait for a user input at the end so that it can be used in a command window
-which closes automatically (use --nowait to change that).
+which closes automatically (use `--nowait` to change that).
 
 The following command line options are supported:
--h, --help      show a help about the command line options
--p, --paths     show location of configuration files and exit
--v, --version   show version information and exit
--n, --nowait    don't wait for the user to press a key before exiting
 
-In addition to that, EU4 parsing supports the following additional options which can be used multiple times:
--e, --onlyextra                skip writing normal game files and only write the result of parsing the files which are specified in the following options
--f FILE, --file=FILE           also process FILE without any special handling
--c FILE, --countryscope=FILE   also process FILE as containing code in the counrty scope
--s FILE, --provincescope=FILE  also process FILE as containing code in the province scope
--m FILE, --modifiers=FILE      also process FILE as containing modifiers
+    -h, --help      show a help about the command line options
+    -p, --paths     show location of configuration files and exit
+    -v, --version   show version information and exit
+    -n, --nowait    don't wait for the user to press a key before exiting
+
+In addition to that, EU4 parsing supports the following additional options, each of which can be used multiple times:
+
+    -e, --onlyextra                skip writing normal game files and only write the result of parsing the files which are specified in the following options
+    -f FILE, --file=FILE           also process FILE without any special handling
+    -c FILE, --countryscope=FILE   also process FILE as containing code in the counrty scope
+    -s FILE, --provincescope=FILE  also process FILE as containing code in the province scope
+    -m FILE, --modifiers=FILE      also process FILE as containing modifiers
 
 
 Without command line options, pdxparse just processes everything it finds and puts
