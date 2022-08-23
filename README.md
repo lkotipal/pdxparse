@@ -40,7 +40,8 @@ The following command line options are supported:
 
 In addition to that, EU4 parsing supports the following additional options, each of which can be used multiple times:
 
-    -e, --onlyextra                skip writing normal game files and only write the result of parsing the files which are specified in the following options
+    -e, --onlyextra                skip writing normal game files and only write the result of parsing
+                                       the files which are specified in the following options
     -f FILE, --file=FILE           also process FILE without any special handling
     -c FILE, --countryscope=FILE   also process FILE as containing code in the counrty scope
     -s FILE, --provincescope=FILE  also process FILE as containing code in the province scope
@@ -48,8 +49,8 @@ In addition to that, EU4 parsing supports the following additional options, each
 
 
 Without command line options, pdxparse just processes everything it finds and puts
-the results in the directory `output`. --onlyextra can be used to restrict the output,
-but the parsing of the extra files is not content aware.
+the results in the directory `output`. `--onlyextra` can be used to restrict the output,
+but the parsing of the extra files is not content-aware.
 
 ## Known Issues
 
