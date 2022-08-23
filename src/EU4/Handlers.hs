@@ -156,6 +156,7 @@ module EU4.Handlers (
     ,   isOrAcceptsReligion
     ,   isOrAcceptsReligionGroup
     ,   genericTextLines
+    ,   handleModifier
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -873,6 +874,7 @@ scriptIconFileTable = HM.fromList
     ,("monthly heir claim increase", ("", "monthly heir claim increase"))
     ,("monthly piety accelerator", ("", "monthly piety accelerator"))
     ,("yearly authority", ("", "yearly authority"))
+    ,("yearly doom reduction", ("", "yearly doom reduction"))
     -- Trade company investments
     ,("local_quarter", ("TC local quarters", "Trade company#Trade company investments"))
     ,("permanent_quarters", ("TC permanent quarters", "Trade company#Trade company investments"))
@@ -4188,6 +4190,22 @@ isOrAcceptsReligionGroup stmt =
                 , mconcat ["** The province religion is the state religion of its owner ''or'' is is in the ", loc, " group"]
                 ] stmt
         _ -> (trace $ "warning: Not handled by isOrAcceptsReligionGroup: " ++ (show stmt)) $ preStatement stmt
+
+capitalizeFirstLetter :: Text -> Text
+capitalizeFirstLetter txt = T.toUpper (T.take 1 txt) <> T.drop 1 txt
+
+-- | Handler for generic modifiers
+-- The localisation is loaded dynamically from the game files
+-- the icon is assumed to be the same as the localisation
+handleModifier :: (EU4Info g, Monad m) =>
+    Text
+    -> (Double -> Doc)
+        -> StatementHandler g m
+handleModifier locKey modifierTransformer [pdx| %_ = !amt |] = do
+    modifierLoc <- getGameL10n locKey
+    let lowerLoc = T.toLower modifierLoc
+    msgToPP $ MsgGenericModifier (iconText lowerLoc) amt (capitalizeFirstLetter lowerLoc) modifierTransformer
+handleModifier _ _  stmt = plainMsg $ pre_statement' stmt
 
 -- | statement handler for a list of lines.
 -- Lines which are prefixed with one or more *, will be indented accordingly

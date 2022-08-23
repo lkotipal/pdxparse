@@ -50,7 +50,7 @@ import qualified Text.PrettyPrint.Leijen.Text as PP
 import Abstract -- everything
 import qualified Doc
 import Messages -- everything
-import MessageTools (plural)
+import MessageTools (plural, colourNumSign)
 import QQ (pdx)
 import SettingsTypes -- everything
 import EU4.Handlers -- everything
@@ -335,7 +335,6 @@ handlersNumeric = Tr.fromList
         ,("tributary_state"                  , numeric MsgNumTributaryStates)
         ,("units_in_province"                , numeric MsgUnitsInProvince)
         ,("vassal"                           , numeric MsgHasNumVassals)
-        ,("yearly_doom_reduction"            , numeric MsgYearlyDoomReduction)
         -- Special cases
         ,("legitimacy_or_horde_unity"        , numeric MsgLegitimacyOrHordeUnity)
         ]
@@ -847,7 +846,9 @@ handlersNumericIcons = Tr.fromList
         ,("move_capital_cost_modifier"        , numericIcon "move capital cost modifier" MsgMoveCapitalCostModifier)
         ,("prestige_per_development_from_conversion", numericIcon "prestige per development from missionary" MsgPrestigePerDevelopmentFromConversion)
         ,("state_governing_cost"              , numericIcon "state governing cost" MsgStateGoverningCost)
-        ,("tolerance_of_heathens_capacity"    , numericIcon "maximum tolerance of heathens" MsgToleranceOfHeathensCapacity)
+        ,("tolerance_of_heathens_capacity"    , handleModifier "MODIFIER_TOLERANCE_OF_HEATHENS_CAPACITY" (colourNumSign True))
+        ,("tolerance_of_heretics_capacity"    , handleModifier "MODIFIER_TOLERANCE_OF_HERETICS_CAPACITY" (colourNumSign True))
+        ,("yearly_doom_reduction"             , handleModifier "MODIFIER_YEARLY_DOOM_REDUCTION" (colourNumSign True))
         ,("yearly_authority"                  , numericIcon "yearly authority" MsgYearlyAuthority)
         ,("monthly_piety_accelerator"         , numericIcon "monthly piety accelerator" MsgMonthlyPietyAccelerator)
         ,("movement_speed_in_fleet_modifier"  , numericIcon "fleet movement speed" MsgMovementSpeedInFleetModifier)
