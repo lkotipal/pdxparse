@@ -125,6 +125,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("mark_focus_tree_layout_dirty" , rhsAlwaysYes MsgMarkFocusTreeLayoutDirty)
         ,("retire"                  , rhsAlwaysYes MsgRetire)
         ,("retire_country_leader"   , rhsAlwaysYes MsgRetireCountryLeader)
+        ,("set_portrait"            , rhsIgnored MsgSetPortrait)
         ]
 
 -- | Handlers for numeric statements
@@ -171,15 +172,15 @@ handlersNumericCompare = Tr.fromList
 -- | Handlers for numeric statements with icons
 handlersNumericIcons :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericIcons = Tr.fromList
-        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgGainLosePos)
+        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgGainLosePosIcon)
         ,("add_extra_state_shared_building_slots", numericIcon "building slot" MsgAddExtraStateSharedBuildingSlots)
-        ,("add_political_power"      , numericIconLoc "political power" "POLITICAL_POWER" MsgGainLosePos)
-        ,("add_command_power"        , numericIconLoc "command power" "COMMAND_POWER" MsgGainLosePos)
+        ,("add_political_power"      , numericIconLoc "political power" "POLITICAL_POWER" MsgGainLosePosIcon)
+        ,("add_command_power"        , numericIconLoc "command power" "COMMAND_POWER" MsgGainLosePosIcon)
         ,("add_stability"            , numericIconLoc "stability" "STABILITY" MsgGainLocPC)
         ,("add_war_support"          , numericIconLoc "war support" "WAR_SUPPORT" MsgGainLocPC)
-        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgGainLosePos)
-        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgGainLosePos)
-        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgGainLosePos)
+        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgGainLosePosIcon)
+        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgGainLosePosIcon)
+        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgGainLosePosIcon)
         ]
 
 -- | Handlers for statements pertaining to modifiers
@@ -513,6 +514,7 @@ handlersSpecialComplex :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSpecialComplex = Tr.fromList
         [("add_building_construction"    , addBuildingConstruction)
         ,("add_doctrine_cost_reduction"  , addDoctrineCostReduction)
+        ,("add_equipment_to_stockpile"   , addEquipment)
         ,("add_named_threat"             , addNamedThreat)
         ,("add_opinion_modifier"         , opinion MsgAddOpinion MsgAddOpinionDur)
         ,("add_tech_bonus"               , addTechBonus)
@@ -570,13 +572,14 @@ handlersSpecialComplex = Tr.fromList
         ,("set_temp_variable"            , setVariable MsgSetTempVariable MsgSetTempVariableVal)
         ,("add_to_variable"              , setVariable MsgAddVariable MsgAddVariableVal)
         ,("add_to_temp_variable"         , setVariable MsgAddTempVariable MsgAddTempVariableVal)
-        ,("subtract_from_variable"            , setVariable MsgSubVariable MsgSubVariableVal)
-        ,("subtract_from_temp_variable"       , setVariable MsgSubTempVariable MsgSubTempVariableVal)
+        ,("subtract_from_variable"       , setVariable MsgSubVariable MsgSubVariableVal)
+        ,("subtract_from_temp_variable"  , setVariable MsgSubTempVariable MsgSubTempVariableVal)
         ,("multiply_variable"            , setVariable MsgMulVariable MsgMulVariableVal)
         ,("multiply_temp_variable"       , setVariable MsgMulTempVariable MsgMulTempVariableVal)
         ,("divide_variable"              , setVariable MsgDivVariable MsgDivVariableVal)
         ,("divide_temp_variable"         , setVariable MsgDivTempVariable MsgDivTempVariableVal)
         ,("check_variable"               , checkVariable MsgCheckVariable MsgCheckVariableVal)
+        ,("clamp_variable"               , clampVariable MsgClampVariableValVal MsgClampVariableValVar MsgClampVariableVarVal MsgClampVariableVarVar)
         ,("is_variable_equal"            , setVariable MsgEquVariable MsgEquVariableVal)
         ,("export_to_variable"           , exportVariable)
         ]
@@ -597,13 +600,20 @@ handlersMisc :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersMisc = Tr.fromList
         [("add_ai_strategy"             , rhsIgnored MsgAddAiStrategy)
         ,("add_autonomy_ratio"          , addAutonomyRatio)
-        ,("add_field_marshal_role"      , addFieldMarshalRole)
+        ,("add_field_marshal_role"      , addFieldMarshalRole MsgAddFieldMarshalRole)
+        ,("add_corps_commander_role"    , addFieldMarshalRole MsgAddCorpsCommanderRole)
+        ,("add_advisor_role"            , addAdvisorRole)
+        ,("remove_advisor_role"         , removeAdvisorRole)
+        ,("add_country_leader_role"     , addLeaderRole)
+        ,("create_country_leader"       , createLeader)
         ,("add_resource"                , addResource)
         ,("date"                        , handleDate "After" "Before")
         ,("has_start_date"              , handleDate "Game initially started after" "Game initially started before")
         ,("random"                      , random)
         ,("random_list"                 , randomList)
         -- Special
+        ,("add_trait"                   , handleTrait True)
+        ,("remove_trait"                , handleTrait False)
         ,("diplomatic_relation" , diplomaticRelation)
         ,("has_character"       , hasCharacter)
         ,("has_dlc"             , hasDlc)

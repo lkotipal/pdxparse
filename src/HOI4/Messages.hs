@@ -234,12 +234,18 @@ data ScriptMessage
     | MsgMarkFocusTreeLayoutDirty
     | MsgRetire
     | MsgRetireCountryLeader
-    | MsgGainLosePos {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
+    | MsgSetPortrait
+    | MsgGainLosePosIcon {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgAddExtraStateSharedBuildingSlots {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainLocPC {scriptMessageIcon :: Text, scriptMessageLoc :: Text, scriptMessageAmt :: Double}
     | MsgCreateFaction {scriptMessageWhat :: Text}
     | MsgHasTech {scriptMessageWhat :: Text}
     | MsgDiplomaticRelation {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgTrait {scriptMessageYn :: Bool}
+    | MsgTraitIdeo {scriptMessageYn :: Bool, scriptMessageWhat :: Text}
+    | MsgTraitChar {scriptMessageWho :: Text, scriptMessageYn :: Bool}
+    | MsgTraitCharIdeo {scriptMessageWho :: Text, scriptMessageYn :: Bool, scriptMessageWhat :: Text}
+    | MsgAddSkill {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgTooltip {scriptMessageWhat :: Text}
     | MsgCustomEffectTooltip {scriptMessageWhat :: Text}
     | MsgRemoveStateClaim {scriptMessageWhat :: Text}
@@ -349,6 +355,8 @@ data ScriptMessage
     | MsgSetRuleYesNo {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgSetTechnology {scriptMessageAmt :: Double, scriptMessageWhat :: Text}
     | MsgAddDoctrineCostReduction {scriptMessageAmt :: Double, scriptMessageAmt2 :: Double, scriptMessageWhat :: Text}
+    | MsgAddEquipmentToStockpile {scriptMessageAmt :: Double, scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageWhat2 :: Text}
+    | MsgAddEquipmentToStockpileVar {scriptMessageAmtT :: Text, scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageWhat2 :: Text}
     | MsgFreeBuildingSlots {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
     | MsgChangeTagFrom {scriptMessageWho :: Text}
     | MsgIsDemilitarizedZone {scriptMessageYn :: Bool}
@@ -428,6 +436,10 @@ data ScriptMessage
     | MsgDivTempVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgCheckVariable { scriptMessageCompare :: Text, scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgCheckVariableVal { scriptMessageCompare :: Text, scriptMessageVar :: Text, scriptMessageAmt :: Double}
+    | MsgClampVariableValVal { scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageAmt2 :: Double}
+    | MsgClampVariableValVar { scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageVar2 :: Text}
+    | MsgClampVariableVarVal { scriptMessageWhat :: Text, scriptMessageVar :: Text, scriptMessageAmt2 :: Double}
+    | MsgClampVariableVarVar { scriptMessageWhat :: Text, scriptMessageVar :: Text, scriptMessageVar2 :: Text}
     | MsgEquVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgEquVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
     | MsgHasDefensiveWar { scriptMessageYn :: Bool }
@@ -497,6 +509,12 @@ data ScriptMessage
     | MsgAddAiStrategy
     | MsgAddAutonomyRatio {scriptMessage_icon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgAddFieldMarshalRole {scriptMessageWho :: Text}
+    | MsgAddCorpsCommanderRole {scriptMessageWho :: Text}
+    | MsgAddAdvisorRole {scriptMessageWho :: Text, scriptMessageWhat :: Text}
+    | MsgRemoveAdvisorRole {scriptmessage_icon :: Text, scriptMessageWho :: Text, scriptMessageWhat :: Text}
+    | MsgAndIsHired
+    | MsgAddCountryLeaderRole {scriptMessageWho :: Text, scriptMessageWhat :: Text}
+    | MsgAddCountryLeaderRolePromoted {scriptMessageWho :: Text, scriptMessageWhat :: Text}
     | MsgAddOffsiteBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgReleaseAutonomy {scriptMessageWho :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessage_war :: Text}
     | MsgSetAutonomy {scriptMessageWho :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageWar :: Text}
@@ -941,7 +959,9 @@ instance RenderMessage Script ScriptMessage where
             -> "Retires"
         MsgRetireCountryLeader
             -> "Retire the current country leader"
-        MsgGainLosePos {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
+        MsgSetPortrait
+            -> "<!-- Change in portrait -->"
+        MsgGainLosePosIcon {scriptMessageIcon = _icon, scriptMessageLoc = _loc, scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
                 , " "
@@ -986,6 +1006,37 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _what
                 , _whom
+                ]
+        MsgTrait {scriptMessageYn = _yn}
+            -> mconcat
+                [ ifThenElseT _yn "Gains" "Loses"
+                ]
+        MsgTraitIdeo {scriptMessageYn = _yn, scriptMessageWhat = _what}
+            -> mconcat
+                [ ifThenElseT _yn "Gains" "Loses"
+                , " if character's ideology is "
+                , _what
+                ]
+        MsgTraitChar {scriptMessageWho = _who, scriptMessageYn = _yn}
+            -> mconcat
+                [ _who
+                , " "
+                , ifThenElseT _yn "gains" "loses"
+                ]
+        MsgTraitCharIdeo {scriptMessageWho = _who, scriptMessageYn = _yn, scriptMessageWhat = _what}
+            -> mconcat
+                [ _who
+                , " "
+                , ifThenElseT _yn "gains" "loses"
+                , " if character's ideology is "
+                , _what
+                ]
+        MsgAddSkill {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Add "
+                , _what
+                , " Skill: "
+                , toMessage (colourNumSign True _amt)
                 ]
         MsgTooltip {scriptMessageWhat = _what}
             -> mconcat
@@ -1359,9 +1410,8 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgIsInHomeArea {scriptMessageYn = _yn}
             -> mconcat
-                [ "Is"
-                , toMessage (ifThenElseT _yn "" " ''not''")
-                , " connected to the owner's capital"
+                [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
+                , " a direct land connection to the owner's capital"
                 ]
         MsgHasWar {scriptMessageYn = _yn}
             -> mconcat
@@ -1686,6 +1736,29 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , "doctrine cost reduction for:"
+                ]
+        MsgAddEquipmentToStockpile {scriptMessageAmt = _amt, scriptMessageWho = _who, scriptMessageWhat = _what, scriptMessageWhat2 = _what2 }
+            -> mconcat
+                [ toMessage (bold (plainNum _amt))
+                , " units of "
+                , _who
+                , ifThenElseT (T.null _who) "" " "
+                , _what
+                , ifThenElseT (T.null _what2) "" ("(" <> italicText _what2 <> ")")
+                , " is "
+                , addedOrRemoved _amt
+                , " to the national Stockpile"
+                ]
+        MsgAddEquipmentToStockpileVar {scriptMessageAmtT = _amtT, scriptMessageWho = _who, scriptMessageWhat = _what, scriptMessageWhat2 = _what2 }
+            -> mconcat
+                [ "Value of "
+                , boldText _amtT
+                , " is added/removed in units of "
+                , _who
+                , ifThenElseT (T.null _who) "" " "
+                , _what
+                , ifThenElseT (T.null _what2) "" ("(" <> italicText _what2 <> ")")
+                , " to the national Stockpile"
                 ]
         MsgFreeBuildingSlots {scriptMessageCompare = _comp, scriptMessageAmt = _amt, scriptMessageWhat = _what, scriptMessageYn = _yn }
             -> mconcat
@@ -2293,6 +2366,42 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (plainNum _amt)
                 ]
+        MsgClampVariableValVal { scriptMessageWhat = _what, scriptMessageAmt = _amt, scriptMessageAmt2 = _amt2}
+            -> mconcat
+                [ "Clamp value of variable "
+                , _what
+                , " to between "
+                , toMessage (plainNum _amt)
+                , " and "
+                , toMessage (plainNum _amt2)
+                ]
+        MsgClampVariableValVar { scriptMessageWhat = _what, scriptMessageAmt = _amt, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Clamp value of variable "
+                , _what
+                , " to between "
+                , toMessage (plainNum _amt)
+                , " and the value of "
+                , _var2
+                ]
+        MsgClampVariableVarVal { scriptMessageWhat = _what, scriptMessageVar = _var, scriptMessageAmt2 = _amt2}
+            -> mconcat
+                [ "Clamp value of variable "
+                , _what
+                , " to between the value of "
+                , _var
+                , " and "
+                , toMessage (plainNum _amt2)
+                ]
+        MsgClampVariableVarVar { scriptMessageWhat = _what, scriptMessageVar = _var, scriptMessageVar2 = _var2}
+            -> mconcat
+                [ "Clamp value of variable "
+                , _what
+                , " to between the value of"
+                , _var
+                , " and the value of"
+                , _var2
+                ]
         MsgEquVariable { scriptMessageVar1 = _var1, scriptMessageVar2 = _var2}
             -> mconcat
                 [ "Value of variable "
@@ -2776,8 +2885,47 @@ instance RenderMessage Script ScriptMessage where
         MsgAddFieldMarshalRole {scriptMessageWho = _who}
             -> mconcat
                 [ _who
-                , ifThenElseT (T.null _who) "Becomes " " becomes "
-                , "a Field Marshal"
+                , ifThenElseT (T.null _who) "Becomes" " becomes"
+                , " a Field Marshal"
+                ]
+        MsgAddCorpsCommanderRole {scriptMessageWho = _who}
+            -> mconcat
+                [ _who
+                , ifThenElseT (T.null _who) "Becomes" " becomes"
+                , " a General"
+                ]
+        MsgAddAdvisorRole {scriptMessageWho = _who, scriptMessageWhat = _what}
+            -> mconcat
+                [ _who
+                , ifThenElseT (T.null _who) "Becomes" " becomes"
+                , " a "
+                , _what
+                , " with the following effect:"
+                ]
+        MsgRemoveAdvisorRole {scriptMessageWho = _who, scriptMessageWhat = _what}
+            -> mconcat
+                [ _who
+                , ifThenElseT (T.null _who) "Stops" " stops"
+                , " being a "
+                , _what
+                ]
+        MsgAndIsHired
+            -> "and is directly hired"
+        MsgAddCountryLeaderRole {scriptMessageWho = _who, scriptMessageWhat = _what}
+            -> mconcat
+                [ _who
+                , ifThenElseT (T.null _who) "Becomes" " becomes"
+                , " a member of the "
+                , boldText _what
+                , " party."
+                ]
+        MsgAddCountryLeaderRolePromoted {scriptMessageWho = _who, scriptMessageWhat = _what}
+            -> mconcat
+                [ _who
+                , ifThenElseT (T.null _who) "Becomes" " becomes"
+                , " the leader for the "
+                , boldText _what
+                , " party."
                 ]
         MsgAddOffsiteBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat

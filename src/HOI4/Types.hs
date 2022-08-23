@@ -19,6 +19,7 @@ module HOI4.Types (
     ,   HOI4CountryHistory (..)
     ,   HOI4Character (..)
     ,   HOI4CountryLeaderTrait (..)
+    ,   HOI4UnitLeaderTrait (..)
         -- * Low level types
     ,   HOI4Scope (..)
     ,   AIWillDo (..)
@@ -74,6 +75,12 @@ data HOI4Data = HOI4Data {
     ,   hoi4characters :: HashMap Text HOI4Character
     ,   hoi4countryleadertraitScripts :: HashMap FilePath GenericScript
     ,   hoi4countryleadertraits :: HashMap Text HOI4CountryLeaderTrait
+    ,   hoi4unitleadertraitScripts :: HashMap FilePath GenericScript
+    ,   hoi4unitleadertraits :: HashMap Text HOI4UnitLeaderTrait
+    ,   hoi4terrainScripts :: HashMap FilePath GenericScript
+    ,   hoi4terrain :: [Text]
+    ,   hoi4ideologyScripts :: HashMap FilePath GenericScript
+    ,   hoi4ideology :: HashMap Text Text
 
     ,   hoi4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -154,6 +161,18 @@ class (IsGame g,
     getCountryLeaderTraitScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the leader traits parsed
     getCountryLeaderTraits :: Monad m => PPT g m (HashMap Text HOI4CountryLeaderTrait)
+    -- | Get leader traits script
+    getUnitLeaderTraitScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the leader traits parsed
+    getUnitLeaderTraits :: Monad m => PPT g m (HashMap Text HOI4UnitLeaderTrait)
+    -- | Get leader traits script
+    getTerrainScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the leader traits parsed
+    getTerrain :: Monad m => PPT g m [Text]
+    -- | Get leader traits script
+    getIdeologyScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the leader traits parsed
+    getIdeology :: Monad m => PPT g m (HashMap Text Text)
 
     -- | Get extra scripts parsed from command line arguments
     getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
@@ -434,7 +453,25 @@ data HOI4CountryLeaderTrait = HOI4CountryLeaderTrait
     ,   clt_path :: FilePath
     ,   clt_targeted_modifier :: Maybe GenericStatement
     ,   clt_equipment_bonus :: Maybe GenericStatement
+    ,   clt_hidden_modifier :: Maybe GenericStatement
     ,   clt_modifier :: Maybe GenericScript
+    } deriving (Show)
+
+data HOI4UnitLeaderTrait = HOI4UnitLeaderTrait
+    {   ult_id :: Text
+    ,   ult_loc_name :: Maybe Text
+    ,   ult_path :: FilePath
+    ,   ult_modifier :: Maybe GenericStatement
+    ,   ult_non_shared_modifier :: Maybe GenericStatement
+    ,   ult_corps_commander_modifier :: Maybe GenericStatement
+    ,   ult_field_marshal_modifier :: Maybe GenericStatement
+    ,   ult_sub_unit_modifiers :: Maybe GenericStatement
+    ,   ult_attack_skill :: Maybe Double
+    ,   ult_defense_skill :: Maybe Double
+    ,   ult_planning_skill :: Maybe Double
+    ,   ult_logistics_skill :: Maybe Double
+    ,   ult_maneuvering_skill :: Maybe Double
+    ,   ult_coordination_skill :: Maybe Double
     } deriving (Show)
 
 

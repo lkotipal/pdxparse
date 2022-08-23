@@ -65,6 +65,7 @@ module HOI4.Handlers (
     ,   handleFocus
     ,   focusProgress
     ,   setVariable
+    ,   clampVariable
     ,   checkVariable
     ,   rhsAlways
     ,   rhsAlwaysYes
@@ -106,10 +107,8 @@ module HOI4.Handlers (
     ,   handleDate
     ,   setTechnology
     ,   setCapital
-    ,   addFieldMarshalRole
-    ,   setCharacterName
-    ,   hasCharacter
     ,   setPopularities
+    ,   addEquipment
     -- testing
     ,   isPronoun
     ,   flag
@@ -1601,7 +1600,7 @@ hasDlc [pdx| %_ = ?dlc |]
             ,("Death ir Dishonor", "dod")
             ,("Waking the Tiger ", "wtt")
             ,("Man the Guns", "mtg")
-            ,("La Résistance ", "lar")
+            ,("La Résistance", "lar")
             ,("Battle for the Bosporus", "bftb")
             ,("No Step Back", "nsb")
             ]
@@ -1710,6 +1709,8 @@ setVariable msgWW msgWV stmt@[pdx| %_ = @scr |]
             = sv { sv_value = Just val }
         addLine sv [pdx| $var = !val |]
             = sv { sv_which = Just var, sv_value = Just val }
+        addLine sv [pdx| $var = $val |]
+            = sv { sv_which = Just var, sv_which2 = Just val }
         addLine sv _ = sv
         toTT :: Text -> Text
         toTT t = "<tt>" <> t <> "</tt>"
@@ -1719,6 +1720,50 @@ setVariable msgWW msgWV stmt@[pdx| %_ = @scr |]
             (Just v,  Nothing, Just val) -> do return $ msgWV (toTT v) val
             _ ->  do return $ preMessage stmt
 setVariable _ _ stmt = preStatement stmt
+
+data ClampVariable = ClampVariable
+        { clv_which  :: Text
+        , clv_var :: Maybe Text
+        , clv_var2 :: Maybe Text
+        , clv_value  :: Maybe Double
+        , clv_value2  :: Maybe Double
+        }
+
+newCLV :: ClampVariable
+newCLV = ClampVariable undefined Nothing Nothing Nothing Nothing
+
+clampVariable :: forall g m. (HOI4Info g, Monad m) =>
+    (Text -> Double -> Double -> ScriptMessage) ->
+    (Text -> Double -> Text -> ScriptMessage) ->
+    (Text -> Text -> Double -> ScriptMessage) ->
+    (Text -> Text -> Text -> ScriptMessage) ->
+    StatementHandler g m
+clampVariable msgVV msgVW msgWV msgWW stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_clv (foldl' addLine newCLV scr)
+    where
+        addLine :: ClampVariable -> GenericStatement -> ClampVariable
+        addLine clv [pdx| var = $var |]
+            = clv { clv_which = var }
+        addLine clv [pdx| min = !val |]
+            = clv { clv_value = Just val }
+        addLine clv [pdx| max = !val |]
+            = clv { clv_value2 = Just val }
+        addLine clv [pdx| min = $var |]
+            = clv { clv_var = Just var}
+        addLine clv [pdx| max = $var |]
+            = clv { clv_var2 = Just var }
+        addLine clv _ = clv
+        toTT :: Text -> Text
+        toTT t = "<tt>" <> t <> "</tt>"
+        pp_clv :: ClampVariable -> PPT g m ScriptMessage
+        pp_clv clv = case (clv_value clv,  clv_value2 clv,
+                             clv_var clv, clv_var2 clv) of
+            (Just val, Just val2, Nothing, Nothing) -> do return $ msgVV (clv_which clv) val val2
+            (Just val, Nothing, Nothing, Just v2) -> do return $ msgVW (clv_which clv) val (toTT v2)
+            (Nothing, Just val2, Just v1, Nothing) -> do return $ msgWV (clv_which clv) (toTT v1) val2
+            (Nothing, Nothing, Just v1, Just v2) -> do return $ msgWW (clv_which clv) (toTT v1) (toTT v2)
+            _ ->  do return $ preMessage stmt
+clampVariable _ _ _ _ stmt = preStatement stmt
 
 data CheckVariable = CheckVariable
         { cv_which  :: Maybe Text
@@ -2896,38 +2941,6 @@ setCapital msg stmt@[pdx| %_ = @scr |] =
             _ -> preStatement stmt
 setCapital msg stmt = withFlag msg stmt
 
-addFieldMarshalRole :: (Monad m, HOI4Info g) => StatementHandler g m
-addFieldMarshalRole stmt@[pdx| %_ = @scr |] = do
-        let (name, _) = extractStmt (matchLhsText "character") scr
-        nameloc <- case name of
-            Just [pdx| character = $id |] -> getCharacterName id
-            _ -> return ""
-        msgToPP $ MsgAddFieldMarshalRole nameloc
-addFieldMarshalRole stmt = preStatement stmt
-
-setCharacterName :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
-setCharacterName stmt@[pdx| %_ = ?txt |] = withLocAtom MsgSetCharacterName stmt
-setCharacterName stmt@[pdx| %_ = @scr |] = case scr of
-    [[pdx| $who = $name |]] -> do
-        whochar <- getCharacterName who
-        nameloc <- getGameL10n name
-        msgToPP $ MsgSetCharacterNameType whochar nameloc
-    _ -> preStatement stmt
-setCharacterName stmt = preStatement stmt
-
-hasCharacter :: (HOI4Info g, Monad m) => StatementHandler g m
-hasCharacter stmt@[pdx| %_ = ?txt |] = do
-    chaname <- getCharacterName txt
-    msgToPP $ MsgHasCharacter chaname
-hasCharacter stmt = preStatement stmt
-
-getCharacterName :: (Monad m, HOI4Info g) =>
-    Text -> PPT g m Text
-getCharacterName idn = do
-    characters <- getCharacters
-    case HM.lookup idn characters of
-            Just charid -> return $ chaName charid
-            _ -> getGameL10n idn
 
 setPopularities :: (HOI4Info g, Monad m) => StatementHandler g m
 setPopularities [pdx| %_ = @scr |] = do
@@ -2944,3 +2957,42 @@ setPopularities [pdx| %_ = @scr |] = do
             msgToPP $ MsgSetPopularities ideo ideoloc txt
         getpops stmt = preStatement stmt
 setPopularities stmt = preStatement stmt
+
+------------------------------
+-- Handler for add_equipment_to_stockpile --
+------------------------------
+data AddEquipment = AddEquipment
+        {   ae_type :: Text
+        ,   ae_amount :: Maybe Double
+        ,   ae_amountvar :: Maybe Text
+        ,   ae_producer :: Maybe (Either Text (Text, Text))
+        ,   ae_variant :: Maybe Text
+        }
+
+newAE :: AddEquipment
+newAE = AddEquipment undefined Nothing Nothing Nothing Nothing
+addEquipment  :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+addEquipment stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< ppAe =<< foldM addLine newAE scr
+    where
+        addLine :: AddEquipment -> GenericStatement -> PPT g m AddEquipment
+        addLine ae [pdx| type = $txt |] = return ae { ae_type = txt }
+        addLine ae [pdx| amount = !num |] = return ae { ae_amount = Just num }
+        addLine ae [pdx| amount = $txt |] = return ae { ae_amountvar = Just txt }
+        addLine ae [pdx| producer = $tag |] = return ae { ae_producer = Just (Left tag) }
+        addLine ae [pdx| producer = $vartag:$var |] = return ae { ae_producer = Just (Right (vartag, var)) }
+        addLine ae [pdx| variant_name = ?txt |] = return ae { ae_variant = Just txt }
+        addLine ae [pdx| $other = %_ |] = trace ("unknown section in add_equipment_to_stockpile: " ++ show other) $ return ae
+        addLine ae stmt = trace ("unknown form in add_equipment_to_stockpile: " ++ show stmt) $ return ae
+        ppAe ae = do
+            let variant = fromMaybe "" $ ae_variant ae
+            flaglocm <- case ae_producer ae of
+                Just producer -> eflag (Just HOI4Country) producer
+                _ -> return Nothing
+            let flagloc = fromMaybe "" flaglocm
+            equiploc <- getGameL10n $ ae_type ae
+            case (ae_amount ae, ae_amountvar ae) of
+                    (Just amount, _) -> return $ MsgAddEquipmentToStockpile amount flagloc equiploc variant
+                    (_, Just amountvar) -> return $ MsgAddEquipmentToStockpileVar amountvar flagloc equiploc variant
+                    _ -> return $ preMessage stmt
+addEquipment stmt = preStatement stmt

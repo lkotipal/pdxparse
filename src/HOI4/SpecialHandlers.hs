@@ -9,6 +9,14 @@ module HOI4.SpecialHandlers (
     ,   handleTargetedModifier
     ,   handleEquipmentBonus
     ,   addDynamicModifier
+    ,   addFieldMarshalRole
+    ,   addAdvisorRole
+    ,   removeAdvisorRole
+    ,   addLeaderRole
+    ,   createLeader
+    ,   setCharacterName
+    ,   hasCharacter
+    ,   handleTrait
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -48,7 +56,7 @@ import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, indentDown, getCurrentIndent, withCurrentIndent, withCurrentIndentZero, withCurrentIndentCustom, alsoIndent, alsoIndent'
                      , getGameL10n, getGameL10nIfPresent, getGameL10nDefault, withCurrentFile
-                     , unfoldM, unsnoc )
+                     , unfoldM, unsnoc, concatMapM)
 import HOI4.Templates
 import {-# SOURCE #-} HOI4.Common (ppScript, ppMany, ppOne, extractStmt, matchLhsText)
 import HOI4.Types -- everything
@@ -194,12 +202,22 @@ modmessage iidea idea_loc ideaKey ideaIcon = do
 -----------------------
 handleModifier :: forall g m. (HOI4Info g, Monad m) =>
         StatementHandler g m
-handleModifier [pdx| %_ = @scr |] = fold <$> traverse modifierMSG scr
+handleModifier [pdx| %_ = @scr |] = fold <$> traverse (modifierMSG False) scr
 handleModifier stmt = preStatement stmt
 
 modifierMSG :: forall g m. (HOI4Info g, Monad m) =>
-        StatementHandler g m
-modifierMSG stmt@[pdx| $mod = !num|] = let lmod = T.toLower mod in case HM.lookup lmod modifiersTable of
+        Bool -> StatementHandler g m
+modifierMSG _ stmt@[pdx| $specmod = @scr|]
+    | specmod == "hidden_modifier" = fold <$> traverse (modifierMSG True) scr
+    | otherwise = do
+        terrain <- getTerrain
+        if specmod `elem` terrain
+        then do
+            termsg <- plainMsg' . (<> ":") . boldText =<< getGameL10n specmod
+            modmsg <- fold <$> indentUp (traverse (modifierMSG False) scr)
+            return $ termsg : modmsg
+        else trace ("unknown modifier type: " ++ show specmod ++ " IN: " ++ show stmt) $ preStatement stmt
+modifierMSG hidden stmt@[pdx| $mod = !num|] = let lmod = T.toLower mod in case HM.lookup lmod modifiersTable of
     Just (loc, msg) ->
         let bonus = num :: Double in
         numericLoc loc msg stmt
@@ -207,27 +225,36 @@ modifierMSG stmt@[pdx| $mod = !num|] = let lmod = T.toLower mod in case HM.looku
         | "cat_" `T.isPrefixOf` lmod -> do
             mloc <- getGameL10nIfPresent lmod
             case mloc of
-                Just loc -> numericLoc loc MsgModifierPcNegReduced stmt
+                Just loc ->
+                    let loc' = if hidden then "(Hidden)" <> loc else loc in
+                    numericLoc loc' MsgModifierPcNegReduced stmt
                 Nothing -> preStatement stmt
         | ("production_speed_" `T.isPrefixOf` lmod && "_factor" `T.isSuffixOf` lmod) ||
             ("experience_gain_" `T.isPrefixOf` lmod && "_combat_factor" `T.isSuffixOf` lmod) ||
             ("trait_" `T.isPrefixOf` lmod && "_xp_gain_factor" `T.isSuffixOf` lmod) -> do
             mloc <- getGameL10nIfPresent ("modifier_" <> lmod)
             case mloc of
-                Just loc -> numericLoc loc MsgModifierPcPosReduced stmt
+                Just loc ->
+                    let loc' = if hidden then "(Hidden)" <> loc else loc in
+                    numericLoc loc' MsgModifierPcPosReduced stmt
                 Nothing -> preStatement stmt
         | "unit_" `T.isPrefixOf` lmod && "_design_cost_factor" `T.isSuffixOf` lmod -> do
             mloc <- getGameL10nIfPresent ("modifier_" <> lmod)
             case mloc of
-                Just loc -> numericLoc loc MsgModifierPcNegReduced stmt
+                Just loc ->
+                    let loc' = if hidden then "(Hidden)" <> loc else loc in
+                    numericLoc loc' MsgModifierPcNegReduced stmt
                 Nothing -> preStatement stmt
+        | lmod == "no_compliance_gain" && num == 1 -> do
+            comploc <- getGameL10n "MODIFIER_NO_COMPLIANCE_GAIN"
+            plainMsg comploc
         | otherwise -> preStatement stmt
-modifierMSG stmt@[pdx| custom_modifier_tooltip = $key|] = do
+modifierMSG _ stmt@[pdx| custom_modifier_tooltip = $key|] = do
     loc <- getGameL10nIfPresent key
     maybe (preStatement stmt)
         (msgToPP . MsgCustomModifierTooltip)
         loc
-modifierMSG stmt@[pdx| $mod = $var|] =  let lmod = T.toLower mod in case HM.lookup lmod modifiersTable of
+modifierMSG hidden stmt@[pdx| $mod = $var|] =  let lmod = T.toLower mod in case HM.lookup lmod modifiersTable of
     Just (loc, msg) -> do
         locced <- getGameL10n loc
         msgToPP $ MsgModifierVar locced var
@@ -235,7 +262,9 @@ modifierMSG stmt@[pdx| $mod = $var|] =  let lmod = T.toLower mod in case HM.look
         | "cat_" `T.isPrefixOf` lmod -> do
             mloc <- getGameL10nIfPresent lmod
             case mloc of
-                Just locced -> msgToPP $ MsgModifierVar locced var
+                Just locced ->
+                    let locced' = if hidden then "(Hidden)" <> locced else locced in
+                    msgToPP $ MsgModifierVar locced' var
                 Nothing -> preStatement stmt
         | ("production_speed_" `T.isPrefixOf` lmod && "_factor" `T.isSuffixOf` lmod) ||
             ("unit_" `T.isPrefixOf` lmod && "_design_cost_factor" `T.isSuffixOf` lmod) ||
@@ -243,10 +272,12 @@ modifierMSG stmt@[pdx| $mod = $var|] =  let lmod = T.toLower mod in case HM.look
             ("trait_" `T.isPrefixOf` lmod && "_xp_gain_factor" `T.isSuffixOf` lmod ) -> do
             mloc <- getGameL10nIfPresent ("modifier_" <> lmod)
             case mloc of
-                Just locced -> msgToPP $ MsgModifierVar locced var
+                Just locced ->
+                    let locced' = if hidden then "(Hidden)" <> locced else locced in
+                    msgToPP $ MsgModifierVar locced' var
                 Nothing -> preStatement stmt
         | otherwise -> preStatement stmt
-modifierMSG stmt = preStatement stmt
+modifierMSG _ stmt = preStatement stmt
 
 handleResearchBonus :: forall g m. (HOI4Info g, Monad m) =>
         StatementHandler g m
@@ -263,9 +294,9 @@ handleTargetedModifier stmt@[pdx| %_ = @scr |] = do
     tagmsg <- case tag of
         Just [pdx| tag = $country |] ->  flagText (Just HOI4Country) country
         _ -> return "CHECK SCRIPT"
-    fold <$> traverse (modifierMSG tagmsg) rest
+    fold <$> traverse (modifierTagMSG tagmsg) rest
         where
-            modifierMSG tagmsg stmt@[pdx| $mod = !num |] = let bonus = num :: Double in case HM.lookup (T.toLower mod) targetedModifiersTable of
+            modifierTagMSG tagmsg stmt@[pdx| $mod = !num |] = let bonus = num :: Double in case HM.lookup (T.toLower mod) targetedModifiersTable of
                 Just (loc, msg) -> do
                     locced <- getGameL10n loc
                     numericLoc ("(" <> tagmsg <> ")" <> locced) msg stmt
@@ -274,7 +305,7 @@ handleTargetedModifier stmt@[pdx| %_ = @scr |] = do
                         locced <- getGameL10n loc
                         numericLoc ("(" <> tagmsg <> ")" <> locced) msg stmt
                     Nothing -> preStatement stmt
-            modifierMSG _ stmt = preStatement stmt
+            modifierTagMSG _ stmt = preStatement stmt
 handleTargetedModifier stmt = preStatement stmt
 
 
@@ -285,15 +316,24 @@ handleEquipmentBonus stmt@[pdx| %_ = @scr |] = fold <$> traverse modifierEquipMS
             modifierEquipMSG [pdx| $tech = @scr |] = do
                 let (_, rest) = extractStmt (matchLhsText "instant") scr
                 techmsg <- plainMsg' . (<> ":") =<< getGameL10n tech
-                modmsg <- fold <$> traverse modifierEquipMSG rest
+                modmsg <- fold <$> indentUp (traverse modifierEquipMSG' rest)
                 return $ techmsg : modmsg
             modifierEquipMSG stmt = preStatement stmt
 
-            modifierMSG stmt@[pdx| $mod = !num |] = case HM.lookup (T.toLower mod) equipmentBonusTable of
-                Just (loc, msg) -> let bonus = num :: Double in numericLoc loc msg stmt
-                Nothing -> preStatement stmt
-            modifierMSG stmt = preStatement stmt
+            modifierEquipMSG' stmt@[pdx| $mod = !num |] = case HM.lookup (T.toLower mod) equipmentBonusTable of
+                Just (loc, msg) -> do
+                    let bonus = num :: Double
+                    locced <- getGameL10n loc
+                    let locced' = if ": " `T.isSuffixOf` locced then T.dropEnd 2 locced else locced
+                    numericLoc locced' msg stmt
+                Nothing -> case HM.lookup (T.toLower mod) modifiersTable of -- has to be some way to do this eligantly?
+                    Just (loc, msg) -> do
+                        locced <- getGameL10n loc
+                        numericLoc loc msg stmt
+                    Nothing -> preStatement stmt
+            modifierEquipMSG' stmt = preStatement stmt
 handleEquipmentBonus stmt = preStatement stmt
+
 
 -- | Handlers for numeric statements with icons
 modifiersTable :: HashMap Text (Text, Text -> Double -> ScriptMessage)
@@ -434,6 +474,7 @@ modifiersTable = HM.fromList
         ,("local_factories"                 , ("MODIFIER_LOCAL_FACTORIES", MsgModifierPcPosReduced))
         ,("mobilization_speed"              , ("MODIFIER_MOBILIZATION_SPEED", MsgModifierPcPosReduced))
         ,("non_core_manpower"               , ("MODIFIER_GLOBAL_NON_CORE_MANPOWER", MsgModifierPcPosReduced))
+        --,("recruitable_population_factor"   , ("MODIFIER_RECRUITABLE_POPULATION_FACTOR", MsgModifierPcReduced))
         ,("resistance_damage_to_garrison"   , ("MODIFIER_RESISTANCE_DAMAGE_TO_GARRISONS", MsgModifierPcNegReduced))
         ,("resistance_decay"                , ("MODIFIER_RESISTANCE_DECAY", MsgModifierPcPosReduced))
         ,("starting_compliance"             , ("MODIFIER_COMPLIANCE_STARTING_VALUE", MsgModifierPcPosReduced))
@@ -445,6 +486,9 @@ targetedModifiersTable :: HashMap Text (Text, Text -> Double -> ScriptMessage)
 targetedModifiersTable = HM.fromList
         [("extra_trade_to_target_factor"    ,("MODIFIER_TRADE_TO_TARGET_FACTOR", MsgModifierPcPosReduced))
         ,("trade_cost_for_target_factor"    ,("MODIFIER_TRADE_COST_TO_TARGET_FACTOR", MsgModifierPcNegReduced))
+        ,("attack_bonus_against"            ,("MODIFIER_ATTACK_BONUS_AGAINST_A_COUNTRY", MsgModifierPcPosReduced))
+        ,("attack_bonus_against_cores"      ,("MODIFIER_ATTACK_BONUS_AGAINST_A_COUNTRY_ON_ITS_CORES", MsgModifierPcPosReduced))
+        ,("defense_bonus_against"           ,("MODIFIER_DEFENSE_BONUS_AGAINST_A_COUNTRY", MsgModifierPcPosReduced))
         ]
 
 -- | Handlers for numeric statements with icons
@@ -485,10 +529,257 @@ addDynamicModifier stmt@[pdx| %_ = @scr |] =
             let dynflagd = fromMaybe "<!-- check script -->" dynflag
             case mmod of
                 Just mod -> withCurrentIndent $ \i -> do
-                    effect <- fold <$> traverse modifierMSG (dmodEffects mod)
+                    effect <- fold <$> traverse (modifierMSG False) (dmodEffects mod)
                     trigger <- indentUp $ ppMany (dmodEnable mod)
                     let name = dmodLocName mod
                         locName = maybe ("<tt>" <> adm_modifier adm <> "</tt>") (Doc.doc2text . iquotes) name
                     return $ ((i, MsgAddDynamicModifier locName dynflagd days) : effect) ++ (if null trigger then [] else (i+1, MsgLimit) : trigger)
                 Nothing -> trace ("add_dynamic_modifier: Modifier " ++ T.unpack (adm_modifier adm) ++ " not found") $ preStatement stmt
 addDynamicModifier stmt = trace ("Not handled in addDynamicModifier: " ++ show stmt) $ preStatement stmt
+
+----------------
+-- characters --
+----------------
+
+addFieldMarshalRole :: (Monad m, HOI4Info g) => (Text -> ScriptMessage) -> StatementHandler g m
+addFieldMarshalRole msg stmt@[pdx| %_ = @scr |] = do
+        let (name, _) = extractStmt (matchLhsText "character") scr
+        nameloc <- case name of
+            Just [pdx| character = $id |] -> getCharacterName id
+            _ -> return ""
+        msgToPP $ msg nameloc
+addFieldMarshalRole _ stmt = preStatement stmt
+
+setCharacterName :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+setCharacterName stmt@[pdx| %_ = ?txt |] = withLocAtom MsgSetCharacterName stmt
+setCharacterName stmt@[pdx| %_ = @scr |] = case scr of
+    [[pdx| $who = $name |]] -> do
+        whochar <- getCharacterName who
+        nameloc <- getGameL10n name
+        msgToPP $ MsgSetCharacterNameType whochar nameloc
+    _ -> preStatement stmt
+setCharacterName stmt = preStatement stmt
+
+removeAdvisorRole :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+removeAdvisorRole stmt@[pdx| %_ = @scr |] =
+    if length scr == 2
+    then textAtom "character" "slot" MsgRemoveAdvisorRole getGameL10nIfPresent stmt
+    else do
+        let (mslot,_) = extractStmt (matchLhsText "slot") scr
+        slot <- case mslot of
+            Just [pdx| %_ = $slottype |] -> getGameL10n slottype
+            _-> return "<!-- Check Script -->"
+        msgToPP $ MsgRemoveAdvisorRole "" "" slot
+removeAdvisorRole stmt = preStatement stmt
+
+hasCharacter :: (HOI4Info g, Monad m) => StatementHandler g m
+hasCharacter stmt@[pdx| %_ = ?txt |] = do
+    chaname <- getCharacterName txt
+    msgToPP $ MsgHasCharacter chaname
+hasCharacter stmt = preStatement stmt
+
+addAdvisorRole :: (Monad m, HOI4Info g) => StatementHandler g m
+addAdvisorRole stmt@[pdx| %_ = @scr |] = do
+        let (name, rest) = extractStmt (matchLhsText "character") scr
+            (advisor, rest') = extractStmt (matchLhsText "advisor") rest
+            (activate, _) = extractStmt (matchLhsText "activate") rest'
+        activate <- maybe (return False) (\case
+            [pdx| %_ = yes |] -> return True
+            _-> return False) activate
+        nameloc <- case name of
+            Just [pdx| character = $id |] -> getCharacterName id
+            _ -> return ""
+        case advisor of
+            Just advisorj -> do
+                (slotloc, traitmsg) <- parseAdvisor advisorj
+                basemsg <- msgToPP $ MsgAddAdvisorRole nameloc slotloc
+                (if activate
+                then do
+                    hiremsg <- msgToPP MsgAndIsHired
+                    return $ basemsg ++ traitmsg ++ hiremsg
+                else return $ basemsg ++ traitmsg)
+            _-> preStatement stmt
+addAdvisorRole stmt = preStatement stmt
+
+parseAdvisor :: (Monad m, HOI4Info g) =>
+    GenericStatement -> PPT g m (Text, [IndentedMessage])
+parseAdvisor stmt@[pdx| %_ = @scr |] = do
+    let (slot, rest) = extractStmt (matchLhsText "slot") scr
+        (traits, _) = extractStmt (matchLhsText "traits") rest
+    traitmsg <- case traits of
+        Just [pdx| %_ = @arr |] -> do
+            let traitbare = map getbaretraits arr
+            concatMapM getLeaderTraits traitbare
+        _-> return []
+    slotloc <- maybe (return "") (\case
+        [pdx| %_ = $slottype|] -> getGameL10n slottype
+        _->return "<!-- Check Script -->") slot
+
+    return (slotloc, traitmsg)
+parseAdvisor stmt = return ("<!-- Check Script -->", [])
+
+addLeaderRole :: (Monad m, HOI4Info g) => StatementHandler g m
+addLeaderRole stmt@[pdx| %_ = @scr |] = do
+        let (name, rest) = extractStmt (matchLhsText "character") scr
+            (leader, rest') = extractStmt (matchLhsText "country_leader") rest
+            (promote, _) = extractStmt (matchLhsText "promote_leader") rest'
+        promoted <- maybe (return False) (\case
+            [pdx| %_ = yes |] -> return True
+            _-> return False) promote
+        nameloc <- case name of
+            Just [pdx| character = $id |] -> getCharacterName id
+            _ -> return ""
+        case leader of
+            Just leaderj -> do
+                (ideoloc, traitmsg) <- parseLeader leaderj
+                basemsg <- if promoted
+                    then msgToPP $ MsgAddCountryLeaderRolePromoted nameloc ideoloc
+                    else msgToPP $ MsgAddCountryLeaderRole nameloc ideoloc
+                return $ basemsg ++ traitmsg
+            _-> preStatement stmt
+addLeaderRole stmt = preStatement stmt
+
+parseLeader :: (Monad m, HOI4Info g) =>
+    GenericStatement -> PPT g m (Text, [IndentedMessage])
+parseLeader stmt@[pdx| %_ = @scr |] = do
+    let (ideo, rest) = extractStmt (matchLhsText "ideology") scr
+        (traits, _) = extractStmt (matchLhsText "traits") rest
+    traitmsg <- case traits of
+        Just [pdx| %_ = @arr |] -> do
+            let traitbare = map getbaretraits arr
+            concatMapM ppHt traitbare
+        _-> return []
+    ideoloc <- maybe (return "") (\case
+        [pdx| %_ = $ideotype|] -> do
+            subideos <- getIdeology
+            case HM.lookup ideotype subideos of
+                Just ideo -> getGameL10n ideo
+                _-> return "<!-- Check Script -->"
+        _->return "<!-- Check Script -->") ideo
+    return (ideoloc, traitmsg)
+parseLeader stmt = return ("<!-- Check Script -->", [])
+
+
+createLeader :: (Monad m, HOI4Info g) => StatementHandler g m
+createLeader stmt@[pdx| %_ = @scr |] = do
+        let (name, rest) = extractStmt (matchLhsText "name") scr
+            (ideo, rest') = extractStmt (matchLhsText "ideology") rest
+            (traits, _) = extractStmt (matchLhsText "traits") rest'
+        nameloc <- case name of
+            Just [pdx| %_ = ?id |] -> getCharacterName id
+            _ -> return ""
+        traitmsg <- case traits of
+            Just [pdx| %_ = @arr |] -> do
+                let traitbare = map getbaretraits arr
+                concatMapM ppHt traitbare
+            _-> return []
+        ideoloc <- maybe (return "") (\case
+            [pdx| %_ = $ideotype|] -> do
+                subideos <- getIdeology
+                case HM.lookup ideotype subideos of
+                    Just ideo -> getGameL10n ideo
+                    _-> return "<!-- Check Script -->"
+            _-> return "<!-- Check Script -->") ideo
+        basemsg <- msgToPP $ MsgAddCountryLeaderRole nameloc ideoloc
+        return $ basemsg ++ traitmsg
+createLeader stmt = preStatement stmt
+
+checksubideo :: Text -> (Text, [Text]) -> Maybe Text
+checksubideo sublead (ideo,subideo) = if sublead `elem` subideo then Just ideo else Nothing
+ppHt :: (Monad m, HOI4Info g) => Text -> PPT g m IndentedMessages
+ppHt trait = do
+    traitloc <- getGameL10n trait
+    namemsg <- indentUp $ plainMsg' ("'''" <> traitloc <> "'''")
+    traitmsg' <- indentUp $ getLeaderTraits trait
+    return $ namemsg : traitmsg'
+
+getbaretraits :: GenericStatement -> Text
+getbaretraits (StatementBare (GenericLhs trait [])) = trait
+getbaretraits stmt = ""
+
+getCharacterName :: (Monad m, HOI4Info g) =>
+    Text -> PPT g m Text
+getCharacterName idn = do
+    characters <- getCharacters
+    case HM.lookup idn characters of
+        Just charid -> return $ chaName charid
+        _ -> getGameL10n idn
+
+
+------------
+-- traits --
+------------
+data HandleTrait = HandleTrait
+    { ht_trait :: Text
+    , ht_character :: Maybe Text
+    , ht_ideology :: Maybe Text
+    }
+
+newHT :: HandleTrait
+newHT = HandleTrait undefined Nothing Nothing
+
+handleTrait :: forall g m. (HOI4Info g, Monad m) => Bool -> StatementHandler g m
+handleTrait addremove stmt@[pdx| %_ = @scr |] =
+    pp_ht addremove (foldl' addLine newHT scr)
+    where
+        addLine ht [pdx| trait = $txt |] = ht { ht_trait = txt }
+        addLine ht [pdx| character = $txt |] = ht { ht_character = Just txt }
+        addLine ht [pdx| ideology = $txt |] = ht { ht_ideology = Just txt }
+        addLine ht [pdx| slot = %_ |] = ht
+        addLine ht stmt = trace ("Unknown in handleTrait: " ++ show stmt) ht
+        pp_ht addremove ht = do
+            traitloc <- getGameL10n $ ht_trait ht
+            namemsg <- indentUp $ plainMsg' ("'''" <> traitloc <> "'''")
+            traitmsg' <- indentUp $ getLeaderTraits (ht_trait ht)
+            let traitmsg = namemsg : traitmsg'
+            case (ht_character ht, ht_ideology ht) of
+                (Just char, Just ideo) -> do
+                    charloc <- getCharacterName char
+                    ideoloc <- getGameL10n ideo
+                    baseMsg <- msgToPP $ MsgTraitCharIdeo charloc addremove ideoloc
+                    return $ baseMsg ++ traitmsg
+                (Just char, _) -> do
+                    charloc <- getCharacterName char
+                    baseMsg <- msgToPP $ MsgTraitChar charloc addremove
+                    return $ baseMsg ++ traitmsg
+                (_, Just ideo) -> do
+                    ideoloc <- getGameL10n ideo
+                    baseMsg <- msgToPP $ MsgTraitIdeo addremove ideoloc
+                    return $ baseMsg ++ traitmsg
+                _ -> do
+                    baseMsg <- msgToPP $ MsgTrait addremove
+                    return $ baseMsg ++ traitmsg
+handleTrait _ stmt = preStatement stmt
+
+
+getLeaderTraits :: (Monad m, HOI4Info g) => Text-> PPT g m IndentedMessages
+getLeaderTraits trait = do
+    traits <- getCountryLeaderTraits
+    case HM.lookup trait traits of
+        Just clt-> do
+            mod <- maybe (return []) (\t -> fold <$> indentUp (traverse (modifierMSG False) t)) (clt_modifier clt)
+            equipmod <- maybe (return []) (indentUp . handleEquipmentBonus) (clt_equipment_bonus clt)
+            tarmod <- maybe (return []) (indentUp . handleTargetedModifier) (clt_targeted_modifier clt)
+            hidmod <- maybe (return []) (indentUp . handleModifier) (clt_hidden_modifier clt)
+            return ( mod ++ tarmod ++ equipmod ++ hidmod)
+        Nothing -> getUnitTraits trait
+
+getUnitTraits :: (Monad m, HOI4Info g) => Text-> PPT g m IndentedMessages
+getUnitTraits trait = do
+    traits <- getUnitLeaderTraits
+    case HM.lookup trait traits of
+        Just ult-> do
+            attack <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Attack") (ult_attack_skill ult)
+            defense <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Defense") (ult_defense_skill ult)
+            logistics <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Logistics") (ult_logistics_skill ult)
+            planning <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Planning") (ult_planning_skill ult)
+            maneuvering <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Maneuvering") (ult_maneuvering_skill ult)
+            coordination <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Coordination") (ult_coordination_skill ult)
+            let skillmsg = attack ++ defense ++ logistics ++ planning ++ maneuvering ++ coordination
+            mod <- maybe (return []) (indentUp . handleModifier) (ult_modifier ult)
+            nsmod <- maybe (return []) (indentUp . handleModifier) (ult_non_shared_modifier ult)
+            ccmod <- maybe (return []) (indentUp . handleModifier) (ult_corps_commander_modifier ult)
+            fmmod <- maybe (return []) (indentUp . handleModifier) (ult_field_marshal_modifier ult)
+            sumod <- maybe (return []) (indentUp . handleEquipmentBonus) (ult_sub_unit_modifiers ult)
+            return (skillmsg ++ mod ++ nsmod ++ ccmod ++ fmmod ++ sumod)
+        Nothing -> return []

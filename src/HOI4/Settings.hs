@@ -51,7 +51,9 @@ import HOI4.NationalFocus(parseHOI4NationalFocuses, writeHOI4NationalFocuses)
 import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
                    , findTriggeredEventsInOnActions, findTriggeredEventsInNationalFocus)
-import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface, parseHOI4Characters, parseHOI4CountryLeaderTraits)
+import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface, parseHOI4Characters
+                 , parseHOI4CountryLeaderTraits, parseHOI4UnitLeaderTraits
+                 , parseHOI4Terrain, parseHOI4Ideology)
 
 -- | Temporary (?) fix for CHI and PRC both localizing to "China"
 -- Can be extended/removed as necessary
@@ -110,6 +112,13 @@ instance IsGame HOI4 where
                 ,   hoi4characters = HM.empty
                 ,   hoi4countryleadertraitScripts = HM.empty
                 ,   hoi4countryleadertraits = HM.empty
+                ,   hoi4unitleadertraitScripts = HM.empty
+                ,   hoi4unitleadertraits = HM.empty
+                ,   hoi4terrainScripts = HM.empty
+                ,   hoi4terrain = []
+                ,   hoi4ideologyScripts = HM.empty
+                ,   hoi4ideology = HM.empty
+
                 -- unused
                 ,   hoi4extraScripts = HM.empty
                 ,   hoi4extraScriptsCountryScope = HM.empty
@@ -222,6 +231,24 @@ instance HOI4Info HOI4 where
     getCountryLeaderTraits = do
         HOI4D ed <- get
         return (hoi4countryleadertraits ed)
+    getUnitLeaderTraitScripts = do
+        HOI4D ed <- get
+        return (hoi4unitleadertraitScripts ed)
+    getUnitLeaderTraits = do
+        HOI4D ed <- get
+        return (hoi4unitleadertraits ed)
+    getTerrainScripts = do
+        HOI4D ed <- get
+        return (hoi4terrainScripts ed)
+    getTerrain = do
+        HOI4D ed <- get
+        return (hoi4terrain ed)
+    getIdeologyScripts = do
+        HOI4D ed <- get
+        return (hoi4ideologyScripts ed)
+    getIdeology = do
+        HOI4D ed <- get
+        return (hoi4ideology ed)
 -- unused
     getExtraScripts = do
         HOI4D ed <- get
@@ -281,6 +308,9 @@ readHOI4Scripts = do
                     "country_history" -> "history" </> "countries"
                     "characters" -> "common" </> "characters"
                     "country_leader_trait" -> "common" </> "country_leader"
+                    "unit_leader_trait" -> "common" </> "unit_leader"
+                    "terrain" -> "common" </> "terrain"
+                    "ideology" -> "common" </> "ideologies"
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
@@ -344,7 +374,11 @@ readHOI4Scripts = do
     country_history <- readHOI4Script "country_history"
     characterScripts <- readHOI4Script "characters"
     countryleadertraitScripts <- readHOI4Script "country_leader_trait"
+    unitleadertraitScripts <- readHOI4Script "unit_leader_trait"
     interface_gfx <- readHOI4SpecificScript "interfacegfx"
+
+    terrainScripts <- readHOI4Script "terrain"
+    ideologyScripts <- readHOI4Script "ideology"
 
     modify $ \(HOI4D s) -> HOI4D $ s {
             hoi4ideaScripts = ideasScripts
@@ -359,7 +393,11 @@ readHOI4Scripts = do
         ,   hoi4nationalfocusScripts = national_focus
         ,   hoi4characterScripts = characterScripts
         ,   hoi4countryleadertraitScripts = countryleadertraitScripts
+        ,   hoi4unitleadertraitScripts = unitleadertraitScripts
         ,   hoi4interfacegfxScripts = interface_gfx
+
+        ,   hoi4terrainScripts = terrainScripts
+        ,   hoi4ideologyScripts = ideologyScripts
         }
 
 
@@ -380,6 +418,9 @@ parseHOI4Scripts = do
     interfaceGFX <- parseHOI4Interface =<< getInterfaceGFXScripts
     characters <- parseHOI4Characters =<< getCharacterScripts
     countryleadertraits <- parseHOI4CountryLeaderTraits =<< getCountryLeaderTraitScripts
+    unitleadertraits <- parseHOI4UnitLeaderTraits =<< getUnitLeaderTraitScripts
+    terrain <- parseHOI4Terrain =<< getTerrainScripts
+    ideology <- parseHOI4Ideology =<< getIdeologyScripts
 
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
@@ -403,7 +444,11 @@ parseHOI4Scripts = do
             ,   hoi4countryHistory = countryHistory
             ,   hoi4characters = characters
             ,   hoi4countryleadertraits = countryleadertraits
+            ,   hoi4unitleadertraits = unitleadertraits
             ,   hoi4interfacegfx = interfaceGFX
+
+            ,   hoi4terrain = terrain
+            ,   hoi4ideology = ideology
             }
 
 -- | Output the game data as wiki text.
