@@ -157,6 +157,7 @@ module EU4.Handlers (
     ,   isOrAcceptsReligionGroup
     ,   genericTextLines
     ,   handleModifier
+    ,   handleModifierWithIcon
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -4201,11 +4202,22 @@ handleModifier :: (EU4Info g, Monad m) =>
     Text
     -> (Double -> Doc)
         -> StatementHandler g m
-handleModifier locKey modifierTransformer [pdx| %_ = !amt |] = do
+handleModifier locKey modifierTransformer stmt = do
+    modifierLoc <- getGameL10n locKey
+    handleModifierWithIcon locKey (T.toLower modifierLoc) modifierTransformer stmt
+
+-- | Handler for generic modifiers
+-- The localisation is loaded dynamically from the game files and the supplied icon key is used
+handleModifierWithIcon :: (EU4Info g, Monad m) =>
+    Text
+    -> Text
+    -> (Double -> Doc)
+        -> StatementHandler g m
+handleModifierWithIcon locKey iconKey modifierTransformer [pdx| %_ = !amt |] = do
     modifierLoc <- getGameL10n locKey
     let lowerLoc = T.toLower modifierLoc
-    msgToPP $ MsgGenericModifier (iconText lowerLoc) amt (capitalizeFirstLetter lowerLoc) modifierTransformer
-handleModifier _ _  stmt = plainMsg $ pre_statement' stmt
+    msgToPP $ MsgGenericModifier (iconText iconKey) amt (capitalizeFirstLetter lowerLoc) modifierTransformer
+handleModifierWithIcon _ _ _  stmt = plainMsg $ pre_statement' stmt
 
 -- | statement handler for a list of lines.
 -- Lines which are prefixed with one or more *, will be indented accordingly
