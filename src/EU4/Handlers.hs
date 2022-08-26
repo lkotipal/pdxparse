@@ -874,6 +874,7 @@ scriptIconFileTable = HM.fromList
     ,("maximum tolerance of heretics", ("", "maximum tolerance of heretics"))
     ,("monthly heir claim increase", ("", "monthly heir claim increase"))
     ,("monthly piety accelerator", ("", "monthly piety accelerator"))
+    ,("monthly reform progress", ("", "reform progress growth"))
     ,("yearly authority", ("", "yearly authority"))
     ,("yearly doom reduction", ("", "yearly doom reduction"))
     -- Trade company investments
