@@ -875,6 +875,7 @@ scriptIconFileTable = HM.fromList
     ,("monthly heir claim increase", ("", "monthly heir claim increase"))
     ,("monthly piety accelerator", ("", "monthly piety accelerator"))
     ,("monthly reform progress", ("", "reform progress growth"))
+    ,("overlord naval force limit", ("", "overlord naval force limit"))
     ,("yearly authority", ("", "yearly authority"))
     ,("yearly doom reduction", ("", "yearly doom reduction"))
     -- Trade company investments
