@@ -139,9 +139,6 @@ handlersRhsIrrelevant = Tr.fromList
         ,("boost_temples_large_effect", rhsAlwaysYes MsgBoostTemplesLargeEffect)
         ,("can_have_center_of_reformation_trigger" , const $ msgToPP MsgCanHaveCenterOfReformation)
         ,("cancel_construction"    , rhsAlwaysYes MsgCancelConstruction) -- Canals
-        ,("cb_on_overseas"         , rhsAlwaysYes MsgGainOverseasCB) -- Full Expansion
-        ,("cb_on_primitives"       , rhsAlwaysYes MsgGainPrimitivesCB) -- Full Exploration
-        ,("cb_on_religious_enemies", rhsAlwaysYes MsgGainReligiousCB) -- Deus Vult
         ,("change_government_to_monarchy"  , rhsAlwaysYes $ MsgChangeGovernment "monarchy")
         ,("change_government_to_republic"  , rhsAlwaysYes $ MsgChangeGovernment "republic")
         ,("change_government_to_theocracy" , rhsAlwaysYes $ MsgChangeGovernment "theocracy")
@@ -172,7 +169,6 @@ handlersRhsIrrelevant = Tr.fromList
         ,("is_subject_other_than_tributary_trigger" , rhsAlwaysYes MsgIsSubjectOtherThanTributary)
         ,("kill_ruler"             , rhsAlwaysYes MsgRulerDies)
         ,("may_agitate_for_liberty", rhsAlwaysYes MsgMayAgitateForLiberty) -- Espionage: Destabilizing Efforts
-        ,("may_explore"            , rhsAlwaysYes MsgMayExplore) -- Exploration: Quest for the New World
         ,("may_infiltrate_administration", rhsAlwaysYes MsgMayInfiltrateAdministration) -- Espionage: Espionage
         ,("may_sabotage_reputation", rhsAlwaysYes MsgMaySabotageReputation) -- Espionage: Rumormongering
         ,("may_sow_discontent"     , rhsAlwaysYes MsgMaySowDiscontent) -- Espionage: Destabilizing Efforts
@@ -180,7 +176,6 @@ handlersRhsIrrelevant = Tr.fromList
         ,("move_capital_effect"    , rhsAlwaysYes MsgMoveCapitalEffect)
         ,("prev_move_capital_effect" , rhsAlwaysYes MsgPrevMoveCapitalEffect)
         ,("set_hre_religion_treaty", rhsAlwaysYes MsgSignWestphalia)
-        ,("reduced_stab_impacts"   , rhsAlwaysYes MsgReducedStabImpacts) -- Full Diplomacy
         ,("reduce_estate_burghers_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_burghers_loyalty_effect"))
         ,("reduce_estate_church_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "reduce_estate_church_loyalty_effect"))
         ,("reduce_estate_cossacks_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_loyalty_effect|cossacks|lose"))
@@ -206,7 +201,6 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_heir"              , rhsAlwaysEmptyCompound MsgHeirRemoved)
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("same_govt_as_root_trigger" , rhsAlwaysYes MsgSameGovtAsRoot)
-        ,("sea_repair"             , rhsAlwaysYes MsgGainSeaRepair) -- Full Maritime
         ,("set_estate_led_regency_privilege" , rhsAlways "random" MsgSetEstateLedRegencyPrivilegeRandom) -- Only random used in 1.31.3
         ,("swap_free_idea_group"     , rhsAlwaysYes MsgSwapFreeIdeaGroup)
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
@@ -1004,6 +998,11 @@ handlersForModifiers = Tr.fromList
         ,("may_perform_slave_raid_on_same_religion", rhsAlwaysYes (MsgGenericText "{{DLC-only|May raid coasts}}, including coasts of countries with same religion"))
         ,("may_recruit_female_generals"           , rhsAlwaysYes (MsgGenericText "May recruit female generals"))
         ,("no_religion_penalty"                   , rhsAlwaysYes (MsgGenericText "Heretic and heathen provinces do not give any penalties"))
+        ,("cb_on_primitives"                      , rhsAlwaysYes (MsgGenericText "Can fabricate claim overseas in colonial regions.")) -- Full Exploration
+        ,("cb_on_religious_enemies"               , rhsAlwaysYes (MsgGenericText "{{icon|cb on religious enemies|28px}} Gain permanent “Holy War” and “Purging of Heresy” [[Casus Belli]] against heathens and heretics respectively.")) -- Deus Vult
+        ,("may_explore"                           , rhsAlwaysYes (MsgGenericText "{{icon|may explore|28px}} Can recruit explorers and conquistadors. Explorers may explore ocean provinces.")) -- Exploration: Quest for the New World
+        ,("reduced_stab_impacts"                  , rhsAlwaysYes (MsgGenericText "Lowered impact on stability from diplomatic actions")) -- Full Diplomacy
+        ,("sea_repair"                            , rhsAlwaysYes (MsgGenericText "Ships repair while in coastal sea provinces.")) -- Full Maritime
         ] -- handlersForModifiers
 
 -- | Handlers for simple compound statements

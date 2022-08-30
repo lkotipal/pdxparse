@@ -584,17 +584,12 @@ data ScriptMessage
     | MsgHasOffensiveIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
     | MsgHasMaritimeIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
     | MsgColonists {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgMayExplore
     | MsgGainColonialRange {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgGainOverseasCB
-    | MsgGainPrimitivesCB
     | MsgNavyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgGainSeaRepair
     | MsgPrimitives {scriptMessageYn :: Bool}
     | MsgRulerIsForeigner {scriptMessageYn :: Bool}
     | MsgProdEff {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProdEffAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgGainReligiousCB
     | MsgMissionaries {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPapalInfluence {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDevotion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -715,7 +710,6 @@ data ScriptMessage
     | MsgLeadersWithoutUpkeep {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDiplomats {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgReducedStabImpacts
     | MsgAccCultureThreshold {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgBetterRelationsOverTime {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMerchants {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -4461,8 +4455,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNumSign True _amt)
                 , plural _amt " Colonist" " Colonists"
                 ]
-        MsgMayExplore
-            -> "{{icon|may explore|28px}} Can recruit explorers and conquistadors. Explorers may explore ocean provinces."
         MsgGainColonialRange {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -4470,18 +4462,12 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Colonial range"
                 ]
-        MsgGainOverseasCB
-            -> "Gain permanent \"Overseas Expansion\" [[Casus Belli]] against countries with Indian, Sub-Saharan, Chinese or Nomad tech group. (Only usable if country's tech group is Western, Eastern or Anatolian.)"
-        MsgGainPrimitivesCB
-            -> "Gain permanent \"Colonial Conquest\" [[Casus Belli]] against all primitives."
         MsgNavyTradition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " Navy tradition is at least "
                 , toMessage (plainNum _amt)
                 ]
-        MsgGainSeaRepair
-            -> "Ships repair while in coastal sea provinces."
         MsgPrimitives {scriptMessageYn = _yn}
             -> mconcat
                 [ "Is"
@@ -4506,8 +4492,6 @@ instance RenderMessage Script ScriptMessage where
                 , " Production efficiency is at least that of "
                 , _whom
                 ]
-        MsgGainReligiousCB
-            -> "{{icon|cb on religious enemies|28px}} Gain permanent \"Holy War\" and \"Purging of Heresy\" [[Casus Belli]] against heathens and heretics respectively."
         MsgMissionaries {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -5224,8 +5208,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNumSign True _amt)
                 , plural _amt " Diplomat" " Diplomats"
                 ]
-        MsgReducedStabImpacts
-            -> "Lowered impact on stability from diplomatic actions"
         MsgAccCultureThreshold {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
