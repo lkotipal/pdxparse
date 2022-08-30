@@ -4210,15 +4210,18 @@ handleModifier locKey modifierTransformer stmt = do
 
 -- | Handler for generic modifiers
 -- The localisation is loaded dynamically from the game files and the supplied icon key is used
+-- if the localisation can't be found, the locKey is used unchanged
 handleModifierWithIcon :: (EU4Info g, Monad m) =>
     Text
     -> Text
     -> (Double -> Doc)
         -> StatementHandler g m
 handleModifierWithIcon locKey iconKey modifierTransformer [pdx| %_ = !amt |] = do
-    modifierLoc <- getGameL10n locKey
-    let lowerLoc = T.toLower modifierLoc
-    msgToPP $ MsgGenericModifier (iconText iconKey) amt (capitalizeFirstLetter lowerLoc) modifierTransformer
+    modifierLoc <- getGameL10nIfPresent locKey
+    let capitalizedText = case modifierLoc of
+            Nothing -> locKey
+            Just str -> capitalizeFirstLetter (T.toLower str)
+    msgToPP $ MsgGenericModifier (iconText iconKey) amt capitalizedText modifierTransformer
 handleModifierWithIcon _ _ _  stmt = plainMsg $ pre_statement' stmt
 
 -- | statement handler for a list of lines.

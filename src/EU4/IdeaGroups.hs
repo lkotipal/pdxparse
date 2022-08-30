@@ -187,7 +187,7 @@ writeEU4IdeaGroups = do
                                 ,   featureId = Just (ig_name ig)
                                 ,   theFeature = Right ig })
                             (HM.elems groups)
-    writeFeatures "idea groups"
+    scope EU4Bonus $ writeFeatures "idea groups"
                   pathedGroups
                   ppIdeaGroup {- need IdeaGroup -> PPT g IO (FilePath, Doc) -}
 

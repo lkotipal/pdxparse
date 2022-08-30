@@ -316,12 +316,10 @@ data ScriptMessage
     | MsgRulerDIP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDIPTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHordeUnity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgYearlyHordeUnity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgKarma {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLegitimacy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLegitimacyAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgLegitimacyEquivalent {scriptMessageAmt :: Double}
-    | MsgYearlyLegitimacy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRulerMIL {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMILTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumAllies {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -347,7 +345,6 @@ data ScriptMessage
     | MsgMonthlyWarExhaustion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgWarScore {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgRepTrad {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgYearlyRepTrad {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgInflation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgInflationAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgLocalAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -602,7 +599,6 @@ data ScriptMessage
     | MsgGainOverseasCB
     | MsgGainPrimitivesCB
     | MsgNavyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgYearlyNavyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHeavyShipCombatAbility {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLightShipCombatAbility {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGalleyCombatAbility {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -619,7 +615,6 @@ data ScriptMessage
     | MsgInterestPerAnnum {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGlobalAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLandMaintenanceMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavalMaintenanceMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProdEff {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProdEffAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgProdEffBonus {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -633,7 +628,7 @@ data ScriptMessage
     | MsgToleranceTrue {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPapalInfluence {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyPapalInfluence {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgYearlyDevotion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgDevotion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMonthlyFervor {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgChurchPowerModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -973,7 +968,6 @@ data ScriptMessage
     | MsgTradeValueMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyArmyProfessionalism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearlyCorruption {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgYearlyMeritocracy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddInnovativenessSmallEffect
     | MsgAddInnovativenessBigEffect
     | MsgAddReformProgressMediumEffect
@@ -2998,13 +2992,6 @@ instance RenderMessage Script ScriptMessage where
                 , " Horde unity is at least "
                 , toMessage (roundNum _amt)
                 ]
-        MsgYearlyHordeUnity {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " {{DLC-only|Yearly horde unity}}"
-                ]
         MsgKarma {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -3027,13 +3014,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "{{icon|legitimacy}} Legitimacy (or equivalent) is at least "
                 , toMessage (roundNum _amt)
-                ]
-        MsgYearlyLegitimacy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Yearly legitimacy"
                 ]
         MsgRulerMIL {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -3223,13 +3203,6 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Republican tradition is at least "
                 , toMessage (roundNum _amt)
-                ]
-        MsgYearlyRepTrad {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Yearly republican tradition"
                 ]
         MsgInflation {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -4866,13 +4839,6 @@ instance RenderMessage Script ScriptMessage where
                 , " Navy tradition is at least "
                 , toMessage (plainNum _amt)
                 ]
-        MsgYearlyNavyTradition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Yearly navy tradition"
-                ]
         MsgHeavyShipCombatAbility {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -4978,13 +4944,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Land maintenance modifier"
                 ]
-        MsgNavalMaintenanceMod {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign False) _amt)
-                , " Naval maintenance modifier"
-                ]
         MsgProdEff {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -5082,12 +5041,11 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNumSign True _amt)
                 , " Yearly papal influence"
                 ]
-        MsgYearlyDevotion {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgDevotion {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
+                , " {{DLC-only|Devotion}} is at least "
                 , toMessage (colourNumSign True _amt)
-                , " {{DLC-only|Yearly devotion}}"
                 ]
         MsgMonthlyFervor {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7287,13 +7245,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNumSign False _amt)
                 , " Yearly corruption"
-                ]
-        MsgYearlyMeritocracy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " {{DLC-only|Yearly meritocracy}}"
                 ]
         MsgAddInnovativenessBigEffect
             -> "If DLC {{icon|rb}} Rule Britannia is active, gain {{icon|innovativeness}} {{green|3}} innovativeness"

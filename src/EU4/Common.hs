@@ -84,7 +84,6 @@ ppHandlers = foldl' Tr.unionL Tr.empty
     , handlersNumeric
     , handlersNumericIcons
     , handlersModifiers
-    , handlersForModifiers
     , handlersCompound
     , handlersLocRhs
     , handlersProvince
@@ -454,14 +453,14 @@ handlersNumericIcons = Tr.fromList
         ,("heir_dip"                 , numericIcon "dip" MsgHeirDIP)
         ,("heir_mil"                 , numericIcon "mil" MsgHeirMIL)
         ,("harmony"                  , numericIcon "harmony" MsgHarmony)
-        ,("horde_unity"              , numericIconBonus "horde unity" MsgHordeUnity MsgYearlyHordeUnity)
+        ,("horde_unity"              , numericIcon "horde unity" MsgHordeUnity)
         ,("imperial_influence"       , numericIcon "imperial authority" MsgImperialAuthority)
         ,("imperial_mandate"         , numericIconBonus "mandate growth modifier" MsgImperialMandate MsgImperialMandateGrowth)
         ,("innovativeness"           , numericIcon "innovativeness" MsgInnovativeness)
         ,("inquisitor"               , numericIconLoc "inquisitor" "inquisitor" MsgHasAdvisorLevel)
         ,("is_defender_of_faith_of_tier" , numericIcon "dotf" MsgIsDotfTier)
         ,("karma"                    , numericIcon "high karma" MsgKarma)
-        ,("legitimacy"               , numericIconBonusAllowTag "legitimacy" MsgLegitimacy MsgLegitimacyAs MsgYearlyLegitimacy)
+        ,("legitimacy"               , numericOrTagIcon "legitimacy" MsgLegitimacy MsgLegitimacyAs)
         ,("liberty_desire"           , numericIconBonus "liberty desire" MsgLibertyDesire MsgLibertyDesireModifier)
         ,("light_ship_fraction"      , numericIcon "light ship" MsgLightShipFraction)
         ,("local_autonomy"           , numericIconBonus "local autonomy" MsgLocalAutonomy MsgMonthlylAutonomyChange)
@@ -486,7 +485,7 @@ handlersNumericIcons = Tr.fromList
         ,("max_sailors"              , numericIcon "sailors" MsgMaxSailors)
         ,("mercantilism"             , numericIcon "mercantilism" MsgMercantilism)
         ,("mercenary_discipline"     , numericIcon "mercenary discipline" MsgMercenaryDiscipline)
-        ,("meritocracy"              , numericIconBonus "meritocracy" MsgMeritocracy MsgYearlyMeritocracy)
+        ,("meritocracy"              , numericIcon "meritocracy" MsgMeritocracy)
         ,("mil"                      , numericIcon "mil" MsgRulerMIL)
         ,("mil_power"                , numericIcon "adm" MsgHasMIL)
         ,("mil_tech"                 , numericIcon "mil tech" MsgMILTech)
@@ -503,7 +502,7 @@ handlersNumericIcons = Tr.fromList
         ,("navigator"                , numericIconLoc "navigator" "navigator" MsgHasAdvisorLevel)
         ,("navy_reformer"            , numericIconLoc "naval reformer"  "naval_reformer"MsgHasAdvisorLevel) -- both are used
         ,("navy_size_percentage"     , numericIcon "naval force limit" MsgNavyPercentage)
-        ,("navy_tradition"           , numericIconBonus "navy tradition" MsgNavyTradition MsgYearlyNavyTradition)
+        ,("navy_tradition"           , numericIcon "navy tradition" MsgNavyTradition)
         ,("num_accepted_cultures"    , numericIcon "max promoted cultures" MsgMaxPromotedCultures)
         ,("num_of_admirals"          , numericIcon "admiral" MsgNumAdmirals)
         ,("num_of_allies"            , numericIcon "alliance" MsgNumAllies)
@@ -541,7 +540,7 @@ handlersNumericIcons = Tr.fromList
         ,("reform_desire"            , numericIcon "reform desire" MsgReformDesire)
         ,("regiment_recruit_speed"   , numericIcon "recruitment time" MsgRecruitmentTime)
         ,("religious_unity"          , numericIconBonus "religious unity" MsgReligiousUnity MsgReligiousUnityBonus)
-        ,("republican_tradition"     , numericIconBonus "republican tradition" MsgRepTrad MsgYearlyRepTrad)
+        ,("republican_tradition"     , numericIcon "republican tradition" MsgRepTrad)
         ,("sailors_percentage"       , numericIcon "sailors" MsgSailorsPercentage)
         ,("ship_recruit_speed"       , numericIcon "shipbuilding time" MsgShipbuildingTime)
         ,("shock_damage"             , numericIcon "shock damage" MsgShockDamage)
@@ -585,7 +584,7 @@ handlersNumericIcons = Tr.fromList
         ,("core_creation"                     , numericIcon "core creation cost" MsgCoreCreationCost)
         ,("culture_conversion_cost"           , numericIcon "culture conversion cost" MsgCultureConvCost)
         ,("defensiveness"                     , numericIcon "defensiveness" MsgFortDefense)
-        ,("devotion"                          , numericIcon "devotion" MsgYearlyDevotion)
+        ,("devotion"                          , numericIcon "devotion" MsgDevotion)
         ,("diplomatic_annexation_cost"        , numericIcon "diplomatic annexation cost" MsgDiploAnnexCost)
         ,("diplomatic_reputation"             , numericIcon "diplomatic reputation" MsgDiploRep)
         ,("diplomatic_upkeep"                 , numericIcon "diplomatic upkeep" MsgDiploRelations)
@@ -649,9 +648,7 @@ handlersNumericIcons = Tr.fromList
         ,("movement_speed"                    , numericIcon "movement speed" MsgMovementSpeed)
         ,("naval_attrition"                   , numericIcon "naval attrition" MsgNavalAttrition)
         ,("naval_forcelimit_modifier"         , numericIcon "naval forcelimit" MsgNavalForcelimitMod)
-        ,("naval_maintenance_modifier"        , numericIcon "naval maintenance" MsgNavalMaintenanceMod)
         ,("naval_morale"                      , numericIcon "morale of navies" MsgMoraleOfNavies)
-        ,("navy_tradition"                    , numericIcon "navy tradition" MsgYearlyNavyTradition)
         ,("navy_tradition_decay"              , numericIcon "navy tradition decay" MsgNavyTraditionDecay)
         ,("papal_influence"                   , numericIconBonus "papal influence" MsgPapalInfluence MsgYearlyPapalInfluence)
         ,("possible_mercenaries"              , numericIcon "available mercenaries" MsgAvailableMercs)
@@ -871,6 +868,7 @@ handlersModifiers = Tr.fromList
         ]
 
 -- | Handlers for actual modifiers
+-- these are only used within the EU4Bonus scope
 handlersForModifiers :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersForModifiers = Tr.fromList
         [("add_tribal_land_cost"                  , handleModifier "MODIFIER_ADD_TRIBAL_LAND_COST" (reducedNum (colourPcSign False)))
@@ -895,6 +893,7 @@ handlersForModifiers = Tr.fromList
         ,("cossacks_loyalty_modifier"             , handleModifierWithIcon "Cossacks loyalty equilibrium" "cossacks loyalty" (reducedNum (colourPcSign True)))
         ,("country_diplomatic_power"              , handleModifier "MODIFIER_COUNTRY_DIPLOMATIC_POWER" (colourNumSign True))
         ,("country_military_power"                , handleModifier "MODIFIER_COUNTRY_MILITARY_POWER" (colourNumSign True))
+        ,("devotion"                              , handleModifierWithIcon "{{DLC-only|Yearly devotion}}" "yearly devotion" (colourNumSign True))
         ,("dhimmi_influence_modifier"             , handleModifier "Dhimmi influence" (reducedNum plainPcSign))
         ,("election_cycle"                        , handleModifier "MODIFIER_ELECTION_CYCLE" plainNumSign)
         ,("enuchs_influence"                      , handleModifierWithIcon "enuchs_influence" "eunuchs influence" plainNumSign)
@@ -911,11 +910,13 @@ handlersForModifiers = Tr.fromList
         ,("global_sailors"                        , handleModifier "SAILORS" (colourNumSign True))
         ,("global_sailors_modifier"               , handleModifier "GLOBAL_SAILORS" (reducedNum (colourPcSign True)))
         ,("gold_depletion_chance_modifier"        , handleModifier "MODIFIER_GOLD_DEPLETION_CHANCE_MODIFIER" (reducedNum (colourPcSign False)))
+        ,("horde_unity"                           , handleModifierWithIcon "{{DLC-only|Yearly horde unity}}" "yearly horde unity" (colourNumSign True))
         ,("imperial_mercenary_cost"               , handleModifier "MODIFIER_IMPERIAL_MERCENARY_COST" (reducedNum (colourPcSign False)))
         ,("imperial_reform_catholic_approval"     , handleModifier "MODIFIER_IMPERIAL_REFORM_CATHOLIC_APPROVAL" (colourNumSign True))
         ,("infantry_fire"                         , handleModifier "MODIFIER_INFANTRY_FIRE" (colourNumSign True))
         ,("institution_growth"                    , handleModifierWithIcon "Yearly institution growth" "institution growth" (colourNumSign True))
         ,("jains_influence_modifier"              , handleModifier "Jains influence" (reducedNum plainPcSign))
+        ,("legitimacy"                            , handleModifier "YEARLY_LEGITIMACY" (colourNumSign True))
         ,("local_amount_of_banners"               , handleModifier "MODIFIER_LOCAL_AMOUNT_OF_BANNERS" (colourNumSign True))
         ,("local_amount_of_cawa"                  , handleModifierWithIcon "Possible cawa per development" "possible cawa (local)" (colourNumSign True))
         ,("local_colonist_placement_chance"       , handleModifier "LOCAL_COLONIST_PLACEMENT_CHANCE" (reducedNum (colourPcSign True)))
@@ -937,6 +938,7 @@ handlersForModifiers = Tr.fromList
         ,("may_build_supply_depot"                , rhsAlwaysYes (MsgGenericText "May build supply depots"))
         ,("may_refill_garrison"                   , rhsAlwaysYes (MsgGenericText "May refill garrison"))
         ,("may_return_manpower_on_disband"        , rhsAlwaysYes (MsgGenericText "Regain manpower when disbanding"))
+        ,("meritocracy"                           , handleModifierWithIcon "{{DLC-only|Yearly meritocracy}}" "yearly meritocracy" (colourNumSign True))
         ,("mil_advisor_cost"                      , handleModifier "MODIFIER_MIL_ADVISOR_COST" (reducedNum (colourPcSign False)))
         ,("military_tactics"                      , handleModifier "MILITARY_TACTICS" (colourNumSign True))
         ,("min_autonomy"                          , handleModifier "MINIMUM_GLOBAL_AUTONOMY" (colourNumSign False))
@@ -953,6 +955,7 @@ handlersForModifiers = Tr.fromList
         ,("naval_maintenance_flagship_modifier"   , handleModifier "MODIFIER_NAVAL_MAINTENANCE_FLAGSHIP" (colourNumSign False))
         ,("naval_maintenance_modifier"            , handleModifier "NAVAL_MAINTENANCE_MODIFIER" (reducedNum (colourPcSign False)))
         ,("naval_tradition_in_fleet_modifier"     , handleModifier "MODIFIER_FLAGSHIP_NAVAL_TRADITION" (reducedNum (colourPcSign True)))
+        ,("navy_tradition"                        , handleModifier "YEARLY_NAVY_TRADITION" (colourNumSign True))
         ,("no_stability_loss_on_monarch_death"    , rhsAlwaysYes (MsgGenericText "No stability loss on monarch death"))
         ,("nomadic_tribes_influence_modifier"     , handleModifier "Tribes influence" (reducedNum plainPcSign))
         ,("nomadic_tribes_loyalty_modifier"       , handleModifierWithIcon "Tribes loyalty equilibrium" "tribes loyalty" (reducedNum (colourPcSign True)))
@@ -971,6 +974,7 @@ handlersForModifiers = Tr.fromList
         ,("relation_with_same_culture"            , handleModifier "MODIFIER_RELATION_WITH_SAME_CULTURE" (colourNumSign True))
         ,("relation_with_same_culture_group"      , handleModifier "MODIFIER_RELATION_WITH_SAME_CULTURE_GROUP" (colourNumSign True))
         ,("relation_with_same_culture_group"      , handleModifier "MODIFIER_RELATION_WITH_SAME_CULTURE_GROUP" (colourNumSign True))
+        ,("republican_tradition"                  , handleModifier "YEARLY_REPUBLICAN_TRADITION" (colourNumSign True))
         ,("reserves_organisation"                 , handleModifier "MODIFIER_RESERVES_ORGANIZATION" (reducedNum (colourPcSign True)))
         ,("rr_girondists_influence"               , handleModifierWithIcon "The girondists influence" "girondist influence" plainNumSign)
         ,("rr_jacobins_influence"                 , handleModifierWithIcon "The jacobins influence" "jacobin influence" plainNumSign)
@@ -1968,30 +1972,42 @@ handlersIgnored = Tr.fromList
         ,("picture"       , return $ return []) -- Some modifiers have custom pictures
         ]
 
+getStatementHandlerForModifiers :: (EU4Info g, Monad m) => Text -> Maybe (StatementHandler g m)
+getStatementHandlerForModifiers label = case Tr.lookup (TE.encodeUtf8 (T.toLower label)) handlersForModifiers of
+        -- @TODO: remove this fallback
+        Nothing -> Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers
+        Just handler -> Just handler
+
+getStatementHandlerByScope :: (EU4Info g, Monad m) => Text -> Maybe EU4Scope -> Maybe (StatementHandler g m)
+getStatementHandlerByScope label (Just EU4Bonus) = getStatementHandlerForModifiers label
+getStatementHandlerByScope label _ = Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers
+
 -- | Extract the appropriate message(s) from a single statement. Note that this
 -- may produce many lines (via 'ppMany'), since some statements are compound.
 ppOne :: (EU4Info g, Monad m) => StatementHandler g m
 ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
-    GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
-        Just handler -> handler stmt
-        -- default
-        Nothing -> if isTag label
-             then case rhs of
-                CompoundRhs scr ->
-                    withCurrentIndent $ \_ -> do -- force indent level at least 1
-                        lflag <- plainMsg' =<< (<> ":") <$> flagText (Just EU4Country) label
-                        scriptMsgs <- scope EU4Country $ ppMany scr
-                        return (lflag : scriptMsgs)
-                _ -> preStatement stmt
-             else do
-                geoData <- getGeoData
-                mloc <- getGameL10nIfPresent label
-                case mloc of
-                    -- Check for localizable atoms, e.g. regions
-                    Just loc -> case rhs of
-                        CompoundRhs scr -> ppMaybeGeo label loc scr
-                        _ -> compound loc stmt
-                    Nothing -> preStatement stmt
+    GenericLhs label _ ->  do
+        mscope <- getCurrentScope
+        case getStatementHandlerByScope label mscope of
+            Just handler -> handler stmt
+            -- default
+            Nothing -> if isTag label
+                then case rhs of
+                    CompoundRhs scr ->
+                        withCurrentIndent $ \_ -> do -- force indent level at least 1
+                            lflag <- plainMsg' =<< (<> ":") <$> flagText (Just EU4Country) label
+                            scriptMsgs <- scope EU4Country $ ppMany scr
+                            return (lflag : scriptMsgs)
+                    _ -> preStatement stmt
+                else do
+                    geoData <- getGeoData
+                    mloc <- getGameL10nIfPresent label
+                    case mloc of
+                        -- Check for localizable atoms, e.g. regions
+                        Just loc -> case rhs of
+                            CompoundRhs scr -> ppMaybeGeo label loc scr
+                            _ -> compound loc stmt
+                        Nothing -> preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
     IntLhs n -> do -- Treat as a province tag
         tradeNodes <- getTradeNodes
