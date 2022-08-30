@@ -302,7 +302,6 @@ data ScriptMessage
     | MsgADMTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgArmyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgArmyTraditionAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgYearlyArmyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgArmyTraditionFromBattles {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgBaseManpower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgBaseProduction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -615,7 +614,6 @@ data ScriptMessage
     | MsgLandMaintenanceMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProdEff {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProdEffAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgProdEffBonus {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainReligiousCB
     | MsgMissionaries {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMissionaryMaintenanceCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -630,7 +628,6 @@ data ScriptMessage
     | MsgChurchPowerModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestigeAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgYearlyPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMissionaryStrengthVsHeretics {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCultureConvCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasOpinion {scriptMessageAmt :: Double, scriptMessageWhom :: Text}
@@ -2894,13 +2891,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (colourNum True _amt)
                 , " Army tradition from battles"
                 ]
-        MsgYearlyArmyTradition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Yearly army tradition"
-                ]
         MsgBaseManpower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -4933,13 +4923,6 @@ instance RenderMessage Script ScriptMessage where
                 , " Production efficiency is at least that of "
                 , _whom
                 ]
-        MsgProdEffBonus {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Production efficiency"
-                ]
         MsgDevelCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -5042,13 +5025,6 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Prestige is at least that of "
                 , _whom
-                ]
-        MsgYearlyPrestige {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , " Yearly prestige"
                 ]
         MsgMissionaryStrengthVsHeretics {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
