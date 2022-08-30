@@ -952,21 +952,13 @@ data ScriptMessage
     | MsgCountryOrSubjectHolds {scriptMessageWhom :: Text}
     | MsgAllowedMarineFraction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAmountOfBanners {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgAutoExploreAdjacentToColony
-    | MsgCanFabricateForVassals
     | MsgCenterOfTradeUpgradeCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgExpelMinoritiesCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgFreeAdmPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgFreeDipPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgFreeMilPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGlobalSailorsModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgIdeaClaimColonies
-    | MsgMayEstablishFrontier
-    | MsgMayPerformSlaveRaid
-    | MsgMayPerformSlaveRaidOnSameReligion
-    | MsgMayRecruitFemaleGenerals
     | MsgMinAutonomyInTerritories {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNoReligionPenalty
     | MsgPossibleAdmPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPossibleDipPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPossibleMilPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -6555,10 +6547,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum plainNumSign _amt)
                 , "}}"
                 ]
-        MsgAutoExploreAdjacentToColony
-            -> "Automatically discover adjacent when a colony is built"
-        MsgCanFabricateForVassals
-            -> "May fabricate claims for subjects"
         MsgCenterOfTradeUpgradeCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -6601,16 +6589,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " National sailors modifier"
                 ]
-        MsgIdeaClaimColonies
-            -> "Can fabricate claims on any overseas province, provided it is overseas for its owner"
-        MsgMayEstablishFrontier
-            -> "{{DLC-only|May establish siberian frontiers}}"
-        MsgMayPerformSlaveRaid
-            -> "{{DLC-only|May raid coasts}}"
-        MsgMayPerformSlaveRaidOnSameReligion
-            -> "{{DLC-only|May raid coasts}}, including coasts of countries with same religion"
-        MsgMayRecruitFemaleGenerals
-            -> "May recruit female generals"
         MsgMinAutonomyInTerritories {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -6618,8 +6596,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Minimum autonomy in territories"
                 ]
-        MsgNoReligionPenalty
-            -> "Heretic and heathen provinces do not give any penalties"
         MsgPossibleAdmPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon

@@ -210,14 +210,6 @@ handlersRhsIrrelevant = Tr.fromList
         ,("set_estate_led_regency_privilege" , rhsAlways "random" MsgSetEstateLedRegencyPrivilegeRandom) -- Only random used in 1.31.3
         ,("swap_free_idea_group"     , rhsAlwaysYes MsgSwapFreeIdeaGroup)
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
-        ,("auto_explore_adjacent_to_colony", rhsAlwaysYes MsgAutoExploreAdjacentToColony)
-        ,("can_fabricate_for_vassals", rhsAlwaysYes MsgCanFabricateForVassals)
-        ,("idea_claim_colonies"    , rhsAlwaysYes MsgIdeaClaimColonies)
-        ,("may_establish_frontier" , rhsAlwaysYes MsgMayEstablishFrontier)
-        ,("may_perform_slave_raid" , rhsAlwaysYes MsgMayPerformSlaveRaid)
-        ,("may_perform_slave_raid_on_same_religion", rhsAlwaysYes MsgMayPerformSlaveRaidOnSameReligion)
-        ,("may_recruit_female_generals", rhsAlwaysYes MsgMayRecruitFemaleGenerals)
-        ,("no_religion_penalty"    , rhsAlwaysYes MsgNoReligionPenalty)
         ,("map_setup"              , rhsAlways "map_setup_random" MsgMapSetupRandom) -- In 1.30.6 all uses are "map_setup = map_setup_random"
         ,("was_never_german_regional_tag_trigger" , rhsAlwaysYes MsgWasNeverGermanReigionalTag)
 
@@ -1004,6 +996,14 @@ handlersForModifiers = Tr.fromList
         ,("yearly_patriarch_authority"            , handleModifier "MODIFIER_YEARLY_PATRIARCH_AUTHORITY" (reducedNum (colourPcSign True)))
         ,("yearly_revolutionary_zeal"             , handleModifierWithIcon "{{DLC-only|Yearly revolutionary zeal}}" "revolutionary zeal" (colourNumSign True))
         ,("years_of_nationalism"                  , handleModifier "MODIFIER_YEARS_OF_NATIONALISM" (colourNumSign False))
+        ,("auto_explore_adjacent_to_colony"       , rhsAlwaysYes (MsgGenericText "Automatically discover adjacent when a colony is built"))
+        ,("can_fabricate_for_vassals"             , rhsAlwaysYes (MsgGenericText "May fabricate claims for subjects"))
+        ,("idea_claim_colonies"                   , rhsAlwaysYes (MsgGenericText "Can fabricate claims on any overseas province, provided it is overseas for its owner"))
+        ,("may_establish_frontier"                , rhsAlwaysYes (MsgGenericText "{{DLC-only|May establish siberian frontiers}}"))
+        ,("may_perform_slave_raid"                , rhsAlwaysYes (MsgGenericText "{{DLC-only|May raid coasts}}"))
+        ,("may_perform_slave_raid_on_same_religion", rhsAlwaysYes (MsgGenericText "{{DLC-only|May raid coasts}}, including coasts of countries with same religion"))
+        ,("may_recruit_female_generals"           , rhsAlwaysYes (MsgGenericText "May recruit female generals"))
+        ,("no_religion_penalty"                   , rhsAlwaysYes (MsgGenericText "Heretic and heathen provinces do not give any penalties"))
         ] -- handlersForModifiers
 
 -- | Handlers for simple compound statements
