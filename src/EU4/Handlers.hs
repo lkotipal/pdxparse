@@ -157,6 +157,7 @@ module EU4.Handlers (
     ,   handleModifier
     ,   handleModifierWithIcon
     ,   handleModifierWithIconPlural
+    ,   handleModifierDlcOnly
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -4194,6 +4195,13 @@ handleModifierWithIconPlural :: (EU4Info g, Monad m) => Text -> Text -> Text -> 
 handleModifierWithIconPlural singularMessage pluralMessage iconKey modifierTransformer [pdx| %_ = !amt |] = do
     msgToPP $ MsgGenericModifier (iconText iconKey) amt (plural amt singularMessage pluralMessage) modifierTransformer
 handleModifierWithIconPlural _ _ _ _  stmt = plainMsg $ pre_statement' stmt
+
+-- | Handler for modifiers which wrap their message and value in a DLC-only template
+-- e.g. {{DLC-only|Administrative free policies|+1}}
+handleModifierDlcOnly :: (EU4Info g, Monad m) => Text -> Text -> (Double -> Doc) -> StatementHandler g m
+handleModifierDlcOnly message iconKey modifierTransformer [pdx| %_ = !amt |] = do
+    msgToPP $ MsgGenericModifierDlcOnly (iconText iconKey) amt message modifierTransformer
+handleModifierDlcOnly _ _ _  stmt = plainMsg $ pre_statement' stmt
 
 -- | statement handler for a list of lines.
 -- Lines which are prefixed with one or more *, will be indented accordingly

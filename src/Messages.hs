@@ -790,6 +790,7 @@ data ScriptMessage
     | MsgGenericTemplate {scriptMessageTemplate :: Text}
     | MsgGenericText {text :: Text}
     | MsgGenericModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double, locModifierName :: Text, amtTransformer :: Double -> Doc}
+    | MsgGenericModifierDlcOnly {scriptMessageIcon :: Text, scriptMessageAmt :: Double, locModifierName :: Text, amtTransformer :: Double -> Doc}
     | MsgAddStabilityOrAdm
     | MsgAddTrust {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAddTrustMutual {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
@@ -936,20 +937,8 @@ data ScriptMessage
     | MsgNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCountryOrNonSovereignSubjectHolds {scriptMessageWhom :: Text}
     | MsgCountryOrSubjectHolds {scriptMessageWhom :: Text}
-    | MsgAllowedMarineFraction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgAmountOfBanners {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgCenterOfTradeUpgradeCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgExpelMinoritiesCost {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgFreeAdmPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgFreeDipPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgFreeMilPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGlobalSailorsModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMinAutonomyInTerritories {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgPossibleAdmPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgPossibleDipPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgPossibleMilPolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgPossiblePolicy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgTreasureFleetIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMapSetupRandom
     | MsgValidForPU {scriptMessageYn :: Bool}
     | MsgIsGreatPower {scriptMessageYn :: Bool}
@@ -5695,6 +5684,15 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _locModifierName
                 ]
+        MsgGenericModifierDlcOnly {scriptMessageIcon = _icon, scriptMessageAmt = _amt, locModifierName = _locModifierName, amtTransformer = _amtTransformer}
+            -> mconcat
+                [ _icon
+                , " {{DLC-only|"
+                , _locModifierName
+                , "|"
+                , toMessage (_amtTransformer _amt)
+                , "}}"
+                ]
         MsgAddStabilityOrAdm
             -> "{{add stability or adm power}}"
         MsgAddTrust {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
@@ -6449,55 +6447,6 @@ instance RenderMessage Script ScriptMessage where
                 , _whom
                 , " or its subjects"
                 ]
-        MsgAllowedMarineFraction {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Marines force limit|"
-                , toMessage (reducedNum plainNumSign _amt)
-                , "}}"
-                ]
-        MsgAmountOfBanners {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Possible manchu banners|"
-                , toMessage (reducedNum plainNumSign _amt)
-                , "}}"
-                ]
-        MsgCenterOfTradeUpgradeCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Center of trade upgrade cost|"
-                , toMessage (reducedNum plainNumSign _amt)
-                , "}}"
-                ]
-        MsgExpelMinoritiesCost {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Expel minorities cost|"
-                , toMessage (reducedNum plainNumSign _amt)
-                , "}}"
-                ]
-        MsgFreeAdmPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Administrative free policies|"
-                , toMessage (plainNumSign _amt)
-                , "}}"
-                ]
-        MsgFreeDipPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Diplomatic free policies|"
-                , toMessage (plainNumSign _amt)
-                , "}}"
-                ]
-        MsgFreeMilPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Military free policies|"
-                , toMessage (plainNumSign _amt)
-                , "}}"
-                ]
         MsgGlobalSailorsModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -6511,41 +6460,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Minimum autonomy in territories"
-                ]
-        MsgPossibleAdmPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Administrative possible policies|"
-                , toMessage (plainNumSign _amt)
-                , "}}"
-                ]
-        MsgPossibleDipPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Diplomatic possible policies|"
-                , toMessage (plainNumSign _amt)
-                , "}}"
-                ]
-        MsgPossibleMilPolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Military possible policies|"
-                , toMessage (plainNumSign _amt)
-                , "}}"
-                ]
-        MsgPossiblePolicy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Possible policies|"
-                , toMessage (plainNumSign _amt)
-                , "}}"
-                ]
-        MsgTreasureFleetIncome {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " {{DLC-only|Treasure fleet income|"
-                , toMessage (reducedNum plainNumSign _amt)
-                , "}}"
                 ]
         MsgMapSetupRandom
             -> "Using random map setup"
