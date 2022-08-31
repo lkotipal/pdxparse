@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module HOI4.Handlers (
         preStatement
+    ,   plainStatement
     ,   plainMsg
     ,   plainMsg'
     ,   msgToPP
@@ -10,6 +11,7 @@ module HOI4.Handlers (
     ,   ppMtth
     ,   compound
     ,   compoundMessage
+    ,   compoundMessageExtractTag
     ,   compoundMessageExtract
     ,   compoundMessagePronoun
     ,   compoundMessageTagged
@@ -30,11 +32,13 @@ module HOI4.Handlers (
     ,   numeric
     ,   numericCompare
     ,   numericCompareCompound
+    ,   numericCompareCompoundLoc
     ,   numericOrTag
     ,   numericOrTagIcon
     ,   numericIconChange
     ,   withFlag
     ,   withBool
+    ,   withBoolHOI4Scope
     ,   withFlagOrBool
     ,   withTagOrNumber
     ,   numericIcon
@@ -45,9 +49,11 @@ module HOI4.Handlers (
     ,   tryLocAndIcon
     ,   tryLocMaybe
     ,   textValue
+    ,   textValueKey
     ,   textValueCompare
     ,   valueValue
     ,   textAtom
+    ,   textAtomKey
     ,   taDescAtomIcon
     ,   taTypeFlag
     ,   simpleEffectNum
@@ -98,7 +104,6 @@ module HOI4.Handlers (
     ,   addDoctrineCostReduction
     ,   freeBuildingSlots
     ,   addAutonomyRatio
-    ,   hasEquipment
     ,   sendEquipment
     ,   buildRailway
     ,   canBuildRailway
@@ -109,6 +114,13 @@ module HOI4.Handlers (
     ,   setCapital
     ,   setPopularities
     ,   addEquipment
+    ,   giveResourceRights
+    ,   addAce
+    ,   divisionTemplate
+    ,   hasNavySize
+    ,   locandid
+    ,   createUnit
+    ,   damageBuilding
     -- testing
     ,   isPronoun
     ,   flag
@@ -138,7 +150,7 @@ import qualified Data.Trie as Tr
 
 import qualified Text.PrettyPrint.Leijen.Text as PP
 
-import Data.List (foldl', intersperse, intercalate)
+import Data.List (foldl', intersperse, intercalate, findIndex)
 import Data.Maybe
 
 import Control.Applicative (liftA2)
@@ -179,6 +191,12 @@ preStatement [pdx| %lhs = @scr |] = do
     msgs <- ppMany scr
     return (headerMsg : msgs)
 preStatement stmt = (:[]) <$> alsoIndent' (preMessage stmt)
+
+-- | For pretty printing a simple statement without <pre>
+plainStatement :: (HOI4Info g, Monad m) =>
+    Text -> GenericStatement -> PPT g m IndentedMessages
+plainStatement xtxt stmt =
+    plainMsg $ xtxt <> "<tt>" <> Doc.doc2text (genericStatement2doc stmt) <> "</tt>"
 
 -- | Pretty-print a statement and wrap it in a @<pre>@ element.
 preStatementText :: GenericStatement -> Doc
@@ -328,6 +346,7 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
                 | expectedScope `matchScope` HOI4ScopeCharacter -> message MsgPREVCharacter
                 | expectedScope `matchScope` HOI4Country -> message MsgPREVCharacterOwner
                 | otherwise                             -> message MsgPREVCharacterAsOther
+            Just HOI4From -> message MsgPREVFROM
             Just HOI4Misc -> message MsgMISC
             Just HOI4Custom -> message MsgPREVCustom
             _ -> return "PREV"
@@ -520,13 +539,13 @@ compoundMessage header [pdx| %_ = @scr |]
 compoundMessage _ stmt = preStatement stmt
 
 -- | Generic handler for a simple compound statement with extra info.
-compoundMessageExtract :: (HOI4Info g, Monad m) =>
+compoundMessageExtractTag :: (HOI4Info g, Monad m) =>
     Text
     -> (Text -> ScriptMessage) -- ^ Message to use as the block header
     -> StatementHandler g m
-compoundMessageExtract xtract header [pdx| %_ = @scr |]
+compoundMessageExtractTag xtract header [pdx| %_ = @scr |]
     = withCurrentIndent $ \i -> do
-        let (xtracted, _) = extractStmt (matchLhsText xtract) scr
+        let (xtracted, rest) = extractStmt (matchLhsText xtract) scr
         xtractflag <- case xtracted of
                 Just [pdx| %_ = $vartag:$var |] -> eflag (Just HOI4Country) (Right (vartag, var))
                 Just [pdx| %_ = $flag |] -> eflag (Just HOI4Country) (Left flag)
@@ -534,8 +553,22 @@ compoundMessageExtract xtract header [pdx| %_ = @scr |]
         let flagd = case xtractflag of
                 Just flag -> flag
                 _ -> "<!-- Check Script -->"
-        script_pp'd <- ppMany scr
+        script_pp'd <- ppMany rest
         return ((i, header flagd) : script_pp'd)
+compoundMessageExtractTag _ _ stmt = preStatement stmt
+
+compoundMessageExtract :: (HOI4Info g, Monad m) =>
+    Text
+    -> (Text -> ScriptMessage) -- ^ Message to use as the block header
+    -> StatementHandler g m
+compoundMessageExtract xtract header [pdx| %_ = @scr |]
+    = withCurrentIndent $ \i -> do
+        let (mxtracted, rest) = extractStmt (matchLhsText xtract) scr
+            xtracted = case mxtracted of
+                Just [pdx| %_ = $txt |] -> txt
+                _-> "<!-- Check game Script -->"
+        script_pp'd <- ppMany rest
+        return ((i, header xtracted) : script_pp'd)
 compoundMessageExtract _ _ stmt = preStatement stmt
 
 -- | Generic handler for a simple compound statement headed by a pronoun.
@@ -560,8 +593,9 @@ compoundMessagePronoun stmt@[pdx| $head = @scr |] = withCurrentIndent $ \i -> do
                     Just HOI4ScopeState -> Just MsgPREVSCOPEState
                     Just HOI4UnitLeader -> Just MsgPREVSCOPEUnitLeader
                     Just HOI4Misc -> Just MsgPREVSCOPEMisc
-                    Just HOI4From -> Just MsgFROMSCOPE -- Roll with it
-                    Nothing -> Just MsgPREVSCOPECustom
+                    Just HOI4From -> Just MsgPREVSCOPEFROM -- Roll with it
+                    Just HOI4Custom -> Just MsgPREVSCOPECustom
+                    Nothing -> Just MsgPREVSCOPECustom2
                     _ -> Nothing) -- warning printed below
         "from" -> return (Just HOI4From, Just MsgFROMSCOPE) -- FROM / Should be some way to have different message depending on if it is event or decison, etc.
         _ -> trace (f ++ ": compoundMessagePronoun: don't know how to handle head " ++ T.unpack head)
@@ -650,17 +684,17 @@ withLocAtomIcon _ stmt = preStatement stmt
 -- meaning changes depending on which scope it's in.
 withLocAtomIconHOI4Scope :: (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage) -- ^ Message for country scope
-        -> (Text -> Text -> ScriptMessage) -- ^ Message for province scope
+        -> (Text -> Text -> ScriptMessage) -- ^ Message for state scope
         -> StatementHandler g m
-withLocAtomIconHOI4Scope countrymsg provincemsg stmt = do
+withLocAtomIconHOI4Scope countrymsg statemsg stmt = do
     thescope <- getCurrentScope
     case thescope of
         Just HOI4Country -> withLocAtomIcon countrymsg stmt
-        Just HOI4ScopeState -> withLocAtomIcon provincemsg stmt
+        Just HOI4ScopeState -> withLocAtomIcon statemsg stmt
         _ -> preStatement stmt -- others don't make sense
 
 -- | Generic handler for a statement where the RHS is a localizable atom, but
--- may be replaced with a tag or province to refer synecdochally to the
+-- may be replaced with a tag or state to refer synecdochally to the
 -- corresponding value.
 locAtomTagOrState :: (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage) -- ^ Message for atom
@@ -770,7 +804,7 @@ withFlagAndIcon iconkey flagmsg expectScope [pdx| %_ = $name |] = msgToPP =<< do
     return . flagmsg (iconText iconkey) . Doc.doc2text $ nflag
 withFlagAndIcon _ _ _ stmt = plainMsg $ preStatementText' stmt
 
--- | Handler for statements where RHS is a tag or province id.
+-- | Handler for statements where RHS is a tag or state id.
 tagOrState :: (HOI4Info g, Monad m) =>
     (Text -> ScriptMessage)
         -> (Text -> ScriptMessage)
@@ -853,6 +887,44 @@ numericCompareCompound gt lt msg msgvar stmt@[pdx| %_ = %rhs |] = case rhs of
     _ -> preStatement stmt
 numericCompareCompound _ _ _ _ stmt = preStatement stmt
 
+numericCompareLoc :: (HOI4Info g, Monad m) =>
+    Text -> Text ->
+    (Double -> Text -> Text -> ScriptMessage) ->
+    (Text -> Text -> Text -> ScriptMessage)
+        -> StatementHandler g m
+numericCompareLoc gt lt msg msgvar stmt@[pdx| $txt = %num |] = do
+    loc <- getGameL10n txt
+    case num of
+        (floatRhs -> Just n) -> msgToPP $ msg n ("equal to or " <> gt) loc
+        GenericRhs n [] -> msgToPP $ msgvar n ("equal to or " <> gt) loc
+        GenericRhs nt [nv] -> let n = nt <> nv in msgToPP $ msgvar n ("equal to or " <> gt) loc
+        _ -> trace ("Compare '=' failed : " ++ show stmt) $ preStatement stmt
+numericCompareLoc gt lt msg msgvar stmt@[pdx| $txt > %num |] = do
+    loc <- getGameL10n txt
+    case num of
+        (floatRhs -> Just n) -> msgToPP $ msg n gt loc
+        GenericRhs n [] -> msgToPP $ msgvar n gt loc
+        GenericRhs nt [nv] -> let n = nt <> nv in msgToPP $ msgvar n gt loc
+        _ -> trace ("Compare '>' failed : " ++ show stmt) $ preStatement stmt
+numericCompareLoc gt lt msg msgvar stmt@[pdx| $txt < %num |] = do
+    loc <- getGameL10n txt
+    case num of
+        (floatRhs -> Just n) -> msgToPP $ msg n lt loc
+        GenericRhs n [] -> msgToPP $ msgvar n lt loc
+        GenericRhs nt [nv] -> let n = nt <> nv in msgToPP $ msgvar n lt loc
+        _ -> trace ("Compare '<' failed : " ++ show stmt) $ preStatement stmt
+numericCompareLoc _ _ _ _ stmt = preStatement stmt
+
+numericCompareCompoundLoc :: (HOI4Info g, Monad m) =>
+    Text -> Text ->
+    (Double -> Text -> Text -> ScriptMessage) ->
+    (Text -> Text -> Text -> ScriptMessage)
+        -> StatementHandler g m
+numericCompareCompoundLoc gt lt msg msgvar stmt@[pdx| %_ = %rhs |] = case rhs of
+    CompoundRhs [scr] -> numericCompareLoc gt lt msg msgvar scr
+    _ -> preStatement stmt
+numericCompareCompoundLoc _ _ _ _ stmt = preStatement stmt
+
 
 -- | Handler for statements where the RHS is either a number or a tag.
 numericOrTag :: (HOI4Info g, Monad m) =>
@@ -909,6 +981,16 @@ withBool msg stmt = do
           return
           fullmsg
 
+withBoolHOI4Scope :: (HOI4Info g, Monad m) =>
+    (Bool -> ScriptMessage) -- ^ Message for country scope
+        -> (Bool -> ScriptMessage) -- ^ Message for character scope
+        -> StatementHandler g m
+withBoolHOI4Scope countrymsg charactermsg stmt = do
+    thescope <- getCurrentScope
+    case thescope of
+        Just HOI4Country -> withBool countrymsg stmt
+        _ -> withBool charactermsg stmt
+
 -- | Helper for 'withBool'.
 withBool' :: (HOI4Info g, Monad m) =>
     (Bool -> ScriptMessage)
@@ -943,7 +1025,7 @@ withFlagOrBool :: (HOI4Info g, Monad m) =>
         -> StatementHandler g m
 withFlagOrBool bmsg _ [pdx| %_ = yes |] = msgToPP (bmsg True)
 withFlagOrBool bmsg _ [pdx| %_ = no  |]  = msgToPP (bmsg False)
-withFlagOrBool _ tmsg stmt = withFlag tmsg stmt -- CHECK FOR USEFULNESS
+withFlagOrBool _ tmsg stmt = withFlag tmsg stmt
 
 -- | Handler for statements whose RHS is a number OR a tag/prounoun, with icon
 withTagOrNumber :: (HOI4Info g, Monad m) =>
@@ -972,11 +1054,15 @@ numericIconLoc :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) 
     Text
         -> Text
         -> (Text -> Text -> Double -> ScriptMessage)
+        -> (Text -> Text -> Text -> ScriptMessage)
         -> StatementHandler g m
-numericIconLoc the_icon what msg [pdx| %_ = !amt |]
+numericIconLoc the_icon what msg msgvar [pdx| %_ = !amt |]
     = do whatloc <- getGameL10n what
          msgToPP $ msg (iconText the_icon) whatloc amt
-numericIconLoc _ _ _ stmt = plainMsg $ preStatementText' stmt
+numericIconLoc the_icon what msg msgvar [pdx| %_ = $amt |]
+    = do whatloc <- getGameL10n what
+         msgToPP $ msgvar (iconText the_icon) whatloc amt
+numericIconLoc _ _ _ _ stmt = plainMsg $ preStatementText' stmt
 
 -- | Handler for statements that have a number and a localizable atom.
 numericLoc :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
@@ -1106,6 +1192,23 @@ textValue whatlabel vallabel smallmsg bigmsg loc stmt@[pdx| %_ = @scr |]
             _ -> return $ preMessage stmt
 textValue _ _ _ _ _ stmt = preStatement stmt
 
+
+textValueKey :: forall g m. (HOI4Info g, Monad m) =>
+    Text                                             -- ^ Label for "what"
+        -> Text                                      -- ^ Label for "how much"
+        -> (Text -> Text -> Double -> ScriptMessage) -- ^ Message constructor, if abs value < 1
+        -> StatementHandler g m
+textValueKey whatlabel vallabel msg stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_tv (parseTV whatlabel vallabel scr)
+    where
+        pp_tv :: TextValue -> PPT g m ScriptMessage
+        pp_tv tv = case (tv_what tv, tv_value tv) of
+            (Just what, Just value) -> do
+                what_loc <- getGameL10n what
+                return $ msg what_loc what value
+            _ -> return $ preMessage stmt
+textValueKey _ _ _ stmt = preStatement stmt
+
 textValueCompare :: forall g m. (HOI4Info g, Monad m) =>
     Text                                             -- ^ Label for "what"
         -> Text                                      -- ^ Label for "how much"
@@ -1222,6 +1325,25 @@ textAtom whatlabel atomlabel msg loc stmt@[pdx| %_ = @scr |]
                 return $ msg what_icon what_loc atom_loc
             _ -> return $ preMessage stmt
 textAtom _ _ _ _ stmt = preStatement stmt
+
+textAtomKey :: forall g m. (HOI4Info g, Monad m) =>
+    Text -- ^ Label for "what" (e.g. "who")
+        -> Text -- ^ Label for atom (e.g. "name")
+        -> (Text -> Text -> Text -> ScriptMessage) -- ^ Message constructor
+        -> (Text -> PPT g m (Maybe Text)) -- ^ Action to localize, get icon, etc. (applied to RHS of "what")
+        -> StatementHandler g m
+textAtomKey whatlabel atomlabel msg loc stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< pp_ta (parseTA whatlabel atomlabel scr)
+    where
+        pp_ta :: TextAtom -> PPT g m ScriptMessage
+        pp_ta ta = case (ta_what ta, ta_atom ta) of
+            (Just what, Just atom) -> do
+                mwhat_loc <- loc what
+                atom_loc <- getGameL10n atom
+                let what_loc = fromMaybe ("<tt>" <> what <> "</tt>") mwhat_loc
+                return $ msg what_loc atom_loc atom
+            _ -> return $ preMessage stmt
+textAtomKey _ _ _ _ stmt = preStatement stmt
 
 taDescAtomIcon :: forall g m. (HOI4Info g, Monad m) =>
     Text -> Text ->
@@ -1597,10 +1719,10 @@ hasDlc [pdx| %_ = ?dlc |]
     where
         mdlc_key = HM.lookup dlc . HM.fromList $
             [("Together for Victory", "tfv")
-            ,("Death ir Dishonor", "dod")
-            ,("Waking the Tiger ", "wtt")
+            ,("Death or Dishonor", "dod")
+            ,("Waking the Tiger", "wtt")
             ,("Man the Guns", "mtg")
-            ,("La Résistance", "lar")
+            ,("La Resistance", "lar")
             ,("Battle for the Bosporus", "bftb")
             ,("No Step Back", "nsb")
             ]
@@ -1615,8 +1737,8 @@ withFlagOrState countryMsg _ stmt@[pdx| %_ = ?_ |]
     = withFlag countryMsg stmt
 withFlagOrState countryMsg _ stmt@[pdx| %_ = $_:$_ |]
     = withFlag countryMsg stmt -- could be either
-withFlagOrState _ provinceMsg stmt@[pdx| %_ = !(_ :: Double) |]
-    = withState provinceMsg stmt
+withFlagOrState _ stateMsg stmt@[pdx| %_ = !(_ :: Double) |]
+    = withState stateMsg stmt
 withFlagOrState _ _ stmt = preStatement stmt -- CHECK FOR USEFULNESS
 
 customTriggerTooltip :: (HOI4Info g, Monad m) => StatementHandler g m
@@ -1700,18 +1822,34 @@ setVariable msgWW msgWV stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_sv (foldl' addLine newSV scr)
     where
         addLine :: SetVariable -> GenericStatement -> SetVariable
-        addLine sv [pdx| var = $val |]
+        addLine sv stmt = if length scr == 1
+            then addLine' sv stmt
+            else addLines sv stmt
+        addLines :: SetVariable -> GenericStatement -> SetVariable
+        addLines sv [pdx| var = ?val |]
             = if isNothing (sv_which sv) then
                 sv { sv_which = Just val }
               else
                 sv { sv_which2 = Just val }
-        addLine sv [pdx| value = !val |]
+        addLines sv [pdx| value = !val |]
             = sv { sv_value = Just val }
-        addLine sv [pdx| $var = !val |]
+        addLines sv [pdx| value = ?val |]
+            = sv { sv_which2 = Just val }
+        addLines sv _ = sv
+        addLine' :: SetVariable -> GenericStatement -> SetVariable
+        addLine' sv [pdx| $var = !val |]
             = sv { sv_which = Just var, sv_value = Just val }
-        addLine sv [pdx| $var = $val |]
+        addLine' sv [pdx| $var = $val |]
             = sv { sv_which = Just var, sv_which2 = Just val }
-        addLine sv _ = sv
+        addLine' sv [pdx| $var:$vartag = !val |]
+            = sv { sv_which = Just (var <> ":" <> vartag), sv_value = Just val }
+        addLine' sv [pdx| $var:$vartag = $val:$valtag |]
+            = sv { sv_which = Just (var <> ":" <> vartag), sv_which2 = Just (val <> ":" <> valtag) }
+        addLine' sv [pdx| $var = $val:$valtag |]
+            = sv { sv_which = Just var, sv_which2 = Just (val <> ":" <> valtag) }
+        addLine' sv [pdx| $var:$vartag = $val |]
+            = sv { sv_which = Just (var <> ":" <> vartag), sv_which2 = Just val }
+        addLine' sv _ = trace ("failed to parse var single: " ++ show stmt) sv
         toTT :: Text -> Text
         toTT t = "<tt>" <> t <> "</tt>"
         pp_sv :: SetVariable -> PPT g m ScriptMessage
@@ -1743,6 +1881,8 @@ clampVariable msgVV msgVW msgWV msgWW stmt@[pdx| %_ = @scr |]
     where
         addLine :: ClampVariable -> GenericStatement -> ClampVariable
         addLine clv [pdx| var = $var |]
+            = clv { clv_which = var }
+        addLine clv [pdx| variable = $var |]
             = clv { clv_which = var }
         addLine clv [pdx| min = !val |]
             = clv { clv_value = Just val }
@@ -1839,12 +1979,14 @@ exportVariable stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_ev (foldl' addLine newEV
         addLine ev [pdx| who = ?val |]
             = ev { ev_who = Just val }
         addLine ev stmt = trace ("Unknown in export_to_variable " ++ show stmt) ev
+        toTT :: Text -> Text
+        toTT t = "<tt>" <> t <> "</tt>"
         pp_ev :: ExportVariable -> PPT g m ScriptMessage
         pp_ev ExportVariable { ev_which = Just which, ev_value = Just value, ev_who = Nothing } =
-            return $ MsgExportVariable which value
+            return $ MsgExportVariable (toTT which) value
         pp_ev ExportVariable { ev_which = Just which, ev_value = Just value, ev_who = Just who } = do
             whoLoc <- Doc.doc2text <$> allowPronoun (Just HOI4Country) (fmap Doc.strictText . getGameL10n) who
-            return $ MsgExportVariableWho which value whoLoc
+            return $ MsgExportVariableWho (toTT which) value whoLoc
         pp_ev ev = return $ trace ("Missing info for export_to_variable " ++ show ev ++ " " ++ show stmt) $ preMessage stmt
 exportVariable stmt = trace ("Not handled in export_to_variable: " ++ show stmt) $ preStatement stmt
 
@@ -2317,6 +2459,8 @@ setAutonomy msg stmt@[pdx| %_ = @scr |]
             return sa { sa_end_wars = False }
         addLine sa [pdx| end_civil_wars = $yn |] =
             return sa { sa_end_civil_wars = False }
+        addLine sa [pdx| release_non_owned_controlled = %_|] =
+            return sa
         addLine sa stmt
             = trace ("unknown section in set_autonomy: " ++ show stmt) $ return sa
         pp_sa sa = do
@@ -2404,8 +2548,9 @@ foldCompound "setPartyName" "SetPartyName" "spn"
         let long_name = fromMaybe "" _long_name
         ideo_loc <- getGameL10n _ideology
         long_loc <- getGameL10n long_name
+        let long_loc' = T.stripEnd (T.takeWhile (/='§') long_loc)
         short_loc <- getGameL10n _name
-        return $ MsgSetPartyName ideo_loc short_loc long_loc
+        return $ MsgSetPartyName ideo_loc short_loc long_loc'
     |]
 
 ---------------------------------
@@ -2624,24 +2769,6 @@ addAutonomyRatio stmt@[pdx| %_ = @scr |] = case length scr of
         msgToPP $ MsgAddAutonomyRatio "" "" value
     _ -> preStatement stmt
 addAutonomyRatio stmt = preStatement stmt
-
--- | Generic handler for a simple compound statement with only one statement.
-hasEquipment :: (HOI4Info g, Monad m) => StatementHandler g m
-hasEquipment stmt@[pdx| %_ = @scr |] = if length scr == 1 then
-        case scr of
-            [[pdx| $txt = !num |]] -> do
-                equiploc <- getGameL10n txt
-                msgToPP $ MsgHasEquipment "equal to or more than" num equiploc
-            [[pdx| $txt > !num |]] -> do
-                equiploc <- getGameL10n txt
-                msgToPP $ MsgHasEquipment "more than" num equiploc
-            [[pdx| $txt < !num |]] -> do
-                equiploc <- getGameL10n txt
-                msgToPP $ MsgHasEquipment "less than" num equiploc
-            _ -> preStatement stmt
-    else
-        preStatement stmt
-hasEquipment stmt = preStatement stmt
 
 --------------------------------
 -- Handler for send_equipment --
@@ -2944,17 +3071,17 @@ setCapital msg stmt = withFlag msg stmt
 
 setPopularities :: (HOI4Info g, Monad m) => StatementHandler g m
 setPopularities [pdx| %_ = @scr |] = do
-    basemsg <- plainMsg "Party Popularities will change:"
+    basemsg <- msgToPP MsgSetPopularities
     popmsg <- fold <$> indentUp (traverse getpops scr)
     return $ basemsg ++ popmsg
     where
         getpops stmt@[pdx| $ideo = !num |] = do
             ideoloc <- getGameL10n ideo
             let numpc = Doc.doc2text $ plainPc num
-            msgToPP $ MsgSetPopularities ideo ideoloc numpc
+            msgToPP $ MsgSetPopularity ideo ideoloc numpc
         getpops stmt@[pdx| $ideo = ?txt |] = do
             ideoloc <- getGameL10n ideo
-            msgToPP $ MsgSetPopularities ideo ideoloc txt
+            msgToPP $ MsgSetPopularity ideo ideoloc txt
         getpops stmt = preStatement stmt
 setPopularities stmt = preStatement stmt
 
@@ -2976,10 +3103,10 @@ addEquipment stmt@[pdx| %_ = @scr |]
     = msgToPP =<< ppAe =<< foldM addLine newAE scr
     where
         addLine :: AddEquipment -> GenericStatement -> PPT g m AddEquipment
-        addLine ae [pdx| type = $txt |] = return ae { ae_type = txt }
+        addLine ae [pdx| type = ?txt |] = return ae { ae_type = txt }
         addLine ae [pdx| amount = !num |] = return ae { ae_amount = Just num }
-        addLine ae [pdx| amount = $txt |] = return ae { ae_amountvar = Just txt }
-        addLine ae [pdx| producer = $tag |] = return ae { ae_producer = Just (Left tag) }
+        addLine ae [pdx| amount = ?txt |] = return ae { ae_amountvar = Just txt }
+        addLine ae [pdx| producer = ?tag |] = return ae { ae_producer = Just (Left tag) }
         addLine ae [pdx| producer = $vartag:$var |] = return ae { ae_producer = Just (Right (vartag, var)) }
         addLine ae [pdx| variant_name = ?txt |] = return ae { ae_variant = Just txt }
         addLine ae [pdx| $other = %_ |] = trace ("unknown section in add_equipment_to_stockpile: " ++ show other) $ return ae
@@ -2996,3 +3123,182 @@ addEquipment stmt@[pdx| %_ = @scr |]
                     (_, Just amountvar) -> return $ MsgAddEquipmentToStockpileVar amountvar flagloc equiploc variant
                     _ -> return $ preMessage stmt
 addEquipment stmt = preStatement stmt
+
+--------------------------------------
+-- Handler for give_resource_rights --
+--------------------------------------
+data GiveRights = GiveRights
+        {   gr_receiver :: Text
+        ,   gr_state :: Maybe Int
+        ,   gr_statevar :: Maybe Text
+        }
+
+newGR :: GiveRights
+newGR = GiveRights undefined Nothing Nothing
+giveResourceRights :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+giveResourceRights stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< ppGR =<< foldM addLine newGR scr
+    where
+        addLine :: GiveRights -> GenericStatement -> PPT g m GiveRights
+        addLine gr [pdx| receiver = ?txt |] = return gr { gr_receiver = txt }
+        addLine gr [pdx| state = !num |] = return gr { gr_state = Just num }
+        addLine gr [pdx| state = ?txt |] = return gr { gr_statevar = Just txt }
+        addLine gr [pdx| $other = %_ |] = trace ("unknown section in give_resource_rights: " ++ show other) $ return gr
+        addLine gr stmt = trace ("unknown form in give_resource_rights: " ++ show stmt) $ return gr
+        ppGR :: GiveRights -> PPT g m ScriptMessage
+        ppGR gr = do
+            flag_loc <- flagText (Just HOI4Country) (gr_receiver gr)
+            case (gr_state gr, gr_statevar gr) of
+                (Just state, _) -> do
+                    state_loc <- getStateLoc state
+                    return $ MsgGiveResourceRights flag_loc state_loc
+                (_, Just state) -> do
+                    mstate <- eGetState (Left state)
+                    let state_loc = fromMaybe "<!-- Check Script -->" mstate
+                    return $ MsgGiveResourceRights flag_loc state_loc
+                _ -> return $ preMessage stmt
+giveResourceRights stmt = preStatement stmt
+
+--------------------------------------
+-- Handler for add_ace --
+--------------------------------------
+
+data AddAce = AddAce
+        {   aa_name :: Text
+        ,   aa_surname :: Text
+        ,   aa_callsign :: Text
+        }
+
+newAA :: AddAce
+newAA = AddAce undefined undefined undefined
+addAce  :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+addAce stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< ppAa =<< foldM addLine newAA scr
+    where
+        addLine :: AddAce -> GenericStatement -> PPT g m AddAce
+        addLine aa [pdx| name = ?txt |] = return aa { aa_name = txt }
+        addLine aa [pdx| surname = ?txt |] = return aa { aa_surname = txt }
+        addLine aa [pdx| callsign = ?txt |] = return aa { aa_callsign = txt }
+        addLine aa [pdx| type = $_ |] = return aa
+        addLine aa [pdx| is_female = ?_ |] = return aa
+        addLine aa [pdx| $other = %_ |] = trace ("unknown section in add_ace: " ++ show other) $ return aa
+        addLine aa stmt = trace ("unknown form in add_ace: " ++ show stmt) $ return aa
+        ppAa aa = do
+            return $ MsgAddAce (aa_name aa) (aa_callsign aa) (aa_surname aa)
+addAce stmt = preStatement stmt
+
+-------------------------------
+-- Handler for has_navy_size --
+------------------------------
+
+data NavySize = NavySize
+        {   ns_size :: Maybe Double
+        ,   ns_sizevar :: Maybe Text
+        ,   ns_comp :: Text
+        ,   ns_type :: Maybe Text
+        ,   ns_archetype :: Maybe Text
+        }
+
+newNS :: NavySize
+newNS = NavySize Nothing Nothing undefined Nothing Nothing
+
+hasNavySize :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+hasNavySize stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< ppNS =<< foldM addLine newNS scr
+    where
+        addLine :: NavySize -> GenericStatement -> PPT g m NavySize
+        addLine ns [pdx| size < !num |] = return ns { ns_comp = "less than", ns_size = Just num}
+        addLine ns [pdx| size > !num |] = return ns { ns_comp = "more than", ns_size = Just num }
+        addLine ns [pdx| size < $num |] = return ns { ns_comp = "less than", ns_sizevar = Just num}
+        addLine ns [pdx| size > $num |] = return ns { ns_comp = "more than", ns_sizevar = Just num }
+        addLine ns [pdx| type = $txt |] = return ns { ns_type = Just txt }
+        addLine ns [pdx| archetype = ?txt |] = return ns { ns_archetype = Just txt }
+        addLine ns [pdx| $other = %_ |] = trace ("unknown section in has_navy_size: " ++ show other) $ return ns
+        addLine ns stmt = trace ("unknown form in has_navy_size: " ++ show stmt) $ return ns
+        ppNS ns = do
+            typed <- case(ns_type ns, ns_archetype ns) of
+                (Just txt, _) -> getGameL10n txt
+                (_, Just txt) -> getGameL10n txt
+                _ -> return ""
+            case (ns_size ns, ns_sizevar ns) of
+                (Just amt, _) -> return $ MsgHasNavySize (ns_comp ns) amt typed
+                (_, Just amt) -> return $ MsgHasNavySizeVar (ns_comp ns) amt typed
+                _ -> return $ preMessage stmt
+hasNavySize stmt = preStatement stmt
+
+-----------------------------------
+-- Handler for division_template --
+-----------------------------------
+
+divisionTemplate :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+divisionTemplate stmt@[pdx| %_ = @scr |] = do
+    let (mname, _) = extractStmt (matchLhsText "name") scr
+    case mname of
+        Just [pdx| %_ = ?txt |] -> msgToPP $ MsgDivisionTemplate txt
+        _ -> preStatement stmt
+divisionTemplate  stmt = preStatement stmt
+
+locandid :: (Monad m, HOI4Info g) =>
+    (Text -> Text -> ScriptMessage) -> StatementHandler g m
+locandid msg [pdx| %_ = ?key |] = do
+    loc <- getGameL10n key
+    msgToPP $ msg loc key
+locandid _ stmt = preStatement stmt
+
+-----------------------------
+-- Handler for create_unit --
+-----------------------------
+
+createUnit :: (Monad m, HOI4Info g) => StatementHandler g m
+createUnit stmt@[pdx| %_ = @scr |] = do
+    let (division,rest) = extractStmt (matchLhsText "division") scr
+        (owner, _) = extractStmt (matchLhsText "owner") rest
+    divis <- case division of
+        Just [pdx| %_ = ?txt |] -> do
+            let divtempi = fromMaybe 0 $ findString "division_template" txt
+                divtemps = T.drop 1 $ T.dropWhile (/= '\"') (T.drop divtempi txt)
+            return $ T.dropEnd 1 (T.dropWhileEnd (/= '\"') divtemps)
+        _ -> return "<!-- Check game Script -->"
+    owner <- case owner of
+        Just [pdx| %_ = ?txt |] -> flagText (Just HOI4Country) txt
+        _ -> return "<!-- Check game Script -->"
+    msgToPP $ MsgCreateUnit owner divis
+    where
+    findString :: Text -> Text -> Maybe Int
+    findString search str = findIndex (T.isPrefixOf search) (T.tails str)
+createUnit stmt = preStatement stmt
+
+---------------------------------
+-- Handler for damage_building --
+---------------------------------
+
+data DamageBuilding = DamageBuilding
+        {   db_type :: Text
+        ,   db_damage :: Maybe Double
+        ,   db_damagevar :: Maybe Text
+        ,   db_province :: Maybe Double
+        }
+
+newDB :: DamageBuilding
+newDB = DamageBuilding undefined Nothing Nothing Nothing
+
+damageBuilding :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+damageBuilding stmt@[pdx| %_ = @scr |]
+    = msgToPP =<< ppDB =<< foldM addLine newDB scr
+    where
+        addLine :: DamageBuilding -> GenericStatement -> PPT g m DamageBuilding
+        addLine db [pdx| type = ?txt |] = return db { db_type = txt }
+        addLine db [pdx| damage = !num |] = return db { db_damage = Just num }
+        addLine db [pdx| damage = $txt |] = return db { db_damagevar = Just txt }
+        addLine db [pdx| province = !num |] = return db {db_province = Just num}
+        addLine db [pdx| $other = %_ |] = trace ("unknown section in damage_building: " ++ show other) $ return db
+        addLine db stmt = trace ("unknown form in damage_building: " ++ show stmt) $ return db
+        ppDB db = do
+            let typeicon = iconText (db_type db)
+                prov = fromMaybe (-1) (db_province db)
+            typeloc <- getGameL10n (db_type db)
+            case (db_damage db, db_damagevar db) of
+                (Just amt, _) -> return $ MsgDamageBuilding typeicon typeloc amt prov
+                (_, Just amt) -> return $ MsgDamageBuildingVar typeicon typeloc amt prov
+                _ -> return $ preMessage stmt
+damageBuilding stmt = preStatement stmt
