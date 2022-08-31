@@ -10,6 +10,8 @@ module HOI4.Misc (
         ,parseHOI4UnitLeaderTraits
         ,parseHOI4Terrain
         ,parseHOI4Ideology
+        ,parseHOI4Effects
+        ,parseHOI4Triggers
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -45,6 +47,7 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions)
 import HOI4.Common -- everything
+import EU4.Common (Idea(idea_name_loc))
 
 newHOI4CountryHistory :: Text -> HOI4CountryHistory
 newHOI4CountryHistory chtag = HOI4CountryHistory chtag undefined
@@ -174,32 +177,44 @@ processInterface stmt = return (Right Nothing)
 ----------------
 
 newHOI4Character :: Text -> Text -> FilePath -> HOI4Character
-newHOI4Character chatag locname = HOI4Character chatag locname Nothing Nothing Nothing Nothing
+newHOI4Character chatag locname = HOI4Character chatag locname Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 parseHOI4Characters :: (HOI4Info g, IsGameData (GameData g), Monad m) =>
-    HashMap String GenericScript -> PPT g m (HashMap Text HOI4Character)
-parseHOI4Characters scripts = HM.unions . HM.elems <$> do
-    tryParse <- hoistExceptions $
-        HM.traverseWithKey
-            (\sourceFile scr -> setCurrentFile sourceFile $ mapM character $ case scr of
-                [[pdx| characters = @chars |]] -> chars
-                _ -> scr)
-            scripts
-    case tryParse of
-        Left err -> do
-            traceM $ "Completely failed parsing characters: " ++ T.unpack err
-            return HM.empty
-        Right characterFilesOrErrors ->
-            flip HM.traverseWithKey characterFilesOrErrors $ \sourceFile ecchar ->
-                fmap (mkChaMap . catMaybes) . forM ecchar $ \case
-                    Left err -> do
-                        traceM $ "Error parsing characters in " ++ sourceFile
-                                 ++ ": " ++ T.unpack err
-                        return Nothing
-                    Right cchar -> return cchar
+    HashMap String GenericScript -> PPT g m (HashMap Text HOI4Character, HashMap Text HOI4Character)
+parseHOI4Characters scripts = do
+    charmap <- HM.unions . HM.elems <$> do
+        tryParse <- hoistExceptions $
+            HM.traverseWithKey
+                (\sourceFile scr -> setCurrentFile sourceFile $ mapM character $ case scr of
+                    [[pdx| characters = @chars |]] -> chars
+                    _ -> scr)
+                scripts
+        case tryParse of
+            Left err -> do
+                traceM $ "Completely failed parsing characters: " ++ T.unpack err
+                return HM.empty
+            Right characterFilesOrErrors ->
+                flip HM.traverseWithKey characterFilesOrErrors $ \sourceFile ecchar ->
+                    fmap (mkChaMap . catMaybes) . forM ecchar $ \case
+                        Left err -> do
+                            traceM $ "Error parsing characters in " ++ sourceFile
+                                     ++ ": " ++ T.unpack err
+                            return Nothing
+                        Right cchar -> return cchar
+    chartokmap <- parseCharToken charmap
+    return (charmap, chartokmap)
     where
         mkChaMap :: [HOI4Character] -> HashMap Text HOI4Character
         mkChaMap = HM.fromList . map (chaTag &&& id)
+        parseCharToken :: (HOI4Info g, IsGameData (GameData g), Monad m) =>
+            HashMap Text HOI4Character ->  PPT g m (HashMap Text HOI4Character)
+        parseCharToken chas = do
+            let chaselem = HM.elems chas
+                chastoken = mapMaybe (\c -> case cha_idea_token c of
+                    Just txt -> Just (txt, c)
+                    _ -> Nothing)
+                    chaselem
+            return $ HM.fromList chastoken
 
 character :: (HOI4Info g, IsGameData (GameData g), MonadError Text m) =>
     GenericStatement -> PPT g m (Either Text (Maybe HOI4Character))
@@ -239,11 +254,15 @@ characterAddSection hChar stmt
                 return hChar {chaName = nameLoc}
             _ -> trace "Bad name in characters" $ return hChar
         characterAddSection' hChar stmt@[pdx| advisor = @adv |] = do
-            let  (onAdd, onRemove, advtraits) = getAdvinfo adv
-            return hChar {chaAdvisorTraits = advtraits, chaOn_add = onAdd, chaOn_remove = onRemove}
+            ai <- getAdvinfo adv
+            return hChar {chaAdvisorTraits = ai_traits ai, chaOn_add = ai_on_add ai,
+                         chaOn_remove = ai_on_remove ai, cha_idea_token = ai_idea_token ai,
+                         cha_advisor_slot = ai_slot ai, cha_adv_modifier = ai_modifier ai,
+                         cha_adv_research_bonus = ai_research_bonus ai}
         characterAddSection' hChar stmt@[pdx| country_leader = @clead |] =
-            let cleadtraits = concatMap getTraits clead in
-            return hChar {chaLeaderTraits = Just cleadtraits}
+            let cleadtraits = concatMap getTraits clead
+                ideo = getLeaderIdeo clead in
+            return hChar {chaLeaderTraits = Just cleadtraits, cha_leader_ideology = ideo}
         characterAddSection' hChar [pdx| portraits = %_ |] =
             return hChar
         characterAddSection' hChar [pdx| corps_commander = %_ |] =
@@ -269,31 +288,65 @@ characterAddSection hChar stmt
                 _ -> trace ("different trait list in" ++ show stmt) "")
             traits
         getTraits stmt = []
+        getLeaderIdeo stmt = do
+            let (ideo, _) = extractStmt (matchLhsText "ideology") stmt
+            case ideo of
+                Just [pdx| %_ = $ideot |] -> Just ideot
+                _ -> Nothing
+traitFromArray :: GenericStatement -> Maybe Text
+traitFromArray (StatementBare (GenericLhs e [])) = Just e
+traitFromArray stmt = trace ("Unknown in character trait array: " ++ show stmt) Nothing
 
-        getAdvinfo :: [GenericStatement] -> (Maybe GenericScript,Maybe GenericScript, Maybe [Text])
-        getAdvinfo adv = do
-            let (onadd, rest) = extractStmt (matchLhsText "on_add") adv
-                (onremove, resttrait) = extractStmt (matchLhsText "on_remove") rest
-                (traits,_ ) = extractStmt (matchLhsText "traits") rest
-                onaddscr = case onadd of
-                    Just [pdx| on_add = %rhs |] -> case rhs of
-                        CompoundRhs [] -> Nothing
-                        CompoundRhs scr -> Just scr
-                        _-> Nothing
-                    _ -> Nothing
-                onremovescr = case onremove of
-                    Just [pdx| on_remove = %rhs |] -> case rhs of
-                        CompoundRhs [] -> Nothing
-                        CompoundRhs scr -> Just scr
-                        _-> Nothing
-                    _ -> Nothing
-                traitsl = case traits of
-                    Just [pdx| traits = @rhs |] -> Just (mapMaybe traitFromArray rhs)
-                    _-> Nothing
-            (onaddscr, onremovescr, traitsl)
-        traitFromArray :: GenericStatement -> Maybe Text
-        traitFromArray (StatementBare (GenericLhs e [])) = Just e
-        traitFromArray stmt = trace ("Unknown in character trait array: " ++ show stmt) Nothing
+data AdvisorInfo = AdvisorInfo
+        {   ai_slot         :: Maybe Text
+        ,   ai_idea_token   :: Maybe Text
+        ,   ai_on_add       :: Maybe GenericScript
+        ,   ai_on_remove    :: Maybe GenericScript
+        ,   ai_traits       :: Maybe [Text]
+        ,   ai_modifier     :: Maybe GenericStatement
+        ,   ai_research_bonus :: Maybe GenericStatement
+        }
+
+newAI :: AdvisorInfo
+newAI = AdvisorInfo Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+getAdvinfo :: forall g m. (HOI4Info g, Monad m) =>
+    [GenericStatement] -> PPT g m AdvisorInfo
+getAdvinfo = foldM addLine newAI
+    where
+        addLine :: AdvisorInfo -> GenericStatement -> PPT g m AdvisorInfo
+        addLine ai [pdx| slot = $txt |] = return ai { ai_slot = Just txt }
+        addLine ai [pdx| idea_token = $txt |] = return ai { ai_idea_token = Just txt}
+        addLine ai [pdx| on_add = %rhs |] = case rhs of
+                CompoundRhs [] -> return ai
+                CompoundRhs scr -> return ai { ai_on_add = Just scr }
+                _-> return ai
+        addLine ai [pdx| on_remove = %rhs |] = case rhs of
+                CompoundRhs [] -> return ai
+                CompoundRhs scr -> return ai { ai_on_remove = Just scr }
+                _-> return ai
+        addLine ai [pdx| traits = @rhs |] = do
+            let traits = Just (mapMaybe traitFromArray rhs)
+            return ai {ai_traits = traits}
+        addLine ai stmt@[pdx| modifier = %rhs |] = case rhs of
+                CompoundRhs [] -> return ai
+                CompoundRhs scr -> return ai { ai_modifier = Just stmt }
+                _-> return ai
+        addLine ai stmt@[pdx| research_bonus = %rhs |] = case rhs of
+                CompoundRhs [] -> return ai
+                CompoundRhs scr -> return ai { ai_research_bonus = Just stmt }
+                _-> return ai
+        addLine ai stmt@[pdx| allowed = %_|] = return ai
+        addLine ai stmt@[pdx| available = %_|] = return ai
+        addLine ai stmt@[pdx| visible = %_|] = return ai
+        addLine ai stmt@[pdx| ledger = %_|] = return ai
+        addLine ai stmt@[pdx| cost = %_|] = return ai
+        addLine ai stmt@[pdx| ai_will_do = %_|] = return ai
+        addLine ai stmt@[pdx| removal_cost = %_|] = return ai
+        addLine ai stmt@[pdx| do_effect = %_|] = return ai
+        addLine ai stmt@[pdx| desc = %_|] = return ai
+        addLine ai stmt@[pdx| picture = %_|] = return ai
+        addLine ai [pdx| $other = %_ |] = trace ("unknown section in advisor info: " ++ show other) $ return ai
+        addLine ai stmt = trace ("unknown form in advisor info: " ++ show stmt) $ return ai
 
 parseHOI4CountryLeaderTraits :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
     HashMap String GenericScript -> PPT g m (HashMap Text HOI4CountryLeaderTrait)
@@ -339,7 +392,8 @@ parseHOI4CountryLeaderTrait [pdx| $id = @effects |]
     where
         addSection :: HOI4CountryLeaderTrait -> GenericStatement -> HOI4CountryLeaderTrait
         addSection clt stmt@[pdx| $lhs = @scr |] = case lhs of
-            "targeted_modifier" -> clt { clt_targeted_modifier = Just stmt }
+            "targeted_modifier" -> let oldstmt = fromMaybe [] (clt_targeted_modifier clt) in
+                    clt { clt_targeted_modifier = Just (oldstmt ++ [stmt]) }
             "equipment_bonus" -> clt { clt_equipment_bonus = Just stmt }
             "hidden_modifier" -> clt { clt_hidden_modifier = Just stmt }
             "ai_strategy" -> clt
@@ -524,15 +578,15 @@ parseHOI4Ideology scripts = HM.unions . HM.elems <$> do
             return HM.empty
         Right ideologyFilesOrErrors ->
             flip HM.traverseWithKey ideologyFilesOrErrors $ \sourceFile eideology ->
-                fmap (mkInterMap . catMaybes) . forM eideology $ \case
+                fmap (mkIdeoMap . catMaybes) . forM eideology $ \case
                     Left err -> do
                         traceM $ "Error parsing ideology in " ++ sourceFile
                                  ++ ": " ++ T.unpack err
                         return Nothing
                     Right iideology -> return iideology
     where
-        mkInterMap :: [(Text,[Text])] -> HashMap Text Text
-        mkInterMap subideolist = HM.fromList $ concatMap switchideos subideolist
+        mkIdeoMap :: [(Text,[Text])] -> HashMap Text Text
+        mkIdeoMap subideolist = HM.fromList $ concatMap switchideos subideolist
         switchideos :: (Text,[Text]) -> [(Text, Text)]
         switchideos (ideo, subideo) = map (switcheroo ideo) subideo
         switcheroo :: Text -> Text -> (Text, Text)
@@ -562,3 +616,90 @@ processIdeology [pdx| %left = %right |] = case right of
         getsubs stmt = Nothing
 processIdeology _ = withCurrentFile $ \file ->
     throwError ("unrecognised form for ideology in " <> T.pack file)
+
+
+-----------------
+-- scripted_<> --
+-----------------
+
+parseHOI4Effects :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text GenericStatement)
+parseHOI4Effects scripts = HM.unions . HM.elems <$> do
+    tryParse <- hoistExceptions $
+        HM.traverseWithKey
+            (\sourceFile scr -> setCurrentFile sourceFile $ mapM parseHOI4Effect $ concatMap onlyscripts scr)
+            scripts
+    case tryParse of
+        Left err -> do
+            traceM $ "Completely failed parsing scripted effects: " ++ T.unpack err
+            return HM.empty
+        Right effectFilesOrErrors ->
+            flip HM.traverseWithKey effectFilesOrErrors $ \sourceFile eeffect ->
+                fmap (mkEffectMap . catMaybes) . forM eeffect $ \case
+                    Left err -> do
+                        traceM $ "Error parsing scripted effects in " ++ sourceFile
+                                 ++ ": " ++ T.unpack err
+                        return Nothing
+                    Right feffect -> return feffect
+    where
+        mkEffectMap :: [(Text,GenericStatement)] -> HashMap Text GenericStatement
+        mkEffectMap = HM.fromList
+        onlyscripts = \case
+            stmt@[pdx| %_ = @_|] -> [stmt]
+            _ -> []
+
+parseHOI4Effect :: (IsGameState (GameState g), IsGameData (GameData g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe (Text, GenericStatement)))
+parseHOI4Effect (StatementBare _) = throwError "bare statement at top level"
+parseHOI4Effect stmt@[pdx| %left = %right |] = case right of
+    CompoundRhs parts -> case left of
+        CustomLhs _ -> throwError "internal error: custom lhs"
+        IntLhs _ -> throwError "int lhs at top level"
+        AtLhs _ -> return (Right Nothing)
+        GenericLhs id [] -> withCurrentFile $ \file ->
+            return (Right (Just (id , stmt)))
+        _ -> throwError "unrecognized form for scripted effect"
+    _ -> throwError "unrecognized form for scripted effect@content"
+parseHOI4Effect _ = withCurrentFile $ \file ->
+    throwError ("unrecognised form for scripted effect in " <> T.pack file)
+
+parseHOI4Triggers :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap Text GenericStatement)
+parseHOI4Triggers scripts = HM.unions . HM.elems <$> do
+    tryParse <- hoistExceptions $
+        HM.traverseWithKey
+            (\sourceFile scr -> setCurrentFile sourceFile $ mapM parseHOI4Trigger $ concatMap onlyscripts scr)
+            scripts
+    case tryParse of
+        Left err -> do
+            traceM $ "Completely failed parsing scripted triggers: " ++ T.unpack err
+            return HM.empty
+        Right triggerFilesOrErrors ->
+            flip HM.traverseWithKey triggerFilesOrErrors $ \sourceFile etrigger ->
+                fmap (mkTriggerMap . catMaybes) . forM etrigger $ \case
+                    Left err -> do
+                        traceM $ "Error parsing scripted triggers in " ++ sourceFile
+                                 ++ ": " ++ T.unpack err
+                        return Nothing
+                    Right ttrigger -> return ttrigger
+    where
+        mkTriggerMap :: [(Text,GenericStatement)] -> HashMap Text GenericStatement
+        mkTriggerMap = HM.fromList
+        onlyscripts = \case
+            stmt@[pdx| %_ = @_|] -> [stmt]
+            _ -> []
+
+parseHOI4Trigger :: (IsGameState (GameState g), IsGameData (GameData g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe (Text, GenericStatement)))
+parseHOI4Trigger (StatementBare _) = throwError "bare statement at top level"
+parseHOI4Trigger stmt@[pdx| %left = %right |] = case right of
+    CompoundRhs parts -> case left of
+        CustomLhs _ -> throwError "internal error: custom lhs"
+        IntLhs _ -> throwError "int lhs at top level"
+        AtLhs _ -> return (Right Nothing)
+        GenericLhs id [] -> withCurrentFile $ \file ->
+            return (Right (Just (id , stmt)))
+        _ -> throwError "unrecognized form for scripted trigger"
+    _ -> throwError "unrecognized form for scripted trigger@content"
+parseHOI4Trigger _ = withCurrentFile $ \file ->
+    throwError ("unrecognised form for scripted trigger in " <> T.pack file)

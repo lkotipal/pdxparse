@@ -37,7 +37,7 @@ settings:
 
     # All Platforms where mod files are kept
     #   Windows non-steam: C:\Users\<Username>\Documents\Paradox Interactive\Hearts of Iron IV\mod\nameofmod (use / instead of \ )
-    #   Windows steam:C:\Program Files (x86)\Steam\steamapps\workshop\content\394360\<number of mod>
+    #   Windows steam: C:\Program Files (x86)\Steam\steamapps\workshop\content\394360\<number of mod>
     #   Mac OS: ~/Documents/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
     #   Linux: ~/.local/share/Paradox Interactive/Hearts of Iron IV/mod/nameofmod
     #

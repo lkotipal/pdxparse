@@ -125,7 +125,8 @@ handlersRhsIrrelevant = Tr.fromList
         ,("mark_focus_tree_layout_dirty" , rhsAlwaysYes MsgMarkFocusTreeLayoutDirty)
         ,("retire"                  , rhsAlwaysYes MsgRetire)
         ,("retire_country_leader"   , rhsAlwaysYes MsgRetireCountryLeader)
-        ,("set_portrait"            , rhsIgnored MsgSetPortrait)
+        ,("set_country_leader_description" , rhsIgnored MsgSetLeaderDescription)
+        ,("set_portraits"            , rhsIgnored MsgSetPortraits)
         ]
 
 -- | Handlers for numeric statements
@@ -137,6 +138,15 @@ handlersNumeric = Tr.fromList
         ,("add_threat"                       , numeric MsgAddThreat)
         ,("reset_province_name"              , numeric MsgResetProvinceName)
         ,("set_compliance"                   , numeric MsgSetCompliance)
+        ,("set_political_power"              , numeric MsgSetPoliticalPower)
+        ,("set_stability"                    , numeric MsgSetStability)
+        ,("set_war_support"                  , numeric MsgSetWarSupport)
+        ,("add_logistics"                    , numeric MsgAddLogistics)
+        ,("add_planning"                     , numeric MsgAddPlanning)
+        ,("add_defense"                      , numeric MsgAddDefense)
+        ,("add_attack"                       , numeric MsgAddAttack)
+        ,("add_coordination"                 , numeric MsgAddCoordination)
+        ,("add_maneuver"                     , numeric MsgAddManeuver)
         ]
 
 -- | Handlers for numeric statements that compare
@@ -146,21 +156,35 @@ handlersNumericCompare = Tr.fromList
         ,("amount_research_slots"            , numericCompare "more than" "less than" MsgAmountResearchSlots MsgAmountResearchSlotsVar)
         ,("any_war_score"                    , numericCompare "over" "under" MsgAnyWarScore MsgAnyWarScoreVar)
         ,("arms_factory"                     , numericCompare "more than" "less than" MsgArmsFactory MsgArmsFactoryVar)
+        ,("command_power"                    , numericCompare "more than" "less than" MsgCommandPower MsgCommandPowerVar)
         ,("compare_autonomy_progress_ratio"  , numericCompare "over" "under" MsgCompareAutonomyProgressRatio MsgCompareAutonomyProgressRatioVar)
         ,("dockyard"                         , numericCompare "more than" "less than" MsgDockyard MsgDockyardVar)
+        ,("compliance"                       , numericCompare "more than" "less than" MsgCompliance MsgComplianceVar)
+        ,("resistance"                       , numericCompare "more than" "less than" MsgResistance MsgResistanceVar)
         ,("enemies_strength_ratio"           , numericCompare "over" "under" MsgEnemiesStrengthRatio MsgEnemiesStrengthRatioVar)
         ,("has_added_tension_amount"         , numericCompare "more than" "less than" MsgHasAddedTensionAmount MsgHasAddedTensionAmountVar)
-        ,("has_army_manpower"                , numericCompareCompound "at least" "at most" MsgHasArmyManpower MsgHasArmyManpowerVar)
+        ,("has_air_experience"               , numericCompare "more than" "less than" MsgHasAirExperience MsgHasAirExperienceVar)
+        ,("has_army_experience"              , numericCompare "more than" "less than" MsgHasArmyExperience MsgHasArmyExperienceVar)
+        ,("has_equipment"                    , numericCompareCompoundLoc "More than" "Less than" MsgHasEquipment MsgHasEquipmentVar)
+        ,("has_navy_experience"              , numericCompare "more than" "less than" MsgHasNavyExperience MsgHasNavyExperienceVar)
+        ,("has_army_manpower"                , numericCompareCompound "more than" "less than" MsgHasArmyManpower MsgHasArmyManpowerVar)
+        ,("has_legitimacy"                   , numericCompare "more than" "less than" MsgHasLegitimacy MsgHasLegitimacyVar)
         ,("has_manpower"                     , numericCompare "more than" "less than" MsgHasManpower MsgHasManpowerVar)
+        ,("has_political_power"              , numericCompare "more than" "less than" MsgHasPoliticalPower MsgHasPoliticalPowerVar)
+        ,("political_power_daily"            , numericCompare "more than" "less than" MsgPoliticalPowerDaily MsgPoliticalPowerDailyVar)
         ,("has_stability"                    , numericCompare "more than" "less than" MsgHasStability MsgHasStabilityVar)
         ,("has_war_support"                  , numericCompare "more than" "less than" MsgHasWarSupport MsgHasWarSupportVar)
         ,("industrial_complex"               , numericCompare "more than" "fewer than" MsgIndustrialComplex MsgIndustrialComplexVar)
-        ,("num_of_civilian_factories"        , numericCompare "more than" "fewer than" MsgNumOfControlledFactories MsgNumOfControlledFactoriesVar)
+        ,("infrastructure"                   , numericCompare "more than" "fewer than" MsgInfrastructure MsgInfrastructureVar)
+        ,("nuclear_reactor"                  , numericCompare "more than" "less than" MsgNuclearReactor MsgNuclearReactorVar)
         ,("num_of_controlled_factories"      , numericCompare "more than" "fewer than" MsgNumOfControlledFactories MsgNumOfControlledFactoriesVar)
         ,("num_of_controlled_states"         , numericCompare "more than" "fewer than" MsgNumOfControlledStates MsgNumOfControlledStatesVar)
+        ,("num_of_civilian_factories"        , numericCompare "more than" "fewer than" MsgNumOfCivilianFactories MsgNumOfCivilianFactoriesVar)
+        ,("num_of_civilian_factories_available_for_projects" , numericCompare "more than" "less than" MsgNumOfProjectFactories MsgNumOfProjectFactoriesVar)
         ,("num_of_factories"                 , numericCompare "more than" "fewer than" MsgNumOfFactories MsgNumOfFactoriesVar)
         ,("num_of_nukes"                     , numericCompare "more than" "fewer than" MsgNumOfNukes MsgNumOfNukesVar)
         ,("original_research_slots"          , numericCompare "more than" "fewer than" MsgOriginalResearchSlots MsgOriginalResearchSlotsVar)
+        ,("state_population"                 , numericCompare "more than" "less than" MsgStatePopulation MsgStatePopulationVar)
         ,("surrender_progress"               , numericCompare "more than" "less than" MsgSurrenderProgress MsgSurrenderProgressVar)
         ,("threat"                           , numericCompare "more than" "less than" MsgThreat MsgThreatVar)
         ,("fascism"                          , numericCompare "more than" "less than" MsgFascismCompare MsgFascismCompareVar)
@@ -172,22 +196,25 @@ handlersNumericCompare = Tr.fromList
 -- | Handlers for numeric statements with icons
 handlersNumericIcons :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericIcons = Tr.fromList
-        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgGainLosePosIcon)
+        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgGainLosePosIcon MsgGainLosePosIconVar)
         ,("add_extra_state_shared_building_slots", numericIcon "building slot" MsgAddExtraStateSharedBuildingSlots)
-        ,("add_political_power"      , numericIconLoc "political power" "POLITICAL_POWER" MsgGainLosePosIcon)
-        ,("add_command_power"        , numericIconLoc "command power" "COMMAND_POWER" MsgGainLosePosIcon)
-        ,("add_stability"            , numericIconLoc "stability" "STABILITY" MsgGainLocPC)
-        ,("add_war_support"          , numericIconLoc "war support" "WAR_SUPPORT" MsgGainLocPC)
-        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgGainLosePosIcon)
-        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgGainLosePosIcon)
-        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgGainLosePosIcon)
+        ,("add_political_power"      , numericIconLoc "political power" "POLITICAL_POWER" MsgGainLosePosIcon MsgGainLosePosIconVar)
+        ,("add_command_power"        , numericIconLoc "command power" "COMMAND_POWER" MsgGainLosePosIcon MsgGainLosePosIconVar)
+        ,("add_stability"            , numericIconLoc "stability" "STABILITY" MsgGainLocPC MsgGainLocPCVar)
+        ,("add_war_support"          , numericIconLoc "war support" "WAR_SUPPORT" MsgGainLocPC MsgGainLocPCVar)
+        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgGainLosePosIcon MsgGainLosePosIconVar)
+        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgGainLosePosIcon MsgGainLosePosIconVar)
+        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgGainLosePosIcon MsgGainLosePosIconVar)
         ]
 
 -- | Handlers for statements pertaining to modifiers
 handlersModifiers :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersModifiers = Tr.fromList
         [("add_dynamic_modifier"        , addDynamicModifier)
+        ,("remove_dynamic_modifier"     , removeDynamicModifier)
+        ,("has_dynamic_modifier"        , hasDynamicModifier)
         ,("modifier"                    , handleModifier)
+        ,("add_state_modifier"          , plainmodifiermsg MsgAddStateModifier)
         ,("research_bonus"              , handleResearchBonus)
         ,("targeted_modifier"           , handleTargetedModifier)
         ,("equipment_bonus"             , handleEquipmentBonus)
@@ -207,7 +234,7 @@ handlersCompound = Tr.fromList
         ,("all_controlled_state"        , scope HOI4ScopeState  . compoundMessage MsgAllControlledState)
         ,("all_core_state"              , scope HOI4ScopeState  . compoundMessage MsgAllCoreState)
         ,("all_country"                 , scope HOI4Country     . compoundMessage MsgAllCountry)
-        ,("all_country_with_original_tag", scope HOI4Country    . compoundMessageExtract "original_tag_to_check" MsgAllCountryWithOriginalTag)
+        ,("all_country_with_original_tag", scope HOI4Country    . compoundMessageExtractTag "original_tag_to_check" MsgAllCountryWithOriginalTag)
         ,("all_enemy_country"           , scope HOI4Country     . compoundMessage MsgAllEnemyCountry)
         ,("all_guaranteed_country"      , scope HOI4Country     . compoundMessage MsgAllGuaranteedCountry)
         ,("all_navy_leader"             , scope HOI4UnitLeader  . compoundMessage MsgAllNavyLeader)
@@ -226,7 +253,7 @@ handlersCompound = Tr.fromList
         ,("any_controlled_state"        , scope HOI4ScopeState  . compoundMessage MsgAnyControlledState)
         ,("any_core_state"              , scope HOI4ScopeState  . compoundMessage MsgAnyCoreState)
         ,("any_country"                 , scope HOI4Country     . compoundMessage MsgAnyCountry)
-        ,("any_country_with_original_tag", scope HOI4Country    . compoundMessageExtract "original_tag_to_check" MsgAnyCountryWithOriginalTag)
+        ,("any_country_with_original_tag", scope HOI4Country    . compoundMessageExtractTag "original_tag_to_check" MsgAnyCountryWithOriginalTag)
         ,("any_enemy_country"           , scope HOI4Country     . compoundMessage MsgAnyEnemyCountry)
         ,("any_guaranteed_country"      , scope HOI4Country     . compoundMessage MsgAnyGuaranteedCountry)
         ,("any_home_area_neighbor_country", scope HOI4Country    . compoundMessage MsgAnyHomeAreaNeighborCountry)
@@ -246,7 +273,7 @@ handlersCompound = Tr.fromList
         ,("every_controlled_state"      , scope HOI4ScopeState  . compoundMessage MsgEveryControlledState)
         ,("every_core_state"            , scope HOI4ScopeState  . compoundMessage MsgEveryCoreState)
         ,("every_country"               , scope HOI4Country     . compoundMessage MsgEveryCountry)
-        ,("every_country_with_original_tag", scope HOI4Country  . compoundMessageExtract "original_tag_to_check" MsgEveryCountryWithOriginalTag)
+        ,("every_country_with_original_tag", scope HOI4Country  . compoundMessageExtractTag "original_tag_to_check" MsgEveryCountryWithOriginalTag)
         ,("every_enemy_country"         , scope HOI4Country     . compoundMessage MsgEveryEnemyCountry)
         ,("every_navy_leader"           , scope HOI4UnitLeader  . compoundMessage MsgEveryNavyLeader)
         ,("every_neighbor_country"      , scope HOI4Country     . compoundMessage MsgEveryNeighborCountry)
@@ -264,7 +291,7 @@ handlersCompound = Tr.fromList
         ,("random_controlled_state"     , scope HOI4ScopeState  . compoundMessage MsgRandomControlledState)
         ,("random_core_state"           , scope HOI4ScopeState  . compoundMessage MsgRandomCoreState)
         ,("random_country"              , scope HOI4Country     . compoundMessage MsgRandomCountry)
-        ,("random_country_with_original_tag", scope HOI4Country . compoundMessageExtract "original_tag_to_check" MsgRandomCountryWithOriginalTag)
+        ,("random_country_with_original_tag", scope HOI4Country . compoundMessageExtractTag "original_tag_to_check" MsgRandomCountryWithOriginalTag)
         ,("random_enemy_country"        , scope HOI4Country     . compoundMessage MsgRandomEnemyCountry)
         ,("random_navy_leader"          , scope HOI4UnitLeader  . compoundMessage MsgRandomNavyLeader)
         ,("random_neighbor_country"     , scope HOI4Country     . compoundMessage MsgRandomNeighborCountry)
@@ -288,6 +315,11 @@ handlersCompound = Tr.fromList
         ,("capital_scope"               , scope HOI4ScopeState  . compoundMessage MsgCapital)
         ,("event_target"        , compoundMessageTagged MsgSCOPEEventTarget (Just HOI4Misc)) -- Tagged blocks
         ,("var"                 , compoundMessageTagged MsgSCOPEVariable (Just HOI4Misc)) -- Tagged blocks
+        -- arrays
+        ,("all_of_scopes"               , scope HOI4Misc . compoundMessageExtract "array" MsgAllOfScopes)
+        ,("any_of_scopes"               , scope HOI4Misc . compoundMessageExtract "array" MsgAnyOfScopes)
+        ,("for_each_scope_loop"         , scope HOI4Misc . compoundMessageExtract "array" MsgForEachScopeLoop)
+        ,("random_scope_in_array"       , scope HOI4Misc . compoundMessageExtract "array" MsgRandomScopeInArray)
         -- flow control
         ,("and"                         , compoundMessage MsgAnd) --AND
         ,("not"                         , compoundMessage MsgNot) --NOT
@@ -317,17 +349,14 @@ handlersLocRhs = Tr.fromList
         ,("set_state_name"        , withLocAtom MsgSetStateName)
         ,("set_state_category"    , withLocAtom MsgSetStateCategory)
         ,("custom_effect_tooltip" , withLocAtom MsgCustomEffectTooltip)
-        ,("has_dynamic_modifier"  , withLocAtom MsgHasDynamicMod)
         ,("has_opinion_modifier"  , withLocAtom MsgHasOpinionMod)
         ,("has_tech"              , withLocAtom MsgHasTech)
+        ,("has_template"          , withLocAtom MsgHasTemplate)
         ,("is_character"          , withLocAtom MsgIsCharacter)
         ,("is_on_continent"       , withLocAtom MsgIsOnContinent)
         ,("is_in_tech_sharing_group" , withLocAtomName MsgIsInTechSharingGroup)
         ,("add_to_tech_sharing_group" , withLocAtomName MsgAddToTechSharingGroup)
-        ,("remove_dynamic_modifier" , withLocAtom MsgRemoveDynamicMod)
         ,("tooltip"               , withLocAtom MsgTooltip)
-        ,("unlock_decision_category_tooltip" , withLocAtom MsgUnlockDecisionCategoryTooltip)
-        ,("unlock_decision_tooltip" , withLocAtom MsgUnlockDecisionTooltip)
         ]
 
 -- | Handlers for statements whose RHS is a state ID
@@ -340,6 +369,7 @@ handlersState = Tr.fromList
         ,("owns_state"          , withState MsgOwnsState)
         ,("remove_state_claim"  , withState MsgRemoveStateClaim)
         ,("remove_state_core"   , withState MsgRemoveStateCore)
+        ,("set_state_controller" , withState MsgSetStateController)
         ,("state"               , withState MsgStateId)
         ,("transfer_state"      , withState MsgTransferState)
         ]
@@ -376,6 +406,7 @@ handlersTypewriter = Tr.fromList
         ,("save_event_target_as", withNonlocAtom MsgSaveEventTargetAs)
         ,("save_global_event_target_as", withNonlocAtom MsgSaveGlobalEventTargetAs)
         ,("set_cosmetic_tag"    , withNonlocAtom MsgSetCosmeticTag)
+        ,("has_cosmetic_tag"    , withNonlocAtom MsgHasCosmeticTag)
         ]
 
 -- | Handlers for simple statements with icon
@@ -397,13 +428,19 @@ handlersSimpleFlag = Tr.fromList
         ,("has_defensive_war_with"  , withFlag MsgHasDefensiveWarWith)
         ,("give_guarantee"          , withFlag MsgGiveGuarantee)
         ,("give_military_access"    , withFlag MsgGiveMilitaryAccess)
+        ,("has_attache_from"        , withFlag MsgHasAttacheFrom)
+        ,("has_border_war_with"     , withFlag MsgHasBorderWarWith)
         ,("has_guaranteed"          , withFlag MsgHasGuaranteed)
         ,("has_non_aggression_pact_with" , withFlag MsgHasNonAggressionPactWith)
         ,("has_offensive_war_with"  , withFlag MsgHasOffensiveWarWith)
         ,("has_subject"             , withFlag MsgHasSubject)
+        ,("occupied_country_tag"    , withFlag MsgOccupiedCountryTag)
         ,("inherit_technology"      , withFlag MsgInheritTechnology)
+        ,("is_ally_with"            , withFlag MsgIsAllyWith)
+        ,("is_exiled_in"            , withFlag MsgIsExiledIn)
         ,("is_fully_controlled_by"  , withFlag MsgIsFullyControlledBy)
         ,("is_guaranteed_by"        , withFlag MsgIsGuaranteedBy)
+        ,("is_hosting_exile"        , withFlag MsgIsHostingExile)
         ,("is_in_faction_with"      , withFlag MsgIsInFactionWith)
         ,("is_justifying_wargoal_against" , withFlag MsgIsJustifyingWargoalAgainst)
         ,("is_neighbor_of"          , withFlag MsgIsNeighborOf)
@@ -414,9 +451,11 @@ handlersSimpleFlag = Tr.fromList
         ,("is_subject_of"           , withFlag MsgIsSubjectOf)
         ,("is_owned_by"             , withFlag MsgIsOwnedBy)
         ,("puppet"                  , withFlag MsgPuppet)
+        ,("release_puppet"          , withFlag MsgReleasePuppet)
         ,("remove_claim_by"         , withFlag MsgRemoveClaimBy)
         ,("remove_core_of"          , withFlag MsgRemoveCoreOf)
         ,("remove_from_faction"     , withFlag MsgRemoveFromFaction)
+        ,("set_state_controller_to" , withFlag MsgSetStateControllerTo)
         ,("tag"                     , withFlag MsgCountryIs)
         ,("has_war_with"            , withFlag MsgHasWarWith)
         ,("has_war_together_with"   , withFlag MsgHasWarTogetherWith)
@@ -427,7 +466,7 @@ handlersSimpleFlag = Tr.fromList
 -- | Handlers for simple generic statements with a flag or "yes"/"no"
 handlersFlagOrYesNo :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersFlagOrYesNo = Tr.fromList
-        [
+        [("start_resistance"            , withFlagOrBool MsgStartResistance MsgCountryStartResistance)
         ]
 
 -- | Handlers for statements whose RHS may be an icon, a flag, a province, or a
@@ -444,7 +483,9 @@ handlersYesNo :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersYesNo = Tr.fromList
         [("is_ai"                       , withBool MsgIsAIControlled)
         ,("always"                      , withBool MsgAlways)
+        ,("country_lock_all_division_template" , withBool MsgLockDivision)
         ,("exists"                      , withBool MsgExists)
+        ,("has_attache"                 , withBool MsgHasAttache)
         ,("has_capitulated"             , withBool MsgHasCapitulated)
         ,("has_civil_war"               , withBool MsgHasCivilWar)
         ,("has_defensive_war"           , withBool MsgHasDefensiveWar)
@@ -454,7 +495,8 @@ handlersYesNo = Tr.fromList
         ,("is_coastal"                  , withBool MsgIsCoastal)
         ,("is_demilitarized_zone"       , withBool MsgIsDemilitarizedZone)
         ,("is_faction_leader"           , withBool MsgIsFactionLeader)
-        ,("is_female"                   , withBool MsgIsFemale)
+        ,("is_female"                   , withBoolHOI4Scope MsgIsFemaleLeader MsgIsFemale)
+        ,("is_government_in_exile"      , withBool MsgIsGovernmentInExile)
         ,("is_historical_focus_on"      , withBool MsgIsHistoricalFocusOn)
         ,("is_in_faction"               , withBool MsgIsInFaction)
         ,("is_in_home_area"             , withBool MsgIsInHomeArea)
@@ -490,10 +532,14 @@ handlersTextValue :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextValue = Tr.fromList
         [("add_offsite_building"        , textValue "type" "level" MsgAddOffsiteBuilding  MsgAddOffsiteBuilding tryLocAndIcon)
         ,("add_popularity"              , textValue "ideology" "popularity" MsgAddPopularity MsgAddPopularity tryLocAndIcon)
+        ,("core_compliance"             , textValueCompare "occupied_country_tag" "value" "more than" "less than" MsgCoreCompliance MsgCoreCompliance flagTextMaybe)
+        ,("core_resistance"             , textValueCompare "occupied_country_tag" "value" "more than" "less than" MsgCoreResistance MsgCoreResistance flagTextMaybe)
         ,("has_volunteers_amount_from"  , textValueCompare "tag" "count" "more than" "less than" MsgHasVolunteersAmountFrom MsgHasVolunteersAmountFrom flagTextMaybe)
         ,("modify_tech_sharing_bonus"   , textValue "id" "bonus" MsgModifyTechSharingBonus MsgModifyTechSharingBonus tryLocMaybe) --icon ignored
         ,("set_province_name"           , textValue "name" "id" MsgSetProvinceName MsgSetProvinceName tryLocMaybe)
         ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPoints)
+        ,("add_victory_points"          , valueValue "province" "value" MsgAddVictoryPoints MsgAddVictoryPoints)
+        ,("stockpile_ratio"             , textValueCompare "archetype" "ratio" "more than" "less than" MsgStockpileRatio MsgStockpileRatio tryLocMaybe)
         ,("strength_ratio"              , textValueCompare "tag" "ratio" "more than" "less than" MsgStrengthRatio MsgStrengthRatio flagTextMaybe)
         ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuilding tryLocAndIcon)
         ,("modify_character_flag"       , withNonlocTextValue "flag" "value" MsgCharacterFlag MsgModifyFlag) -- Localization/icon ignored
@@ -503,10 +549,13 @@ handlersTextValue = Tr.fromList
         ,("modify_unit_leader_flag"     , withNonlocTextValue "flag" "value" MsgUnitLeaderFlag MsgModifyFlag) -- Localization/icon ignored
         ]
 
+flagMaybeText :: (HOI4Info g, Monad m) => Text -> PPT g m (Maybe Text)
+flagMaybeText txt = eflag (Just HOI4Country) (Left txt)
 -- | Handlers for text/atom pairs
 handlersTextAtom :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextAtom = Tr.fromList
         [("has_game_rule"               , textAtom "rule" "option" MsgHasRule tryLoc)
+        ,("has_core_occupation_modifier" , textAtom "occupied_country_tag" "modifier" MsgHasCoreOccupationModifier flagMaybeText)
         ]
 
 -- | Handlers for special complex statements
@@ -525,6 +574,7 @@ handlersSpecialComplex = Tr.fromList
         ,("can_build_railway"            , canBuildRailway)
         ,("create_equipment_variant"     , createEquipmentVariant)
         ,("create_wargoal"               , createWargoal)
+        ,("create_unit"                  , createUnit)
         ,("custom_trigger_tooltip"       , customTriggerTooltip)
         ,("country_event"                , scope HOI4Country . triggerEvent MsgCountryEvent)
         ,("declare_war_on"               , declareWarOn)
@@ -535,13 +585,14 @@ handlersSpecialComplex = Tr.fromList
         ,("focus"                        , handleFocus MsgFocus) -- used in pre-requisite for focuses
         ,("focus_progress"               , focusProgress MsgFocusProgress)
         ,("has_army_size"                , hasArmySize)
+        ,("has_navy_size"                , hasNavySize)
         ,("has_opinion"                  , hasOpinion MsgHasOpinion)
         ,("has_country_leader"           , hasCountryLeader)
         ,("add_opinion_modifier"         , opinion MsgAddOpinion (\modid what who _years -> MsgAddOpinion modid what who))
         ,("load_focus_tree"              , loadFocusTree)
         ,("modify_building_resources"    , modifyBuildingResources)
         ,("news_event"                   , scope HOI4Country . triggerEvent MsgNewsEvent)
-        ,("Release_autonomy"             , setAutonomy MsgReleaseAutonomy)
+        ,("release_autonomy"             , setAutonomy MsgReleaseAutonomy)
         ,("remove_opinion_modifier"      , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
         ,("set_autonomy"                 , setAutonomy MsgSetAutonomy)
         ,("set_politics"                 , setPolitics)
@@ -580,32 +631,62 @@ handlersSpecialComplex = Tr.fromList
         ,("divide_temp_variable"         , setVariable MsgDivTempVariable MsgDivTempVariableVal)
         ,("check_variable"               , checkVariable MsgCheckVariable MsgCheckVariableVal)
         ,("clamp_variable"               , clampVariable MsgClampVariableValVal MsgClampVariableValVar MsgClampVariableVarVal MsgClampVariableVarVar)
+        ,("clamp_temp_variable"          , clampVariable MsgClampTempVariableValVal MsgClampTempVariableValVar MsgClampTempVariableVarVal MsgClampTempVariableVarVar)
         ,("is_variable_equal"            , setVariable MsgEquVariable MsgEquVariableVal)
         ,("export_to_variable"           , exportVariable)
+        ,("round_variable"              , withNonlocAtom MsgRoundVariable)
+        ,("round_temp_variable"         , withNonlocAtom MsgRoundTempVariable)
+        ,("clear_variable"              , withNonlocAtom MsgClearVariable)
+        ,("has_variable"                , withNonlocAtom MsgHasVariable)
+
+        --decisions
+        ,("activate_decision"            , locandid MsgActivateDecision)
+        ,("remove_decision"              , locandid MsgRemoveDecision)
+        ,("activate_mission"             , locandid MsgActivateMission)
+        ,("remove_mission"               , locandid MsgRemoveMission)
+        ,("activate_targeted_decision"   , textAtomKey "target" "decision" MsgActivateTargetedDecision flagMaybeText)
+        ,("remove_targeted_decision"     , textAtomKey "target" "decision" MsgRemoveTargetedDecision flagMaybeText)
+        ,("unlock_decision_category_tooltip" , withLocAtom MsgUnlockDecisionCategoryTooltip)
+        ,("unlock_decision_tooltip"       , withLocAtom MsgUnlockDecisionTooltip)
+        ,("activate_mission_tooltip"      , withLocAtom MsgActivateMissionTooltip)
+        ,("add_days_remove"              , textValueKey "decision" "days" MsgAddDaysRemove)
+        ,("add_days_mission_timeout"     , textValueKey "mission" "days" MsgAddDaysMissionTimeout)
         ]
 
 -- | Handlers for idea groups
 handlersIdeas :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersIdeas = Tr.fromList
-        [("has_idea"                     , handleIdeas False MsgHasIdea)
-        ,("add_ideas"                    , handleIdeas True MsgAddIdea)
-        ,("remove_ideas"                 , handleIdeas False MsgRemoveIdea)
-        ,("add_timed_idea"               , handleTimedIdeas MsgAddTimedIdea)
-        ,("modify_timed_idea"            , handleTimedIdeas MsgModifyTimedIdea)
-        ,("swap_ideas"                   , handleSwapIdeas)
+        [("has_idea"                    , handleIdeas False MsgHasIdea)
+        ,("add_ideas"                   , handleIdeas True MsgAddIdea)
+        ,("remove_ideas"                , handleIdeas False MsgRemoveIdea)
+        ,("add_timed_idea"              , handleTimedIdeas MsgAddTimedIdea)
+        ,("modify_timed_idea"           , handleTimedIdeas MsgModifyTimedIdea)
+        ,("swap_ideas"                  , handleSwapIdeas)
+        ,("show_ideas_tooltip"          , showIdea)
         ]
 
 -- | Handlers for miscellaneous statements
 handlersMisc :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersMisc = Tr.fromList
-        [("add_ai_strategy"             , rhsIgnored MsgAddAiStrategy)
+        [("add_ace"                     , addAce)
+        ,("add_ai_strategy"             , rhsIgnored MsgAddAiStrategy)
         ,("add_autonomy_ratio"          , addAutonomyRatio)
         ,("add_field_marshal_role"      , addFieldMarshalRole MsgAddFieldMarshalRole)
         ,("add_corps_commander_role"    , addFieldMarshalRole MsgAddCorpsCommanderRole)
+        ,("add_naval_commander_role"    , addFieldMarshalRole MsgAddNavalCommanderRole)
         ,("add_advisor_role"            , addAdvisorRole)
         ,("remove_advisor_role"         , removeAdvisorRole)
         ,("add_country_leader_role"     , addLeaderRole)
         ,("create_country_leader"       , createLeader)
+        ,("promote_character"           , promoteCharacter)
+        ,("damage_building"             , damageBuilding)
+        ,("division_template"           , divisionTemplate)
+        ,("add_country_leader_trait"    , addRemoveLeaderTrait MsgAddCountryLeaderTrait)
+        ,("remove_country_leader_trait" , addRemoveLeaderTrait MsgRemoveCountryLeaderTrait)
+        ,("add_unit_leader_trait"       , addRemoveUnitTrait MsgAddUnitLeaderTrait)
+        ,("remove_unit_leader_trait"    , addRemoveUnitTrait MsgRemoveUnitLeaderTrait)
+        ,("add_timed_unit_leader_trait" , addTimedTrait)
+        ,("swap_ruler_traits"           , swapLeaderTrait)
         ,("add_resource"                , addResource)
         ,("date"                        , handleDate "After" "Before")
         ,("has_start_date"              , handleDate "Game initially started after" "Game initially started before")
@@ -615,9 +696,9 @@ handlersMisc = Tr.fromList
         ,("add_trait"                   , handleTrait True)
         ,("remove_trait"                , handleTrait False)
         ,("diplomatic_relation" , diplomaticRelation)
+        ,("give_resource_rights" , giveResourceRights)
         ,("has_character"       , hasCharacter)
         ,("has_dlc"             , hasDlc)
-        ,("has_equipment"       , hasEquipment)
         ,("has_wargoal_against" , hasWarGoalAgainst)
         ,("send_equipment"      , sendEquipment)
         ,("set_capital"         , setCapital MsgSetCapital)
@@ -634,7 +715,6 @@ handlersIgnored = Tr.fromList
         ,("effect_tooltip", return $ return []) -- shows the effects but doesn't execute them, don't know if I want it to show up in the parser
         ,("goto"          , return $ return [])
         ,("log"           , return $ return [])
-        ,("original_tag_to_check" , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
         ,("picture"       , return $ return []) -- Some modifiers have custom pictures
@@ -673,6 +753,15 @@ ppOne' stmt lhs rhs = case lhs of
                             scriptMsgs <- scope HOI4ScopeCharacter $ ppMany scr
                             return (lchar : scriptMsgs)
                         _ -> preStatement stmt
+                GenericRhs t []
+                    | T.toLower t == "no"|| T.toLower t == "yes" -> do
+                        scripteffect <- getScriptedEffects
+                        scripttrigger <- getScriptedTriggers
+                        case HM.lookup label scripteffect of
+                            Just effect -> plainStatement "Scripted Effect: " stmt
+                            _ -> case HM.lookup label scripttrigger of
+                                Just trigger -> plainStatement "Scripted Trigger: " stmt
+                                _ -> preStatement stmt
                 _ -> preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
     IntLhs n -> do -- Treat as a province tag
