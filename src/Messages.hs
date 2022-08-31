@@ -4555,9 +4555,7 @@ instance RenderMessage Script ScriptMessage where
         MsgReligiousUnity {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " <!-- idea: "
-                , toMessage (reducedNum (colourPcSign True) _amt)
-                , " --> Religious unity is at least "
+                , " Religious unity is at least "
                 , toMessage (reducedNum (colourPc True) _amt)
                 ]
         MsgHasADM {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
