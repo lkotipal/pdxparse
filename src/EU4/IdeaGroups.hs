@@ -146,7 +146,7 @@ fixup = Doc.strictText . T.unlines . map (TE.decodeUtf8
         . TE.encodeUtf8) . T.lines . Doc.doc2text where
     badIcons, singleIdeaIcons, multiIdeaIcons{-, multiIdeaStartIcons -} :: Regex
     badIcons = RE.makeRegex ("((tradition.|bonus)=|\\* )({{icon[^}]*}}|\\[\\[File:[^]]*\\]\\]) "::ByteString)
-    singleIdeaIcons = RE.makeRegex ("idea(.)effect=({{icon\\||\\[\\[File:)([a-z ]*)(.png)?\\|28px(}}|\\]\\]) "::ByteString)
+    singleIdeaIcons = RE.makeRegex ("idea(.)effect=({{icon\\||\\[\\[File:)([a-z ]*)(.png)?\\|28px(}}|(\\|link=[^]]*)?\\]\\]) "::ByteString)
     multiIdeaIcons = RE.makeRegex ("(:)({{icon[^}]*}}|\\[\\[File:[^]]*\\]\\]) "::ByteString)
     greenTemplate = RE.makeRegex ("{{green\\|([^}]*)}}"::ByteString)
 --    multiIdeaStartIcons = RE.makeRegex ("idea(.)effect = {{plainlist\\|\\* {{icon\\|([a-z ]*)\\|28px}} "::ByteString)
