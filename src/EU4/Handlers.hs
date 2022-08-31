@@ -157,6 +157,7 @@ module EU4.Handlers (
     ,   handleModifierWithIcon
     ,   handleModifierWithIconPlural
     ,   handleModifierDlcOnly
+    ,   handleModifierAlwaysYesWithIcon
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -864,6 +865,7 @@ scriptIconTable = HM.fromList
 scriptIconFileTable :: HashMap Text (Text, Text)
 scriptIconFileTable = HM.fromList
     [("all estates loyalty equilibrium", ("", "all estates loyalty equilibrium"))
+    ,("auto explore adjacent to colony", ("", "discovery"))
     ,("average monarch lifespan", ("", "average monarch lifespan"))
     ,("cost to promote mercantilism", ("", "cost to promote mercantilism"))
     ,("establish holy order cost", ("", "establish holy order cost"))
@@ -872,6 +874,8 @@ scriptIconFileTable = HM.fromList
     ,("local state maintenance modifier", ("", "local state maintenance modifier"))
     ,("maximum tolerance of heathens", ("", "maximum tolerance of heathens"))
     ,("maximum tolerance of heretics", ("", "maximum tolerance of heretics"))
+    ,("may establish siberian frontiers", ("", "Siberian frontier"))
+    ,("may fabricate claims for subjects", ("", "Fabricate claims"))
     ,("monthly heir claim increase", ("", "monthly heir claim increase"))
     ,("monthly piety accelerator", ("", "monthly piety accelerator"))
     ,("monthly reform progress", ("", "reform progress growth"))
@@ -4197,6 +4201,15 @@ handleModifierDlcOnly :: (EU4Info g, Monad m) => Text -> Text -> (Double -> Doc)
 handleModifierDlcOnly message iconKey modifierTransformer [pdx| %_ = !amt |] = do
     msgToPP $ MsgGenericModifierDlcOnly (iconText iconKey) amt message modifierTransformer
 handleModifierDlcOnly _ _ _  stmt = plainMsg $ pre_statement' stmt
+
+-- | Handler for modifiers which have an icon and always have "yes" as their value
+-- e.g. "may_recruit_female_generals = yes" =>
+-- "{{icon|may recruit female generals|28px}} May recruit female generals"
+handleModifierAlwaysYesWithIcon :: (EU4Info g, Monad m) => Text -> Text -> StatementHandler g m
+-- handleModifierAlwaysYesWithIcon message iconKey [pdx| %_ = "yes" |] = do
+handleModifierAlwaysYesWithIcon message iconKey [pdx| %_ = ?rhs |] | T.toLower rhs == "yes" = do
+    msgToPP $ MsgGenericTextWithIcon (iconText iconKey) message
+handleModifierAlwaysYesWithIcon _ _  stmt = plainMsg $ pre_statement' stmt
 
 -- | statement handler for a list of lines.
 -- Lines which are prefixed with one or more *, will be indented accordingly

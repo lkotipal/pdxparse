@@ -787,6 +787,7 @@ data ScriptMessage
     | MsgAddLootFromProvinceEffect
     | MsgGenericTemplate {scriptMessageTemplate :: Text}
     | MsgGenericText {text :: Text}
+    | MsgGenericTextWithIcon {scriptMessageIcon :: Text, text :: Text}
     | MsgGenericModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double, locModifierName :: Text, amtTransformer :: Double -> Doc}
     | MsgGenericModifierDlcOnly {scriptMessageIcon :: Text, scriptMessageAmt :: Double, locModifierName :: Text, amtTransformer :: Double -> Doc}
     | MsgAddStabilityOrAdm
@@ -5655,6 +5656,12 @@ instance RenderMessage Script ScriptMessage where
             -> "{{" <> _template <> "}}"
         MsgGenericText {text = _text}
             -> _text
+        MsgGenericTextWithIcon {scriptMessageIcon = _icon, text = _text}
+            -> mconcat
+                [ _icon
+                , " "
+                , _text
+                ]
         MsgGenericModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt, locModifierName = _locModifierName, amtTransformer = _amtTransformer}
             -> mconcat
                 [ _icon

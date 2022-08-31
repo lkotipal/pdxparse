@@ -960,17 +960,17 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("yearly_patriarch_authority"            , handleModifier "MODIFIER_YEARLY_PATRIARCH_AUTHORITY" (reducedNum (colourPcSign True)))
         ,("yearly_revolutionary_zeal"             , handleModifierWithIcon "{{DLC-only|Yearly revolutionary zeal}}" "revolutionary zeal" (colourNumSign True))
         ,("years_of_nationalism"                  , handleModifier "MODIFIER_YEARS_OF_NATIONALISM" (colourNumSign False))
-        ,("auto_explore_adjacent_to_colony"       , rhsAlwaysYes (MsgGenericText "Automatically discover adjacent when a colony is built"))
-        ,("can_fabricate_for_vassals"             , rhsAlwaysYes (MsgGenericText "May fabricate claims for subjects"))
+        ,("auto_explore_adjacent_to_colony"       , handleModifierAlwaysYesWithIcon "Automatically discover adjacent when a colony is built" "auto explore adjacent to colony")
+        ,("can_fabricate_for_vassals"             , handleModifierAlwaysYesWithIcon "May fabricate claims for subjects" "may fabricate claims for subjects")
         ,("idea_claim_colonies"                   , rhsAlwaysYes (MsgGenericText "Can fabricate claims on any overseas province, provided it is overseas for its owner"))
-        ,("may_establish_frontier"                , rhsAlwaysYes (MsgGenericText "{{DLC-only|May establish siberian frontiers}}"))
-        ,("may_perform_slave_raid"                , rhsAlwaysYes (MsgGenericText "{{DLC-only|May raid coasts}}"))
-        ,("may_perform_slave_raid_on_same_religion", rhsAlwaysYes (MsgGenericText "{{DLC-only|May raid coasts}}, including coasts of countries with same religion"))
-        ,("may_recruit_female_generals"           , rhsAlwaysYes (MsgGenericText "May recruit female generals"))
+        ,("may_establish_frontier"                , handleModifierAlwaysYesWithIcon "{{DLC-only|May establish siberian frontiers}}" "may establish siberian frontiers")
+        ,("may_perform_slave_raid"                , handleModifierAlwaysYesWithIcon "{{DLC-only|May raid coasts}}" "may raid coasts")
+        ,("may_perform_slave_raid_on_same_religion", handleModifierAlwaysYesWithIcon "{{DLC-only|May raid coasts}}, including coasts of countries with same religion" "may raid coasts including coasts of countries with same religion")
+        ,("may_recruit_female_generals"           , handleModifierAlwaysYesWithIcon "May recruit female generals" "may recruit female generals")
         ,("no_religion_penalty"                   , rhsAlwaysYes (MsgGenericText "Heretic and heathen provinces do not give any penalties"))
         ,("cb_on_primitives"                      , rhsAlwaysYes (MsgGenericText "Can fabricate claim overseas in colonial regions.")) -- Full Exploration
-        ,("cb_on_religious_enemies"               , rhsAlwaysYes (MsgGenericText "{{icon|cb on religious enemies|28px}} Gain permanent “Holy War” and “Purging of Heresy” [[Casus Belli]] against heathens and heretics respectively.")) -- Deus Vult
-        ,("may_explore"                           , rhsAlwaysYes (MsgGenericText "{{icon|may explore|28px}} Can recruit explorers and conquistadors. Explorers may explore ocean provinces.")) -- Exploration: Quest for the New World
+        ,("cb_on_religious_enemies"               , handleModifierAlwaysYesWithIcon "Gain permanent “Holy War” and “Purging of Heresy” [[Casus Belli]] against heathens and heretics respectively." "cb on religious enemies") -- Deus Vult
+        ,("may_explore"                           , handleModifierAlwaysYesWithIcon "Can recruit explorers and conquistadors. Explorers may explore ocean provinces." "may explore") -- Exploration: Quest for the New World
         ,("reduced_stab_impacts"                  , rhsAlwaysYes (MsgGenericText "Lowered impact on stability from diplomatic actions")) -- Full Diplomacy
         ,("sea_repair"                            , rhsAlwaysYes (MsgGenericText "Ships repair while in coastal sea provinces.")) -- Full Maritime
         ,("advisor_pool"                          , handleModifierWithIconPlural "Possible advisor" "Possible advisors" "advisor pool" (colourNumSign True))
