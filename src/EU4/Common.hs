@@ -904,7 +904,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("province_trade_power_value"            , handleModifier "PROVINCE_TRADE_VALUE" (colourNumSign True))
         ,("province_warscore_cost"                , handleModifier "Province warscore cost" (reducedNum (colourPcSign False)))
         ,("raze_power_gain"                       , handleModifier "RAZE_POWER_GAIN" (reducedNum (colourPcSign True)))
-        ,("rebel_support_efficiency"              , handleModifierWithIcon "MODIFIER_REBEL_SUPPORT_EFFICIENCY" "reform desire" (reducedNum (colourPcSign True)))
+        ,("rebel_support_efficiency"              , handleModifier "MODIFIER_REBEL_SUPPORT_EFFICIENCY" (reducedNum (colourPcSign True)))
         ,("recover_army_morale_speed"             , handleModifier "RECOVER_ARMY_MORALE_SPEED" (reducedNum (colourPcSign True)))
         ,("recover_navy_morale_speed"             , handleModifier "RECOVER_NAVY_MORALE_SPEED" (reducedNum (colourPcSign True)))
         ,("reduced_liberty_desire"                , handleModifier "MODIFIER_REDUCED_LIBERTY_DESIRE" ((colourPcSign False) . negate))
