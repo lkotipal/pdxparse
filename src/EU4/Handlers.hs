@@ -93,7 +93,6 @@ module EU4.Handlers (
     ,   withFlagOrProvinceEU4Scope
     ,   tradeMod
     ,   isMonth
-    ,   range
     ,   area
     ,   dominantCulture
     ,   customTriggerTooltip
@@ -865,6 +864,7 @@ scriptIconTable = HM.fromList
 scriptIconFileTable :: HashMap Text (Text, Text)
 scriptIconFileTable = HM.fromList
     [("all estates loyalty equilibrium", ("", "all estates loyalty equilibrium"))
+    ,("average monarch lifespan", ("", "average monarch lifespan"))
     ,("cost to promote mercantilism", ("", "cost to promote mercantilism"))
     ,("establish holy order cost", ("", "establish holy order cost"))
     ,("fleet movement speed", ("", "fleet movement speed"))
@@ -2986,11 +2986,6 @@ isMonth [pdx| %_ = !(num :: Int) |] | num >= 0, num <= 11
             _ -> error "impossible: tried to localize bad month number"
         msgToPP $ MsgIsMonth month_loc
 isMonth stmt = preStatement stmt
-
-range :: (EU4Info g, Monad m) => StatementHandler g m
-range stmt@[pdx| %_ = !(_ :: Double) |]
-    = numericIcon "colonial range" MsgGainColonialRange stmt
-range stmt = withFlag MsgIsInColonialRange stmt
 
 area :: (EU4Info g, Monad m) => StatementHandler g m
 area stmt@[pdx| %_ = @_ |] = scope EU4Geographic $ compoundMessage MsgArea stmt

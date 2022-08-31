@@ -583,7 +583,6 @@ data ScriptMessage
     | MsgHasInnovativeIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
     | MsgHasOffensiveIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
     | MsgHasMaritimeIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
-    | MsgGainColonialRange {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrimitives {scriptMessageYn :: Bool}
     | MsgRulerIsForeigner {scriptMessageYn :: Bool}
@@ -707,7 +706,6 @@ data ScriptMessage
     | MsgAccCultureThreshold {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgBetterRelationsOverTime {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMaySabotageReputation
-    | MsgSpyOffense {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMayStudyTech
     | MsgMaySowDiscontent
     | MsgMayAgitateForLiberty
@@ -1060,9 +1058,7 @@ data ScriptMessage
     | MsgHomeTradeNodeEffectScope
     | MsgRemoveAdvisor {scriptMessageType :: Text}
     | MsgLandForcelimit {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgMonarchLifespan {scriptMessageAmt :: Double}
     | MsgMonthlyReformProgressModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgReducedLibertyDesireOnSameContinent {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSupplyLimitModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasGlobalModifierValue {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgHasAnyGreatProject
@@ -1341,7 +1337,6 @@ data ScriptMessage
     | MsgEstateLedRegencyLoyalty {scriptMessageAmt :: Double}
     | MsgSetEstateLedRegencyPrivilegeRandom
     | MsgTradeNode {scriptMessageWhat :: Text}
-    | MsgLocalManpower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgColonyMissionReward {scriptMessageProv :: Text}
     | MsgClearPreviousPrimaryCults
     | MsgNumUnlockedCults {scriptMessageAmt :: Double}
@@ -1355,7 +1350,6 @@ data ScriptMessage
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSwitchTag {scriptMessageWho :: Text}
-    | MsgMonthlyPietyAccelerator {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -4429,13 +4423,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (iquotes _name)
                 ]
-        MsgGainColonialRange {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Colonial range"
-                ]
         MsgNavyTradition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -5121,9 +5108,8 @@ instance RenderMessage Script ScriptMessage where
         MsgMoraleOfArmies {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Morale of armies"
+                , " Morale of armies is at least "
+                , toMessage (plainNum _amt)
                 ]
         MsgMoraleOfArmiesAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
             -> mconcat
@@ -5161,13 +5147,6 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgMaySabotageReputation
             -> "{{icon|may sabotage reputation|28px}} May [[sabotage reputation]]"
-        MsgSpyOffense {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (reducedNum (colourPcSign True) _amt)
-                , " Spy network construction"
-                ]
         MsgMayStudyTech
             -> "{{icon|may study technology|28px}} May [[study technology]]"
         MsgMaySowDiscontent
@@ -7156,24 +7135,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "Land force limit is at least "
                 , toMessage (plainNum _amt)
                 ]
-        MsgMonarchLifespan {scriptMessageAmt = _amt}
-            -> mconcat
-                [ toMessage (reducedNum (colourPcSign True) _amt)
-                , " Average monarch lifespan"
-                ]
         MsgMonthlyReformProgressModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Monthly reform progress modifier"
-                ]
-        MsgReducedLibertyDesireOnSameContinent {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourPcSign False (_amt * (-1)))
-                , " Liberty desire in same continent subjects"
                 ]
         MsgSupplyLimitModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -8799,13 +8766,6 @@ instance RenderMessage Script ScriptMessage where
                 [ _what
                 , " trade node:"
                 ]
-        MsgLocalManpower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True (_amt * 1000))
-                , " Local manpower increase"
-                ]
         MsgColonyMissionReward {scriptMessageProv = _prov}
             -> mconcat
                 [ _prov
@@ -8897,13 +8857,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "The human player plays as "
                 , _who
-                ]
-        MsgMonthlyPietyAccelerator {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True (_amt * 100))
-                , " Monthly piety accelerator"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

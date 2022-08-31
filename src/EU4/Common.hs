@@ -277,7 +277,6 @@ handlersNumeric = Tr.fromList
         ,("is_year"                          , numeric MsgYearIs)
         ,("janissary_percentage"             , numeric MsgJanissaryPercentage)
         ,("legitimacy_equivalent"            , numeric MsgLegitimacyEquivalent)
-        ,("monarch_lifespan"                 , numeric MsgMonarchLifespan)
         ,("months_since_defection"           , numeric MsgMonthsSinceDefection)
         ,("native_size"                      , numeric MsgNativeSize)
         ,("num_federation_advancements"      , numeric MsgNumFederationAdvancements)
@@ -515,7 +514,6 @@ handlersNumericIcons = Tr.fromList
         ,("production_efficiency"             , numericOrTagIcon "production efficiency" MsgProdEff MsgProdEffAs)
         ,("prosperity"                        , numericIcon "prosperity" MsgProsperity)
         ,("relations_decay_of_me"             , numericIcon "better relations over time" MsgBetterRelationsOverTime)
-        ,("spy_offence"                       , numericIcon "spy offense" MsgSpyOffense) -- US spelling in game
         ,("trade_range_modifier"              , numericIcon "trade range" MsgTradeRange)
         ,("global_sailors_modifier"           , numericIcon "national sailors modifier" MsgGlobalSailorsModifier)
         ,("min_autonomy_in_territories"       , numericIcon "minimum autonomy in territories" MsgMinAutonomyInTerritories)
@@ -523,11 +521,8 @@ handlersNumericIcons = Tr.fromList
         ,("land_forcelimit"                   , numericIcon "land force limit" MsgLandForcelimit)
         ,("monthly_reform_progress_modifier"  , numericIcon "monthly reform progress modifier" MsgMonthlyReformProgressModifier)
         ,("patriarch_authority"               , numericIcon "patriarch authority" MsgPatriarchAuthority)
-        ,("reduced_liberty_desire_on_same_continent", numericIcon "liberty desire in same continent subjects" MsgReducedLibertyDesireOnSameContinent)
         ,("supply_limit_modifier"             , numericIcon "supply limit modifier" MsgSupplyLimitModifier)
         ,("heir_claim"                        , numericIcon "legitimacy" MsgHeirClaim)
-        ,("local_manpower"                    , numericIcon "local manpower" MsgLocalManpower)
-        ,("monthly_piety_accelerator"         , numericIcon "monthly piety accelerator" MsgMonthlyPietyAccelerator)
         ]
 
 -- | Handlers for statements pertaining to modifiers
@@ -1003,6 +998,13 @@ handlersForModifiers = Tr.fromList
         ,("possible_mil_policy"                   , handleModifierDlcOnly "Military possible policies" "military possible policies" (plainNumSign))
         ,("possible_policy"                       , handleModifierDlcOnly "Possible policies" "possible policies" (plainNumSign))
         ,("treasure_fleet_income"                 , handleModifierDlcOnly "Treasure fleet income" "treasure fleet income" (reducedNum plainNumSign))
+        ,("local_manpower"                        , handleModifierWithIcon "Local manpower increase" "local manpower" (colourNumSign True . (*1000)))
+        ,("land_morale"                           , handleModifier "LAND_MORALE" (reducedNum (colourPcSign True)))
+        ,("monarch_lifespan"                      , handleModifier "MODIFIER_MONARCH_LIFESPAN" (reducedNum (colourPcSign True)))
+        ,("monthly_piety_accelerator"             , handleModifier "MODIFIER_MONTHLY_PIETY_ACCELERATOR" (colourNumSign True .(*100)))
+        ,("range"                                 , handleModifier "MODIFIER_COLONIAL_RANGE" (reducedNum (colourPcSign True)))
+        ,("reduced_liberty_desire_on_same_continent", handleModifier "MODIFIER_REDUCED_LIBERTY_DESIRE_ON_SAME_CONTINENT" (colourPcSign False . (*(-1))))
+        ,("spy_offence"                           , handleModifier "SPY_OFFENCE" (reducedNum (colourPcSign True)))
         ] -- handlersForModifiers
 
 -- | Handlers for simple compound statements
@@ -1372,6 +1374,7 @@ handlersSimpleFlag = Tr.fromList
         ,("owned_by"                , withFlag MsgOwnedBy)
         ,("preferred_emperor"       , withFlag MsgPreferredEmperor)
         ,("provinces_on_capital_continent_of" , withFlag MsgProvincesOnCapitalContinentOf)
+        ,("range"                   , withFlag MsgIsInColonialRange)
         ,("release"                 , withFlag MsgReleaseVassal)
         ,("remove_claim"            , withFlag MsgRemoveClaim)
         ,("remove_historical_friend" , withFlag MsgRemoveHistoricalFriend)
@@ -1908,7 +1911,6 @@ handlersMisc = Tr.fromList
         ,("num_of_states_owned_or_owned_by_non_sovereign_subjects_with" , numOwnedProvincesWith MsgNumOwnedStatesOrNonSovereignSubjectsWith)
         ,("piety"               , piety)
         ,("production_leader"   , productionLeader)
-        ,("range"               , range)
         ,("remove_casus_belli"  , taTypeFlag "type" "target" MsgRemoveCasusBelli)
         ,("remove_trade_modifier" , taTypeFlag "name" "who" MsgRemoveTradeModifier)
         ,("set_government_rank" , setGovtRank)
