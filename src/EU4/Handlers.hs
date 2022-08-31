@@ -156,6 +156,7 @@ module EU4.Handlers (
     ,   genericTextLines
     ,   handleModifier
     ,   handleModifierWithIcon
+    ,   handleModifierWithIconPlural
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -4186,6 +4187,13 @@ handleModifierWithIcon locKey iconKey modifierTransformer [pdx| %_ = !amt |] = d
             Just str -> capitalizeFirstLetter (T.toLower str)
     msgToPP $ MsgGenericModifier (iconText iconKey) amt capitalizedText modifierTransformer
 handleModifierWithIcon _ _ _  stmt = plainMsg $ pre_statement' stmt
+
+-- | Handler for modifiers with a specific message which changes depending on the value
+-- e.g. "+1 Diplomat" / "+2 Diplomats"
+handleModifierWithIconPlural :: (EU4Info g, Monad m) => Text -> Text -> Text -> (Double -> Doc) -> StatementHandler g m
+handleModifierWithIconPlural singularMessage pluralMessage iconKey modifierTransformer [pdx| %_ = !amt |] = do
+    msgToPP $ MsgGenericModifier (iconText iconKey) amt (plural amt singularMessage pluralMessage) modifierTransformer
+handleModifierWithIconPlural _ _ _ _  stmt = plainMsg $ pre_statement' stmt
 
 -- | statement handler for a list of lines.
 -- Lines which are prefixed with one or more *, will be indented accordingly

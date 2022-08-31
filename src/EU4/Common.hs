@@ -460,7 +460,6 @@ handlersNumericIcons = Tr.fromList
         ,("navy_reformer"            , numericIconLoc "naval reformer"  "naval_reformer"MsgHasAdvisorLevel) -- both are used
         ,("navy_size_percentage"     , numericIcon "naval force limit" MsgNavyPercentage)
         ,("navy_tradition"           , numericIcon "navy tradition" MsgNavyTradition)
-        ,("num_accepted_cultures"    , numericIcon "max promoted cultures" MsgMaxPromotedCultures)
         ,("num_of_admirals"          , numericIcon "admiral" MsgNumAdmirals)
         ,("num_of_allies"            , numericIcon "alliance" MsgNumAllies)
         ,("num_of_banners"           , numericIcon "banners" MsgNumOfBanners)
@@ -507,16 +506,9 @@ handlersNumericIcons = Tr.fromList
         ,("years_of_income"          , numericIcon "ducats" MsgYearsOfIncome)
         -- Used in ideas and other bonuses, omit "gain/lose" in l10n
         ,("accepted_culture_threshold"        , numericIcon "accepted culture threshold" MsgAccCultureThreshold)
-        ,("advisor_pool"                      , numericIcon "advisor pool" MsgPossibleAdvisors)
-        ,("colonists"                         , numericIcon "colonists" MsgColonists)
         ,("devotion"                          , numericIcon "devotion" MsgDevotion)
-        ,("diplomatic_upkeep"                 , numericIcon "diplomatic upkeep" MsgDiploRelations)
-        ,("diplomats"                         , numericIcon "diplomats" MsgDiplomats)
         ,("fabricate_claims_time"             , numericIcon "time to fabricate claims" MsgTimeToFabricateClaims)
-        ,("free_leader_pool"                  , numericIcon "free leader pool" MsgLeadersWithoutUpkeep)
         ,("leader_land_siege"                 , numericIcon "leader siege" MsgGainLandLeaderSiege)
-        ,("merchants"                         , numericIcon "merchants" MsgMerchants)
-        ,("missionaries"                      , numericIcon "missionaries" MsgMissionaries)
         ,("papal_influence"                   , numericIcon "papal influence" MsgPapalInfluence)
         ,("possible_mercenaries"              , numericIcon "available mercenaries" MsgAvailableMercs)
         ,("prestige"                          , numericOrTagIcon "prestige" MsgPrestige MsgPrestigeAs)
@@ -1003,6 +995,14 @@ handlersForModifiers = Tr.fromList
         ,("may_explore"                           , rhsAlwaysYes (MsgGenericText "{{icon|may explore|28px}} Can recruit explorers and conquistadors. Explorers may explore ocean provinces.")) -- Exploration: Quest for the New World
         ,("reduced_stab_impacts"                  , rhsAlwaysYes (MsgGenericText "Lowered impact on stability from diplomatic actions")) -- Full Diplomacy
         ,("sea_repair"                            , rhsAlwaysYes (MsgGenericText "Ships repair while in coastal sea provinces.")) -- Full Maritime
+        ,("advisor_pool"                          , handleModifierWithIconPlural "Possible advisor" "Possible advisors" "advisor pool" (colourNumSign True))
+        ,("colonists"                             , handleModifierWithIconPlural "Colonist" "Colonists" "colonists" (colourNumSign True))
+        ,("diplomatic_upkeep"                     , handleModifierWithIconPlural "Diplomatic relation" "Diplomatic relations" "diplomatic upkeep" (colourNumSign True))
+        ,("diplomats"                             , handleModifierWithIconPlural "Diplomat" "Diplomats" "diplomats" (colourNumSign True))
+        ,("free_leader_pool"                      , handleModifierWithIconPlural "Leader without upkeep" "Leaders without upkeep" "free leader pool" (colourNumSign True))
+        ,("merchants"                             , handleModifierWithIconPlural "Merchant" "Merchants" "merchants" (colourNumSign True))
+        ,("missionaries"                          , handleModifierWithIconPlural "Missionary" "Missionaries" "missionaries" (colourNumSign True))
+        ,("num_accepted_cultures"                 , handleModifierWithIconPlural "Max promoted culture" "Max promoted cultures" "max promoted cultures" (colourNumSign True))
         ] -- handlersForModifiers
 
 -- | Handlers for simple compound statements

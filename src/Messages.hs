@@ -583,14 +583,12 @@ data ScriptMessage
     | MsgHasInnovativeIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
     | MsgHasOffensiveIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
     | MsgHasMaritimeIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
-    | MsgColonists {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainColonialRange {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNavyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrimitives {scriptMessageYn :: Bool}
     | MsgRulerIsForeigner {scriptMessageYn :: Bool}
     | MsgProdEff {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProdEffAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgMissionaries {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPapalInfluence {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDevotion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -702,17 +700,12 @@ data ScriptMessage
     | MsgGainFervor {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainChurchPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgTimeToFabricateClaims {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgDiploRelations {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMoraleOfArmies {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMoraleOfArmiesAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgAvailableMercs {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgPossibleAdvisors {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgLeadersWithoutUpkeep {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgDiplomats {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAccCultureThreshold {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgBetterRelationsOverTime {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgMerchants {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMaySabotageReputation
     | MsgSpyOffense {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMayStudyTech
@@ -811,7 +804,6 @@ data ScriptMessage
     | MsgBuildLightShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
     | MsgBuildGalleys {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
     | MsgBuildTransports {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
-    | MsgMaxPromotedCultures {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMeritocracy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddInnovativenessSmallEffect
     | MsgAddInnovativenessBigEffect
@@ -4448,13 +4440,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (iquotes _name)
                 ]
-        MsgColonists {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , plural _amt " Colonist" " Colonists"
-                ]
         MsgGainColonialRange {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -4491,13 +4476,6 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Production efficiency is at least that of "
                 , _whom
-                ]
-        MsgMissionaries {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , plural _amt " Missionary" " Missionaries"
                 ]
         MsgPapalInfluence {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5153,13 +5131,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign False) _amt)
                 , " Time to fabricate claims"
                 ]
-        MsgDiploRelations {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , plural _amt " Diplomatic relation" " Diplomatic relations"
-                ]
         MsgMoraleOfArmies {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -5180,33 +5151,12 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Available mercenaries"
                 ]
-        MsgPossibleAdvisors {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , plural _amt " Possible advisor" " Possible advisors"
-                ]
-        MsgLeadersWithoutUpkeep {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , plural _amt " Leader without upkeep" " Leaders without upkeep"
-                ]
         MsgGainNavalLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
                 , " "
                 , toMessage (colourNumSign True _amt)
                 , " Naval leader siege"
-                ]
-        MsgDiplomats {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , plural _amt " Diplomat" " Diplomats"
                 ]
         MsgAccCultureThreshold {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5221,13 +5171,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (reducedNum (colourPcSign True) _amt)
                 , " Better relations over time"
-                ]
-        MsgMerchants {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , plural _amt " Merchant" " Merchants"
                 ]
         MsgMaySabotageReputation
             -> "{{icon|may sabotage reputation|28px}} May [[sabotage reputation]]"
@@ -5868,13 +5811,6 @@ instance RenderMessage Script ScriptMessage where
                 , " of normal cost, taking "
                 , toMessage (reducedNum plainPc _speed)
                 , " of normal time"
-                ]
-        MsgMaxPromotedCultures {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ _icon
-                , " "
-                , toMessage (colourNumSign True _amt)
-                , plural _amt " Max promoted culture" " Max promoted cultures"
                 ]
         MsgMeritocracy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
