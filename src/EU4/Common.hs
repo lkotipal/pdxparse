@@ -163,9 +163,6 @@ handlersRhsIrrelevant = Tr.fromList
         ,("increase_legitimacy_huge_effect"  , rhsAlwaysYes MsgIncreaseLegitimacyHugeEffect)
         ,("increase_legitimacy_medium_effect", rhsAlwaysYes MsgIncreaseLegitimacyMediumEffect)
         ,("increase_legitimacy_small_effect" , rhsAlwaysYes MsgIncreaseLegitimacySmallEffect)
-        ,("is_imperial_modifier"   , rhsAlwaysYes MsgIsImperialMod)
-        ,("is_janissary_modifier"  , rhsAlwaysYes MsgIsJanissaryMod)
-        ,("is_rajput_modifier"     , rhsAlwaysYes MsgIsRajputMod)
         ,("is_subject_other_than_tributary_trigger" , rhsAlwaysYes MsgIsSubjectOtherThanTributary)
         ,("kill_ruler"             , rhsAlwaysYes MsgRulerDies)
         ,("may_agitate_for_liberty", rhsAlwaysYes MsgMayAgitateForLiberty) -- Espionage: Destabilizing Efforts
@@ -546,7 +543,7 @@ handlersModifiers = Tr.fromList
 -- | Handlers for actual modifiers
 -- these are only used within the EU4Bonus scope
 handlersForModifiers :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
-handlersForModifiers = Tr.fromList
+handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fromList
         [("add_tribal_land_cost"                  , handleModifier "MODIFIER_ADD_TRIBAL_LAND_COST" (reducedNum (colourPcSign False)))
         ,("admiral_skill_gain_modifier"           , handleModifier "MODIFIER_MONTHLY_CHANCE_ADMIRAL_GAINING_SKILL" (reducedNum (colourPcSign True)))
         ,("allowed_num_of_manufactories"          , handleModifier "MODIFIER_ALLOWED_NUM_OF_MANUFACTORIES" (colourNumSign True))
@@ -1005,7 +1002,18 @@ handlersForModifiers = Tr.fromList
         ,("range"                                 , handleModifier "MODIFIER_COLONIAL_RANGE" (reducedNum (colourPcSign True)))
         ,("reduced_liberty_desire_on_same_continent", handleModifier "MODIFIER_REDUCED_LIBERTY_DESIRE_ON_SAME_CONTINENT" (colourPcSign False . (*(-1))))
         ,("spy_offence"                           , handleModifier "SPY_OFFENCE" (reducedNum (colourPcSign True)))
-        ] -- handlersForModifiers
+        ]) -- handlersForModifiers
+
+handlersForNonModifiersWithinModifiiers :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
+handlersForNonModifiersWithinModifiiers = Tr.fromList
+        [("is_imperial_modifier"        , rhsAlwaysYes (MsgGenericText "This modifier only applies to members of the HRE"))
+        ,("is_cawa_modifier"            , rhsAlwaysYes (MsgGenericText "This modifier only applies to cawa regiments"))
+        ,("is_janissary_modifier"       , rhsAlwaysYes (MsgGenericText "This modifier only applies to janissary regiments"))
+        ,("is_mercenary_modifier"       , rhsAlwaysYes (MsgGenericText "This modifier only applies to mercenary regiments"))
+        ,("is_rajput_modifier"          , rhsAlwaysYes (MsgGenericText "This modifier only applies to rajput regiments"))
+        ,("is_revolutionary_guard_modifier", rhsAlwaysYes (MsgGenericText "This modifier only applies to revolutionary guard regiments"))
+        ,("picture"                     , return $ return []) -- Some modifiers have custom pictures
+        ]
 
 -- | Handlers for simple compound statements
 handlersCompound :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
@@ -1982,18 +1990,13 @@ handlersIgnored = Tr.fromList
         ,("tooltip"       , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
-        ,("picture"       , return $ return []) -- Some modifiers have custom pictures
         ]
 
-getStatementHandlerForModifiers :: (EU4Info g, Monad m) => Text -> Maybe (StatementHandler g m)
-getStatementHandlerForModifiers label = case Tr.lookup (TE.encodeUtf8 (T.toLower label)) handlersForModifiers of
-        -- @TODO: remove this fallback
-        Nothing -> Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers
-        Just handler -> Just handler
-
 getStatementHandlerByScope :: (EU4Info g, Monad m) => Text -> Maybe EU4Scope -> Maybe (StatementHandler g m)
-getStatementHandlerByScope label (Just EU4Bonus) = getStatementHandlerForModifiers label
-getStatementHandlerByScope label _ = Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers
+getStatementHandlerByScope label scope = case scope of
+        (Just EU4Bonus) -> lookupLabel handlersForModifiers
+        _               -> lookupLabel ppHandlers
+        where lookupLabel modifierMap = Tr.lookup (TE.encodeUtf8 (T.toLower label)) modifierMap
 
 -- | Extract the appropriate message(s) from a single statement. Note that this
 -- may produce many lines (via 'ppMany'), since some statements are compound.

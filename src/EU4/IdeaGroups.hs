@@ -221,7 +221,7 @@ ppIdeaGroup ig = fixup <$> do
             bonus_pp'd <- imsg2doc . unindent =<< ppMany bonus
             mtrigger_pp'd <- case ig_trigger ig of
                 Nothing -> return Nothing
-                Just trigger -> Just <$> (imsg2doc =<< ppMany trigger)
+                Just trigger -> Just <$> (imsg2doc =<< scope EU4Country (ppMany trigger))
             let name_loc = Doc.strictText . T.replace " Ideas" "" $ name
                 ig_id_t = ig_name ig
                 ig_id = Doc.strictText ig_id_t
