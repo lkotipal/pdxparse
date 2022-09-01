@@ -345,6 +345,7 @@ getAdvinfo = foldM addLine newAI
         addLine ai stmt@[pdx| do_effect = %_|] = return ai
         addLine ai stmt@[pdx| desc = %_|] = return ai
         addLine ai stmt@[pdx| picture = %_|] = return ai
+        addLine ai stmt@[pdx| name = %_|] = return ai
         addLine ai [pdx| $other = %_ |] = trace ("unknown section in advisor info: " ++ show other) $ return ai
         addLine ai stmt = trace ("unknown form in advisor info: " ++ show stmt) $ return ai
 

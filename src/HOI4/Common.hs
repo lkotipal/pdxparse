@@ -153,6 +153,7 @@ handlersNumeric = Tr.fromList
 handlersNumericCompare :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericCompare = Tr.fromList
         [("air_base"                         , numericCompare "more than" "less than" MsgAirBase MsgAirBaseVar)
+        ,("alliance_strength_ratio"          , numericCompare "more than" "less than" MsgAllianceStrengthRatio MsgAllianceStrengthRatioVar)
         ,("amount_research_slots"            , numericCompare "more than" "less than" MsgAmountResearchSlots MsgAmountResearchSlotsVar)
         ,("any_war_score"                    , numericCompare "over" "under" MsgAnyWarScore MsgAnyWarScoreVar)
         ,("arms_factory"                     , numericCompare "more than" "less than" MsgArmsFactory MsgArmsFactoryVar)
@@ -183,6 +184,7 @@ handlersNumericCompare = Tr.fromList
         ,("num_of_civilian_factories_available_for_projects" , numericCompare "more than" "less than" MsgNumOfProjectFactories MsgNumOfProjectFactoriesVar)
         ,("num_of_factories"                 , numericCompare "more than" "fewer than" MsgNumOfFactories MsgNumOfFactoriesVar)
         ,("num_of_nukes"                     , numericCompare "more than" "fewer than" MsgNumOfNukes MsgNumOfNukesVar)
+        ,("num_of_operatives"                , numericCompare "more than" "fewer than" MsgNumOfOperatives MsgNumOfOperativesVar)
         ,("original_research_slots"          , numericCompare "more than" "fewer than" MsgOriginalResearchSlots MsgOriginalResearchSlotsVar)
         ,("state_population"                 , numericCompare "more than" "less than" MsgStatePopulation MsgStatePopulationVar)
         ,("surrender_progress"               , numericCompare "more than" "less than" MsgSurrenderProgress MsgSurrenderProgressVar)
@@ -196,15 +198,15 @@ handlersNumericCompare = Tr.fromList
 -- | Handlers for numeric statements with icons
 handlersNumericIcons :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericIcons = Tr.fromList
-        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgGainLosePosIcon MsgGainLosePosIconVar)
-        ,("add_extra_state_shared_building_slots", numericIcon "building slot" MsgAddExtraStateSharedBuildingSlots)
-        ,("add_political_power"      , numericIconLoc "political power" "POLITICAL_POWER" MsgGainLosePosIcon MsgGainLosePosIconVar)
-        ,("add_command_power"        , numericIconLoc "command power" "COMMAND_POWER" MsgGainLosePosIcon MsgGainLosePosIconVar)
-        ,("add_stability"            , numericIconLoc "stability" "STABILITY" MsgGainLocPC MsgGainLocPCVar)
-        ,("add_war_support"          , numericIconLoc "war support" "WAR_SUPPORT" MsgGainLocPC MsgGainLocPCVar)
-        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgGainLosePosIcon MsgGainLosePosIconVar)
-        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgGainLosePosIcon MsgGainLosePosIconVar)
-        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgGainLosePosIcon MsgGainLosePosIconVar)
+        [("add_manpower"             , numericIconLoc "manpower" "MANPOWER" MsgGainLosePosIcon MsgGainLoseLocIconVar)
+        ,("add_extra_state_shared_building_slots", numericIcon "building slot" MsgAddExtraStateSharedBuildingSlots MsgAddExtraStateSharedBuildingSlotsVar)
+        ,("add_political_power"      , numericIconLoc "political power" "POLITICAL_POWER" MsgGainLosePosIcon MsgGainLoseLocIconVar)
+        ,("add_command_power"        , numericIconLoc "command power" "COMMAND_POWER" MsgGainLosePosIcon MsgGainLoseLocIconVar)
+        ,("add_stability"            , numericIconLoc "stability" "STABILITY" MsgGainLocPC MsgGainLoseLocIconVar)
+        ,("add_war_support"          , numericIconLoc "war support" "WAR_SUPPORT" MsgGainLocPC MsgGainLoseLocIconVar)
+        ,("air_experience"           , numericIconLoc "air exp" "AIR_EXPERIENCE" MsgGainLosePosIcon MsgGainLoseLocIconVar)
+        ,("army_experience"          , numericIconLoc "army exp" "ARMY_EXPERIENCE" MsgGainLosePosIcon MsgGainLoseLocIconVar)
+        ,("navy_experience"          , numericIconLoc "navy exp" "NAVY_EXPERIENCE" MsgGainLosePosIcon MsgGainLoseLocIconVar)
         ]
 
 -- | Handlers for statements pertaining to modifiers
@@ -307,7 +309,11 @@ handlersCompound = Tr.fromList
         -- dual scopes
         ,("root"                        , compoundMessagePronoun) --ROOT
         ,("prev"                        , compoundMessagePronoun) --PREV
+        ,("prev.prev"                   , compoundMessagePronoun) -- need beter way
+        ,("prev.prev.prev"              , compoundMessagePronoun) -- need beter way
         ,("from"                        , compoundMessagePronoun) --FROM
+        ,("from.from"                   , compoundMessagePronoun) -- need beter way
+        ,("from.from.from"              , compoundMessagePronoun) -- need beter way
         -- no THIS, not used on LHS
         ,("overlord"                    , scope HOI4Country   . compoundMessage MsgOverlord)
         ,("owner"                       , scope HOI4Country   . compoundMessage MsgOwner)
@@ -402,7 +408,7 @@ handlersTypewriter = Tr.fromList
         ,("clr_global_flag"     , withNonlocAtom2 MsgGlobalFlag MsgClearFlag)
         ,("clr_state_flag"      , withNonlocAtom2 MsgStateFlag MsgClearFlag)
         ,("clr_unit_leader_flag" , withNonlocAtom2 MsgUnitLeaderFlag MsgClearFlag)
-        ,("has_focus_tree"      , withNonlocAtom MsgHasFocusTree)
+        ,("has_focus_tree"        , withNonlocAtom MsgHasFocusTree)
         ,("save_event_target_as", withNonlocAtom MsgSaveEventTargetAs)
         ,("save_global_event_target_as", withNonlocAtom MsgSaveGlobalEventTargetAs)
         ,("set_cosmetic_tag"    , withNonlocAtom MsgSetCosmeticTag)
@@ -421,6 +427,7 @@ handlersSimpleFlag :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSimpleFlag = Tr.fromList
         [("add_claim_by"            , withFlag MsgAddClaimBy)
         ,("add_core_of"             , withFlag MsgAddCoreOf)
+        ,("add_nationality"         , withFlag MsgAddNationality)
         ,("add_to_faction"          , withFlag MsgAddToFaction)
         ,("change_tag_from"         , withFlag MsgChangeTagFrom)
         ,("is_controlled_by"        , withFlag MsgIsControlledBy)
@@ -431,6 +438,7 @@ handlersSimpleFlag = Tr.fromList
         ,("has_attache_from"        , withFlag MsgHasAttacheFrom)
         ,("has_border_war_with"     , withFlag MsgHasBorderWarWith)
         ,("has_guaranteed"          , withFlag MsgHasGuaranteed)
+        ,("has_military_access_to" , withFlag MsgHasMilitaryAccessTo)
         ,("has_non_aggression_pact_with" , withFlag MsgHasNonAggressionPactWith)
         ,("has_offensive_war_with"  , withFlag MsgHasOffensiveWarWith)
         ,("has_subject"             , withFlag MsgHasSubject)
@@ -451,6 +459,8 @@ handlersSimpleFlag = Tr.fromList
         ,("is_subject_of"           , withFlag MsgIsSubjectOf)
         ,("is_owned_by"             , withFlag MsgIsOwnedBy)
         ,("puppet"                  , withFlag MsgPuppet)
+        ,("recall_volunteers_from"  , withFlag MsgRecallVolunteersFrom)
+        ,("release"                 , withFlag MsgRelease)
         ,("release_puppet"          , withFlag MsgReleasePuppet)
         ,("remove_claim_by"         , withFlag MsgRemoveClaimBy)
         ,("remove_core_of"          , withFlag MsgRemoveCoreOf)
@@ -498,6 +508,7 @@ handlersYesNo = Tr.fromList
         ,("is_female"                   , withBoolHOI4Scope MsgIsFemaleLeader MsgIsFemale)
         ,("is_government_in_exile"      , withBool MsgIsGovernmentInExile)
         ,("is_historical_focus_on"      , withBool MsgIsHistoricalFocusOn)
+        ,("is_operative_captured"       , withBool MsgIsOperativeCaptured)
         ,("is_in_faction"               , withBool MsgIsInFaction)
         ,("is_in_home_area"             , withBool MsgIsInHomeArea)
         ,("is_island_state"             , withBool MsgIsIslandState)
@@ -530,23 +541,23 @@ tryLocAndIconTitle t = tryLocAndIcon (t <> "_title")
 -- $textvalue
 handlersTextValue :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextValue = Tr.fromList
-        [("add_offsite_building"        , textValue "type" "level" MsgAddOffsiteBuilding  MsgAddOffsiteBuilding tryLocAndIcon)
-        ,("add_popularity"              , textValue "ideology" "popularity" MsgAddPopularity MsgAddPopularity tryLocAndIcon)
-        ,("core_compliance"             , textValueCompare "occupied_country_tag" "value" "more than" "less than" MsgCoreCompliance MsgCoreCompliance flagTextMaybe)
-        ,("core_resistance"             , textValueCompare "occupied_country_tag" "value" "more than" "less than" MsgCoreResistance MsgCoreResistance flagTextMaybe)
-        ,("has_volunteers_amount_from"  , textValueCompare "tag" "count" "more than" "less than" MsgHasVolunteersAmountFrom MsgHasVolunteersAmountFrom flagTextMaybe)
-        ,("modify_tech_sharing_bonus"   , textValue "id" "bonus" MsgModifyTechSharingBonus MsgModifyTechSharingBonus tryLocMaybe) --icon ignored
-        ,("set_province_name"           , textValue "name" "id" MsgSetProvinceName MsgSetProvinceName tryLocMaybe)
-        ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPoints)
-        ,("add_victory_points"          , valueValue "province" "value" MsgAddVictoryPoints MsgAddVictoryPoints)
-        ,("stockpile_ratio"             , textValueCompare "archetype" "ratio" "more than" "less than" MsgStockpileRatio MsgStockpileRatio tryLocMaybe)
-        ,("strength_ratio"              , textValueCompare "tag" "ratio" "more than" "less than" MsgStrengthRatio MsgStrengthRatio flagTextMaybe)
-        ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuilding tryLocAndIcon)
-        ,("modify_character_flag"       , withNonlocTextValue "flag" "value" MsgCharacterFlag MsgModifyFlag) -- Localization/icon ignored
-        ,("modify_country_flag"         , withNonlocTextValue "flag" "value" MsgCountryFlag MsgModifyFlag) -- Localization/icon ignored
-        ,("modify_global_flag"          , withNonlocTextValue "flag" "value" MsgGlobalFlag MsgModifyFlag) -- Localization/icon ignored
-        ,("modify_state_flag"           , withNonlocTextValue "flag" "value" MsgStateFlag MsgModifyFlag) -- Localization/icon ignored
-        ,("modify_unit_leader_flag"     , withNonlocTextValue "flag" "value" MsgUnitLeaderFlag MsgModifyFlag) -- Localization/icon ignored
+        [("add_offsite_building"        , textValue "type" "level" MsgAddOffsiteBuilding MsgAddOffsiteBuildingVar tryLocAndIcon)
+        ,("add_popularity"              , textValue "ideology" "popularity" MsgAddPopularity MsgAddPopularityVar tryLocAndIcon)
+        ,("core_compliance"             , textValueCompare "occupied_country_tag" "value" "more than" "less than" MsgCoreCompliance MsgCoreComplianceVar flagTextMaybe)
+        ,("core_resistance"             , textValueCompare "occupied_country_tag" "value" "more than" "less than" MsgCoreResistance MsgCoreResistanceVar flagTextMaybe)
+        ,("has_volunteers_amount_from"  , textValueCompare "tag" "count" "more than" "less than" MsgHasVolunteersAmountFrom MsgHasVolunteersAmountFromVar flagTextMaybe)
+        ,("modify_tech_sharing_bonus"   , textValue "id" "bonus" MsgModifyTechSharingBonus MsgModifyTechSharingBonusVar tryLocMaybe) --icon ignored
+        ,("set_province_name"           , textValue "name" "id" MsgSetProvinceName MsgSetProvinceNameVar tryLocMaybe)
+        ,("set_victory_points"          , valueValue "province" "value" MsgSetVictoryPoints MsgSetVictoryPointsVar)
+        ,("add_victory_points"          , valueValue "province" "value" MsgAddVictoryPoints MsgAddVictoryPointsVar)
+        ,("stockpile_ratio"             , textValueCompare "archetype" "ratio" "more than" "less than" MsgStockpileRatio MsgStockpileRatioVar tryLocMaybe)
+        ,("strength_ratio"              , textValueCompare "tag" "ratio" "more than" "less than" MsgStrengthRatio MsgStrengthRatioVar flagTextMaybe)
+        ,("remove_building"             , textValue "type" "level" MsgRemoveBuilding MsgRemoveBuildingVar tryLocAndIcon)
+        ,("modify_character_flag"       , withNonlocTextValue "flag" "value" MsgCharacterFlag MsgModifyFlag MsgModifyFlagVar) -- Localization/icon ignored
+        ,("modify_country_flag"         , withNonlocTextValue "flag" "value" MsgCountryFlag MsgModifyFlag MsgModifyFlagVar) -- Localization/icon ignored
+        ,("modify_global_flag"          , withNonlocTextValue "flag" "value" MsgGlobalFlag MsgModifyFlag MsgModifyFlagVar) -- Localization/icon ignored
+        ,("modify_state_flag"           , withNonlocTextValue "flag" "value" MsgStateFlag MsgModifyFlag MsgModifyFlagVar) -- Localization/icon ignored
+        ,("modify_unit_leader_flag"     , withNonlocTextValue "flag" "value" MsgUnitLeaderFlag MsgModifyFlag MsgModifyFlagVar) -- Localization/icon ignored
         ]
 
 flagMaybeText :: (HOI4Info g, Monad m) => Text -> PPT g m (Maybe Text)
@@ -595,6 +606,7 @@ handlersSpecialComplex = Tr.fromList
         ,("release_autonomy"             , setAutonomy MsgReleaseAutonomy)
         ,("remove_opinion_modifier"      , opinion MsgRemoveOpinionMod (\modid what who _years -> MsgRemoveOpinionMod modid what who))
         ,("set_autonomy"                 , setAutonomy MsgSetAutonomy)
+        ,("set_building_level"           , setBuildingLevel)
         ,("set_politics"                 , setPolitics)
         ,("set_party_name"               , setPartyName)
         ,("start_civil_war"              , startCivilWar)
@@ -644,13 +656,14 @@ handlersSpecialComplex = Tr.fromList
         ,("remove_decision"              , locandid MsgRemoveDecision)
         ,("activate_mission"             , locandid MsgActivateMission)
         ,("remove_mission"               , locandid MsgRemoveMission)
+        ,("has_active_mission"           , locandid MsgHasActiveMission)
         ,("activate_targeted_decision"   , textAtomKey "target" "decision" MsgActivateTargetedDecision flagMaybeText)
         ,("remove_targeted_decision"     , textAtomKey "target" "decision" MsgRemoveTargetedDecision flagMaybeText)
         ,("unlock_decision_category_tooltip" , withLocAtom MsgUnlockDecisionCategoryTooltip)
         ,("unlock_decision_tooltip"       , withLocAtom MsgUnlockDecisionTooltip)
         ,("activate_mission_tooltip"      , withLocAtom MsgActivateMissionTooltip)
-        ,("add_days_remove"              , textValueKey "decision" "days" MsgAddDaysRemove)
-        ,("add_days_mission_timeout"     , textValueKey "mission" "days" MsgAddDaysMissionTimeout)
+        ,("add_days_remove"              , textValueKey "decision" "days" MsgAddDaysRemove MsgAddDaysRemoveVar)
+        ,("add_days_mission_timeout"     , textValueKey "mission" "days" MsgAddDaysMissionTimeout MsgAddDaysMissionTimeoutVar)
         ]
 
 -- | Handlers for idea groups
@@ -670,23 +683,34 @@ handlersMisc :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersMisc = Tr.fromList
         [("add_ace"                     , addAce)
         ,("add_ai_strategy"             , rhsIgnored MsgAddAiStrategy)
-        ,("add_autonomy_ratio"          , addAutonomyRatio)
+        ,("add_autonomy_ratio"          , addAutonomyRatio MsgAddAutonomyRatio MsgAddAutonomyRatioVar)
+        ,("add_autonomy_Score"          , addAutonomyRatio MsgAddAutonomyScore MsgAddAutonomyScoreVar)
         ,("add_field_marshal_role"      , addFieldMarshalRole MsgAddFieldMarshalRole)
+        ,("create_field_marshal"        , addFieldMarshalRole MsgAddFieldMarshalRole) -- deprecated
         ,("add_corps_commander_role"    , addFieldMarshalRole MsgAddCorpsCommanderRole)
+        ,("create_corps_commander"      , addFieldMarshalRole MsgAddCorpsCommanderRole) -- deprecated
         ,("add_naval_commander_role"    , addFieldMarshalRole MsgAddNavalCommanderRole)
+        ,("create_navy_leader"          , addFieldMarshalRole MsgAddNavalCommanderRole) -- deprecated
         ,("add_advisor_role"            , addAdvisorRole)
         ,("remove_advisor_role"         , removeAdvisorRole)
         ,("add_country_leader_role"     , addLeaderRole)
         ,("create_country_leader"       , createLeader)
+        ,("create_operative_leader"     , createOperativeLeader)
         ,("promote_character"           , promoteCharacter)
         ,("damage_building"             , damageBuilding)
+        ,("delete_unit_template_and_units" , deleteUnits MsgDeleteUnitTemplateAndunits)
+        ,("delete_units"                , deleteUnits MsgDeleteUnits)
         ,("division_template"           , divisionTemplate)
+        ,("army_manpower_in_state"          , divisionsInState MsgArmyManpowerInState)
+        ,("divisions_in_state"          , divisionsInState MsgDivisionsInState)
+        ,("divisions_in_border_state"   , divisionsInState MsgDivisionsInBorderState)
         ,("add_country_leader_trait"    , addRemoveLeaderTrait MsgAddCountryLeaderTrait)
         ,("remove_country_leader_trait" , addRemoveLeaderTrait MsgRemoveCountryLeaderTrait)
         ,("add_unit_leader_trait"       , addRemoveUnitTrait MsgAddUnitLeaderTrait)
         ,("remove_unit_leader_trait"    , addRemoveUnitTrait MsgRemoveUnitLeaderTrait)
         ,("add_timed_unit_leader_trait" , addTimedTrait)
         ,("swap_ruler_traits"           , swapLeaderTrait)
+        ,("has_trait"                   , withLocAtom MsgHasTrait)
         ,("add_resource"                , addResource)
         ,("date"                        , handleDate "After" "Before")
         ,("has_start_date"              , handleDate "Game initially started after" "Game initially started before")
@@ -697,9 +721,11 @@ handlersMisc = Tr.fromList
         ,("remove_trait"                , handleTrait False)
         ,("diplomatic_relation" , diplomaticRelation)
         ,("give_resource_rights" , giveResourceRights)
-        ,("has_character"       , hasCharacter)
+        ,("has_character"       , withCharacter MsgHasCharacter)
+        ,("retire_character"    , withCharacter MsgRetireCharacter)
         ,("has_dlc"             , hasDlc)
         ,("has_wargoal_against" , hasWarGoalAgainst)
+        ,("region"              , withRegion)
         ,("send_equipment"      , sendEquipment)
         ,("set_capital"         , setCapital MsgSetCapital)
         ,("set_character_name"  , setCharacterName)

@@ -578,6 +578,13 @@ ppEventSource (HOI4EvtSrcOnAction act weight) = do
                 let actmsg = "<!-- " <> n <>  " -->On every month for "
                 tagloc <- flagText (Just HOI4Country) tag
                 return $ actmsg <> tagloc
+            | "on_weekly_" `T.isPrefixOf` n = do
+                let tag = case T.stripPrefix "on_weekly_" n of
+                        Just nc -> nc
+                        _ -> "<!-- Check game Script -->"
+                let actmsg = "<!-- " <> n <>  " -->On every week for "
+                tagloc <- flagText (Just HOI4Country) tag
+                return $ actmsg <> tagloc
             | "on_daily_" `T.isPrefixOf` n = do
                 let tag = case T.stripPrefix "on_daily_" n of
                         Just nc -> nc
@@ -630,6 +637,7 @@ ppEventSource (HOI4EvtSrcOnAction act weight) = do
             ,("on_unit_leader_created","<!-- on_unit_leader_created -->On army leader created")
             ,("on_war_relation_added","<!-- on_war_relation_added -->On nation joined war")
             ,("on_wargoal_expire","<!-- on_wargoal_expire -->On wargoal expired")
+            ,("on_weekly","<!-- on_weekly -->On every week")
             ]
 ppEventSource (HOI4EvtSrcNFComplete id loc icon) = do
     gfx <- getInterfaceGFX

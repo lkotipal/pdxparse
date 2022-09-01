@@ -40,7 +40,7 @@ module MessageTools (
     -- * If-then-else
     ,   ifThenElse, ifThenElseT
     -- * General text formatting
-    ,   iquotes, quotes, bold, boldText, italic, italicText
+    ,   iquotes, quotes, bold, boldText, italic, italicText, typewriterText
     -- * The 'ppNumSep' number formatting method
     ,   PPSep (..)
     ,   module Text.Shakespeare.I18N
@@ -349,6 +349,12 @@ bold = PP.enclose "'''" "'''"
 -- however, does work.
 boldText :: Text -> Text
 boldText = Doc.doc2text . bold . Doc.strictText
+
+typewriter :: Doc -> Doc
+typewriter = PP.enclose "<tt>" "</tt>"
+
+typewriterText :: Text -> Text
+typewriterText = Doc.doc2text . typewriter . Doc.strictText
 
 -- | Produce output based on a boolean (i.e. if-then-else). Needed because the
 -- i18n templates don't understand this syntax, but instead interpret these

@@ -470,7 +470,7 @@ ppdecision dec gfx = do
     custom_cost_trigger_pp'd  <- decArg "custom_cost_trigger" dec_custom_cost_trigger ppScript
     activation_pp'd <- decArg "activation" dec_activation ppScript
     modifier_pp'd <- setIsInEffect True (decArg "modifier" dec_modifier ppStatement)
-    targetedModifier_pp'd <- setIsInEffect True (decArg "targeted_modifier" dec_modifier ppStatement)
+    targetedModifier_pp'd <- setIsInEffect True (decArg "targeted_modifier" dec_targeted_modifier ppStatement)
     name_loc <- getGameL10n name
     icon_pp'd <- case dec_icon dec of
             Just (HOI4DecisionIconSimple txt) ->
@@ -634,6 +634,13 @@ ppDecisionSource (HOI4DecSrcOnAction act weight) = do
                 let actmsg = "<!-- " <> n <>  " -->On every month for "
                 tagloc <- flagText (Just HOI4Country) tag
                 return $ actmsg <> tagloc
+            | "on_weekly_" `T.isPrefixOf` n = do
+                let tag = case T.stripPrefix "on_weekly_" n of
+                        Just nc -> nc
+                        _ -> "<!-- Check game Script -->"
+                let actmsg = "<!-- " <> n <>  " -->On every week for "
+                tagloc <- flagText (Just HOI4Country) tag
+                return $ actmsg <> tagloc
             | "on_daily_" `T.isPrefixOf` n = do
                 let tag = case T.stripPrefix "on_daily_" n of
                         Just nc -> nc
@@ -686,6 +693,7 @@ ppDecisionSource (HOI4DecSrcOnAction act weight) = do
             ,("on_unit_leader_created","<!-- on_unit_leader_created -->On army leader created")
             ,("on_war_relation_added","<!-- on_war_relation_added -->On nation joined war")
             ,("on_wargoal_expire","<!-- on_wargoal_expire -->On wargoal expired")
+            ,("on_weekly","<!-- on_weekly -->On every week")
             ]
 ppDecisionSource (HOI4DecSrcNFComplete id loc) = do
     nfloc <- getGameL10n loc

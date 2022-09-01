@@ -147,6 +147,7 @@ instance IsGame HOI4 where
         st { hoi4scopeStack = s : hoi4scopeStack st }
     getCurrentScope = asks $ listToMaybe . hoi4scopeStack . hoi4s
     getPrevScope = asks $ safeIndex 1 . hoi4scopeStack . hoi4s
+    getPrevScopeCustom i = asks $ safeIndex i . hoi4scopeStack . hoi4s
     getRootScope = asks $ safeLast . hoi4scopeStack . hoi4s
     getScopeStack = asks $ hoi4scopeStack . hoi4s
     getIsInEffect = asks $ hoi4IsInEffect . hoi4s

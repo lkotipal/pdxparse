@@ -21,7 +21,8 @@ module HOI4.SpecialHandlers (
     ,   createLeader
     ,   promoteCharacter
     ,   setCharacterName
-    ,   hasCharacter
+    ,   withCharacter
+    ,   createOperativeLeader
     ,   handleTrait
     ,   addRemoveLeaderTrait
     ,   addRemoveUnitTrait
@@ -493,9 +494,9 @@ modifiersTable = HM.fromList
 
             -- Governments in exile
 
-        ,("dockyard_donations "             , ("MODIFIER_INDUSTRIAL_FACTORY_DONATIONS", MsgModifierColourPos))
-        ,("industrial_factory_donations"    , ("MODIFIER_MILITARY_FACTORY_DONATIONS", MsgModifierColourPos))
-        ,("military_factory_donations "     , ("MODIFIER_DOCKYARD_DONATIONS", MsgModifierColourPos))
+        ,("dockyard_donations "             , ("MODIFIER_DOCKYARD_DONATIONS", MsgModifierColourPos))
+        ,("industrial_factory_donations"    , ("MODIFIER_INDUSTRIAL_FACTORY_DONATIONS", MsgModifierColourPos))
+        ,("military_factory_donations"     , ("MODIFIER_MILITARY_FACTORY_DONATIONS", MsgModifierColourPos))
         ,("exile_manpower_factor"           , ("MODIFIER_EXILED_MAPOWER_GAIN_FACTOR", MsgModifierPcPosReduced))
         ,("exiled_government_weekly_manpower" , ("MODIFIER_EXILED_GOVERNMENT_WEEKLY_MANPOWER", MsgModifierColourPos))
         ,("legitimacy_daily"                , ("MODIFIER_LEGITIMACY_DAILY", MsgModifierColourPos))
@@ -661,6 +662,11 @@ modifiersTable = HM.fromList
         ,("terrain_penalty_reduction"       , ("MODIFIER_TERRAIN_PENALTY_REDUCTION", MsgModifierPcPosReduced))
         ,("planning_speed"                  , ("MODIFIER_PLANNING_SPEED", MsgModifierPcPosReduced))
 
+            -- naval invasions
+        ,("amphibious_invasion"             , ("MODIFIER_AMPHIBIOUS_INVASION", MsgModifierPcPosReduced))
+        ,("amphibious_invasion_defence"     , ("MODIFIER_NAVAL_INVASION_DEFENSE", MsgModifierPcPosReduced))
+        ,("invasion_preparation"            , ("MODIFIER_NAVAL_INVASION_PREPARATION", MsgModifierPcNegReduced))
+
             -- Naval combat
         ,("naval_coordination"              , ("MODIFIER_NAVAL_COORDINATION", MsgModifierPcPosReduced))
         ,("naval_hit_chance"                , ("MODIFIER_NAVAL_HIT_CHANCE", MsgModifierPcPosReduced))
@@ -671,6 +677,7 @@ modifiersTable = HM.fromList
         ,("sortie_efficiency"               , ("MODIFIER_STAT_CARRIER_SORTIE_EFFICIENCY", MsgModifierPcPosReduced))
 
             -- Air combat
+        ,("air_accidents_factor"            , ("MODIFIER_AIR_ACCIDENTS_FACTOR", MsgModifierPcNegReduced))
         ,("air_ace_generation_chance_factor" , ("MODIFIER_AIR_ACE_GENERATION_CHANCE_FACTOR", MsgModifierPcPosReduced))
         ,("air_agility"                     , ("MODIFIER_AIR_AGILITY", MsgModifierPcPosReduced))
         ,("air_attack"                      , ("MODIFIER_AIR_ATTACK", MsgModifierPcPosReduced))
@@ -723,6 +730,7 @@ modifiersTable = HM.fromList
         ,("reassignment_duration_factor"    , ("MODIFIER_REASSIGNMENT_DURATION_FACTOR", MsgModifierPcNegReduced))
         ,("skill_bonus_factor"              , ("MODIFIER_UNIT_LEADER_SKILL_BONUS_FACTOR", MsgModifierPcPosReduced))
         ,("wounded_chance_factor"           , ("MODIFIER_WOUNDED_CHANCE_FACTOR", MsgModifierPcNegReduced))
+        ,("shore_bombardment_bonus"         , ("MODIFIER_SHORE_BOMBARDMENT", MsgModifierPcPosReduced))
 
         -- targeted
         ,("extra_trade_to_target_factor"    , ("MODIFIER_TRADE_TO_TARGET_FACTOR", MsgModifierPcPosReduced))
@@ -731,6 +739,7 @@ modifiersTable = HM.fromList
         ,("attack_bonus_against_cores"      , ("MODIFIER_ATTACK_BONUS_AGAINST_A_COUNTRY_ON_ITS_CORES", MsgModifierPcPosReduced))
         ,("cic_to_target_factor"            , ("MODIFIER_CIC_TO_TARGET_FACTOR", MsgModifierPcNegReduced))
         ,("mic_to_target_factor"            , ("MODIFIER_MIC_TO_TARGET_FACTOR", MsgModifierPcNegReduced))
+        ,("targeted_legitimacy_daily"       , ("MODIFIER_TARGETED_LEGITIMACY_DAILY", MsgModifierColourPos))
         ,("defense_bonus_against"           , ("MODIFIER_DEFENSE_BONUS_AGAINST_A_COUNTRY", MsgModifierPcPosReduced))
 
         -- equipment/stats
@@ -806,8 +815,10 @@ addFieldMarshalRole :: (Monad m, HOI4Info g) => (Text -> ScriptMessage) -> State
 addFieldMarshalRole msg stmt@[pdx| %_ = @scr |] = do
         let (name, _) = extractStmt (matchLhsText "character") scr
         nameloc <- case name of
-            Just [pdx| character = $id |] -> getCharacterName id
-            _ -> return ""
+            Just [pdx| character = ?id |] -> getCharacterName id
+            _ -> case extractStmt (matchLhsText "name") scr of
+                (Just [pdx| name = ?id |],_) -> getCharacterName id
+                _-> return ""
         msgToPP $ msg nameloc
 addFieldMarshalRole _ stmt = preStatement stmt
 
@@ -833,11 +844,11 @@ removeAdvisorRole stmt@[pdx| %_ = @scr |] =
         msgToPP $ MsgRemoveAdvisorRole "" "" slot
 removeAdvisorRole stmt = preStatement stmt
 
-hasCharacter :: (HOI4Info g, Monad m) => StatementHandler g m
-hasCharacter stmt@[pdx| %_ = ?txt |] = do
+withCharacter :: (HOI4Info g, Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
+withCharacter msg stmt@[pdx| %_ = ?txt |] = do
     chaname <- getCharacterName txt
-    msgToPP $ MsgHasCharacter chaname
-hasCharacter stmt = preStatement stmt
+    msgToPP $ msg chaname
+withCharacter _ stmt = preStatement stmt
 
 addAdvisorRole :: (Monad m, HOI4Info g) => StatementHandler g m
 addAdvisorRole stmt@[pdx| %_ = @scr |] = do
@@ -873,7 +884,7 @@ parseAdvisor stmt@[pdx| %_ = @scr |] = do
     resmsg <- maybe (return []) (indentUp . handleResearchBonus) resbonus
     traitmsg <- case traits of
         Just [pdx| %_ = @arr |] -> do
-            let traitbare = map getbaretraits arr
+            let traitbare = mapMaybe getbaretraits arr
             concatMapM getLeaderTraits traitbare
         _-> return []
     slotloc <- maybe (return "") (\case
@@ -911,7 +922,7 @@ parseLeader stmt@[pdx| %_ = @scr |] = do
         (traits, _) = extractStmt (matchLhsText "traits") rest
     traitmsg <- case traits of
         Just [pdx| %_ = @arr |] -> do
-            let traitbare = map getbaretraits arr
+            let traitbare = mapMaybe getbaretraits arr
             concatMapM ppHt traitbare
         _-> return []
     ideoloc <- maybe (return "") (\case
@@ -935,7 +946,7 @@ createLeader stmt@[pdx| %_ = @scr |] = do
             _ -> return ""
         traitmsg <- case traits of
             Just [pdx| %_ = @arr |] -> do
-                let traitbare = map getbaretraits arr
+                let traitbare = mapMaybe getbaretraits arr
                 concatMapM ppHt traitbare
             _-> return []
         ideoloc <- maybe (return "") (\case
@@ -1002,9 +1013,9 @@ ppHt trait = do
     traitmsg' <- indentUp $ getLeaderTraits trait
     return $ namemsg : traitmsg'
 
-getbaretraits :: GenericStatement -> Text
-getbaretraits (StatementBare (GenericLhs trait [])) = trait
-getbaretraits stmt = ""
+getbaretraits :: GenericStatement -> Maybe Text
+getbaretraits (StatementBare (GenericLhs trait [])) = Just trait
+getbaretraits stmt = Nothing
 
 getCharacterName :: (Monad m, HOI4Info g) =>
     Text -> PPT g m Text
@@ -1014,6 +1025,55 @@ getCharacterName idn = do
         Just charid -> return $ chaName charid
         _ -> getGameL10n idn
 
+-- operatives
+
+data CreateOperative = CreateOperative
+        {   co_bypass_recruitment :: Bool
+        ,   co_name :: Text
+        ,   co_traits :: Maybe [Text]
+        ,   co_nationalities :: Maybe [Text]
+        ,   co_available_to_spy_master :: Bool
+        }
+
+newCO :: CreateOperative
+newCO = CreateOperative undefined "" Nothing Nothing False
+
+createOperativeLeader :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
+createOperativeLeader stmt@[pdx| %_ = @scr |]
+    = ppCO (foldl' addLine newCO scr)
+    where
+        addLine :: CreateOperative -> GenericStatement -> CreateOperative
+        addLine co [pdx| bypass_recruitment = %rhs |]
+            | GenericRhs "yes" [] <- rhs = co { co_bypass_recruitment = True }
+            | GenericRhs "no" [] <- rhs = co { co_bypass_recruitment = False }
+        addLine co [pdx| name = ?txt |] = co {co_name = txt}
+        addLine co [pdx| traits = @arr |] =
+            let traits = mapMaybe getbaretraits arr
+            in co {co_traits = Just traits}
+        addLine co [pdx| nationalities = @arr |] =
+            let nats = mapMaybe getbaretraits arr
+            in co {co_nationalities = Just nats}
+        addLine co [pdx| available_to_spy_master = %rhs |]
+            | GenericRhs "yes" [] <- rhs = co { co_available_to_spy_master = True }
+            | otherwise = co
+        addLine co stmt = co
+
+        ppCO co = do
+            natmsg <- case co_nationalities co of
+                    Just nats -> do
+                        flagged <- mapM (flagText (Just HOI4Country)) nats
+                        return $ T.intercalate ", " flagged
+                    _ -> return ""
+            basemsg <- msgToPP $ MsgCreateOperativeLeader (co_name co) natmsg (co_bypass_recruitment co) (co_available_to_spy_master co)
+            traitsmsg <- case co_traits co of
+                Just traits -> concatMapM (\t -> do
+                    namemsg <- indentUp $ plainMsg' ("'''" <> t <> "'''")
+                    traitmsg <- indentUp $ getUnitTraits t
+                    return $ namemsg : traitmsg
+                    ) traits
+                _ -> return []
+            return $ basemsg ++ traitsmsg
+createOperativeLeader stmt = preStatement stmt
 
 ------------
 -- traits --
@@ -1082,23 +1142,28 @@ addRemoveUnitTrait _ stmt = preStatement stmt
 
 data AddTimedTrait = AddTimedTrait
     { adt_trait :: Text
-    , adt_days :: Double
+    , adt_days :: Maybe Double
+    , adt_daysvar :: Maybe Text
     }
 
 newADT :: AddTimedTrait
-newADT = AddTimedTrait undefined undefined
+newADT = AddTimedTrait undefined Nothing Nothing
 addTimedTrait ::  (Monad m, HOI4Info g) => GenericStatement -> PPT g m IndentedMessages
 addTimedTrait stmt@[pdx| %_ = @scr |] =
     ppADT (foldl' addLine newADT scr)
 
     where
         addLine adt [pdx| trait = $txt |] = adt { adt_trait = txt }
-        addLine adt [pdx| days = !num |] = adt { adt_days = num }
+        addLine adt [pdx| days = !num |] = adt { adt_days = Just num }
+        addLine adt [pdx| days = $txt |] = adt { adt_daysvar = Just txt }
         addLine adt stmt = trace ("Unknown in addTimedTrait: " ++ show stmt) adt
         ppADT adt = do
             traitloc <- getGameL10n (adt_trait adt)
             traitmsg <- getUnitTraits (adt_trait adt)
-            baseMsg <- msgToPP $ MsgAddTimedUnitLeaderTrait traitloc (adt_days adt)
+            baseMsg <- case (adt_days adt, adt_daysvar adt) of
+                (Just days,_)-> msgToPP $ MsgAddTimedUnitLeaderTrait traitloc days
+                (_, Just daysvar)->msgToPP $ MsgAddTimedUnitLeaderTraitVar traitloc daysvar
+                _-> msgToPP $ MsgAddTimedUnitLeaderTraitVar traitloc "<!-- Check Script -->"
             return $ baseMsg ++ traitmsg
 addTimedTrait stmt = preStatement stmt
 
