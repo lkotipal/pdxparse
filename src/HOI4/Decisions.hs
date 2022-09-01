@@ -373,7 +373,8 @@ decisionAddSection dec stmt
                 _ -> dec
             "targeted_modifier" -> case rhs of -- effects for country/state targeted and duration?
                 CompoundRhs [] -> dec -- empty, treat as if it wasn't there
-                CompoundRhs scr -> dec { dec_targeted_modifier = Just stmt }
+                CompoundRhs scr -> let oldstmt = fromMaybe [] (dec_targeted_modifier dec) in
+                    dec { dec_targeted_modifier = Just (oldstmt ++ [stmt]) }
                 _ -> dec
             "cancel_if_not_visible" -> case rhs of -- cancels mission if visible is false
                 GenericRhs "yes" [] -> dec { dec_cancel_if_not_visible = True }
@@ -470,7 +471,7 @@ ppdecision dec gfx = do
     custom_cost_trigger_pp'd  <- decArg "custom_cost_trigger" dec_custom_cost_trigger ppScript
     activation_pp'd <- decArg "activation" dec_activation ppScript
     modifier_pp'd <- setIsInEffect True (decArg "modifier" dec_modifier ppStatement)
-    targetedModifier_pp'd <- setIsInEffect True (decArg "targeted_modifier" dec_targeted_modifier ppStatement)
+    targetedModifier_pp'd <- setIsInEffect True (decArg "targeted_modifier" dec_targeted_modifier ppScript)
     name_loc <- getGameL10n name
     icon_pp'd <- case dec_icon dec of
             Just (HOI4DecisionIconSimple txt) ->

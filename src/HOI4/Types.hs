@@ -391,7 +391,7 @@ data HOI4Decision = HOI4Decision
     ,   dec_target_array :: Maybe Text
     ,   dec_targets_dynamic :: Bool
     ,   dec_target_trigger :: Maybe GenericScript
-    ,   dec_targeted_modifier :: Maybe GenericStatement
+    ,   dec_targeted_modifier :: Maybe GenericScript
     ,   dec_state_target :: Bool
     ,   dec_ai_will_do :: Maybe AIWillDo -- ^ Factors affecting whether an AI
                                          --   will take the decision when available
