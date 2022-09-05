@@ -2226,7 +2226,7 @@ instance RenderMessage Script ScriptMessage where
                 , "|modifiers="
                 ]
         MsgEffectBoxEnd
-            -> "}}"
+            -> "}}\n"
         MsgShowIdea {scriptMessageLoc = _loc, scriptMessageKey = _key}
             -> mconcat
                 [ _loc
@@ -3242,8 +3242,8 @@ instance RenderMessage Script ScriptMessage where
         MsgHasDefensiveWar { scriptMessageYn = _yn}
             -> mconcat
                 [ "Is "
-                , toMessage (ifThenElseT _yn "" "''not''")
-                , " in a defensive war"
+                , toMessage (ifThenElseT _yn "" "''not'' ")
+                , "in a defensive war"
                 ]
         MsgLoadFocusTree { scriptMessageWhat = _what }
             -> mconcat
