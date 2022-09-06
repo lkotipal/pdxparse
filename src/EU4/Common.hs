@@ -652,7 +652,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("rr_jacobins_influence"                 , handleModifierWithIcon "The jacobins influence" "jacobin influence" plainNumSign)
         ,("rr_royalists_influence"                , handleModifierWithIcon "The imperials influence" "imperial influence" plainNumSign)
         ,("settle_cost"                           , handleModifier "MODIFIER_SETTLE_COST" (reducedNum (colourPcSign False)))
-        ,("statewide_governing_cost"              , handleModifier "MODIFIER_STATEWIDE_GOVERNING_COST" (reducedNum (colourPcSign False)))
+        ,("statewide_governing_cost"              , handleModifierWithIcon "MODIFIER_STATEWIDE_GOVERNING_COST" "state governing cost" (reducedNum (colourPcSign False)))
         ,("supply_limit_modifier"                 , handleModifier "SUPPLY_LIMIT_MODIFIER" (reducedNum (colourPcSign True)))
         ,("temples_influence"                     , handleModifierWithIcon "Commanderies influence" "temples influence" plainNumSign)
         ,("tolerance_of_heathens_capacity"        , handleModifier "MODIFIER_TOLERANCE_OF_HEATHENS_CAPACITY" (colourNumSign True))

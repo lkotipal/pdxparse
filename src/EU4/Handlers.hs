@@ -871,6 +871,7 @@ scriptIconFileTable = HM.fromList
     ,("establish holy order cost", ("", "establish holy order cost"))
     ,("fleet movement speed", ("", "fleet movement speed"))
     ,("hostile fleet attrition", ("", "hostile fleet attrition"))
+    ,("local prosperity growth", ("", "prosperity"))
     ,("maximum tolerance of heathens", ("", "maximum tolerance of heathens"))
     ,("maximum tolerance of heretics", ("", "maximum tolerance of heretics"))
     ,("may establish siberian frontiers", ("", "Siberian frontier"))
