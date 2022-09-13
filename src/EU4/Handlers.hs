@@ -3269,6 +3269,7 @@ isInWar stmt@[pdx| %_ = @scr |]
     where
         handleLine :: (EU4Info g, Monad m) => StatementHandler g m
         handleLine [pdx| duration = !dur |] = msgToPP $ MsgDurationAtLeast dur
+        handleLine [pdx| war_score = !warscore |] = msgToPP $ MsgWarScore (iconText "war score") warscore
         handleLine [pdx| casus_belli = $cb |] = msgToPP =<< do
             cbText <- getGameL10n cb
             return $ MsgCasusBelliIs cbText
