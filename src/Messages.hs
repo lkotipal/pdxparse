@@ -793,6 +793,7 @@ data ScriptMessage
     | MsgGenericTextWithIcon {scriptMessageIcon :: Text, text :: Text}
     | MsgGenericModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double, locModifierName :: Text, amtTransformer :: Double -> Doc}
     | MsgGenericModifierDlcOnly {scriptMessageIcon :: Text, scriptMessageAmt :: Double, locModifierName :: Text, amtTransformer :: Double -> Doc}
+    | MsgGenericAtLeast {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text, amtTransformer :: Double -> Doc}
     | MsgAddStabilityOrAdm
     | MsgAddTrust {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAddTrustMutual {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
@@ -5776,6 +5777,14 @@ instance RenderMessage Script ScriptMessage where
                 , "|"
                 , toMessage (_amtTransformer _amt)
                 , "}}"
+                ]
+        MsgGenericAtLeast {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageWhat = _what, amtTransformer = _amtTransformer}
+            -> mconcat
+                [ "Has at least "
+                , if T.null _icon then "" else T.append _icon " "
+                , toMessage (_amtTransformer _amt)
+                , " "
+                , _what
                 ]
         MsgAddStabilityOrAdm
             -> "{{add stability or adm power}}"

@@ -171,6 +171,8 @@ module EU4.Handlers (
     ,   handleModifierWithIconPlural
     ,   handleModifierDlcOnly
     ,   handleModifierAlwaysYesWithIcon
+    ,   handleAtLeast
+    ,   handleAtLeastWithIcon
     ) where
 
 import Data.Char (toUpper, toLower, isUpper)
@@ -4407,6 +4409,19 @@ handleModifierAlwaysYesWithIcon :: (EU4Info g, Monad m) => Text -> Text -> State
 handleModifierAlwaysYesWithIcon message iconKey [pdx| %_ = ?rhs |] | T.toLower rhs == "yes" = do
     msgToPP $ MsgGenericTextWithIcon (iconText iconKey) message
 handleModifierAlwaysYesWithIcon _ _  stmt = plainMsg $ pre_statement' stmt
+
+handleAtLeast :: (EU4Info g, Monad m) => Text -> (Double -> Doc) -> StatementHandler g m
+handleAtLeast locKey = handleAtLeastWithIcon locKey ""
+
+handleAtLeastWithIcon :: (EU4Info g, Monad m) =>
+    Text
+    -> Text
+    -> (Double -> Doc)
+        -> StatementHandler g m
+handleAtLeastWithIcon locKey iconKey valueTransformer [pdx| %_ = !amt |] = do
+    loc <- getGameL10n locKey
+    msgToPP $ MsgGenericAtLeast (iconText iconKey) amt loc valueTransformer
+handleAtLeastWithIcon _ _ _  stmt = plainMsg $ pre_statement' stmt
 
 -- | statement handler for a list of lines.
 -- Lines which are prefixed with one or more *, will be indented accordingly

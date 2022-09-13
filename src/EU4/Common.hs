@@ -97,6 +97,7 @@ ppHandlers = foldl' Tr.unionL Tr.empty
     , handlersTagOrProvince -- merge?
     , handlersYesNo
     , handlersNumericOrTag
+    , handlersAtLeast
     , handlersSignedNumeric
     , handlersNumProvinces
     , handlersTextValue
@@ -1707,6 +1708,15 @@ handlersNumericOrTag = Tr.fromList
         ,("production_efficiency", numericOrTagIcon "production efficiency" MsgProdEff MsgProdEffAs)
         ,("total_development"    , numericOrTagIcon "development" MsgTotalDevelopment MsgTotalDevelopmentAs)
         ,("total_own_and_non_tributary_subject_development" , numericOrTagIcon "development" MsgOwnOrNonTribSubjectDevelopment MsgOwnOrNonTribSubjectDevelopmentAs)
+        ]
+-- | Handlers for triggers with at least
+handlersAtLeast :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
+handlersAtLeast = Tr.fromList
+        [("current_institution"         , handleAtLeastWithIcon "Progress towards the newest institution" "institution" plainPc)
+        ,("current_size_of_parliament"  , handleAtLeastWithIcon "Seats in parliament" "parliament" plainNum)
+        ,("diplomatic_reputation"       , handleAtLeastWithIcon "diplomatic_reputation" "diplomatic reputation" plainNum)
+        ,("land_maintenance"            , handleAtLeastWithIcon "land_maintenance" "land maintenance" (reducedNum plainPc))
+        ,("naval_maintenance"           , handleAtLeastWithIcon "naval_maintenance" "naval maintenance" (reducedNum plainPc))
         ]
 
 -- | Handlers for signed numeric statements
