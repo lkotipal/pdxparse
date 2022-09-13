@@ -1133,6 +1133,7 @@ data ScriptMessage
     | MsgCreateGuarantee {scriptMessageWhom :: Text}
     | MsgCreateSubject {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgHeirClaim { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
+    | MsgExtendGoldenAge { scriptMessageAmt :: Double }
     | MsgExtendRegency { scriptMessageAmt :: Double }
     | MsgAddPowerProjection {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgRemoveCasusBelli {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
@@ -7619,6 +7620,12 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " [[Heir claim|claim strength]] is at least "
                 , toMessage (roundNum _amt)
+                ]
+        MsgExtendGoldenAge {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Extend the current golden age by "
+                , toMessage (roundNum _amt)
+                , " months"
                 ]
         MsgExtendRegency {scriptMessageAmt = _amt}
             -> mconcat
