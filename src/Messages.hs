@@ -1370,6 +1370,7 @@ data ScriptMessage
     | MsgSubsidisedPercentAmount {scriptMessageAmt :: Double }
     | MsgSetCenterOfTrade2 {scriptMessageIcon1 :: Text, scriptMessageIcon2 :: Text}
     | MsgSetCenterOfTrade3 {scriptMessageIcon1 :: Text, scriptMessageIcon2 :: Text, scriptMessageIcon3 :: Text}
+    | MsgGreatPowerRank {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -8999,7 +9000,7 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " accepted cultures"
                 ]
-        MsgYearsOfTradeIncome  {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgYearsOfTradeIncome {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Gain "
                 , toMessage (roundNum _amt)
@@ -9007,7 +9008,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " trade income"
                 ]
-        MsgAddFavors {scriptMessageWho = _who, scriptMessageAmt = _amt }
+        MsgAddFavors {scriptMessageWho = _who, scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
                 , " "
@@ -9054,6 +9055,14 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True 2)
                 , " base production"
+                ]
+        MsgGreatPowerRank {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Is a "
+                , _icon
+                , " great power with rank "
+                , toMessage (roundNum _amt)
+                , " or worse or not a great power"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

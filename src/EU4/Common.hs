@@ -422,6 +422,7 @@ handlersNumericIcons = Tr.fromList
         ,("gold_income_percentage"   , numericIcon "gold" MsgGoldIncomePercentage)
         ,("government_reform_progress" , numericIcon "reform progress" MsgGovernmentReformProgress)
         ,("grand_captain"            , numericIconLoc "grand captain" "grand_captain" MsgHasAdvisorLevel)
+        ,("great_power_rank"         , numericIcon "great power" MsgGreatPowerRank)
         ,("grown_by_development"     , numericIcon "development" MsgGrownByDevelopment)
         ,("grown_by_states"          , numericIcon "states" MsgGrownByStates)
         ,("heir_adm"                 , numericIcon "adm" MsgHeirADM)
