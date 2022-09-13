@@ -163,6 +163,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("increase_legitimacy_huge_effect"  , rhsAlwaysYes MsgIncreaseLegitimacyHugeEffect)
         ,("increase_legitimacy_medium_effect", rhsAlwaysYes MsgIncreaseLegitimacyMediumEffect)
         ,("increase_legitimacy_small_effect" , rhsAlwaysYes MsgIncreaseLegitimacySmallEffect)
+        ,("is_hegemon"             , rhsAlwaysYes (MsgGenericText "Is a [[hegemon]]"))
         ,("is_subject_other_than_tributary_trigger" , rhsAlwaysYes MsgIsSubjectOtherThanTributary)
         ,("kill_ruler"             , rhsAlwaysYes MsgRulerDies)
         ,("may_agitate_for_liberty", rhsAlwaysYes MsgMayAgitateForLiberty) -- Espionage: Destabilizing Efforts
