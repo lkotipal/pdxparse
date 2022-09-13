@@ -125,6 +125,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("add_loot_from_province_effect", rhsAlwaysYes MsgAddLootFromProvinceEffect)
         ,("add_mandate_effect"     , rhsAlwaysYes MsgAddMandateEffect)
         ,("add_mandate_large_effect", rhsAlwaysYes MsgAddMandateLargeEffect)
+        ,("add_manufactory" , rhsAlwaysYes MsgAddManufactoryEffect)
         ,("add_meritocracy_effect" , rhsAlwaysYes MsgAddMeritocracyEffect)
         ,("add_meritocracy_large_effect", rhsAlwaysYes MsgAddMeritocracyLargeEffect)
         ,("add_reform_progress_medium_effect", rhsAlwaysYes MsgAddReformProgressMediumEffect)

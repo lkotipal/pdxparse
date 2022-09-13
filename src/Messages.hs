@@ -1397,6 +1397,7 @@ data ScriptMessage
     | MsgJoinLeague {scriptMessageWhat :: Text}
     | MsgMercTemplate {scriptMessageWhat :: Text}
     | MsgHiredForMonths {scriptMessageAmt :: Double }
+    | MsgAddManufactoryEffect
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9267,6 +9268,8 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " months"
                 ]
+        MsgAddManufactoryEffect
+            -> "Build the manufactory for the trade good of this province"
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
 -- FIXME: What's the significance of this?
