@@ -691,6 +691,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("administrative_efficiency"             , handleModifier "MODIFIER_ADMINISTRATIVE_EFFICIENCY" (reducedNum (colourPcSign True)))
         ,("imperial_mandate"                      , handleModifierWithIcon "{{DLC-only|Mandate growth modifier}}" "mandate growth modifier" (colourNumSign True))
         ,("land_forcelimit"                       , handleModifier "LAND_FORCELIMIT" (colourNumSign True))
+        ,("naval_forcelimit"                      , handleModifier "NAVAL_FORCELIMIT" (colourNumSign True))
         ,("liberty_desire"                        , handleModifier "MODIFIER_LIBERTY_DESIRE" (colourPcSign False))
         ,("local_autonomy"                        , handleModifierWithIcon "LOCAL_AUTONOMY_MOD" "local autonomy" (colourNumSign False))
         ,("papal_influence"                       , handleModifierWithIcon "YEARLY_PAPAL_INFLUENCE" "papal influence" (colourNumSign True))
