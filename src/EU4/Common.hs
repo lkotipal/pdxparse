@@ -189,6 +189,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("reduce_eunuchs_effect"  , rhsAlwaysYes MsgReduceEunuchsEffect)
         ,("reduce_innovativeness_small_effect", rhsAlwaysYes MsgAddInnovativenessSmallEffect)
         ,("reduce_temples_effect"  , rhsAlwaysYes MsgReduceTemplesEffect)
+        ,("reduce_legitimacy_large_effect", rhsAlwaysYes MsgReduceLegitimacyLargeEffect)
         ,("reduce_legitimacy_medium_effect", rhsAlwaysYes MsgReduceLegitimacyEffect)
         ,("reduce_legitimacy_small_effect", rhsAlwaysYes MsgReduceLegitimacySmallEffect)
         ,("reduce_mandate_effect", rhsAlwaysYes MsgReduceMandateEffect)

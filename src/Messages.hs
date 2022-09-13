@@ -835,6 +835,7 @@ data ScriptMessage
     | MsgReduceBureaucratsEffect
     | MsgReduceTemplesEffect
     | MsgReduceEunuchsEffect
+    | MsgReduceLegitimacyLargeEffect
     | MsgReduceLegitimacyEffect
     | MsgReduceLegitimacySmallEffect
     | MsgReduceMandateEffect
@@ -5960,6 +5961,8 @@ instance RenderMessage Script ScriptMessage where
             -> "If DLC Mandate of Heaven is ''not'' active, the Offices of Maritime Trade faction loses 10 influence"
         MsgReduceTemplesEffect
             -> "If DLC Mandate of Heaven is ''not'' active, the Commanderies of the Five Armies faction loses 10 influence"
+        MsgReduceLegitimacyLargeEffect
+            -> "Lose {{icon|legitimacy}} {{red|25}} legitimacy, {{icon|horde unity}} {{red|25}} horde unity, {{icon|devotion}} {{red|25}} devotion, or {{icon|republican tradition}} {{red|12}} republican tradition as appropriate"
         MsgReduceLegitimacyEffect
             -> "Lose {{icon|legitimacy}} {{red|10}} legitimacy, {{icon|horde unity}} {{red|10}} horde unity, {{icon|devotion}} {{red|10}} devotion, or {{icon|republican tradition}} {{red|5}} republican tradition as appropriate"
         MsgReduceLegitimacySmallEffect
