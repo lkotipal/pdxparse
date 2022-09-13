@@ -301,6 +301,7 @@ handlersNumeric = Tr.fromList
         ,("num_of_non_tributary_subjects"    , numeric MsgNumNonTribSubjects)
         ,("num_of_owned_and_controlled_institutions" , numeric MsgNumOwnInstitutionProvinces)
         ,("num_of_ports"                     , numeric MsgNumPorts) -- same as num_of_total_ports?
+        ,("num_of_provinces_in_states"       , numeric MsgNumOfProvincesInStates)
         ,("num_of_rajput"                    , numeric MsgNumRajput)
         ,("num_of_rebel_armies"              , numeric MsgNumRebelArmies)
         ,("num_of_rebel_controlled_provinces", numeric MsgNumRebelControlledProvinces)

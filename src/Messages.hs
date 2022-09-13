@@ -1375,6 +1375,7 @@ data ScriptMessage
     | MsgIsOrWasTag {scriptMessageWhom :: Text}
     | MsgGreatPowerRank {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgIsAbsolutismActive {scriptMessageYn :: Bool}
+    | MsgNumOfProvincesInStates {scriptMessageAmt :: Double }
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9090,6 +9091,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "The current age "
                 , toMessage (ifThenElseT _yn "has" "does ''not'' have")
                 , " the {{icon|absolutism|28px}} absolutism mechanic"
+                ]
+        MsgNumOfProvincesInStates {scriptMessageAmt = _amt }
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " provinces in states"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
