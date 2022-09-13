@@ -1274,17 +1274,17 @@ handlersFlagOrProvince = Tr.fromList
 -- | Handlers for statements whose RHS is a number OR a tag/pronoun, with icon
 handlersNumericOrFlag :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericOrFlag = Tr.fromList
-        [("adm_tech"             , withTagOrNumber "adm tech" MsgADMTech MsgADMTechAs)
-        ,("army_size"            , withTagOrNumber "" MsgArmySize MsgArmySizeMatches) -- FIXME: Don't really need icon
-        ,("development"          , withTagOrNumber "development" MsgDevelopment MsgDevelopmentAs) -- Can't really be a tag, but it can be "CAPITAL"
-        ,("land_forcelimit"      , withTagOrNumber "land force limit" MsgLandForcelimit MsgLandForcelimitAs)
-        ,("land_morale"          , withTagOrNumber "morale of armies" MsgMoraleOfArmies MsgMoraleOfArmiesAs)
-        ,("monthly_income"       , withTagOrNumber "ducats" MsgMonthlyIncome MsgMonthlyIncomeAs)
-        ,("navy_size"            , withTagOrNumber "" MsgNavySize MsgNavySizeMatches) -- FIXME: Don't really need icon
-        ,("num_of_light_ship"    , withTagOrNumber "light ship" MsgNumLightShips MsgNumLightShipsMatches)
-        ,("num_of_heavy_ship"    , withTagOrNumber "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
-        ,("num_of_galley"        , withTagOrNumber "galley" MsgNumGalleyShips MsgNumGalleyShipsMatches)
-        ,("num_of_transport"     , withTagOrNumber "transport" MsgNumTransportShips MsgNumTransportShipsMatches)
+        [("adm_tech"             , numericOrTagIcon "adm tech" MsgADMTech MsgADMTechAs)
+        ,("army_size"            , numericOrTag MsgArmySize MsgArmySizeMatches) -- FIXME: Don't really need icon
+        ,("development"          , numericOrTagIcon "development" MsgDevelopment MsgDevelopmentAs) -- Can't really be a tag, but it can be "CAPITAL"
+        ,("land_forcelimit"      , numericOrTagIcon "land force limit" MsgLandForcelimit MsgLandForcelimitAs)
+        ,("land_morale"          , numericOrTagIcon "morale of armies" MsgMoraleOfArmies MsgMoraleOfArmiesAs)
+        ,("monthly_income"       , numericOrTagIcon "ducats" MsgMonthlyIncome MsgMonthlyIncomeAs)
+        ,("navy_size"            , numericOrTag MsgNavySize MsgNavySizeMatches) -- FIXME: Don't really need icon
+        ,("num_of_light_ship"    , numericOrTagIcon "light ship" MsgNumLightShips MsgNumLightShipsMatches)
+        ,("num_of_heavy_ship"    , numericOrTagIcon "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
+        ,("num_of_galley"        , numericOrTagIcon "galley" MsgNumGalleyShips MsgNumGalleyShipsMatches)
+        ,("num_of_transport"     , numericOrTagIcon "transport" MsgNumTransportShips MsgNumTransportShipsMatches)
         ]
 
 -- TODO: parse advisor files

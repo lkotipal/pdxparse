@@ -954,10 +954,10 @@ data ScriptMessage
     | MsgHasConsortRegency {scriptMessageYn :: Bool}
     | MsgIsOwnedByTradeCompany {scriptMessageYn :: Bool}
     | MsgWasTag {scriptMessageWhom :: Text}
-    | MsgArmySize {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgArmySizeMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgNavySize {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavySizeMatches {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgArmySize {scriptMessageAmt :: Double}
+    | MsgArmySizeMatches { scriptMessageWhom :: Text}
+    | MsgNavySize {scriptMessageAmt :: Double}
+    | MsgNavySizeMatches {scriptMessageWhom :: Text}
     | MsgAddCuriaTreasury {scriptMessageAmt :: Double}
     | MsgReduceCuriaTreasury {scriptMessageAmt :: Double}
     | MsgHasClimate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -6587,22 +6587,22 @@ instance RenderMessage Script ScriptMessage where
                 [ "The country was previously "
                 , _whom
                 ]
-        MsgArmySize {scriptMessageIcon = _, scriptMessageAmt = _amt}
+        MsgArmySize {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Army size is at least "
                 , toMessage (plainNum _amt)
                 ]
-        MsgArmySizeMatches {scriptMessageIcon = _, scriptMessageWhom = _whom}
+        MsgArmySizeMatches {scriptMessageWhom = _whom}
             -> mconcat
                 ["Army size is at least as large as that of "
                 , _whom
                 ]
-        MsgNavySize {scriptMessageIcon = _, scriptMessageAmt = _amt}
+        MsgNavySize {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Navy size is at least "
                 , toMessage (plainNum _amt)
                 ]
-        MsgNavySizeMatches {scriptMessageIcon = _, scriptMessageWhom = _whom}
+        MsgNavySizeMatches {scriptMessageWhom = _whom}
             -> mconcat
                 ["Navy size is at least as large as that of "
                 , _whom

@@ -40,7 +40,6 @@ module EU4.Handlers (
     ,   withFlag
     ,   withBool
     ,   withFlagOrBool
-    ,   withTagOrNumber
     ,   numericIcon
     ,   numericIconLoc
     ,   boolIconLoc
@@ -1235,37 +1234,29 @@ numeric :: (IsGameState (GameState g), Monad m) =>
 numeric msg [pdx| %_ = !n |] = msgToPP $ msg n
 numeric _ stmt = plainMsg $ pre_statement' stmt
 
--- | Handler for statements where the RHS is either a number or a tag.
+-- | Handler for statements where the RHS is either a number or a tag/prounoun.
 numericOrTag :: (EU4Info g, Monad m) =>
     (Double -> ScriptMessage)
         -> (Text -> ScriptMessage)
         -> StatementHandler g m
-numericOrTag numMsg tagMsg stmt@[pdx| %_ = %rhs |] = msgToPP =<<
-    case floatRhs rhs of
-        Just n -> return $ numMsg n
-        Nothing -> case textRhs rhs of
-            Just t -> do -- assume it's a country
-                tflag <- flag (Just EU4Country) t
-                return $ tagMsg (Doc.doc2text tflag)
-            Nothing -> return (preMessage stmt)
-numericOrTag _ _ stmt = preStatement stmt
+numericOrTag numMsg _ [pdx| %_ = !num |]
+    = msgToPP $ numMsg num
+numericOrTag _ tagMsg scr@[pdx| %_ = $_ |]
+    = withFlag tagMsg scr
+numericOrTag  _ _ stmt = plainMsg $ pre_statement' stmt
 
--- | Handler for statements where the RHS is either a number or a tag, that
+-- | Handler for statements where the RHS is either a number or a tag/prounoun, that
 -- also require an icon.
 numericOrTagIcon :: (EU4Info g, Monad m) =>
     Text
         -> (Text -> Double -> ScriptMessage)
         -> (Text -> Text -> ScriptMessage)
         -> StatementHandler g m
-numericOrTagIcon icon numMsg tagMsg stmt@[pdx| %_ = %rhs |] = msgToPP =<<
-    case floatRhs rhs of
-        Just n -> return $ numMsg (iconText icon) n
-        Nothing -> case textRhs rhs of
-            Just t -> do -- assume it's a country
-                tflag <- flag (Just EU4Country) t
-                return $ tagMsg (iconText icon) (Doc.doc2text tflag)
-            Nothing -> return (preMessage stmt)
-numericOrTagIcon _ _ _ stmt = preStatement stmt
+numericOrTagIcon iconkey numMsg _ [pdx| %_ = !num |]
+    = msgToPP $ numMsg (iconText iconkey) num
+numericOrTagIcon iconkey _ tagMsg scr@[pdx| %_ = $_ |]
+    = withFlagAndIcon iconkey tagMsg (Just EU4Country) scr
+numericOrTagIcon  _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for a statement referring to a country. Use a flag.
 withFlag :: (EU4Info g, Monad m) =>
@@ -1325,18 +1316,6 @@ withFlagOrBool :: (EU4Info g, Monad m) =>
 withFlagOrBool bmsg _ [pdx| %_ = yes |] = msgToPP (bmsg True)
 withFlagOrBool bmsg _ [pdx| %_ = no  |]  = msgToPP (bmsg False)
 withFlagOrBool _ tmsg stmt = withFlag tmsg stmt
-
--- | Handler for statements whose RHS is a number OR a tag/prounoun, with icon
-withTagOrNumber :: (EU4Info g, Monad m) =>
-    Text
-        -> (Text -> Double -> ScriptMessage)
-        -> (Text -> Text -> ScriptMessage)
-        -> StatementHandler g m
-withTagOrNumber iconkey numMsg _ [pdx| %_ = !num |]
-    = msgToPP $ numMsg (iconText iconkey) num
-withTagOrNumber iconkey _ tagMsg scr@[pdx| %_ = $_ |]
-    = withFlagAndIcon iconkey tagMsg (Just EU4Country) scr
-withTagOrNumber  _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for statements that have a number and an icon.
 numericIcon :: (IsGameState (GameState g), Monad m) =>
