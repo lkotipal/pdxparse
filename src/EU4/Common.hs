@@ -496,6 +496,7 @@ handlersNumericIcons = Tr.fromList
         ,("reform_desire"            , numericIcon "reform desire" MsgReformDesire)
         ,("religious_unity"          , numericIcon "religious unity" MsgReligiousUnity)
         ,("republican_tradition"     , numericIcon "republican tradition" MsgRepTrad)
+        ,("sailors"                  , numericIcon "sailors" MsgSailors)
         ,("sailors_percentage"       , numericIcon "sailors" MsgSailorsPercentage)
         ,("stability"                , numericIcon "stability" MsgStability)
         ,("statesman"                , numericIconLoc "statesman" "statesman" MsgHasAdvisorLevel)

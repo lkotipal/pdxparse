@@ -767,6 +767,7 @@ data ScriptMessage
     | MsgArmyProfessionalism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgArmyProfessionalismAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgGainArmyProfessionalism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgSailors {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSailorsPercentage {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNationalSailorsMod {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCorruption {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -2922,6 +2923,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Has at least "
                 , _icon
+                , " "
                 , toMessage (plainNum (_amt * 1000))
                 , " manpower"
                 ]
@@ -5572,11 +5574,18 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (reducedNum (colourPc True) _amt)
                 , " {{DLC-only|army professionalism}}"
                 ]
+        MsgSailors {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " sailors"
+                ]
         MsgSailorsPercentage {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , "Sailors reserves are at least "
-                , " "
+                , " Sailors reserves are at least "
                 , toMessage (reducedNum (colourPc True) _amt)
                 , " of maximum"
                 ]
