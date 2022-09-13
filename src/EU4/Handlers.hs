@@ -897,6 +897,7 @@ scriptIconFileTable = HM.fromList
     ,("cost to promote mercantilism", ("", "cost to promote mercantilism"))
     ,("establish holy order cost", ("", "establish holy order cost"))
     ,("fleet movement speed", ("", "fleet movement speed"))
+    ,("global monthly devastation", ("", "Devastation"))
     ,("hostile fleet attrition", ("", "hostile fleet attrition"))
     ,("local prosperity growth", ("", "prosperity"))
     ,("maximum tolerance of heathens", ("", "maximum tolerance of heathens"))
