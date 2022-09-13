@@ -2111,6 +2111,8 @@ handlersIgnored = Tr.fromList
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
         ,("show_points_needed_for_livionian_government_of_category" , return $ return []) -- this is a scripted effect which just shows tooltips
+        -- @TODO: revisit the decision to ignore restore_country_name_effect if the effect does anything useful
+        ,("restore_country_name_effect", return $ return []) -- as of 1.34, this effect undoes just one of the many name changes and because of this, it has been ignored by the wiki
         ]
 
 getStatementHandlerByScope :: (EU4Info g, Monad m) => Text -> Maybe EU4Scope -> Maybe (StatementHandler g m)
