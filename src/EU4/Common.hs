@@ -165,6 +165,12 @@ handlersRhsIrrelevant = Tr.fromList
         ,("is_hegemon"             , rhsAlwaysYes (MsgGenericText "Is a [[hegemon]]"))
         ,("is_subject_other_than_tributary_trigger" , rhsAlwaysYes MsgIsSubjectOtherThanTributary)
         ,("kill_ruler"             , rhsAlwaysYes MsgRulerDies)
+        ,("make_ruler_to_legendary_pirate" , genericTextLines [
+                "The ruler gains the following:"
+                , T.concat ["* The personality trait ", iconText "legendary_pirate_personality", " Legendary Pirate as long as the ruler doesn't have 3 traits already"]
+                , "* The flag <tt>historical_pirate</tt> which removes the republican tradition cost from re-election"
+                , "* One monarch point skill in a category which is not already 6"
+        ])
         ,("may_agitate_for_liberty", rhsAlwaysYes MsgMayAgitateForLiberty) -- Espionage: Destabilizing Efforts
         ,("may_infiltrate_administration", rhsAlwaysYes MsgMayInfiltrateAdministration) -- Espionage: Espionage
         ,("may_sabotage_reputation", rhsAlwaysYes MsgMaySabotageReputation) -- Espionage: Rumormongering
