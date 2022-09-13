@@ -2030,6 +2030,7 @@ handlersIgnored = Tr.fromList
         ,("tooltip"       , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
+        ,("show_points_needed_for_livionian_government_of_category" , return $ return []) -- this is a scripted effect which just shows tooltips
         ]
 
 getStatementHandlerByScope :: (EU4Info g, Monad m) => Text -> Maybe EU4Scope -> Maybe (StatementHandler g m)
