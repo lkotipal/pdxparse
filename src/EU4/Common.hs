@@ -1827,6 +1827,7 @@ handlersSpecialComplex = Tr.fromList
         ,("add_faction_influence"        , factionInfluence MsgFactionGainInfluence)
         ,("add_government_power"         , governmentPower)
         ,("add_estate_influence_modifier", estateInfluenceModifier MsgEstateInfluenceModifier)
+        ,("add_latest_building"          , addLatestBuilding)
         ,("add_mutual_opinion_modifier_effect", opinion MsgMutualOpinion MsgMutualOpinionDur)
         ,("add_opinion"                  , opinion MsgAddOpinion MsgAddOpinionDur)
         ,("add_unit_construction"        , addUnitConstruction)

@@ -147,6 +147,7 @@ module EU4.Handlers (
     ,   addLegitimacyEquivalent
     ,   totalStats
     ,   hasBuildingTrigger
+    ,   addLatestBuilding
     ,   productionLeader
     ,   addProvinceTriggeredModifier
     ,   hasHeir
@@ -4128,22 +4129,72 @@ createIndependentEstate stmt = (trace $ "Not handled in createIndependentEstate:
 -----------------------------------------
 hasBuildingTrigger :: forall g m. (EU4Info g, Monad m) => [Text] -> StatementHandler g m
 hasBuildingTrigger buildings stmt@[pdx| %_ = $yn |] = do
-    locAndIcons <- mapM locAndIcon buildings
-    let buildingText = fmtList locAndIcons
+    buildingText <- formatBuildingList buildings
     case T.toLower yn of
         "yes" -> msgToPP $ MsgHasOneOfBuildings True buildingText
         "no" -> msgToPP $ MsgHasOneOfBuildings False buildingText
         _ -> (trace $ "Not handled in hasBuildingTrigger: " ++ show stmt) $ preStatement stmt
-        where
-            locAndIcon b = do
-                loc <- getGameL10n $ "building_" <> b
-                return (iconText b, loc)
-            fmtList [] = ""
-            fmtList ((i,b):bs) = i <> " " <> b <> (case length bs of
-                0 -> ""
-                1 -> " or "
-                _ -> ", ") <> fmtList bs
+
 hasBuildingTrigger _ stmt = (trace $ "Not handled in hasBuildingTrigger: " ++ show stmt) $ preStatement stmt
+
+formatBuildingList :: (EU4Info g, Monad m) => [Text] -> PPT g m Text
+formatBuildingList buildings = do
+    locAndIcons <- mapM locAndIcon buildings
+    return $ fmtList locAndIcons
+    where
+        locAndIcon b = do
+            loc <- getGameL10n $ "building_" <> b
+            return (iconText b, loc)
+        fmtList [] = ""
+        fmtList ((i,b):bs) = i <> " " <> b <> (case length bs of
+            0 -> ""
+            1 -> " or "
+            _ -> ", ") <> fmtList bs
+
+getLatestBuildingMessage :: (EU4Info g, Monad m) => [Text] -> PPT g m ScriptMessage
+getLatestBuildingMessage buildings = do
+    formattedBuildings <- formatBuildingList buildings
+    return $ MsgAddLatestBuilding formattedBuildings
+
+foldCompound "addLatestBuilding" "AddLatestBuilding" "alb"
+    []
+    [CompField "builder" [t|Text|] Nothing True
+    ,CompField "trade" [t|Text|] Nothing False
+    ,CompField "government" [t|Text|] Nothing False
+    ,CompField "production" [t|Text|] Nothing False
+    ,CompField "tax" [t|Text|] Nothing False
+    ,CompField "manpower" [t|Text|] Nothing False
+    ,CompField "sailors" [t|Text|] Nothing False
+    ,CompField "army_forcelimit" [t|Text|] Nothing False
+    ,CompField "navy_forcelimit" [t|Text|] Nothing False
+    ,CompField "coastal" [t|Text|] Nothing False
+    ,CompField "fort" [t|Text|] Nothing False
+    ]
+    [|
+        -- we assume that at most one of them is set
+        if _trade == Just "yes" then
+            getLatestBuildingMessage ["stock_exchange", "trade_depot", "marketplace"]
+        else if _government == Just "yes" then
+            getLatestBuildingMessage ["town_hall", "courthouse"]
+        else if _production == Just "yes" then
+            getLatestBuildingMessage ["counting_house", "workshop"]
+        else if _tax == Just "yes" then
+            getLatestBuildingMessage ["cathedral", "temple"]
+        else if _manpower == Just "yes" then
+            getLatestBuildingMessage ["training_fields", "barracks"]
+        else if _sailors == Just "yes" then
+            getLatestBuildingMessage ["drydock", "dock"]
+        else if _army_forcelimit == Just "yes" then
+            getLatestBuildingMessage ["conscription_center", "regimental_camp"]
+        else if _navy_forcelimit == Just "yes" then
+            getLatestBuildingMessage ["grand_shipyard", "shipyard"]
+        else if _coastal == Just "yes" then
+            getLatestBuildingMessage ["naval_battery", "coastal_defence"]
+        else if _fort == Just "yes" then
+            getLatestBuildingMessage ["fort_18th", "fort_17th", "fort_16th", "fort_15th"]
+        else
+            return $ preMessage stmt
+    |]
 
 -----------------------------------
 -- Handler for production_leader --

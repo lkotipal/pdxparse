@@ -1386,6 +1386,7 @@ data ScriptMessage
     | MsgAddYearsOfOwnedProvinceIncome {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgTotalStats {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgPreviousOwner {scriptMessageWhom :: Text}
+    | MsgAddLatestBuilding {scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9195,6 +9196,11 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Was previously owned by "
                 , _whom
+                ]
+        MsgAddLatestBuilding {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Construct one of the following buildings depending on the available technology: "
+                , _what
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
