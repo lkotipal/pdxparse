@@ -422,7 +422,7 @@ pp_event evt = case (eu4evt_id evt
             -- option_conditions = no (not implemented yet)
             (maybe [] (\app -> ["| after =", PP.line, app, PP.line]) after_pp'd) ++
             ["| options = ", options_pp'd, PP.line
-            ,"| collapse = yes", PP.line
+            -- ,"| collapse = yes", PP.line
             ,"}}", PP.line
             ,"<section end=", evtId, "/>", PP.line
             ]
