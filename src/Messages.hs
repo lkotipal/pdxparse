@@ -1361,6 +1361,7 @@ data ScriptMessage
     | MsgPowerCost {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgUnlockMercCompany {scriptMessageWhat :: Text, scriptMessageFree :: Bool, scriptMessageGlobal :: Bool}
     | MsgDisableRebelsFromSeizeLand {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgNumRulerTraits {scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -8961,6 +8962,12 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " estate "
                 , " will no longer raise any rebels when their land gets seized if their loyalty drops below '''30'''"
+                ]
+        MsgNumRulerTraits {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The ruler has at least "
+                , toMessage (roundNum _amt)
+                , " traits"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
