@@ -1415,9 +1415,9 @@ tryLocAndIcon atom = do
 tryLocAndLocMod :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Text,Text)
 tryLocAndLocMod atom = do
     loc <- tryLoc (HM.lookupDefault atom atom locTable)
-    when (isNothing loc) (traceM $ "tryLocAndLocMod: Localization failed for modifier: " ++ (T.unpack atom))
-    return (maybe mempty id (Just (iconText atom)),
-            maybe ("<tt>" <> atom <> "</tt>") id loc)
+    case loc of
+        Just loc' -> return (iconText (T.toLower loc'), loc')
+        Nothing   -> return $ trace ("tryLocAndLocMod: Localization failed for modifier: " ++ T.unpack atom) (iconText atom, "<tt>" <> atom <> "</tt>")
     where
         locTable :: HashMap Text Text
         locTable = HM.fromList
