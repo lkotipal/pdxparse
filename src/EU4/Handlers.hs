@@ -4377,7 +4377,7 @@ isOrAcceptsReligionGroup stmt =
                 , mconcat ["*The province religion is the state religion of its owner ''and'' in the ", loc," group"]
                 , "*All of the following:"
                 , mconcat ["** The owner has a syncretic religion in the ", loc, " group"]
-                , mconcat ["** The province religion is the state religion of its owner ''or'' is is in the ", loc, " group"]
+                , mconcat ["** The province religion is the state religion of its owner ''or'' is in the ", loc, " group"]
                 ] stmt
         _ -> (trace $ "warning: Not handled by isOrAcceptsReligionGroup: " ++ (show stmt)) $ preStatement stmt
 
