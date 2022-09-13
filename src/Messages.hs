@@ -582,12 +582,7 @@ data ScriptMessage
     | MsgHasReformTier {scriptMessageAmt :: Double}
     | MsgReligionProvinces {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
     | MsgGoodsProvinces {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
-    | MsgHasAristocraticIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
-    | MsgHasEconomicIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
-    | MsgHasDefensiveIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
-    | MsgHasInnovativeIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
-    | MsgHasOffensiveIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
-    | MsgHasMaritimeIdea {scriptMessageName :: Text, scriptMessageNum :: Int}
+    | MsgHasIdeaFromGroup {scriptMessageIcon :: Text, scriptMessageGroup :: Text, scriptMessageName :: Text, scriptMessageNum :: Int}
     | MsgNavyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrimitives {scriptMessageYn :: Bool}
     | MsgRulerIsForeigner {scriptMessageYn :: Bool}
@@ -4492,44 +4487,13 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _name
                 ]
-        MsgHasAristocraticIdea {scriptMessageName = _name, scriptMessageNum = _num}
+        MsgHasIdeaFromGroup {scriptMessageIcon = _icon, scriptMessageGroup = _group, scriptMessageName = _name, scriptMessageNum = _num}
             -> mconcat
-                [ "Has {{icon|aristocratic}} Aristocratic idea "
-                , toMessage (show _num)
+                [ "Has "
+                , _icon
                 , " "
-                , toMessage (iquotes _name)
-                ]
-        MsgHasEconomicIdea {scriptMessageName = _name, scriptMessageNum = _num}
-            -> mconcat
-                [ "Has {{icon|economic}} Economic idea "
-                , toMessage (show _num)
-                , " "
-                , toMessage (iquotes _name)
-                ]
-        MsgHasDefensiveIdea {scriptMessageName = _name, scriptMessageNum = _num}
-            -> mconcat
-                [ "Has {{icon|defensive}} Defensive idea "
-                , toMessage (show _num)
-                , " "
-                , toMessage (iquotes _name)
-                ]
-        MsgHasInnovativeIdea {scriptMessageName = _name, scriptMessageNum = _num}
-            -> mconcat
-                [ "Has {{icon|innovative}} Innovative idea "
-                , toMessage (show _num)
-                , " "
-                , toMessage (iquotes _name)
-                ]
-        MsgHasOffensiveIdea {scriptMessageName = _name, scriptMessageNum = _num}
-            -> mconcat
-                [ "Has {{icon|offensive}} Offensive idea "
-                , toMessage (show _num)
-                , " "
-                , toMessage (iquotes _name)
-                ]
-        MsgHasMaritimeIdea {scriptMessageName = _name, scriptMessageNum = _num}
-            -> mconcat
-                [ "Has {{icon|maritime}} Maritime idea "
+                , _group
+                , " idea "
                 , toMessage (show _num)
                 , " "
                 , toMessage (iquotes _name)

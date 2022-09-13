@@ -3190,9 +3190,8 @@ dynasty stmt = (trace (show stmt)) $ preStatement stmt
 ----------------------
 
 hasIdea :: (EU4Info g, Monad m) =>
-    (Text -> Int -> ScriptMessage)
-        -> StatementHandler g m
-hasIdea msg stmt@[pdx| $lhs = !n |] | n >= 1, n <= 7 = do
+    StatementHandler g m
+hasIdea stmt@[pdx| $lhs = !n |] | n >= 1, n <= 7 = do
     groupTable <- getIdeaGroups
     let mideagroup = HM.lookup lhs groupTable
     case mideagroup of
@@ -3200,9 +3199,10 @@ hasIdea msg stmt@[pdx| $lhs = !n |] | n >= 1, n <= 7 = do
         Just grp -> do
             let idea = ig_ideas grp !! (n - 1)
                 ideaKey = idea_name idea
+                group_loc = T.replace " Ideas" "" $ ig_name_loc grp
             idea_loc <- getGameL10n ideaKey
-            msgToPP (msg idea_loc n)
-hasIdea _ stmt = preStatement stmt
+            msgToPP (MsgHasIdeaFromGroup (iconText (T.toLower group_loc)) group_loc idea_loc n)
+hasIdea stmt = preStatement stmt
 
 -----------
 -- Trust --
