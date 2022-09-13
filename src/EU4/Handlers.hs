@@ -138,6 +138,7 @@ module EU4.Handlers (
     ,   numOfReligion
     ,   createSuccessionCrisis
     ,   unlockMercCompany
+    ,   yearsOfTradeIncome
     ,   hasBuildingTrigger
     ,   productionLeader
     ,   addProvinceTriggeredModifier
@@ -2667,6 +2668,16 @@ foldCompound "unlockMercCompany" "UnlockMercCompany" "unlock_merc"
     [| do
         typeLoc <- getGameL10n _merc_company
         return $ MsgUnlockMercCompany typeLoc (_free_merc == Just "yes") (_global == Just "yes")
+    |]
+
+foldCompound "yearsOfTradeIncome" "YearsOfTradeIncome" "years_trade_income"
+    -- []
+    [("_icon", [t|Text|])]
+    [CompField "years" [t|Double|] Nothing True
+    ,CompField "custom_tooltip" [t|Text|] Nothing False  -- ignored
+    ]
+    [| do
+        return $ MsgYearsOfTradeIncome (iconText _icon) _years
     |]
 
 -- War

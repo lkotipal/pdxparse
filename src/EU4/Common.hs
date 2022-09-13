@@ -1941,6 +1941,7 @@ handlersMisc = Tr.fromList
         ,("random_list", randomList)
         -- Special
         ,("add_estate_loyalty_modifier" , addEstateLoyaltyModifier)
+        ,("add_years_of_trade_income"   , yearsOfTradeIncome "trade income")
         ,("add_core"            , addCore)
         ,("add_manpower"        , gainMen)
         ,("add_sailors"         , gainMen)

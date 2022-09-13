@@ -1363,6 +1363,7 @@ data ScriptMessage
     | MsgDisableRebelsFromSeizeLand {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgNumRulerTraits {scriptMessageAmt :: Double}
     | MsgNumAcceptedCulturesTrigger {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgYearsOfTradeIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -8977,6 +8978,14 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (plainNum _amt)
                 , " accepted cultures"
+                ]
+        MsgYearsOfTradeIncome  {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Gain "
+                , toMessage (roundNum _amt)
+                , " years worth of "
+                , _icon
+                , " trade income"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
