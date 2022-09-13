@@ -1226,7 +1226,8 @@ handlersLocRhs = Tr.fromList
 -- | Handlers for statements whose RHS is a province ID
 handlersProvince :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersProvince = Tr.fromList
-        [("capital"           , withProvince MsgCapitalIs)
+        [("add_permanent_claim_province", permanentClaimProvince MsgGainPermanentClaimProvince)
+        ,("capital"           , withProvince MsgCapitalIs)
         ,("controls"          , withProvince MsgControls)
         ,("discover_province" , withProvince MsgDiscoverProvince)
         ,("higher_development_than" , withProvince MsgHigherDevelopmentThan)

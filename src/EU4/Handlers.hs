@@ -22,6 +22,7 @@ module EU4.Handlers (
     ,   withLocAtomIconBuilding
     ,   locAtomTagOrProvince
     ,   withProvince
+    ,   permanentClaimProvince
     ,   withNonlocAtom
     ,   withNonlocAtom2
     ,   iconKey
@@ -676,6 +677,14 @@ withProvince msg stmt@[pdx| %lhs = $var |]
 withProvince msg [pdx| %lhs = !provid |]
     = msgToPP =<< msg <$> getProvLoc provid
 withProvince _ stmt = preStatement stmt
+
+permanentClaimProvince :: (EU4Info g, Monad m) =>
+    (Text -> ScriptMessage)
+        -> StatementHandler g m
+permanentClaimProvince msg stmt =
+    case getEffectArg "province" stmt of
+        Just (IntRhs provid) -> msgToPP =<< msg <$> getProvLoc provid
+        _ -> (trace $ "warning: Not handled by permanentClaimProvince: " ++ (show stmt)) $ preStatement stmt
 
 -- As withLocAtom but no l10n.
 withNonlocAtom :: (EU4Info g, Monad m) => (Text -> ScriptMessage) -> StatementHandler g m
