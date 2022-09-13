@@ -445,6 +445,7 @@ data ScriptMessage
     | MsgFactionGainInfluence {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgFactionHasInfluence {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgFactionInPower {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgFactionInPowerEffect {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgHasFaction {scriptMessageWhat :: Text}
     | MsgHasFactions {scriptMessageYn :: Bool}
     | MsgHasAdoptedCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -3510,6 +3511,14 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _whom
                 , " faction is in power"
+                ]
+        MsgFactionInPowerEffect {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "If the "
+                , _icon
+                , " "
+                , _whom
+                , " faction is in power:"
                 ]
         MsgHasFaction {scriptMessageWhat = _what}
             -> mconcat

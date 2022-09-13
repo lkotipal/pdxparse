@@ -58,6 +58,7 @@ module EU4.Handlers (
     ,   ppAiMod
     ,   factionInfluence
     ,   factionInPower
+    ,   factionInPowerEffect
     ,   addModifier
     ,   addCore
     ,   opinion
@@ -210,6 +211,7 @@ import {-# SOURCE #-} EU4.Common (ppScript, ppMany, ppOne, extractStmt, matchLhs
 import EU4.Types -- everything
 
 import Debug.Trace
+import FileIO (readScriptFromText)
 
 -- | Pretty-print a script statement, wrap it in a @<pre>@ element, and emit a
 -- generic message for it at the current indentation level. This is the
@@ -1631,6 +1633,10 @@ facInfluence_iconkey fac = case fac of
         "rr_jacobins"      -> Just "jacobin influence"
         "rr_royalists"     -> Just "imperial influence"
         "rr_girondists"    -> Just "girondist influence"
+        -- Pirate republics
+        "pr_buccaneers"    -> Just "buccaneers influence"
+        "pr_smugglers"     -> Just "smugglers influence"
+        "pr_captains"      -> Just "captains influence"
         _ {- unknown -}    -> Nothing
 
 -- | Convert the atom used in scripts for a faction to the corresponding icon
@@ -1649,6 +1655,10 @@ fac_iconkey fac = case fac of
         "rr_jacobins"      -> Just "jacobins"
         "rr_royalists"     -> Just "imperials"
         "rr_girondists"    -> Just "girondists"
+        -- Pirate republics
+        "pr_buccaneers"    -> Just "buccaneers"
+        "pr_smugglers"     -> Just "smugglers"
+        "pr_captains"      -> Just "captains"
         _ {- unknown -}    -> Nothing
 
 data FactionInfluence = FactionInfluence {
@@ -1683,6 +1693,26 @@ factionInPower [pdx| %_ = ?fac |] | Just facKey <- fac_iconkey fac
     = do fac_loc <- getGameL10n fac
          msgToPP $ MsgFactionInPower (iconText facKey) fac_loc
 factionInPower stmt = preStatement stmt
+
+-- | Handler for trigger checking which faction is in power.
+factionInPowerEffect :: (EU4Info g, Monad m) => StatementHandler g m
+factionInPowerEffect stmt@[pdx| %_ = @stmts |] = do
+    let (factionStmt, rest) = extractStmt (matchLhsText "faction") stmts
+        (effectStmt, rest') = extractStmt (matchLhsText "effect") rest
+    case rest' of
+        [] -> case factionStmt of
+            Just [pdx| %_ = ?faction |] -> case effectStmt of
+                Just [pdx| %_ = ?effectText |] -> do
+                    facLoc <- getGameL10n faction
+                    let facKey = fromMaybe faction (fac_iconkey faction)
+                    effectStmt2 <- readScriptFromText effectText
+                    effectMsgs <- ppMany effectStmt2
+                    withCurrentIndent $ \i ->
+                        return $  (i, MsgFactionInPowerEffect (iconText facKey) facLoc) : effectMsgs
+                _ -> preStatement stmt
+            _ -> preStatement stmt
+        unhandledStatements -> (trace $ "factionInPowerEffect: Unhandled statements " ++ (show unhandledStatements)) $ preStatement stmt
+factionInPowerEffect stmt = preStatement stmt
 
 -- Modifiers
 

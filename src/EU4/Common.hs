@@ -1857,6 +1857,7 @@ handlersSpecialComplex = Tr.fromList
         ,("employed_advisor"             , employedAdvisor)
         ,("expulsion_target"             , expulsionTarget)
         ,("faction_influence"            , factionInfluence MsgFactionHasInfluence)
+        ,("faction_in_power_effect"      , factionInPowerEffect)
         ,("has_estate_led_regency"       , hasEstateLedRegency)
         ,("has_estate_influence_modifier", hasEstateModifier MsgEstateHasInfluenceModifier)
         ,("has_estate_loyalty_modifier"  , hasEstateModifier MsgEstateHasLoyaltyModifier)
