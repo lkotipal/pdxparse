@@ -7756,10 +7756,12 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddGreatProjectTier {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
-                [ "Add great project "
-                , _what
-                , " of tier "
+                [ "Add "
                 , toMessage (roundNum _amt)
+                , toMessage (plural _amt " tier" " tiers")
+                , " to the great project [["
+                , _what
+                , "]]"
                 ]
         MsgWarscoreAgainst {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
             -> mconcat
