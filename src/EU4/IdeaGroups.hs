@@ -234,7 +234,10 @@ ppIdeaGroup ig = fixup <$> do
                 Nothing -> return (Left Nothing)
             return . mconcat $
                 ["<section begin=", name_loc, "/>", PP.line
-                ,"{{idea group", PP.line
+                ,case ig_category ig of
+                    Just cat -> "{{idea group"
+                    Nothing -> "{{national ideas" -- also used for group national ideas
+                , PP.line
                 ,"|version=", Doc.strictText version, PP.line
                 ,"|name2=", name_loc, PP.line
                 ,"|name=", name_loc, PP.line
