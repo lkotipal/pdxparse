@@ -1391,6 +1391,7 @@ data ScriptMessage
     | MsgAddLatestBuilding {scriptMessageWhat :: Text}
     | MsgHasPointsForLivonianMonarchy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgIsRentingCondottieriTo {scriptMessageWhom :: Text}
+    | MsgHasCompletedIdeaGroupOfCategory {scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9222,6 +9223,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is renting [[condottieri]] to "
                 , _whom
+                ]
+        MsgHasCompletedIdeaGroupOfCategory {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Hast completed at least one "
+                , _what
+                , " idea group"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

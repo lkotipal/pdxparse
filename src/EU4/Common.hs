@@ -2033,6 +2033,7 @@ handlersMisc = Tr.fromList
         ,("faction_in_power"    , factionInPower)
         ,("government_rank"     , govtRank)
         ,("has_casus_belli"     , taTypeFlag "type" "target" MsgHasCasusBelli)
+        ,("has_completed_idea_group_of_category", hasCompletedIdeaGroupOfCategory)
         ,("has_dlc"             , hasDlc)
         ,("has_government_attribute" , hasGovermentAttribute)
         ,("has_heir"            , hasHeir)

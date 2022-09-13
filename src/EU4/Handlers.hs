@@ -146,6 +146,7 @@ module EU4.Handlers (
     ,   addYearsOfOwnedProvinceIncome
     ,   addLegitimacyEquivalent
     ,   totalStats
+    ,   hasCompletedIdeaGroupOfCategory
     ,   hasBuildingTrigger
     ,   addLatestBuilding
     ,   productionLeader
@@ -189,7 +190,7 @@ import qualified Data.Trie as Tr
 import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import Data.List (foldl', intersperse)
-import Data.Maybe (isJust, isNothing, fromMaybe)
+import Data.Maybe (isJust, isNothing, fromMaybe, mapMaybe)
 
 import Control.Applicative (liftA2)
 import Control.Arrow (first)
@@ -2760,6 +2761,30 @@ foldCompound "totalStats" "TotalStats" "ts"
                 Just unexpected_who -> trace ("Expected root as who= in totalStats, but found " ++ T.unpack unexpected_who) return $ MsgTotalStats rulerOrHeirLoc _stats
     |]
 
+-- | helper for foldCompound with multiple possible "x = yes" statements
+mapYesValues :: (EU4Info g, Monad m) => (a -> PPT g m b) -> [(Maybe Text, a)] -> PPT g m [b]
+mapYesValues f args_for_map = do
+    let mapped = mapMaybe getYesValue args_for_map
+    mapM f mapped
+    where
+        getYesValue :: (Maybe Text, a) -> Maybe a
+        getYesValue (Just "yes", value) = Just value
+        getYesValue _ = Nothing
+
+foldCompound "hasCompletedIdeaGroupOfCategory" "HasCompletedIdeaGroupOfCategory" "hcig"
+    []
+    [CompField "adm_ideas" [t|Text|] Nothing False
+    ,CompField "dip_ideas" [t|Text|] Nothing False
+    ,CompField "mil_ideas" [t|Text|] Nothing False
+    ]
+    [| do
+        -- normally there should only be one of adm_ideas, dip_ideas or mil_ideas, but in the unlikely case
+        -- that there is more than one, we join them with a +, because all need to be completed
+        -- "and" would be better, but we don't have a localisation for "and"
+        loc_ideas <- mapYesValues getGameL10n [(_adm_ideas, "ADM"), (_dip_ideas, "DIP"), (_mil_ideas, "MIL")]
+        return $ MsgHasCompletedIdeaGroupOfCategory (T.intercalate "+" loc_ideas)
+    |]
+
 -- War
 
 data DeclareWarWithCB = DeclareWarWithCB
@@ -4151,11 +4176,6 @@ formatBuildingList buildings = do
             1 -> " or "
             _ -> ", ") <> fmtList bs
 
-getLatestBuildingMessage :: (EU4Info g, Monad m) => [Text] -> PPT g m ScriptMessage
-getLatestBuildingMessage buildings = do
-    formattedBuildings <- formatBuildingList buildings
-    return $ MsgAddLatestBuilding formattedBuildings
-
 foldCompound "addLatestBuilding" "AddLatestBuilding" "alb"
     []
     [CompField "builder" [t|Text|] Nothing True
@@ -4170,30 +4190,23 @@ foldCompound "addLatestBuilding" "AddLatestBuilding" "alb"
     ,CompField "coastal" [t|Text|] Nothing False
     ,CompField "fort" [t|Text|] Nothing False
     ]
-    [|
-        -- we assume that at most one of them is set
-        if _trade == Just "yes" then
-            getLatestBuildingMessage ["stock_exchange", "trade_depot", "marketplace"]
-        else if _government == Just "yes" then
-            getLatestBuildingMessage ["town_hall", "courthouse"]
-        else if _production == Just "yes" then
-            getLatestBuildingMessage ["counting_house", "workshop"]
-        else if _tax == Just "yes" then
-            getLatestBuildingMessage ["cathedral", "temple"]
-        else if _manpower == Just "yes" then
-            getLatestBuildingMessage ["training_fields", "barracks"]
-        else if _sailors == Just "yes" then
-            getLatestBuildingMessage ["drydock", "dock"]
-        else if _army_forcelimit == Just "yes" then
-            getLatestBuildingMessage ["conscription_center", "regimental_camp"]
-        else if _navy_forcelimit == Just "yes" then
-            getLatestBuildingMessage ["grand_shipyard", "shipyard"]
-        else if _coastal == Just "yes" then
-            getLatestBuildingMessage ["naval_battery", "coastal_defence"]
-        else if _fort == Just "yes" then
-            getLatestBuildingMessage ["fort_18th", "fort_17th", "fort_16th", "fort_15th"]
-        else
-            return $ preMessage stmt
+    [| do
+        -- normally there should only be one building type, but in the unlikely case
+        -- that there is more than one, we join them with an english message. A localised message would be better,
+        -- but this case doesn't exit yet in the game files. Returning just one message would be easier, but
+        -- then a wiki editor might miss the fact that the effect adds multiple buildings
+        messages <- mapYesValues formatBuildingList [(_trade, ["stock_exchange", "trade_depot", "marketplace"])
+                ,(_government      , ["town_hall", "courthouse"])
+                ,(_production      , ["counting_house", "workshop"])
+                ,(_tax             , ["cathedral", "temple"])
+                ,(_manpower        , ["training_fields", "barracks"])
+                ,(_sailors         , ["drydock", "dock"])
+                ,(_army_forcelimit , ["conscription_center", "regimental_camp"])
+                ,(_navy_forcelimit , ["grand_shipyard", "shipyard"])
+                ,(_coastal         , ["naval_battery", "coastal_defence"])
+                ,(_fort            , ["fort_18th", "fort_17th", "fort_16th", "fort_15th"])
+                ]
+        return $ MsgAddLatestBuilding (T.intercalate " and one of the following: " messages)
     |]
 
 -----------------------------------
