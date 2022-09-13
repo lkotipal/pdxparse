@@ -1398,6 +1398,7 @@ handlersSimpleFlag = Tr.fromList
         ,("defensive_war_with"      , withFlag MsgDefensiveWarAgainst)
         ,("discover_country"        , withFlag MsgDiscoverCountry)
         ,("excommunicate"           , withFlag MsgExcommunicate)
+        ,("force_converted_by"      , withFlag MsgForceConverted)
         ,("form_coalition_against"  , withFlag MsgFormCoalitionAgainst)
         ,("free_vassal"             , withFlag MsgFreeVassal)
         ,("galley"                  , withFlag MsgGalley)
