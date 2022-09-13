@@ -1329,8 +1329,10 @@ data ScriptMessage
     | MsgRemoveConsort
     | MsgClearRebels
     | MsgMonthsSinceDefection {scriptMessageAmt :: Double}
+    | MsgNumCarolean {scriptMessageAmt :: Double}
     | MsgNumHussars {scriptMessageAmt :: Double}
     | MsgNumJanissaries {scriptMessageAmt :: Double}
+    | MsgNumMarines {scriptMessageAmt :: Double}
     | MsgJanissaryPercentage {scriptMessageAmt :: Double}
     | MsgBreakUnion {scriptMessageWhom :: Text}
     | MsgCreateMarriage {scriptMessageWhom :: Text}
@@ -8794,11 +8796,23 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (formatMonths _amt)
                 , " since the province defected"
                 ]
+        MsgNumCarolean {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " carolean regiments"
+                ]
         MsgNumHussars {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
                 , toMessage (plainNum _amt)
                 , " winged hussars regiments"
+                ]
+        MsgNumMarines {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " marine regiments"
                 ]
         MsgNumJanissaries {scriptMessageAmt = _amt}
             -> mconcat
