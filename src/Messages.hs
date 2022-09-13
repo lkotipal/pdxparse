@@ -249,10 +249,8 @@ data ScriptMessage
     | MsgHasAdvisor {scriptMessageWhom :: Text}
     | MsgHasAdvisorType {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasTerrain {scriptMessageWhat :: Text}
-    | MsgCavalrySpawnsCountry {scriptMessageWhom :: Text}
-    | MsgCavalrySpawnsProvince {scriptMessageWhere :: Text}
-    | MsgInfantrySpawnsCountry {scriptMessageWhom :: Text}
-    | MsgInfantrySpawnsProvince {scriptMessageWhere :: Text}
+    | MsgUnitSpawnsCountry {scriptMessageSpecialUnitType :: Maybe(Text), scriptMessageUnitType :: Text, scriptMessageWhom :: Text}
+    | MsgUnitSpawnsProvince {scriptMessageSpecialUnitType :: Maybe(Text), scriptMessageUnitType :: Text,scriptMessageWhere :: Text}
     | MsgAdvisorDies {scriptMessageWho :: Text}
     | MsgDominantCultureIs {scriptMessageWhat :: Text}
     | MsgDominantCultureIsAs {scriptMessageWhat :: Text}
@@ -2278,26 +2276,24 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " terrain"
                 ]
-        MsgCavalrySpawnsCountry {scriptMessageWhom = _whom}
+        MsgUnitSpawnsCountry {scriptMessageSpecialUnitType = _special_unit_type, scriptMessageUnitType = _unit_type, scriptMessageWhom = _whom}
             -> mconcat
-                [ "A cavalry regiment loyal to "
+                [
+                addAOrAn True (T.concat [
+                    maybe "" (`T.append` " ") _special_unit_type
+                   , _unit_type
+                ])
+                , " regiment loyal to "
                 , _whom
                 , " spawns"
                 ]
-        MsgCavalrySpawnsProvince {scriptMessageWhere = _where}
+        MsgUnitSpawnsProvince {scriptMessageSpecialUnitType = _special_unit_type, scriptMessageUnitType = _unit_type, scriptMessageWhere = _where}
             -> mconcat
-                [ "A cavalry regiment spawns in "
-                , _where
-                ]
-        MsgInfantrySpawnsCountry {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "An infantry regiment loyal to "
-                , _whom
-                , " spawns"
-                ]
-        MsgInfantrySpawnsProvince {scriptMessageWhere = _where}
-            -> mconcat
-                [ "An infantry regiment spawns in "
+                [ "A"
+                , maybe "" (T.append " ") _special_unit_type
+                , " "
+                , _unit_type
+                , " regiment spawns in "
                 , _where
                 ]
         MsgAdvisorDies {scriptMessageWho = _who}
@@ -9111,6 +9107,16 @@ schoolOpinion  0   = "neutral"
 schoolOpinion  1   = "postive"
 schoolOpinion val  = "(Unknown <> " <> T.pack (show val) <> ")"
 
+-- | add "A " in front of the text or "An " if the first letter is a vowel
+--   if the first parameter is False, "a " or "an " is added instead
+addAOrAn :: Bool -> Text -> Text
+addAOrAn capitalize text = do
+    let capitalizedA = if capitalize then "A" else "a"
+    let aOrAn = if isVowel(T.head text) then T.append capitalizedA "n" else capitalizedA
+    T.concat [aOrAn, " ", text]
+    where
+        isVowel :: Char -> Bool
+        isVowel x = x `elem` ("aeiouAEIOU" :: String)
 -- | Message paired with an indentation level.
 type IndentedMessage = (Int, ScriptMessage)
 -- | List of messages, paired with their respective indentation levels.

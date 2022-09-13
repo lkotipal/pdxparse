@@ -95,6 +95,7 @@ module EU4.Handlers (
     ,   numProvinces
     ,   withFlagOrProvince
     ,   withFlagOrProvinceEU4Scope
+    ,   spawnRegiment
     ,   tradeMod
     ,   isMonth
     ,   area
@@ -3006,6 +3007,22 @@ withFlagOrProvinceEU4Scope bothCountryMsg scopeCountryParamGeogMsg scopeGeogPara
         withFlagOrProvince scopeGeogParamCountryMsg bothGeogMsg stmt
     else
         withFlagOrProvince bothCountryMsg scopeCountryParamGeogMsg stmt
+
+-- | for statements of the type infantry = ROOT/TAG/province_id
+spawnRegiment :: (EU4Info g, Monad m) =>
+        Maybe Text  -- localisation key special units(e.g. STRELTSY_REGIMENT_TYPE), Nothing if this is just a normal infantry/cavalry/artillery
+        -> Text     -- localisation key for the unit type (e.g. INFANTRY)
+        -> StatementHandler g m
+spawnRegiment specialUnitType unitType stmt = do
+    specialUnitTypeLoc <- getMaybeLoc specialUnitType
+    unitTypeLoc <- T.toLower <$> getGameL10n unitType
+    withFlagOrProvince (MsgUnitSpawnsCountry specialUnitTypeLoc unitTypeLoc) (MsgUnitSpawnsProvince specialUnitTypeLoc unitTypeLoc) stmt
+    where
+        getMaybeLoc :: (IsGameData (GameData g), Monad m) => Maybe Text -> PPT g m (Maybe Text)
+        getMaybeLoc (Just locKey) = do
+            loc <- getGameL10n locKey
+            return (Just (T.toLower loc))
+        getMaybeLoc _ = return Nothing
 
 tradeMod :: (EU4Info g, Monad m) => StatementHandler g m
 tradeMod stmt@[pdx| %_ = ?_ |]
