@@ -508,6 +508,7 @@ handlersNumericIcons = Tr.fromList
         ,("devotion"                          , numericIcon "devotion" MsgDevotion)
         ,("fabricate_claims_time"             , numericIcon "time to fabricate claims" MsgTimeToFabricateClaims)
         ,("leader_land_siege"                 , numericIcon "leader siege" MsgGainLandLeaderSiege)
+        ,("invested_papal_influence"          , numericIcon "papal influence" MsgInvestedPapalInfluence)
         ,("papal_influence"                   , numericIcon "papal influence" MsgPapalInfluence)
         ,("possible_mercenaries"              , numericIcon "available mercenaries" MsgAvailableMercs)
         ,("prestige"                          , numericOrTagIcon "prestige" MsgPrestige MsgPrestigeAs)

@@ -591,6 +591,7 @@ data ScriptMessage
     | MsgRulerIsForeigner {scriptMessageYn :: Bool}
     | MsgProdEff {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProdEffAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgInvestedPapalInfluence {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPapalInfluence {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgDevotion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -4494,6 +4495,14 @@ instance RenderMessage Script ScriptMessage where
                 [ _icon
                 , " Production efficiency is at least that of "
                 , _whom
+                ]
+        MsgInvestedPapalInfluence {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has invested at least"
+                , _icon
+                , " "
+                , toMessage (roundNum _amt)
+                , " Papal influence in the election of the next papal controller"
                 ]
         MsgPapalInfluence {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
