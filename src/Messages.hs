@@ -1395,6 +1395,7 @@ data ScriptMessage
     | MsgHiredForMonths {scriptMessageAmt :: Double }
     | MsgAddManufactoryEffect
     | MsgHasStateEdict {scriptMessageWhat :: Text}
+    | MsgOwesFavors {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9248,6 +9249,14 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Has enacted the state edict"
                 , toMessage (iquotes _what)
+                ]
+        MsgOwesFavors {scriptMessageIcon = __icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Owes "
+                , _whom
+                , " at least "
+                , toMessage (plainNum _amt)
+                , " favors"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
