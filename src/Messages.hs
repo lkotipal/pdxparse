@@ -1093,6 +1093,7 @@ data ScriptMessage
     | MsgGrownByDevelopment {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGrownByStates {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumAdmirals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNumAdmiralsWithTrait {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumGenerals {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumGeneralsWithTrait {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgShareOfStartingIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -7393,6 +7394,15 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (roundNum _amt)
                 , plural _amt " admiral" " admirals"
+                ]
+        MsgNumAdmiralsWithTrait {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (roundNum _amt)
+                , plural _amt " admiral" " admirals"
+                , " with one or more trait"
                 ]
         MsgNumGenerals {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

@@ -465,6 +465,7 @@ handlersNumericIcons = Tr.fromList
         ,("navy_tradition"           , numericIcon "navy tradition" MsgNavyTradition)
         ,("num_accepted_cultures"    , numericIcon "max promoted cultures" MsgNumAcceptedCulturesTrigger)
         ,("num_of_admirals"          , numericIcon "admiral" MsgNumAdmirals)
+        ,("num_of_admirals_with_traits", numericIcon "admiral" MsgNumAdmiralsWithTrait)
         ,("num_of_allies"            , numericIcon "alliance" MsgNumAllies)
         ,("num_of_banners"           , numericIcon "banners" MsgNumOfBanners)
         ,("num_of_cardinals"         , numericIcon "cardinal" MsgNumCardinals)
