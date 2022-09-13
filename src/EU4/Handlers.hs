@@ -136,6 +136,7 @@ module EU4.Handlers (
     ,   createIndependentEstate
     ,   numOfReligion
     ,   createSuccessionCrisis
+    ,   unlockMercCompany
     ,   hasBuildingTrigger
     ,   productionLeader
     ,   addProvinceTriggeredModifier
@@ -2646,6 +2647,17 @@ foldCompound "createSuccessionCrisis" "CreateSuccessionCrisis" "csc"
         defenderLoc <- flagText (Just EU4Country) _defender
         targetLoc   <- flagText (Just EU4Country) _target
         return $ MsgCreateSuccessionCrisis attackerLoc defenderLoc targetLoc
+    |]
+
+foldCompound "unlockMercCompany" "UnlockMercCompany" "unlock_merc"
+    []
+    [CompField "merc_company" [t|Text|] Nothing True
+    ,CompField "free_merc" [t|Text|] Nothing False
+    ,CompField "global" [t|Text|] Nothing False
+    ]
+    [| do
+        typeLoc <- getGameL10n _merc_company
+        return $ MsgUnlockMercCompany typeLoc (_free_merc == Just "yes") (_global == Just "yes")
     |]
 
 -- War

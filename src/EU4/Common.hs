@@ -1966,6 +1966,7 @@ handlersMisc = Tr.fromList
         ,("remove_trade_modifier" , taTypeFlag "name" "who" MsgRemoveTradeModifier)
         ,("set_government_rank" , setGovtRank)
         ,("set_saved_name"      , setSavedName)
+        ,("unlock_merc_company", unlockMercCompany)
         ,("generate_advisor_of_type_and_semi_random_religion_effect" , randomAdvisor)
         ,("create_colony_mission_reward" , createColonyMissionReward)
         ,("has_idea_group"      , hasIdeaGroup)

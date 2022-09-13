@@ -1354,6 +1354,7 @@ data ScriptMessage
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSwitchTag {scriptMessageWho :: Text}
     | MsgPowerCost {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgUnlockMercCompany {scriptMessageWhat :: Text, scriptMessageFree :: Bool, scriptMessageGlobal :: Bool}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -8897,6 +8898,15 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " power<ref name=\"allpowercost\">This cost is modified by the {{icon|all power costs}} all power costs modifier.</ref>"
+                ]
+        MsgUnlockMercCompany {scriptMessageWhat = _what, scriptMessageFree = _free, scriptMessageGlobal = _global}
+            -> mconcat
+                [ "Unlock mercenary company "
+                , toMessage (iquotes _what)
+                , if _free || _global then "(" else ""
+                , if _free then "This mercenary company does ''not'' cost army professionalism when hired." else ""
+                , if _global then "Is globally available for recruitment." else ""
+                , if _free || _global then ")" else ""
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
