@@ -148,6 +148,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)
         ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
         ,("grant_independence"      , rhsAlwaysYes MsgGrantIndependence)
+        ,("halves_parliament_bribe_costs", rhsAlwaysYes (MsgGenericText "The costs of [[Parliament bribes]] are reduced by {{green|50%}}."))
         ,("has_holy_order_trigger"  , rhsAlwaysYes MsgHasAnyHolyOrder)
         ,("has_border_with_religious_enemy" , rhsAlwaysYes MsgHasBorderWithReligiousEnemy)
         ,("has_river_estuary_trigger", rhsAlwaysYes MsgHasRiverEstuary)
