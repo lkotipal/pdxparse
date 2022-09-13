@@ -1050,6 +1050,7 @@ data ScriptMessage
     | MsgRemoveBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHigherDevelopmentThan {scriptMessageWhat :: Text}
     | MsgCrownlandShare {scriptMessageAmt :: Double}
+    | MsgNumEstateAgendas {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgNumEstatePrivileges {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAnyProvinceInState
     | MsgRandomOwnedArea
@@ -7145,6 +7146,16 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has at least "
                 , toMessage $ (plainPc _amt)
                 , " [[crown land]] ownership"
+                ]
+        MsgNumEstateAgendas {scriptMessageIcon = _icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has completed at least "
+                , toMessage (plainNum _amt)
+                , " "
+                , _icon
+                , " "
+                , _whom
+                , " agendas"
                 ]
         MsgNumEstatePrivileges {scriptMessageIcon = _icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
             -> mconcat

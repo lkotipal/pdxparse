@@ -1762,6 +1762,7 @@ handlersTextValue = Tr.fromList
         ,("incident_variable_value"     , textValue "incident" "value" MsgIncidentVariableValue MsgIncidentVariableValue tryLocAndIconTitle)
         ,("institution_difference"      , textValue "who" "value" MsgInstitutionDifference MsgInstitutionDifference flagTextMaybe)
         ,("military_strength"           , textValue "who" "value" MsgMilitaryStrength MsgMilitaryStrength flagTextMaybe)
+        ,("num_of_estate_agendas_completed", textValue "estate" "value" MsgNumEstateAgendas MsgNumEstateAgendas tryLocAndIcon)
         ,("num_of_estate_privileges"    , textValue "estate" "value" MsgNumEstatePrivileges MsgNumEstatePrivileges tryLocAndIcon)
         ,("num_of_units_in_province"    , textValue "who" "amount" MsgNumUnitsInProvince MsgNumUnitsInProvince flagTextMaybe) -- TODO: Support type
         ,("num_investments_in_trade_company_region" , textValue "investment" "value" MsgNumInvestmentsInTradeCompanyReigion MsgNumInvestmentsInTradeCompanyReigion tryLocAndIcon)
