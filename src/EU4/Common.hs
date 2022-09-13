@@ -1869,6 +1869,7 @@ handlersSpecialComplex = Tr.fromList
         ,("generate_scaled_advisor_of_type_and_religion_effect" , defineAdvisor True)
         ,("generate_traitor_advisor_effect" , simpleEffectNum "skill_level" MsgGenerateTraitorAdvisor)
         ,("has_primary_cult"                , simpleEffectAtom "cult" MsgHasPrimaryCult)
+        ,("is_or_was_tag"                   , simpleEffectWithExtraHandler "tag" (withFlag MsgIsOrWasTag))
         ,("kill_advisor_by_category_effect" , killAdvisorByCategory)
         ,("num_of_ruler_traits"             , simpleEffectNum "amount" MsgNumRulerTraits)
         ,("our_scholar_matches_their_school_trigger" , simpleEffectAtom "school" MsgOurScholarMatchesTheirSchool)

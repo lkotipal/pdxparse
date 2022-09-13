@@ -1370,6 +1370,7 @@ data ScriptMessage
     | MsgSubsidisedPercentAmount {scriptMessageAmt :: Double }
     | MsgSetCenterOfTrade2 {scriptMessageIcon1 :: Text, scriptMessageIcon2 :: Text}
     | MsgSetCenterOfTrade3 {scriptMessageIcon1 :: Text, scriptMessageIcon2 :: Text, scriptMessageIcon3 :: Text}
+    | MsgIsOrWasTag {scriptMessageWhom :: Text}
     | MsgGreatPowerRank {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
@@ -9055,6 +9056,11 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True 2)
                 , " base production"
+                ]
+        MsgIsOrWasTag {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "The country is ''or'' was "
+                , _whom
                 ]
         MsgGreatPowerRank {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
