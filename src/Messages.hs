@@ -1362,6 +1362,7 @@ data ScriptMessage
     | MsgUnlockMercCompany {scriptMessageWhat :: Text, scriptMessageFree :: Bool, scriptMessageGlobal :: Bool}
     | MsgDisableRebelsFromSeizeLand {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgNumRulerTraits {scriptMessageAmt :: Double}
+    | MsgNumAcceptedCulturesTrigger {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -8968,6 +8969,14 @@ instance RenderMessage Script ScriptMessage where
                 [ "The ruler has at least "
                 , toMessage (roundNum _amt)
                 , " traits"
+                ]
+        MsgNumAcceptedCulturesTrigger {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " accepted cultures"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

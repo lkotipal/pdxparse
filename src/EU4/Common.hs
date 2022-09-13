@@ -458,6 +458,7 @@ handlersNumericIcons = Tr.fromList
         ,("navy_reformer"            , numericIconLoc "naval reformer"  "naval_reformer"MsgHasAdvisorLevel) -- both are used
         ,("navy_size_percentage"     , numericIcon "naval force limit" MsgNavyPercentage)
         ,("navy_tradition"           , numericIcon "navy tradition" MsgNavyTradition)
+        ,("num_accepted_cultures"    , numericIcon "max promoted cultures" MsgNumAcceptedCulturesTrigger)
         ,("num_of_admirals"          , numericIcon "admiral" MsgNumAdmirals)
         ,("num_of_allies"            , numericIcon "alliance" MsgNumAllies)
         ,("num_of_banners"           , numericIcon "banners" MsgNumOfBanners)
