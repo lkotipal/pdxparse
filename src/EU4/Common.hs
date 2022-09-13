@@ -863,7 +863,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("local_sailors"                         , handleModifier "SAILORS" (colourNumSign True))
         ,("local_sailors_modifier"                , handleModifier "LOCAL_SAILORS" (reducedNum (colourPcSign True)))
         ,("local_ship_cost"                       , handleModifier "MODIFIER_LOCAL_SHIP_COST" (reducedNum (colourPcSign False)))
-        ,("local_ship_repair"                     , handleModifier "MODIFIER_LOCAL_SHIP_REPAIR" (reducedNum (colourPcSign False)))
+        ,("local_ship_repair"                     , handleModifier "MODIFIER_LOCAL_SHIP_REPAIR" (reducedNum (colourPcSign True)))
         ,("local_state_maintenance_modifier"      , handleModifierWithIcon "Local state maintenance" "state maintenance" (reducedNum (colourPcSign False)))
         ,("local_tax_modifier"                    , handleModifier "LOCAL_TAX_MODIFIER" (reducedNum (colourPcSign True)))
         ,("local_unrest"                          , handleModifier "LOCAL_UNREST" (colourNumSign False))
