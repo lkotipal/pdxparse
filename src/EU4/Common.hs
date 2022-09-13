@@ -304,6 +304,7 @@ handlersNumeric = Tr.fromList
         ,("num_of_times_used_transfer_development" , numeric MsgNumTimesUsedTransferDevelopment)
         ,("num_of_total_ports"               , numeric MsgNumPorts) -- same as num_of_ports?
         ,("num_of_trade_embargos"            , numeric MsgNumEmbargoes)
+        ,("num_of_trading_bonuses"           , numeric MsgNumTradingBonuses)
         ,("num_of_trusted_allies"            , numeric MsgNumTrustedAllies)
         ,("num_of_unlocked_cults"            , numeric MsgNumUnlockedCults)
         ,("num_of_war_reparations"           , numeric MsgNumOfWarReparations)

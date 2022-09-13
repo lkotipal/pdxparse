@@ -294,6 +294,7 @@ data ScriptMessage
     | MsgNumPorts {scriptMessageAmt :: Double}
     | MsgNumRebelArmies {scriptMessageAmt :: Double}
     | MsgNumEmbargoes {scriptMessageAmt :: Double}
+    | MsgNumTradingBonuses {scriptMessageAmt :: Double}
     | MsgUnitsInProvince {scriptMessageAmt :: Double}
     | MsgNumCities {scriptMessageAmt :: Double}
     | MsgNumCitiesThan {scriptMessageWhom :: Text}
@@ -2518,6 +2519,12 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (roundNum _amt)
                 , " other "
                 , plural (round _amt) "country" "countries"
+                ]
+        MsgNumTradingBonuses {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has enough market share in "
+                , toMessage (roundNum _amt)
+                , " trade goods to get their [[Trading in]] bonus"
                 ]
         MsgUnitsInProvince {scriptMessageAmt = _amt}
             -> mconcat
