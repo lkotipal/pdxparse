@@ -1875,6 +1875,7 @@ handlersSpecialComplex = Tr.fromList
         ,("set_great_project_tier_3"        , simpleEffectAtom "type" (MsgSetGreatProjectTier 3))
         ,("scaled_estate_land_share_reduce_effect" , simpleEffectAtom "estate" (MsgScaledEstateLandShareEffect False))
         ,("scaled_estate_land_share_add_effect" , simpleEffectAtom "estate" (MsgScaledEstateLandShareEffect True))
+        ,("subsidised_percent_amount"       , simpleEffectNum "value" MsgSubsidisedPercentAmount)
         ,("unlock_estate_privilege"         , simpleEffectAtom "estate_privilege" MsgUnlockEstatePrivilege)
         ,("unlock_government_reform"         , simpleEffectAtom "government_reform" MsgUnlockGovernmentReform)
 

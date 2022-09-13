@@ -1365,6 +1365,7 @@ data ScriptMessage
     | MsgNumAcceptedCulturesTrigger {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgYearsOfTradeIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddFavors {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
+    | MsgSubsidisedPercentAmount {scriptMessageAmt :: Double }
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -8995,6 +8996,12 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , " favors with "
                 , _who
+                ]
+        MsgSubsidisedPercentAmount {scriptMessageAmt = _amt }
+            -> mconcat
+                [ "At least "
+                , toMessage (reducedNum plainPc _amt)
+                , " of the income is from subsidies"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
