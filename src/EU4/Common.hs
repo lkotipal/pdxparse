@@ -528,7 +528,6 @@ handlersNumericIcons = Tr.fromList
         ,("global_sailors_modifier"           , numericIcon "national sailors modifier" MsgGlobalSailorsModifier)
         ,("min_autonomy_in_territories"       , numericIcon "minimum autonomy in territories" MsgMinAutonomyInTerritories)
         ,("province_has_center_of_trade_of_level" , numericIcon "center of trade" MsgProviceHasCenterOfTrade)
-        ,("land_forcelimit"                   , numericIcon "land force limit" MsgLandForcelimit)
         ,("monthly_reform_progress_modifier"  , numericIcon "monthly reform progress modifier" MsgMonthlyReformProgressModifier)
         ,("patriarch_authority"               , numericIcon "patriarch authority" MsgPatriarchAuthority)
         ,("supply_limit_modifier"             , numericIcon "supply limit modifier" MsgSupplyLimitModifier)
@@ -1278,6 +1277,7 @@ handlersNumericOrFlag = Tr.fromList
         [("adm_tech"             , withTagOrNumber "adm tech" MsgADMTech MsgADMTechAs)
         ,("army_size"            , withTagOrNumber "" MsgArmySize MsgArmySizeMatches) -- FIXME: Don't really need icon
         ,("development"          , withTagOrNumber "development" MsgDevelopment MsgDevelopmentAs) -- Can't really be a tag, but it can be "CAPITAL"
+        ,("land_forcelimit"      , withTagOrNumber "land force limit" MsgLandForcelimit MsgLandForcelimitAs)
         ,("land_morale"          , withTagOrNumber "morale of armies" MsgMoraleOfArmies MsgMoraleOfArmiesAs)
         ,("monthly_income"       , withTagOrNumber "ducats" MsgMonthlyIncome MsgMonthlyIncomeAs)
         ,("navy_size"            , withTagOrNumber "" MsgNavySize MsgNavySizeMatches) -- FIXME: Don't really need icon

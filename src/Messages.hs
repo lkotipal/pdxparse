@@ -1063,6 +1063,7 @@ data ScriptMessage
     | MsgHomeTradeNodeEffectScope
     | MsgRemoveAdvisor {scriptMessageType :: Text}
     | MsgLandForcelimit {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLandForcelimitAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgMonthlyReformProgressModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSupplyLimitModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasGlobalModifierValue {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
@@ -7215,6 +7216,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Land force limit is at least "
                 , toMessage (plainNum _amt)
+                ]
+        MsgLandForcelimitAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _icon
+                , " Land force limit is at least that of "
+                , _whom
                 ]
         MsgMonthlyReformProgressModifier {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
