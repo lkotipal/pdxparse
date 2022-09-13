@@ -1394,6 +1394,7 @@ data ScriptMessage
     | MsgMercTemplate {scriptMessageWhat :: Text}
     | MsgHiredForMonths {scriptMessageAmt :: Double }
     | MsgAddManufactoryEffect
+    | MsgHasStateEdict {scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9243,6 +9244,11 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddManufactoryEffect
             -> "Build the manufactory for the trade good of this province"
+        MsgHasStateEdict {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has enacted the state edict"
+                , toMessage (iquotes _what)
+                ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
 -- FIXME: What's the significance of this?

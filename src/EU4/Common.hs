@@ -1225,6 +1225,7 @@ handlersLocRhs = Tr.fromList
         ,("has_leader"            , withLocAtom MsgHasLeader) -- will usually fail localization
         ,("has_mission"           , withLocAtomTitle MsgHasMission)
         ,("has_reform"            , withLocAtom MsgHasReform)
+        ,("has_state_edict"       , withLocAtom MsgHasStateEdict)
         ,("has_terrain"           , withLocAtom MsgHasTerrain)
         ,("has_winter"            , withLocAtom MsgHasWinter)
         ,("hre_reform_passed"     , withLocAtomTitle MsgHREPassedReform)
