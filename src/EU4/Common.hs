@@ -149,6 +149,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("divorce_consort_effect", rhsAlwaysYes MsgDivorceConsortEffect)
         ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)
         ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
+        ,("fifty_percent_merc_army_professionalism_cost" , rhsAlwaysYes (MsgGenericText "Reduce the {{icon|army professionalism}} army professionalism cost of recruiting mercenaries by {{green|50%}}"))
         ,("grant_independence"      , rhsAlwaysYes MsgGrantIndependence)
         ,("halves_parliament_bribe_costs", rhsAlwaysYes (MsgGenericText "The costs of [[Parliament bribes]] are reduced by {{green|50%}}."))
         ,("has_holy_order_trigger"  , rhsAlwaysYes MsgHasAnyHolyOrder)
@@ -1146,6 +1147,7 @@ handlersCompound = Tr.fromList
         ,("every_core_country"      , scope EU4Country   . compoundMessage MsgEveryCoreCountry) -- used in province scope
         ,("every_core_province"     , scope EU4Province  . compoundMessage MsgEveryCoreProvince)
         ,("every_country"           , scope EU4Country   . compoundMessage MsgEveryCountry)
+        ,("every_elector"           , scope EU4Country   . compoundMessage (MsgGenericText "Every elector:"))
         ,("every_enemy_country"     , scope EU4Country   . compoundMessage MsgEveryEnemyCountry)
         ,("every_federation_member" , scope EU4Country   . compoundMessage MsgEveryFederationMember)
         ,("every_heretic_province"  , scope EU4Province  . compoundMessage MsgEveryHereticProvince)
