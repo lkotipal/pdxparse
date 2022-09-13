@@ -143,6 +143,7 @@ module EU4.Handlers (
     ,   unlockMercCompany
     ,   yearsOfTradeIncome
     ,   addYearsOfOwnedProvinceIncome
+    ,   addLegitimacyEquivalent
     ,   hasBuildingTrigger
     ,   productionLeader
     ,   addProvinceTriggeredModifier
@@ -2678,7 +2679,6 @@ foldCompound "unlockMercCompany" "UnlockMercCompany" "unlock_merc"
     |]
 
 foldCompound "yearsOfTradeIncome" "YearsOfTradeIncome" "years_trade_income"
-    -- []
     [("_icon", [t|Text|])]
     [CompField "years" [t|Double|] Nothing True
     ,CompField "custom_tooltip" [t|Text|] Nothing False  -- ignored
@@ -2704,6 +2704,15 @@ addYearsOfOwnedProvinceIncome typeLocKey stmt@[pdx| %_ = @stmts |] = do
             _ -> preStatement stmt
         unhandledStatements -> (trace $ "addYearsOfOwnedProvinceIncome: Unhandled statemens " ++ (show unhandledStatements)) $ preStatement stmt
 addYearsOfOwnedProvinceIncome _ stmt = preStatement stmt
+
+foldCompound "addLegitimacyEquivalent" "AddLegitimacyEquivalent" "le"
+    []
+    [CompField "amount" [t|Double|] Nothing True
+    ,CompField "republican_tradition" [t|Double|] Nothing True
+    ]
+    [| do
+        return $ MsgAddLegitimacyEquivalent _amount _republican_tradition
+    |]
 
 -- War
 

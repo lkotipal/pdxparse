@@ -2006,6 +2006,7 @@ handlersMisc = Tr.fromList
         ,("random_list", randomList)
         -- Special
         ,("add_estate_loyalty_modifier" , addEstateLoyaltyModifier)
+        ,("add_legitimacy_equivalent"   , addLegitimacyEquivalent)
         ,("add_years_of_trade_income"   , yearsOfTradeIncome "trade income")
         ,("add_years_of_owned_provinces_manpower", addYearsOfOwnedProvinceIncome "manpower")
         ,("add_years_of_owned_provinces_production_income", addYearsOfOwnedProvinceIncome "PROD_INCOME")

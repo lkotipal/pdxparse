@@ -319,6 +319,7 @@ data ScriptMessage
     | MsgLegitimacyAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgLegitimacyEquivalent {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLegitimacyEquivalentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
+    | MsgAddLegitimacyEquivalent {legitimacy :: Double, rt :: Double}
     | MsgRulerMIL {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMILTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumAllies {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -2722,6 +2723,20 @@ instance RenderMessage Script ScriptMessage where
                 [  _icon
                 , " Legitimacy (or equivalent) is at least that of "
                 , _whom
+                ]
+        MsgAddLegitimacyEquivalent {legitimacy = _legitimacy, rt = _rt}
+            -> mconcat
+                ["Gain {{icon|legitimacy}} "
+                , toMessage (colourNum True _legitimacy)
+                ," legitimacy, {{icon|horde unity}} "
+                , toMessage (colourNum True _legitimacy)
+                ," horde unity, {{icon|devotion}} "
+                , toMessage (colourNum True _legitimacy)
+                ," devotion, {{icon|meritocracy}} "
+                , toMessage (colourNum True _legitimacy)
+                ," or {{icon|republican tradition}} "
+                , toMessage (colourNum True _rt)
+                ," republican tradition as appropriate"
                 ]
         MsgRulerMIL {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -9151,7 +9166,8 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddYearsOfOwnedProvinceIncome {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
-                [ "Gain "
+                [ gainOrLose _amt
+                , " "
                 , toMessage (colourNum True _amt)
                 , " years of "
                 , T.toLower _what
