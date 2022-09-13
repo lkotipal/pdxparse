@@ -1864,6 +1864,7 @@ handlersSpecialComplex = Tr.fromList
         ,("scaled_estate_land_share_reduce_effect" , simpleEffectAtom "estate" (MsgScaledEstateLandShareEffect False))
         ,("scaled_estate_land_share_add_effect" , simpleEffectAtom "estate" (MsgScaledEstateLandShareEffect True))
         ,("unlock_estate_privilege"         , simpleEffectAtom "estate_privilege" MsgUnlockEstatePrivilege)
+        ,("unlock_government_reform"         , simpleEffectAtom "government_reform" MsgUnlockGovernmentReform)
 
         -- Variables
         ,("set_variable"                 , setVariable MsgSetVariable MsgSetVariableVal)

@@ -1347,6 +1347,7 @@ data ScriptMessage
     | MsgSelectPrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgChangePrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgUnlockGovernmentReform {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -8836,6 +8837,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "Unlock the "
                 , toMessage (iquotes _what)
                 , " estate privilege"
+                ]
+        MsgUnlockGovernmentReform {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Unlock the "
+                , toMessage (iquotes _what)
+                , " government reform"
                 ]
         MsgKillUnits {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageWho = _who, scriptMessageAmt = _amt}
             -> mconcat
