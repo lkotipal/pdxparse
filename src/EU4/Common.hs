@@ -1564,6 +1564,7 @@ handlersYesNo = Tr.fromList
         ,("hre_religion_locked"         , withBool MsgHREReligionLocked)
         ,("hre_religion_treaty"         , withBool MsgHREWestphalia)
         ,("in_golden_age"               , withBool MsgInGoldenAge)
+        ,("is_absolutism_active"        , withBool MsgIsAbsolutismActive)
         ,("is_all_concessions_in_council_taken" , withBool MsgAllConcesssionsTaken)
         ,("is_at_war"                   , withBool MsgAtWar)
         ,("is_backing_current_issue"    , withBool MsgIsBackingCurrentIssue)

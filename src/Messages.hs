@@ -1373,6 +1373,7 @@ data ScriptMessage
     | MsgSetCenterOfTrade3 {scriptMessageIcon1 :: Text, scriptMessageIcon2 :: Text, scriptMessageIcon3 :: Text}
     | MsgIsOrWasTag {scriptMessageWhom :: Text}
     | MsgGreatPowerRank {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgIsAbsolutismActive {scriptMessageYn :: Bool}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9076,6 +9077,12 @@ instance RenderMessage Script ScriptMessage where
                 , " great power with rank "
                 , toMessage (roundNum _amt)
                 , " or worse or not a great power"
+                ]
+        MsgIsAbsolutismActive {scriptMessageYn = _yn}
+            -> mconcat
+                [ "The current age "
+                , toMessage (ifThenElseT _yn "has" "does ''not'' have")
+                , " the {{icon|absolutism|28px}} absolutism mechanic"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
