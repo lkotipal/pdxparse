@@ -520,6 +520,9 @@ handlersNumericIcons = Tr.fromList
         ,("patriarch_authority"               , numericIcon "patriarch authority" MsgPatriarchAuthority)
         ,("supply_limit_modifier"             , numericIcon "supply limit modifier" MsgSupplyLimitModifier)
         ,("heir_claim"                        , numericIcon "legitimacy" MsgHeirClaim)
+        ,("adm_power_cost"                    , numericIconLoc "adm" "ADM" MsgPowerCost)
+        ,("dip_power_cost"                    , numericIconLoc "dip" "DIP" MsgPowerCost)
+        ,("mil_power_cost"                    , numericIconLoc "mil" "MIL" MsgPowerCost)
         ]
 
 -- | Handlers for statements pertaining to modifiers
@@ -1739,7 +1742,7 @@ handlersTextValue = Tr.fromList
         ,("add_power_projection"        , textValue "type" "amount" MsgAddPowerProjection MsgAddPowerProjection tryLocAndIcon)
         ,("add_spy_network_from"        , textValue "who" "value" MsgAddSpyNetworkFrom MsgAddSpyNetworkFrom flagTextMaybe)
         ,("add_spy_network_in"          , textValue "who" "value" MsgAddSpyNetworkIn MsgAddSpyNetworkIn flagTextMaybe)
-        ,("add_stat_or_monarch_power"   , textValue "stat" "amount" MsgGainStatOrMonarchPower MsgGainStatOrMonarchPower (\ what -> tryLocAndIcon (T.toUpper what)))
+        ,("add_stat_or_monarch_power"   , textValue "stat" "amount" MsgGainStatOrMonarchPower MsgGainStatOrMonarchPower (tryLocAndIcon . T.toUpper))
         ,("army_strength"               , textValue "who" "value" MsgArmyStrength MsgArmyStrength flagTextMaybe)
         ,("border_distance"             , textValue "who" "distance" MsgBorderDistance MsgBorderDistance flagTextMaybe)
         ,("estate_influence"            , textValue "estate" "influence" MsgEstateInfluence MsgEstateInfluence tryLocAndIcon)

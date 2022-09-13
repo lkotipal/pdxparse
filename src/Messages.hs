@@ -1353,6 +1353,7 @@ data ScriptMessage
     | MsgAllowBaselineInviteScholar {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveLoot {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSwitchTag {scriptMessageWho :: Text}
+    | MsgPowerCost {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -8886,6 +8887,16 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "The human player plays as "
                 , _who
+                ]
+        MsgPowerCost {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Pay "
+                , _icon
+                , " "
+                , toMessage (colourNum False _amt)
+                , " "
+                , _what
+                , " power<ref name=\"allpowercost\">This cost is modified by the {{icon|all power costs}} all power costs modifier.</ref>"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
