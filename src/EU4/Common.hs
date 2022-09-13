@@ -88,7 +88,6 @@ ppHandlers = foldl' Tr.unionL Tr.empty
     , handlersLocRhs
     , handlersProvince
     , handlersFlagOrProvince
-    , handlersNumericOrFlag
     , handlersAdvisorId
     , handlersTypewriter
     , handlersSimpleIcon
@@ -386,7 +385,6 @@ handlersNumericIcons = Tr.fromList
         ,("administrative_efficiency", numericIcon "administrative efficiency" MsgAdminEfficiency)
         ,("army_organiser"           , numericIconLoc "army organizer" "army_organiser" MsgHasAdvisorLevel)
         ,("army_reformer"            , numericIconLoc "army reformer" "army_reformer" MsgHasAdvisorLevel)
-        ,("army_tradition"           , numericOrTagIcon "army tradition" MsgArmyTradition MsgArmyTraditionAs)
         ,("artillery_fraction"       , numericIcon "artillery" MsgArtilleryFraction)
         ,("artist"                   , numericIconLoc "artist" "artist" MsgHasAdvisorLevel)
         ,("average_autonomy"         , numericIcon "autonomy" MsgAverageAutonomy)
@@ -441,7 +439,6 @@ handlersNumericIcons = Tr.fromList
         ,("inquisitor"               , numericIconLoc "inquisitor" "inquisitor" MsgHasAdvisorLevel)
         ,("is_defender_of_faith_of_tier" , numericIcon "dotf" MsgIsDotfTier)
         ,("karma"                    , numericIcon "high karma" MsgKarma)
-        ,("legitimacy"               , numericOrTagIcon "legitimacy" MsgLegitimacy MsgLegitimacyAs)
         ,("liberty_desire"           , numericIcon "liberty desire" MsgLibertyDesire)
         ,("light_ship_fraction"      , numericIcon "light ship" MsgLightShipFraction)
         ,("local_autonomy"           , numericIcon "local autonomy" MsgLocalAutonomy)
@@ -520,8 +517,6 @@ handlersNumericIcons = Tr.fromList
         ,("invested_papal_influence"          , numericIcon "papal influence" MsgInvestedPapalInfluence)
         ,("papal_influence"                   , numericIcon "papal influence" MsgPapalInfluence)
         ,("possible_mercenaries"              , numericIcon "available mercenaries" MsgAvailableMercs)
-        ,("prestige"                          , numericOrTagIcon "prestige" MsgPrestige MsgPrestigeAs)
-        ,("production_efficiency"             , numericOrTagIcon "production efficiency" MsgProdEff MsgProdEffAs)
         ,("prosperity"                        , numericIcon "prosperity" MsgProsperity)
         ,("relations_decay_of_me"             , numericIcon "better relations over time" MsgBetterRelationsOverTime)
         ,("trade_range_modifier"              , numericIcon "trade range" MsgTradeRange)
@@ -1271,22 +1266,6 @@ handlersFlagOrProvince = Tr.fromList
         ,("same_continent"     , withFlagOrProvinceEU4Scope (MsgSameContinent True True) (MsgSameContinent True False) (MsgSameContinent False True) (MsgSameContinent False False)) -- scope sensitive
         ]
 
--- | Handlers for statements whose RHS is a number OR a tag/pronoun, with icon
-handlersNumericOrFlag :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
-handlersNumericOrFlag = Tr.fromList
-        [("adm_tech"             , numericOrTagIcon "adm tech" MsgADMTech MsgADMTechAs)
-        ,("army_size"            , numericOrTag MsgArmySize MsgArmySizeMatches) -- FIXME: Don't really need icon
-        ,("development"          , numericOrTagIcon "development" MsgDevelopment MsgDevelopmentAs) -- Can't really be a tag, but it can be "CAPITAL"
-        ,("land_forcelimit"      , numericOrTagIcon "land force limit" MsgLandForcelimit MsgLandForcelimitAs)
-        ,("land_morale"          , numericOrTagIcon "morale of armies" MsgMoraleOfArmies MsgMoraleOfArmiesAs)
-        ,("monthly_income"       , numericOrTagIcon "ducats" MsgMonthlyIncome MsgMonthlyIncomeAs)
-        ,("navy_size"            , numericOrTag MsgNavySize MsgNavySizeMatches) -- FIXME: Don't really need icon
-        ,("num_of_light_ship"    , numericOrTagIcon "light ship" MsgNumLightShips MsgNumLightShipsMatches)
-        ,("num_of_heavy_ship"    , numericOrTagIcon "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
-        ,("num_of_galley"        , numericOrTagIcon "galley" MsgNumGalleyShips MsgNumGalleyShipsMatches)
-        ,("num_of_transport"     , numericOrTagIcon "transport" MsgNumTransportShips MsgNumTransportShipsMatches)
-        ]
-
 -- TODO: parse advisor files
 -- | Handlers for statements whose RHS is an advisor ID
 handlersAdvisorId :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
@@ -1678,16 +1657,31 @@ handlersYesNo = Tr.fromList
         ,("has_loyal_sheikh_ul_islam_trigger"      , withBool (MsgRulerHasIslamModifier "Loyal"))
         ]
 
--- | Handlers for statements that may be numeric or a tag
+-- | Handlers for statements that may be numeric OR a tag/pronoun, with or without icon
 handlersNumericOrTag :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersNumericOrTag = Tr.fromList
-        [("num_of_cities"       , numericOrTag MsgNumCities MsgNumCitiesThan)
-        ,("army_professionalism", numericOrTagIcon "army professionalism" MsgArmyProfessionalism MsgArmyProfessionalismAs)
-        ,("inflation"           , numericOrTagIcon "inflation" MsgInflation MsgInflationAs)
-        ,("total_development"   , numericOrTagIcon "development" MsgTotalDevelopment MsgTotalDevelopmentAs)
+        [("adm_tech"             , numericOrTagIcon "adm tech" MsgADMTech MsgADMTechAs)
+        ,("army_professionalism" , numericOrTagIcon "army professionalism" MsgArmyProfessionalism MsgArmyProfessionalismAs)
+        ,("army_size"            , numericOrTag MsgArmySize MsgArmySizeMatches)
+        ,("army_tradition"       , numericOrTagIcon "army tradition" MsgArmyTradition MsgArmyTraditionAs)
+        ,("development"          , numericOrTagIcon "development" MsgDevelopment MsgDevelopmentAs) -- Can't really be a tag, but it can be "CAPITAL"
+        ,("inflation"            , numericOrTagIcon "inflation" MsgInflation MsgInflationAs)
+        ,("land_forcelimit"      , numericOrTagIcon "land force limit" MsgLandForcelimit MsgLandForcelimitAs)
+        ,("land_morale"          , numericOrTagIcon "morale of armies" MsgMoraleOfArmies MsgMoraleOfArmiesAs)
+        ,("legitimacy"           , numericOrTagIcon "legitimacy" MsgLegitimacy MsgLegitimacyAs)
+        ,("monthly_income"       , numericOrTagIcon "ducats" MsgMonthlyIncome MsgMonthlyIncomeAs)
+        ,("navy_size"            , numericOrTag MsgNavySize MsgNavySizeMatches)
+        ,("num_of_artillery"     , numericOrTag MsgNumArtillery MsgNumArtilleryThan)
+        ,("num_of_cavalry"       , numericOrTag MsgNumCavalry MsgNumCavalryThan)
+        ,("num_of_cities"        , numericOrTag MsgNumCities MsgNumCitiesThan)
+        ,("num_of_light_ship"    , numericOrTagIcon "light ship" MsgNumLightShips MsgNumLightShipsMatches)
+        ,("num_of_heavy_ship"    , numericOrTagIcon "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
+        ,("num_of_galley"        , numericOrTagIcon "galley" MsgNumGalleyShips MsgNumGalleyShipsMatches)
+        ,("num_of_transport"     , numericOrTagIcon "transport" MsgNumTransportShips MsgNumTransportShipsMatches)
+        ,("prestige"             , numericOrTagIcon "prestige" MsgPrestige MsgPrestigeAs)
+        ,("production_efficiency", numericOrTagIcon "production efficiency" MsgProdEff MsgProdEffAs)
+        ,("total_development"    , numericOrTagIcon "development" MsgTotalDevelopment MsgTotalDevelopmentAs)
         ,("total_own_and_non_tributary_subject_development" , numericOrTagIcon "development" MsgOwnOrNonTribSubjectDevelopment MsgOwnOrNonTribSubjectDevelopmentAs)
-        ,("num_of_artillery"    , numericOrTag MsgNumArtillery MsgNumArtilleryThan)
-        ,("num_of_cavalry"      , numericOrTag MsgNumCavalry MsgNumCavalryThan)
         ]
 
 -- | Handlers for signed numeric statements
