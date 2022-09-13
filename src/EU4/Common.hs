@@ -283,6 +283,7 @@ handlersNumeric = Tr.fromList
         ,("had_recent_war"                   , numeric MsgWasAtWar)
         ,("hegemon_strength"                 , numeric MsgHegemonStrength)
         ,("heir_age"                         , numeric MsgHeirAge)
+        ,("hired_for_months"                 , numeric MsgHiredForMonths)
         ,("hre_size"                         , numeric (\s -> if s == 1 then MsgHREExists else MsgHRESize s))
         ,("is_year"                          , numeric MsgYearIs)
         ,("janissary_percentage"             , numeric MsgJanissaryPercentage)
@@ -1227,6 +1228,7 @@ handlersLocRhs = Tr.fromList
         ,("is_incident_possible"  , withLocAtomTitle MsgIsIncidentPossible)
         ,("is_hegemon_of_type"    , withLocAtom MsgIsHegemonOfType)
         ,("is_subject_of_type"    , withLocAtomTitle MsgIsSubjectOfType)
+        ,("join_league"           , withLocAtom MsgJoinLeague)
         ,("kill_advisor"          , withLocAtom MsgAdvisorDies)
         ,("mission_completed"     , withLocAtomTitle MsgMissionCompleted)
         ,("native_policy"         , withLocAtom MsgNativePolicy)
@@ -1239,6 +1241,7 @@ handlersLocRhs = Tr.fromList
         ,("set_estate_privilege"  , withLocAtom MsgGrantEstatePrivilege)
         ,("set_imperial_incident" , withLocAtom MsgStartHREIncident)
         ,("superregion"           , withLocAtom MsgSuperRegionIs)
+        ,("template"              , withLocAtom MsgMercTemplate)
         ,("trade_company_region"  , withLocAtom MsgTradeCompanyRegion)
         ]
 

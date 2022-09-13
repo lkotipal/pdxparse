@@ -1392,6 +1392,9 @@ data ScriptMessage
     | MsgHasPointsForLivonianMonarchy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgIsRentingCondottieriTo {scriptMessageWhom :: Text}
     | MsgHasCompletedIdeaGroupOfCategory {scriptMessageWhat :: Text}
+    | MsgJoinLeague {scriptMessageWhat :: Text}
+    | MsgMercTemplate {scriptMessageWhat :: Text}
+    | MsgHiredForMonths {scriptMessageAmt :: Double }
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9229,6 +9232,23 @@ instance RenderMessage Script ScriptMessage where
                 [ "Hast completed at least one "
                 , _what
                 , " idea group"
+                ]
+        MsgJoinLeague {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Join the "
+                , _what
+                , " league"
+                ]
+        MsgMercTemplate {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Is "
+                , toMessage(iquotes _what)
+                ]
+        MsgHiredForMonths {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has been hired for at least "
+                , toMessage (plainNum _amt)
+                , " months"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
