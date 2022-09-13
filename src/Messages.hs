@@ -1270,6 +1270,7 @@ data ScriptMessage
     | MsgUsesDoom {scriptMessageYn :: Bool}
     | MsgAverageAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAverageAutonomyAboveMin {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgAverageHomeAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPowerProjection {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgElector {scriptMessageYn :: Bool}
     | MsgNumOfWarReparations {scriptMessageAmt :: Double}
@@ -8466,6 +8467,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " Average autonomy above the minimum is at least "
+                , toMessage (plainPc _amt)
+                ]
+        MsgAverageHomeAutonomy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _icon
+                , " Average non-overseas core province autonomy is at least "
                 , toMessage (plainPc _amt)
                 ]
         MsgPowerProjection {scriptMessageIcon = _icon, scriptMessageAmt = _amt}

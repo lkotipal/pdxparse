@@ -399,6 +399,7 @@ handlersNumericIcons = Tr.fromList
         ,("artist"                   , numericIconLoc "artist" "artist" MsgHasAdvisorLevel)
         ,("average_autonomy"         , numericIcon "autonomy" MsgAverageAutonomy)
         ,("average_autonomy_above_min", numericIcon "autonomy" MsgAverageAutonomyAboveMin)
+        ,("average_home_autonomy"    , numericIcon "autonomy" MsgAverageHomeAutonomy)
         ,("average_unrest"           , numericIcon "unrest" MsgAverageUnrest)
         ,("base_manpower"            , numericIcon "manpower" MsgBaseManpower)
         ,("base_production"          , numericIcon "base production" MsgBaseProduction)
