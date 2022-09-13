@@ -147,6 +147,7 @@ module EU4.Handlers (
     ,   addYearsOfOwnedProvinceIncome
     ,   addLegitimacyEquivalent
     ,   totalStats
+    ,   removeTradeModifier
     ,   hasCompletedIdeaGroupOfCategory
     ,   hasBuildingTrigger
     ,   addLatestBuilding
@@ -2765,6 +2766,25 @@ foldCompound "totalStats" "TotalStats" "ts"
                 Nothing -> return $ MsgTotalStats rulerOrHeirLoc _stats
                 Just "ROOT" -> return $ MsgTotalStats rulerOrHeirLoc _stats
                 Just unexpected_who -> trace ("Expected root as who= in totalStats, but found " ++ T.unpack unexpected_who) return $ MsgTotalStats rulerOrHeirLoc _stats
+    |]
+
+foldCompound "removeTradeModifier" "RemoveTradeModifier" "rtm"
+    []
+    [CompField "who" [t|Text|] Nothing True
+    ,CompField "key" [t|Text|] Nothing False
+    ,CompField "name" [t|Text|] Nothing False
+    ]
+    [| do
+        flagLoc <- flagText (Just EU4Country) _who
+        case (_key, _name) of
+            (Just key, Just name) -> return $ (trace $ ("key and name can't both be set in removeTradeModifier: " ++ show stmt)) $ preMessage stmt
+            (Just key, _) -> do
+                modifierLoc <- getGameL10n key
+                return $ MsgRemoveTradeModifier modifierLoc flagLoc
+            (_, Just name) -> do
+                modifierLoc <- getGameL10n name
+                return $ MsgRemoveTradeModifier modifierLoc flagLoc
+            _ -> return $ (trace $ ("either key or name must be set in removeTradeModifier: " ++ show stmt)) $ preMessage stmt
     |]
 
 -- | helper for foldCompound with multiple possible "x = yes" statements

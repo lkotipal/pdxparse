@@ -2090,7 +2090,7 @@ handlersMisc = Tr.fromList
         ,("piety"               , piety)
         ,("production_leader"   , productionLeader)
         ,("remove_casus_belli"  , taTypeFlag "type" "target" MsgRemoveCasusBelli)
-        ,("remove_trade_modifier" , taTypeFlag "name" "who" MsgRemoveTradeModifier)
+        ,("remove_trade_modifier" , removeTradeModifier)
         ,("ruler_total_stats"   , totalStats "FE_RULER")
         ,("set_government_rank" , setGovtRank)
         ,("set_saved_name"      , setSavedName)
