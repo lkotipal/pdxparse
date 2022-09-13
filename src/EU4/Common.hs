@@ -252,6 +252,7 @@ handlersNumeric = Tr.fromList
         ,("add_isolationism"                 , numeric MsgAddIsolationism)
         ,("add_next_institution_embracement" , numeric MsgAddNextInstitutionEmbracement)
         ,("add_nationalism"                  , numeric MsgGainYearsOfSeparatism)
+        ,("add_siberian_construction"        , numeric MsgAddSiberianConstruction)
         ,("add_trade_node_income"            , numeric MsgAddTradeNodeIcome)
         ,("army_size_percentage"             , numeric MsgArmySizePc) -- Inti?
         ,("authority"                        , numeric MsgAuth) -- Inti?

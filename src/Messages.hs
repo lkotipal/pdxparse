@@ -1347,6 +1347,7 @@ data ScriptMessage
     | MsgSetEstateLedRegencyPrivilegeRandom
     | MsgTradeNode {scriptMessageWhat :: Text}
     | MsgColonyMissionReward {scriptMessageProv :: Text}
+    | MsgAddSiberianConstruction {scriptMessageAmt :: Double}
     | MsgClearPreviousPrimaryCults
     | MsgNumUnlockedCults {scriptMessageAmt :: Double}
     | MsgHasPrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -8865,6 +8866,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _prov
                 , ": If uncolonized, gain a siberian frontier colony with 400 settlers (+1/+1/+1 development if the ''“Higher Developed Colonies”'' age ability is unlocked), if owned gain +1/+1/+1 development, otherwise gain a permanent claim."
+                ]
+        MsgAddSiberianConstruction {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Gain a siberian frontier colony with "
+                , toMessage (plainNum _amt)
+                , " settlers"
                 ]
         MsgClearPreviousPrimaryCults
             -> "Remove selected primary cult"
