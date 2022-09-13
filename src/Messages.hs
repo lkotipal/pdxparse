@@ -877,6 +877,7 @@ data ScriptMessage
     | MsgHasInstitution { scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgWasNeverEndGameTag { scriptMessageYn :: Bool }
     | MsgHasCompletedAllReforms { scriptMessageYn :: Bool }
+    | MsgHasCulturalUnion { scriptMessageYn :: Bool }
     | MsgHasFinalTierReform { scriptMessageYn :: Bool }
     | MsgPctBackingParliamentIssue { scriptMessageAmt :: Double }
     | MsgIsBackingCurrentIssue { scriptMessageYn :: Bool }
@@ -6166,6 +6167,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "The country has"
                 , toMessage (ifThenElseT _yn "" " not")
                 , " enacted one of the highest tier [[government reform]]s and DLC {{icon|emp|28px}} Emperor is not active"
+                ]
+        MsgHasCulturalUnion { scriptMessageYn = _yn }
+            -> mconcat
+                [ "The country "
+                , toMessage (ifThenElseT _yn "has" "does not have")
+                , " a [[cultural union]]"
                 ]
         MsgHasFinalTierReform { scriptMessageYn = _yn }
             -> mconcat

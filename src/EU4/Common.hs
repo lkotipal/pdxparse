@@ -1538,6 +1538,7 @@ handlersYesNo = Tr.fromList
         ,("has_active_fervor"           , withBool MsgHasActiveFervor)
         ,("has_cardinal"                , withBool MsgHasCardinal)
         ,("has_completed_all_reforms_trigger" , withBool MsgHasCompletedAllReforms)
+        ,("has_cultural_union"          , withBool MsgHasCulturalUnion)
         ,("has_final_tier_reforms_trigger" , withBool MsgHasFinalTierReform)
         ,("has_consort"                 , withBool MsgHasConsort)
         ,("has_consort_regency"         , withBool MsgHasConsortRegency)
