@@ -51,6 +51,7 @@ module EU4.Handlers (
     ,   taTypeFlag
     ,   simpleEffectNum
     ,   simpleEffectAtom
+    ,   simpleEffectAtomIcon
     ,   ppAiWillDo
     ,   ppAiMod
     ,   factionInfluence
@@ -1555,6 +1556,14 @@ simpleEffectAtom tArg msg stmt =
             loc <- getGameL10n atom
             msgToPP $ msg (iconText atom) loc
         _ -> (trace $ "warning: Not handled by simpleEffectAtom: " ++ (show stmt)) $ preStatement stmt
+
+simpleEffectAtomIcon :: forall g m. (EU4Info g, Monad m) => Text -> Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
+simpleEffectAtomIcon iconKey tArg msg stmt =
+    case getEffectArg tArg stmt of
+        Just (GenericRhs atom _) -> do
+            loc <- getGameL10n atom
+            msgToPP $ msg (iconText iconKey) loc
+        _ -> (trace $ "warning: Not handled by simpleEffectAtomIcon: " ++ (show stmt)) $ preStatement stmt
 
 -- AI decision factors
 
