@@ -198,6 +198,8 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_heir"              , rhsAlwaysEmptyCompound MsgHeirRemoved)
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("same_govt_as_root_trigger" , rhsAlwaysYes MsgSameGovtAsRoot)
+        ,("set_center_level_2_center_of_trade" , rhsAlwaysYes (MsgSetCenterOfTrade2 (iconText "cotlvl2") (iconText "production")))
+        ,("set_center_level_3_center_of_trade" , rhsAlwaysYes (MsgSetCenterOfTrade3 (iconText "cotlvl3") (iconText "cotlvl2") (iconText "production")))
         ,("set_estate_led_regency_privilege" , rhsAlways "random" MsgSetEstateLedRegencyPrivilegeRandom) -- Only random used in 1.31.3
         ,("swap_free_idea_group"     , rhsAlwaysYes MsgSwapFreeIdeaGroup)
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
@@ -288,6 +290,7 @@ handlersNumeric = Tr.fromList
         ,("num_of_foreign_hre_provinces"     , numeric MsgNumOfForeignHREProvinces)
         ,("num_of_harmonized"                , numeric MsgNumHarmonized)
         ,("num_of_hired_mercenary_companies" , numeric MsgNumOfHiredMercCompanies)
+        ,("num_of_hussars"                   , numeric MsgNumHussars)
         ,("num_of_janissaries"               , numeric MsgNumJanissaries)
         ,("num_of_loans"                     , numeric MsgNumLoans)
         ,("num_of_mercenaries"               , numeric MsgNumMercs)

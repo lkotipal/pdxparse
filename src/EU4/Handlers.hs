@@ -4,6 +4,7 @@ module EU4.Handlers (
     ,   plainMsg'
     ,   msgToPP
     ,   msgToPP'
+    ,   iconText
     ,   flagText
     ,   isTag
     ,   getProvLoc

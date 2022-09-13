@@ -1326,6 +1326,7 @@ data ScriptMessage
     | MsgRemoveConsort
     | MsgClearRebels
     | MsgMonthsSinceDefection {scriptMessageAmt :: Double}
+    | MsgNumHussars {scriptMessageAmt :: Double}
     | MsgNumJanissaries {scriptMessageAmt :: Double}
     | MsgJanissaryPercentage {scriptMessageAmt :: Double}
     | MsgBreakUnion {scriptMessageWhom :: Text}
@@ -1367,6 +1368,8 @@ data ScriptMessage
     | MsgYearsOfTradeIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddFavors {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgSubsidisedPercentAmount {scriptMessageAmt :: Double }
+    | MsgSetCenterOfTrade2 {scriptMessageIcon1 :: Text, scriptMessageIcon2 :: Text}
+    | MsgSetCenterOfTrade3 {scriptMessageIcon1 :: Text, scriptMessageIcon2 :: Text, scriptMessageIcon3 :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -8749,6 +8752,12 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (formatMonths _amt)
                 , " since the province defected"
                 ]
+        MsgNumHussars {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " winged hussars regiments"
+                ]
         MsgNumJanissaries {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
@@ -9011,6 +9020,40 @@ instance RenderMessage Script ScriptMessage where
                 [ "At least "
                 , toMessage (reducedNum plainPc _amt)
                 , " of the income is from subsidies"
+                ]
+        MsgSetCenterOfTrade2 {scriptMessageIcon1 = _icon2, scriptMessageIcon2 = _icon_prod}
+            -> mconcat
+                [ "If it has at least a "
+                , _icon2
+                , " Level '''2''' Center of Trade, gain "
+                , _icon_prod
+                , " "
+                , toMessage (colourNum True 2)
+                , " base production. Otherwise gain a "
+                , _icon2
+                , " Level "
+                , toMessage (colourNum True 2)
+                , " Center of Trade"
+                ]
+        MsgSetCenterOfTrade3 {scriptMessageIcon1 = _icon3, scriptMessageIcon2 = _icon2, scriptMessageIcon3 = _icon_prod}
+            -> mconcat
+                [ "Gain a "
+                , _icon3
+                , " Level "
+                , toMessage (colourNum True 3)
+                , " Center of Trade. If it already had a "
+                , _icon3
+                , " Level '''3''' Center of Trade, gain "
+                , _icon_prod
+                , " "
+                , toMessage (colourNum True 4)
+                , " base production. If it had a "
+                , _icon2
+                , " Level '''2''' Center of Trade, gain "
+                , _icon_prod
+                , " "
+                , toMessage (colourNum True 2)
+                , " base production"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
