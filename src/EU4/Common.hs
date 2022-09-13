@@ -1055,8 +1055,11 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
 handlersForNonModifiersWithinModifiiers :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersForNonModifiersWithinModifiiers = Tr.fromList
         [("is_imperial_modifier"        , rhsAlwaysYes (MsgGenericText "This modifier only applies to members of the HRE"))
+        ,("is_carolean_modifier"        , rhsAlwaysYes (MsgGenericText "This modifier only applies to carolean regiments"))
         ,("is_cawa_modifier"            , rhsAlwaysYes (MsgGenericText "This modifier only applies to cawa regiments"))
+        ,("is_hussars_modifier"         , rhsAlwaysYes (MsgGenericText "This modifier only applies to winged hussars regiments"))
         ,("is_janissary_modifier"       , rhsAlwaysYes (MsgGenericText "This modifier only applies to janissary regiments"))
+        ,("is_marine_modifier"          , rhsAlwaysYes (MsgGenericText "This modifier only applies to marine regiments"))
         ,("is_mercenary_modifier"       , rhsAlwaysYes (MsgGenericText "This modifier only applies to mercenary regiments"))
         ,("is_rajput_modifier"          , rhsAlwaysYes (MsgGenericText "This modifier only applies to rajput regiments"))
         ,("is_revolutionary_guard_modifier", rhsAlwaysYes (MsgGenericText "This modifier only applies to revolutionary guard regiments"))
