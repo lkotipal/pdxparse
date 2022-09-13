@@ -1910,6 +1910,13 @@ rebel_loc = HM.fromList
         ,("colonial_patriot_rebels", ("Colonial patriot", "colonial patriot")) -- ??
         ,("particularist_rebels",   ("Particularist rebels", "particularist"))
         ,("nationalist_rebels",     ("Separatist rebels", "separatists"))
+        ,("anglican_rebels",        ("Anglican zealots", "anglican zealots"))
+        ,("cossack_rebels",         ("Cossack rebels", "cossacks"))
+        ,("dreamtime_rebels",       ("Alcheringa zealots", "alcheringa zealots"))
+        ,("hussite_rebels",         ("Hussite zealots", "hussite zealots"))
+        ,("leadered_peasant_rebels",("Leadered peasants", "leadered peasants"))
+        ,("nap_republican_rebels",  ("Republican rebels", "republicans"))
+        ,("tribal_rebels",          ("Tribal rebels", "tribal rebels"))
         ]
 
 -- Spawn a rebel stack.
