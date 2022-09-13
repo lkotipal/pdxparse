@@ -1738,6 +1738,7 @@ tryLocAndIconTitle t = tryLocAndIcon (t <> "_title")
 handlersTextValue :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextValue = Tr.fromList
         [("add_great_project_tier"      , textValue "type" "tier" MsgAddGreatProjectTier MsgAddGreatProjectTier tryLocAndIcon)
+        ,("add_favors"                  , textValue "who" "amount" MsgAddFavors MsgAddFavors flagTextMaybe)
         ,("add_incident_variable_value" , textValue "incident" "value" MsgAddIncidentVariableValue MsgAddIncidentVariableValue tryLocAndIconTitle)
         ,("add_institution_embracement" , textValue "which" "value" MsgAddInstitutionEmbracement MsgAddInstitutionEmbracement tryLocAndIcon)
         ,("add_disaster_progress"       , textValue "disaster" "value" MsgAddDisasterProgress MsgAddDisasterProgress tryLocAndIcon)
