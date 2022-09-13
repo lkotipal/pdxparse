@@ -903,6 +903,7 @@ scriptIconFileTable = HM.fromList
     ,("maximum tolerance of heretics", ("", "maximum tolerance of heretics"))
     ,("may establish siberian frontiers", ("", "Siberian frontier"))
     ,("may fabricate claims for subjects", ("", "Fabricate claims"))
+    ,("monthly federation favor growth", ("", "Monthly federation favor growth"))
     ,("monthly heir claim increase", ("", "monthly heir claim increase"))
     ,("monthly piety accelerator", ("", "monthly piety accelerator"))
     ,("monthly reform progress", ("", "reform progress growth"))
