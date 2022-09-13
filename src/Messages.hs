@@ -7112,7 +7112,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgTrust {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
             -> mconcat
-                [ "Has at "
+                [ "Has at least "
                 , toMessage (plainNum _amt)
                 , " [[trust]] with "
                 , _whom
