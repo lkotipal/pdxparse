@@ -1381,6 +1381,7 @@ data ScriptMessage
     | MsgIsAbsolutismActive {scriptMessageYn :: Bool}
     | MsgNumOfProvincesInStates {scriptMessageAmt :: Double }
     | MsgForceConverted {scriptMessageWhom :: Text}
+    | MsgAddYearsOfOwnedProvinceIncome {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9147,6 +9148,14 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Has been force converted by "
                 , _whom
+                ]
+        MsgAddYearsOfOwnedProvinceIncome {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Gain "
+                , toMessage (colourNum True _amt)
+                , " years of "
+                , T.toLower _what
+                , " income from provinces which fulfill the following conditions:"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

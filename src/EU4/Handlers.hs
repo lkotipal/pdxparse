@@ -142,6 +142,7 @@ module EU4.Handlers (
     ,   createSuccessionCrisis
     ,   unlockMercCompany
     ,   yearsOfTradeIncome
+    ,   addYearsOfOwnedProvinceIncome
     ,   hasBuildingTrigger
     ,   productionLeader
     ,   addProvinceTriggeredModifier
@@ -2685,6 +2686,24 @@ foldCompound "yearsOfTradeIncome" "YearsOfTradeIncome" "years_trade_income"
     [| do
         return $ MsgYearsOfTradeIncome (iconText _icon) _years
     |]
+
+addYearsOfOwnedProvinceIncome :: (EU4Info g, Monad m) => Text -> StatementHandler g m
+addYearsOfOwnedProvinceIncome typeLocKey stmt@[pdx| %_ = @stmts |] = do
+    let (yearsStmt, rest) = extractStmt (matchLhsText "years") stmts
+        (_, rest') = extractStmt (matchLhsText "custom_tooltip") rest -- ignore the tooltip
+        (triggerStmt, rest2') = extractStmt (matchLhsText "trigger") rest'
+    case rest2' of
+        [] -> case yearsStmt of
+            Just [pdx| %_ = !years |] -> case triggerStmt of
+                Just [pdx| %_ = @triggers |] -> do
+                    typeLoc <- getGameL10n typeLocKey
+                    triggerMsgs <- ppMany triggers
+                    withCurrentIndent $ \i ->
+                        return $ (i, MsgAddYearsOfOwnedProvinceIncome typeLoc years) : triggerMsgs
+                _ -> preStatement stmt
+            _ -> preStatement stmt
+        unhandledStatements -> (trace $ "addYearsOfOwnedProvinceIncome: Unhandled statemens " ++ (show unhandledStatements)) $ preStatement stmt
+addYearsOfOwnedProvinceIncome _ stmt = preStatement stmt
 
 -- War
 
