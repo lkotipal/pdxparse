@@ -1855,6 +1855,7 @@ handlersSpecialComplex = Tr.fromList
         ,("allow_baseline_invite_scholar"   , simpleEffectAtom "religious_school" MsgAllowBaselineInviteScholar)
         ,("check_reducing_estate_revolt_size_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize False))
         ,("check_reducing_estate_revolt_size_more_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize True))
+        ,("disable_rebels_from_seize_land_for_estate" , simpleEffectAtom "estate" MsgDisableRebelsFromSeizeLand)
         ,("generate_exile_advisor_effect"   , simpleEffectAtom "advisor_type" MsgGenerateExileAdvisor)
         ,("generate_scaled_advisor_of_type_and_religion_effect" , defineAdvisor True)
         ,("generate_traitor_advisor_effect" , simpleEffectNum "skill_level" MsgGenerateTraitorAdvisor)
@@ -1883,9 +1884,11 @@ handlersSpecialComplex = Tr.fromList
         ,("export_to_variable"           , exportVariable)
 
         -- Has building triggers (from common/scripted_triggers/00_scripted_triggers.txt)
+        ,("has_coast_defense_building_trigger", hasBuildingTrigger ["coastal_defence", "naval_battery"])
         ,("has_courthouse_building_trigger" , hasBuildingTrigger ["courthouse", "town_hall"])
         ,("has_dock_building_trigger"       , hasBuildingTrigger ["dock", "drydock"])
         ,("has_forcelimit_building_trigger" , hasBuildingTrigger ["regimental_camp", "conscription_center"])
+        ,("has_fort_building_trigger"       , hasBuildingTrigger ["fort_15th", "fort_16th", "fort_17th", "fort_18th"])
         ,("has_manpower_building_trigger"   , hasBuildingTrigger ["barracks", "training_fields"])
         ,("has_production_building_trigger" , hasBuildingTrigger ["workshop", "counting_house"])
         ,("has_shipyard_building_trigger"   , hasBuildingTrigger ["shipyard", "grand_shipyard"])
@@ -1913,6 +1916,7 @@ handlersRebels = Tr.fromList
         -- Scripted
         ,("spawn_small_scaled_rebels" , spawnScaledRebels False)
         ,("spawn_large_scaled_rebels" , spawnScaledRebels True)
+        ,("spawn_province_religious_rebels", simpleEffectNum "size" MsgSpawnProvinceReligiousRebels)
         ]
 
 -- | Handlers for idea groups

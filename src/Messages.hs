@@ -542,6 +542,7 @@ data ScriptMessage
     | MsgRebelsLedBy {scriptMessageLeader :: Text}
     | MsgRebelsGainProgress {scriptMessageAmt :: Double}
     | MsgSpawnRebels {scriptMessageRtype :: Text, scriptMessageSize :: Double, scriptMessageFriend :: Text, scriptMessageLeader :: Text, scriptMessageWin :: Bool, scriptMessageProgress :: Text}
+    | MsgSpawnProvinceReligiousRebels {scriptMessageSize :: Double}
     | MsgRebelsHaveRisen {scriptMessageIcon :: Text, scriptMessageRtype :: Text}
     | MsgTagGainsCore {scriptMessageWho :: Text}
     | MsgGainCoreOnProvince {scriptMessageProv :: Text}
@@ -1358,6 +1359,7 @@ data ScriptMessage
     | MsgSwitchTag {scriptMessageWho :: Text}
     | MsgPowerCost {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgUnlockMercCompany {scriptMessageWhat :: Text, scriptMessageFree :: Bool, scriptMessageGlobal :: Bool}
+    | MsgDisableRebelsFromSeizeLand {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -4165,6 +4167,12 @@ instance RenderMessage Script ScriptMessage where
                 , _leader
                 , toMessage (ifThenElseT _win " and occupy the province" "")
                 , _progress
+                ]
+        MsgSpawnProvinceReligiousRebels {scriptMessageSize = _size}
+            -> mconcat
+                [ "Religious rebels (size "
+                , toMessage (roundNum _size)
+                , ") with the religion of this province, rise in revolt"
                 ]
         MsgRebelsHaveRisen {scriptMessageIcon = _icon, scriptMessageRtype = _rtype}
             -> mconcat
@@ -8933,6 +8941,15 @@ instance RenderMessage Script ScriptMessage where
                 , if _free then "This mercenary company does ''not'' cost army professionalism when hired." else ""
                 , if _global then "Is globally available for recruitment." else ""
                 , if _free || _global then ")" else ""
+                ]
+        MsgDisableRebelsFromSeizeLand {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "The "
+                , _icon
+                , " "
+                , _what
+                , " estate "
+                , " will no longer raise any rebels when their land gets seized if their loyalty drops below '''30'''"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
