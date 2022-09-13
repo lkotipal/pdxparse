@@ -1224,6 +1224,7 @@ handlersLocRhs = Tr.fromList
         ,("is_incident_active"    , withLocAtomTitle MsgIsIncidentActive)
         ,("is_incident_happened"  , withLocAtomTitle MsgHasIncidentHappened)
         ,("is_incident_possible"  , withLocAtomTitle MsgIsIncidentPossible)
+        ,("is_hegemon_of_type"    , withLocAtom MsgIsHegemonOfType)
         ,("is_subject_of_type"    , withLocAtomTitle MsgIsSubjectOfType)
         ,("kill_advisor"          , withLocAtom MsgAdvisorDies)
         ,("mission_completed"     , withLocAtomTitle MsgMissionCompleted)

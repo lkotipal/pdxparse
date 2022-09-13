@@ -925,6 +925,7 @@ data ScriptMessage
     | MsgProvinceTradePower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasPermanentClaim { scriptMessageWhat :: Text }
     | MsgIsPermanentClaim { scriptMessageWhom :: Text }
+    | MsgIsHegemonOfType { scriptMessageType :: Text }
     | MsgIsSubjectOfType { scriptMessageType :: Text }
     | MsgHasRuler { scriptMessageWho :: Text }
     | MsgHasCasusBelli { scriptMessageWhat :: Text, scriptMessageWho :: Text }
@@ -6422,6 +6423,11 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is a [[permanent claim]] of "
                 , _whom
+                ]
+        MsgIsHegemonOfType { scriptMessageType = _type }
+            -> mconcat
+                [ "Is "
+                , _type
                 ]
         MsgIsSubjectOfType { scriptMessageType = _type }
             -> mconcat
