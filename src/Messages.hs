@@ -1383,6 +1383,8 @@ data ScriptMessage
     | MsgNumOfProvincesInStates {scriptMessageAmt :: Double }
     | MsgForceConverted {scriptMessageWhom :: Text}
     | MsgAddYearsOfOwnedProvinceIncome {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgTotalStats {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgPreviousOwner {scriptMessageWhom :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9172,6 +9174,18 @@ instance RenderMessage Script ScriptMessage where
                 , " years of "
                 , T.toLower _what
                 , " income from provinces which fulfill the following conditions:"
+                ]
+        MsgTotalStats {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The "
+                , _what
+                , "'s {{icon|adm}}, {{icon|dip}} and {{icon|mil}} add up to at least "
+                , toMessage (bold (plainNum _amt))
+                ]
+        MsgPreviousOwner {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Was previously owned by "
+                , _whom
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

@@ -144,6 +144,7 @@ module EU4.Handlers (
     ,   yearsOfTradeIncome
     ,   addYearsOfOwnedProvinceIncome
     ,   addLegitimacyEquivalent
+    ,   totalStats
     ,   hasBuildingTrigger
     ,   productionLeader
     ,   addProvinceTriggeredModifier
@@ -2712,6 +2713,20 @@ foldCompound "addLegitimacyEquivalent" "AddLegitimacyEquivalent" "le"
     ]
     [| do
         return $ MsgAddLegitimacyEquivalent _amount _republican_tradition
+    |]
+
+foldCompound "totalStats" "TotalStats" "ts"
+    [("_ruler_or_heir", [t|Text|])]
+    [CompField "stats" [t|Double|] Nothing True
+    ,CompField "custom_tooltip" [t|Text|] Nothing False --ignored
+    ,CompField "who" [t|Text|] Nothing False --should either be empty or root
+    ]
+    [| do
+        rulerOrHeirLoc <- getGameL10n _ruler_or_heir
+        case _who of
+                Nothing -> return $ MsgTotalStats rulerOrHeirLoc _stats
+                Just "ROOT" -> return $ MsgTotalStats rulerOrHeirLoc _stats
+                Just unexpected_who -> trace ("Expected root as who= in totalStats, but found " ++ T.unpack unexpected_who) return $ MsgTotalStats rulerOrHeirLoc _stats
     |]
 
 -- War
