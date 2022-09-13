@@ -1739,6 +1739,7 @@ handlersTextValue = Tr.fromList
         ,("add_power_projection"        , textValue "type" "amount" MsgAddPowerProjection MsgAddPowerProjection tryLocAndIcon)
         ,("add_spy_network_from"        , textValue "who" "value" MsgAddSpyNetworkFrom MsgAddSpyNetworkFrom flagTextMaybe)
         ,("add_spy_network_in"          , textValue "who" "value" MsgAddSpyNetworkIn MsgAddSpyNetworkIn flagTextMaybe)
+        ,("add_stat_or_monarch_power"   , textValue "stat" "amount" MsgGainStatOrMonarchPower MsgGainStatOrMonarchPower (\ what -> tryLocAndIcon (T.toUpper what)))
         ,("army_strength"               , textValue "who" "value" MsgArmyStrength MsgArmyStrength flagTextMaybe)
         ,("border_distance"             , textValue "who" "distance" MsgBorderDistance MsgBorderDistance flagTextMaybe)
         ,("estate_influence"            , textValue "estate" "influence" MsgEstateInfluence MsgEstateInfluence tryLocAndIcon)

@@ -91,6 +91,7 @@ data ScriptMessage
     | MsgGainADMSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainDIPSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMILSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainStatOrMonarchPower {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgGainHeirADMSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainHeirDIPSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainHeirMILSkill {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1622,6 +1623,20 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True _amt)
                 , " military skill"
+                ]
+        MsgGainStatOrMonarchPower {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Ruler "
+                , gainsOrLoses _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " "
+                , _what
+                , " skill. Excess points over '''6''' will be converted into {{green|+100}} "
+                , _what
+                , " power."
                 ]
         MsgGainHeirADMSkill {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
