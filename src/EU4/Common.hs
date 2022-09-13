@@ -1423,6 +1423,7 @@ handlersSimpleFlag = Tr.fromList
         ,("is_league_friend"        , withFlag MsgIsLeagueFriend)
         ,("is_neighbor_of"          , withFlag MsgNeighbors)
         ,("is_origin_of_consort"    , withFlag MsgIsOriginOfConsort)
+        ,("is_renting_condottieri_to" , withFlag MsgIsRentingCondottieriTo)
         ,("is_rival"                , withFlag MsgIsRival)
         ,("is_supporting_independence_of" , withFlag MsgIsSupportingIndependenceOf)
         ,("is_state_core"           , withFlag MsgIsStateCore)

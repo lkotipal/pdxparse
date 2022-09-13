@@ -1390,6 +1390,7 @@ data ScriptMessage
     | MsgPreviousOwner {scriptMessageWhom :: Text}
     | MsgAddLatestBuilding {scriptMessageWhat :: Text}
     | MsgHasPointsForLivonianMonarchy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgIsRentingCondottieriTo {scriptMessageWhom :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9216,6 +9217,11 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "The country variables <tt>liv_adm</tt>, <tt>liv_dip</tt> and <tt>liv_mil</tt> have exactly the values which are required for the government reform "
                 ,  toMessage (iquotes _what)
+                ]
+        MsgIsRentingCondottieriTo {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is renting [[condottieri]] to "
+                , _whom
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
