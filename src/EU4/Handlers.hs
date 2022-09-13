@@ -51,6 +51,7 @@ module EU4.Handlers (
     ,   taDescAtomIcon
     ,   taTypeFlag
     ,   simpleEffectNum
+    ,   simpleEffectNumIcon
     ,   simpleEffectAtom
     ,   simpleEffectAtomIcon
     ,   simpleEffectWithExtraHandler
@@ -1549,6 +1550,9 @@ simpleEffectNum tArg msg stmt =
         Just (FloatRhs num) -> msgToPP (msg num)
         Just (IntRhs num) -> msgToPP (msg (fromIntegral num))
         _ -> (trace $ "warning: Not handled by simpleEffectNum: " ++ (show stmt)) $ preStatement stmt
+
+simpleEffectNumIcon :: forall g m. (EU4Info g, Monad m) => Text -> Text -> (Text -> Double -> ScriptMessage) -> StatementHandler g m
+simpleEffectNumIcon iconKey tArg msg = simpleEffectNum tArg (msg (iconText iconKey))
 
 simpleEffectAtom :: forall g m. (EU4Info g, Monad m) => Text -> (Text -> Text -> ScriptMessage) -> StatementHandler g m
 simpleEffectAtom tArg msg stmt =

@@ -1893,6 +1893,7 @@ handlersSpecialComplex = Tr.fromList
         -- Effects/Triggers
         ,("add_accepted_culture_or_dip_power", simpleEffectAtomIcon "max promoted cultures" "culture" MsgAddAcceptedCultureOrDipPower)
         ,("add_loot_from_rich_province_general_effect" , simpleEffectAtom "looter" MsgAddLootFromRichProvince) -- Note: RHS ignored
+        ,("add_prestige_or_monarch_power"  , simpleEffectNumIcon "prestige" "amount" MsgAddPrestigeOrMonarchPower)
         ,("allow_baseline_invite_scholar"   , simpleEffectAtom "religious_school" MsgAllowBaselineInviteScholar)
         ,("check_reducing_estate_revolt_size_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize False))
         ,("check_reducing_estate_revolt_size_more_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize True))

@@ -85,6 +85,7 @@ data ScriptMessage
     | MsgGainNavyTradition {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainPapalInfluence {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainPrestige {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgAddPrestigeOrMonarchPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainStability {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainWarExhaustion {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainYearlyManpower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1591,6 +1592,15 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True _amt)
                 , " prestige"
+                ]
+        MsgAddPrestigeOrMonarchPower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " prestige. Each exess prestige will be converted into one of each type of monarch power."
                 ]
         MsgGainRepTrad {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
