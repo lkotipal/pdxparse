@@ -1119,7 +1119,7 @@ handlersCompound = Tr.fromList
         ,("else_if"                 ,                      compoundMessage MsgElseIf)
         ,("emperor"                 , scope EU4Country   . compoundMessage MsgEmperor)
         ,("every_active_trade_node" , scope EU4TradeNode . compoundMessage MsgEveryActiveTradeNode)
-        ,("every_ally"              , scope EU4TradeNode . compoundMessage MsgEveryAlly)
+        ,("every_ally"              , scope EU4Country   . compoundMessage MsgEveryAlly)
         ,("every_core_country"      , scope EU4Country   . compoundMessage MsgEveryCoreCountry) -- used in province scope
         ,("every_core_province"     , scope EU4Province  . compoundMessage MsgEveryCoreProvince)
         ,("every_country"           , scope EU4Country   . compoundMessage MsgEveryCountry)
