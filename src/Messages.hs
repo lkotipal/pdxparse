@@ -317,7 +317,8 @@ data ScriptMessage
     | MsgKarma {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLegitimacy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLegitimacyAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgLegitimacyEquivalent {scriptMessageAmt :: Double}
+    | MsgLegitimacyEquivalent {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLegitimacyEquivalentAs {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgRulerMIL {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMILTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumAllies {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -2704,10 +2705,17 @@ instance RenderMessage Script ScriptMessage where
                 , " Legitimacy is at least that of "
                 , _whom
                 ]
-        MsgLegitimacyEquivalent {scriptMessageAmt = _amt}
+        MsgLegitimacyEquivalent {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
-                [ "{{icon|legitimacy}} Legitimacy (or equivalent) is at least "
+                [  _icon
+                , " Legitimacy (or equivalent) is at least "
                 , toMessage (roundNum _amt)
+                ]
+        MsgLegitimacyEquivalentAs {scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [  _icon
+                , " Legitimacy (or equivalent) is at least that of "
+                , _whom
                 ]
         MsgRulerMIL {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
