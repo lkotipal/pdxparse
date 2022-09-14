@@ -119,6 +119,7 @@ executable pdxparse
                        mtl >=2.1,
                        shakespeare >=2.0,
                        regex-tdfa >= 1.2,
+                       regex-compat,
                        template-haskell >= 2.10,
                        text >=1.2,
                        th-lift >=0.7,
