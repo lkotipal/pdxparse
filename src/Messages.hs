@@ -3271,8 +3271,6 @@ instance RenderMessage Script ScriptMessage where
         MsgRulerCultureIs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Ruler culture is "
-                , _icon
-                , " "
                 , _what
                 ]
         MsgIsCoreOf {scriptMessageWhom = _whom}
