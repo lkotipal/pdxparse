@@ -579,7 +579,9 @@ data ScriptMessage
     | MsgReligionYears {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageYears :: Double}
     | MsgHasIdea {scriptMessageWhat :: Text}
     | MsgHasReform {scriptMessageWhat :: Text}
+    | MsgHaveHadReform {scriptMessageWhat :: Text}
     | MsgHasReformTier {scriptMessageAmt :: Double}
+    | MsgHasUnlockedGovernmentReform {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgReligionProvinces {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
     | MsgGoodsProvinces {scriptMessageIcon :: Text, scriptMessageName :: Text, scriptMessageAmt :: Double}
     | MsgHasIdeaFromGroup {scriptMessageIcon :: Text, scriptMessageGroup :: Text, scriptMessageName :: Text, scriptMessageNum :: Int}
@@ -4460,11 +4462,22 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (iquotes _what)
                 , " government reform"
                 ]
+        MsgHaveHadReform {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Had the government reform "
+                , toMessage (iquotes _what)
+                , " before"
+                ]
         MsgHasReformTier {scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has enacted a tier "
                 , toMessage (plainNum _amt)
                 , " government reform"
+                ]
+        MsgHasUnlockedGovernmentReform {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has unlocked the government reform "
+                , toMessage (iquotes _what)
                 ]
         MsgReligionProvinces {scriptMessageIcon = _icon, scriptMessageName = _name, scriptMessageAmt = _amt}
             -> mconcat
