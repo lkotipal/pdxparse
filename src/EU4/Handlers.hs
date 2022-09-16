@@ -4321,7 +4321,7 @@ hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
         if maybe False ig_free (HM.lookup ig igs) then
             msgToPP $ MsgHasIdeaGroup "" textLoc -- group national idea -> no icon
         else
-            msgToPP $ MsgHasIdeaGroup (iconText ig) textLoc
+            msgToPP $ MsgHasIdeaGroup (iconText (T.toLower (T.replace " Ideas" "" textLoc))) textLoc
 hasIdeaGroup stmt = (trace $ "Not handled in hasIdeaGroup: " ++ show stmt) $ preStatement stmt
 
 ----------------------------
