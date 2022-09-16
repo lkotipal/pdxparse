@@ -912,6 +912,7 @@ scriptIconFileTable = HM.fromList
     ,("overlord naval force limit", ("", "overlord naval force limit"))
     ,("yearly authority", ("", "yearly authority"))
     ,("yearly doom reduction", ("", "yearly doom reduction"))
+    ,("years for personal union integration", ("", "Personal union"))
     -- Trade company investments
     ,("local_quarter", ("TC local quarters", "Trade company#Trade company investments"))
     ,("permanent_quarters", ("TC permanent quarters", "Trade company#Trade company investments"))
@@ -4306,23 +4307,23 @@ createColonyMissionReward stmt =
 --------------------------------
 -- Handler for has_idea_group --
 --------------------------------
-hasIdeaGroup :: (EU4Info g, Monad m) => StatementHandler g m
-hasIdeaGroup stmt@[pdx| %_ = ?ig |] =
+hasIdeaGroup :: (EU4Info g, Monad m) => (Text -> Text -> ScriptMessage) -> StatementHandler g m
+hasIdeaGroup msg stmt@[pdx| %_ = ?ig |] =
     -- TODO: Improve
     -- Dirty check, if of the form XXX_ideas (where XXX are upper caes letters) assume national ideas..
     if  ((T.length ig) > 4) && ((T.index ig 3) == '_') && (isUpper (T.index ig 0)) && (isUpper (T.index ig 1)) && (isUpper (T.index ig 2)) then do
         countryLoc <- getGameL10n (T.take 3 ig)
         textLoc <- getGameL10n ig
         -- Show flag (again, dirty)
-        msgToPP $ MsgHasIdeaGroup ("[[File:" <> countryLoc <> ".png|20px]]") textLoc
+        msgToPP $ msg ("[[File:" <> countryLoc <> ".png|20px]]") textLoc
     else do -- "normal" idea group or group national idea
         igs <- getIdeaGroups
         textLoc <- getGameL10n ig
         if maybe False ig_free (HM.lookup ig igs) then
-            msgToPP $ MsgHasIdeaGroup "" textLoc -- group national idea -> no icon
+            msgToPP $ msg "" textLoc -- group national idea -> no icon
         else
-            msgToPP $ MsgHasIdeaGroup (iconText (T.toLower (T.replace " Ideas" "" textLoc))) textLoc
-hasIdeaGroup stmt = (trace $ "Not handled in hasIdeaGroup: " ++ show stmt) $ preStatement stmt
+            msgToPP $ msg (iconText (T.toLower (T.replace " Ideas" "" textLoc))) textLoc
+hasIdeaGroup _ stmt = (trace $ "Not handled in hasIdeaGroup: " ++ show stmt) $ preStatement stmt
 
 ----------------------------
 -- Handler for kill_units --

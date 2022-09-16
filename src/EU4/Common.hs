@@ -1357,7 +1357,6 @@ handlersSimpleIcon = Tr.fromList
         ,("current_age"             , withLocAtomIcon MsgCurrentAge)
         ,("current_icon"            , withLocAtomIcon MsgCurrentIcon)
         ,("enable_religion"         , withLocAtomIcon MsgEnableReligion)
-        ,("full_idea_group"         , withLocAtomIcon MsgFullIdeaGroup)
         ,("has_adopted_cult"        , withLocAtomIcon MsgHasAdoptedCult)
         ,("has_building"            , withLocAtomIconBuilding MsgHasBuilding)
         ,("has_climate"             , withLocAtomIcon MsgHasClimate)
@@ -2100,7 +2099,8 @@ handlersMisc = Tr.fromList
         ,("unlock_merc_company", unlockMercCompany)
         ,("generate_advisor_of_type_and_semi_random_religion_effect" , randomAdvisor)
         ,("create_colony_mission_reward" , createColonyMissionReward)
-        ,("has_idea_group"      , hasIdeaGroup)
+        ,("full_idea_group"     , hasIdeaGroup MsgFullIdeaGroup)
+        ,("has_idea_group"      , hasIdeaGroup MsgHasIdeaGroup)
         -- Estate monopoly privileges
         ,("apply_estate_monopoly_modifier"  , estatePrivilege MsgApplyEstateModifer)
         ,("reapply_estate_privilege"        , estatePrivilege MsgReapplyEstatePrivilege)
