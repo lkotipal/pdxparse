@@ -248,6 +248,23 @@ handlersRhsIrrelevant = Tr.fromList
                         ,"** {{icon|shinto}} Shinto"
                         ,"* The state religion is {{icon|confucian}} Confucian with a harmonized Buddhist religion and the province has another harmonized religion"
                 ])
+        ,("province_is_buddhist_or_accepts_buddhism_or_is_dharmic", genericTextLines [
+                        "Either:"
+                        ,"* Province has one of the following religions (which is either the state religion, the syncretic religion, or harmonized):"
+                        ,"** {{icon|buddhism}} Theravada"
+                        ,"** {{icon|vajrayana}} Vajrayana"
+                        ,"** {{icon|mahayana}} Mahayana"
+                        ,"* The state religion is {{icon|tengri}} Tengri with a Dharmic religion as the syncretic religion ''and'' the province religion is in the Dharmic group."
+                        ,"* The province and state religion are {{icon|tengri}} Tengri with any Buddhist ''or'' Dharmic religion as the syncretic religion."
+                        ,"* The province and state religion are {{icon|confucian}} Confucian with a harmonized Buddhist religion."
+                        ,"* The province and state religion are one of the following:"
+                       --(unneccessary, because hindu is allowed as part of the dharmic group) ,"** {{icon|hinduism}} Hindu with {{icon|buddha}} Buddha as personal deity"
+                        ,"** {{icon|fetishism}} Fetishist with the {{icon|buddhadharma}} Buddhadharma cult"
+                        ,"** {{icon|shinto}} Shinto"
+                        ,"** in the Dharmic group"
+                        ,"* The state religion is {{icon|confucian}} Confucian with a harmonized Buddhist religion and the province has another harmonized religion"
+                ])
+
         ]
 
 -- | Handlers for numeric statements
@@ -1912,6 +1929,7 @@ handlersSpecialComplex = Tr.fromList
         ,("add_loot_from_rich_province_general_effect" , simpleEffectAtom "looter" MsgAddLootFromRichProvince) -- Note: RHS ignored
         ,("add_prestige_or_monarch_power"  , simpleEffectNumIcon "prestige" "amount" MsgAddPrestigeOrMonarchPower)
         ,("allow_baseline_invite_scholar"   , simpleEffectAtom "religious_school" MsgAllowBaselineInviteScholar)
+        ,("can_swap_out_of_estate_granting_reform", simpleEffectAtom "estate" MsgCanSwapOutEstateGrantingReform)
         ,("check_reducing_estate_revolt_size_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize False))
         ,("check_reducing_estate_revolt_size_more_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize True))
         ,("disable_rebels_from_seize_land_for_estate" , simpleEffectAtom "estate" MsgDisableRebelsFromSeizeLand)

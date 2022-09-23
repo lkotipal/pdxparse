@@ -1399,6 +1399,7 @@ data ScriptMessage
     | MsgAddManufactoryEffect
     | MsgHasStateEdict {scriptMessageWhat :: Text}
     | MsgOwesFavors {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgCanSwapOutEstateGrantingReform {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9275,6 +9276,14 @@ instance RenderMessage Script ScriptMessage where
                 , " at least "
                 , toMessage (plainNum _amt)
                 , " favors"
+                ]
+        MsgCanSwapOutEstateGrantingReform {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has no "
+                , _icon
+                , " "
+                , _what
+                , " estate ''or'' the estate has no privileges"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
