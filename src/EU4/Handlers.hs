@@ -910,7 +910,6 @@ scriptIconFileTable = HM.fromList
     ,("may fabricate claims for subjects", ("", "Fabricate claims"))
     ,("monthly federation favor growth", ("", "Monthly federation favor growth"))
     ,("monthly heir claim increase", ("", "monthly heir claim increase"))
-    ,("monthly piety accelerator", ("", "monthly piety accelerator"))
     ,("monthly reform progress", ("", "reform progress growth"))
     ,("norse zealots", ("Norse rebels", "Norse zealots"))
     ,("number of free cities", ("", "Number of free cities"))
