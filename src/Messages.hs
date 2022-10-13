@@ -1549,7 +1549,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (colourNum True _amt)
-                , " karma"
+                , " {{DLC-only|karma}}"
                 ]
         MsgGainLegitimacy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5409,7 +5409,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (colourNum True _amt)
-                , " militarization"
+                , " {{DLC-only|militarization of state}}"
                 ]
         MsgGainProsperity {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
