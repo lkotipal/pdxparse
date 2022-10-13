@@ -7167,15 +7167,17 @@ instance RenderMessage Script ScriptMessage where
                 , " estate "
                 , gainsOrLoses _amt
                 , " "
-                , toMessage (colourPcSign False _amt)
+                , toMessage (colourPc False  _amt)
                 , " share of the land"
                 ]
         MsgEstateLandShareEffectAll {scriptMessageAmt = _amt}
             -> mconcat
-                [ "Every estate "
-                , gainsOrLoses _amt
+                -- The value in the code is for all estates together, so it is easier to say
+                -- that the crown gains it instead of the estates losing land.
+                [ "The crown "
+                , gainsOrLoses (-1 * _amt)
                 , " "
-                , toMessage (colourPcSign False _amt)
+                , toMessage (colourPc False _amt)
                 , " share of the land"
                 ]
         MsgIsInTradeLeagueWith {scriptMessageWhom = _whom}
