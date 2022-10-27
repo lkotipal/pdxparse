@@ -467,6 +467,8 @@ data ScriptMessage
     | MsgIsUnitLeader {scriptMessageYn :: Bool}
     | MsgAddStateModifier
     | MsgAddPowerBalanceModifier { scriptMessageWho :: Text, scriptMessageWhoKey :: Text, scriptMessageWhat :: Text, scriptMessageWhatKey :: Text }
+    | MsgRemovePowerBalanceModifier { scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageWhoKey :: Text , scriptMessageWhatKey :: Text }
+    | MsgHasPowerBalanceModifier { scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageWhoKey :: Text , scriptMessageWhatKey :: Text }
     | MsgModifier {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierSign {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierColourPos {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
@@ -627,6 +629,8 @@ data ScriptMessage
     | MsgAddResourceVar {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmtText :: Text, scriptMessageWhere :: Text}
     | MsgAddPopularity {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgAddPopularityVar {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmtText :: Text}
+    | MsgAddPowerBalanceValue { scriptMessageLoc :: Text, scriptMessageKey :: Text, scriptMessageAmt :: Double }
+    | MsgAddPowerBalanceValueVar { scriptMessageLoc :: Text, scriptMessageKey :: Text, scriptMessageAmtText :: Text }
     | MsgBuildRailway {scriptMessageAmt :: Double, scriptMessageStart :: Text, scriptMessageEnd :: Text}
     | MsgBuildRailwayProv {scriptMessageAmt :: Double, scriptMessageStartProv :: Double, scriptMessageEndProv :: Double}
     | MsgBuildRailwayPath {scriptMessageAmt :: Double, scriptMessageWhat :: Text}
@@ -2669,11 +2673,28 @@ instance RenderMessage Script ScriptMessage where
         MsgAddPowerBalanceModifier {scriptMessageWho = _who, scriptMessageWhoKey = _okey, scriptMessageWhat = _what, scriptMessageWhatKey = _akey }
             -> mconcat
                 [ "Adds modifier"
-                , _what
+                , toMessage (iquotes _what)
                 , "<!--", _akey, "-->"
                 , " to "
                 , _who
                 , "<!--", _okey, "-->"
+                ]
+        MsgRemovePowerBalanceModifier {scriptMessageWho = _who, scriptMessageWhoKey = _okey, scriptMessageWhat = _what, scriptMessageWhatKey = _akey }
+            -> mconcat
+                [ "Removes modifier "
+                , toMessage (iquotes _what)
+                , "<!--", _akey, "-->"
+                , " from "
+                , _who
+                , "<!--", _okey, "-->"
+                ]
+        MsgHasPowerBalanceModifier {scriptMessageWho = _who, scriptMessageWhoKey = _okey, scriptMessageWhat = _what, scriptMessageWhatKey = _akey }
+            -> mconcat
+                [ _who
+                , "<!--", _okey, "-->"
+                , " has modifier "
+                , _what
+                , "<!--", _akey, "-->"
                 ]
         MsgModifier {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
@@ -3888,6 +3909,24 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " party popularity"
+                ]
+        MsgAddPowerBalanceValue { scriptMessageLoc = _loc, scriptMessageKey = _key, scriptMessageAmt = _amt }
+            -> mconcat
+                [ "The "
+                , _loc
+                , "<!--", _key, "-->"
+                , " moves "
+                , bopicon _amt
+                , toMessage (bold (reducedNum plainPc _amt))
+                ]
+        MsgAddPowerBalanceValueVar { scriptMessageLoc = _loc, scriptMessageKey = _key, scriptMessageAmtText = _amtT }
+            -> mconcat
+                [ "The "
+                , _loc
+                , "<!--", _key, "-->"
+                , " moves "
+                , typewriterText _amtT
+                , " to the left or right"
                 ]
         MsgBuildRailway {scriptMessageAmt = _amt, scriptMessageStart = _start, scriptMessageEnd = _end}
             -> mconcat
