@@ -512,6 +512,7 @@ modifiersTable = HM.fromList
         ,("send_volunteer_divisions_required" , ("MODIFIER_SEND_VOLUNTEER_DIVISIONS_REQUIRED", MsgModifierPcNegReduced))
         ,("send_volunteer_size"             , ("MODIFIER_SEND_VOLUNTEER_SIZE", MsgModifierColourPos))
         ,("send_volunteers_tension"         , ("MODIFIER_SEND_VOLUNTEERS_TENSION_LIMIT", MsgModifierPcNegReduced))
+        ,("embargo_threshold_factor"        , ("MODIFIER_EMBARGO_THRESHOLD_FACTOR", MsgModifierPcNegReduced))
 
             -- autonomy
         ,("autonomy_gain"                   , ("MODIFIER_AUTONOMY_GAIN", MsgModifierColourPos))

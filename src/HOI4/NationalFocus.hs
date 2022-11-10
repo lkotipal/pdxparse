@@ -295,7 +295,7 @@ ppPrereq prereqs = mapM ppTitle prereqs
             let reqfol = if length prereq == 1 then
                     [Doc.strictText "* Requires the following:", PP.line]
                 else
-                    [Doc.strictText "* Requires one of the following:", PP.line]
+                    [Doc.strictText "* Requires ''one'' of the following:", PP.line]
             reqs <- sequenceA
                 [indentUp (ppScript prereq), pure PP.line
                 ]

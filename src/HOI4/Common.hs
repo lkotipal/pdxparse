@@ -452,7 +452,6 @@ handlersSimpleFlag = Tr.fromList
         ,("add_nationality"         , withFlag MsgAddNationality)
         ,("add_to_faction"          , withFlag MsgAddToFaction)
         ,("change_tag_from"         , withFlag MsgChangeTagFrom)
-        ,("is_controlled_by"        , withFlag MsgIsControlledBy)
         ,("country_exists"          , withFlag MsgCountryExists)
         ,("has_defensive_war_with"  , withFlag MsgHasDefensiveWarWith)
         ,("give_guarantee"          , withFlag MsgGiveGuarantee)
@@ -467,6 +466,7 @@ handlersSimpleFlag = Tr.fromList
         ,("occupied_country_tag"    , withFlag MsgOccupiedCountryTag)
         ,("inherit_technology"      , withFlag MsgInheritTechnology)
         ,("is_ally_with"            , withFlag MsgIsAllyWith)
+        ,("is_controlled_by"        , withFlag MsgIsControlledBy)
         ,("is_exiled_in"            , withFlag MsgIsExiledIn)
         ,("is_fully_controlled_by"  , withFlag MsgIsFullyControlledBy)
         ,("is_guaranteed_by"        , withFlag MsgIsGuaranteedBy)
@@ -492,7 +492,7 @@ handlersSimpleFlag = Tr.fromList
         ,("transfer_state_to"       , withFlag MsgTransferStateTo)
         ,("has_war_with"            , withFlag MsgHasWarWith)
         ,("has_war_together_with"   , withFlag MsgHasWarTogetherWith)
-        ,("original_tag"            , withFlag MsgOrignalTag)
+        ,("original_tag"            , withFlagAndTag MsgOrignalTag)
         ,("white_peace"             , withFlag MsgMakeWhitePeace)
         ]
 

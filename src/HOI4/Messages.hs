@@ -359,26 +359,60 @@ data ScriptMessage
     | MsgOriginalResearchSlotsVar {scriptMessageAmtText :: Text, scriptMessageCompare :: Text}
     | MsgStatePopulation {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgStatePopulationVar {scriptMessageAmtText :: Text, scriptMessageCompare :: Text}
-    | MsgIsControlledBy {scriptMessageWhom :: Text}
-    | MsgHasDefensiveWarWith {scriptMessageWhom :: Text}
+    -- simpleflag/WithFlag messages
     | MsgAddClaimBy {scriptMessageWho :: Text}
-    | MsgAddStateClaim {scriptMessageWhat :: Text}
-    | MsgAddStateCore {scriptMessageWhat :: Text}
+    | MsgAddCoreOf {scriptMessageWho :: Text}
+    | MsgAddNationality {scriptMessageWho :: Text}
+    | MsgAddToFaction {scriptMessageWhom :: Text}
+    | MsgChangeTagFrom {scriptMessageWho :: Text}
+    | MsgCountryExists {scriptMessageWho :: Text}
+    | MsgHasDefensiveWarWith {scriptMessageWhom :: Text}
+    | MsgGiveGuarantee {scriptMessageWhom :: Text}
+    | MsgGiveMilitaryAccess {scriptMessageWhom :: Text}
+    | MsgHasAttacheFrom {scriptMessageWhom :: Text}
+    | MsgHasBorderWarWith {scriptMessageWhom :: Text}
+    | MsgHasGuaranteed {scriptMessageWhom :: Text}
+    | MsgHasMilitaryAccessTo {scriptMessageWhom :: Text}
+    | MsgHasNonAggressionPactWith {scriptMessageWhom :: Text}
+    | MsgHasOffensiveWarWith {scriptMessageWhom :: Text}
+    | MsgHasSubject {scriptMessageWhom :: Text}
+    | MsgOccupiedCountryTag {scriptMessageWhom :: Text}
     | MsgInheritTechnology {scriptMessageWhom :: Text}
     | MsgIsAllyWith {scriptMessageWhom :: Text}
+    | MsgIsControlledBy {scriptMessageWhom :: Text}
+    | MsgIsExiledIn { scriptMessageWho :: Text }
+    | MsgIsFullyControlledBy { scriptMessageWho :: Text }
+    | MsgIsGuaranteedBy { scriptMessageWho :: Text }
+    | MsgIsHostingExile { scriptMessageWho :: Text }
+    | MsgIsInFactionWith {scriptMessageWhom :: Text}
+    | MsgIsJustifyingWargoalAgainst {scriptMessageWhom :: Text}
     | MsgIsNeighborOf {scriptMessageWhom :: Text}
+    | MsgIsOwnedAndControlledBy {scriptMessageWhom :: Text}
+    | MsgIsPuppetOf {scriptMessageWhom :: Text}
+    | MsgIsClaimedBy {scriptMessageWhom :: Text}
+    | MsgIsStateCore {scriptMessageWhat :: Text}
     | MsgIsSubjectOf {scriptMessageWhom :: Text}
     | MsgIsOwnedBy {scriptMessageWhom :: Text}
     | MsgPuppet {scriptMessageWhom :: Text}
     | MsgRecallVolunteersFrom {scriptMessageWhom :: Text}
     | MsgRelease {scriptMessageWhom :: Text}
     | MsgReleasePuppet {scriptMessageWhom :: Text}
+    | MsgRemoveClaimBy {scriptMessageWho :: Text}
+    | MsgRemoveCoreOf {scriptMessageWho :: Text}
+    | MsgRemoveFromFaction {scriptMessageWho :: Text}
+    | MsgSetStateControllerTo {scriptMessageWho :: Text}
     | MsgCountryIs {scriptMessageWho :: Text}
     | MsgTransferStateTo {scriptMessageWho :: Text}
     | MsgHasWarWith {scriptMessageWhom :: Text}
     | MsgHasWarTogetherWith {scriptMessageWhom :: Text}
+    | MsgOrignalTag {scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgMakeWhitePeace {scriptMessageWhom :: Text}
-    | MsgCountryExists {scriptMessageWho :: Text}
+    -- flagyesno messages
+    | MsgCountryStartResistance {scriptMessageWho :: Text}
+    | MsgStartResistance {scriptMessageYn :: Bool}
+    -- other messages
+    | MsgAddStateClaim {scriptMessageWhat :: Text}
+    | MsgAddStateCore {scriptMessageWhat :: Text}
     | MsgExists {scriptMessageYn :: Bool}
     | MsgIsAIControlled {scriptMessageYn :: Bool}
     | MsgHasAttache {scriptMessageYn :: Bool}
@@ -422,8 +456,6 @@ data ScriptMessage
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgTriggerEventTime {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageTime :: Text}
     | MsgDeclareWarOn {scriptMessageWhom :: Text, scriptMessageWhat :: Text, scriptMessageStates :: Text}
-    | MsgAddCoreOf {scriptMessageWho :: Text}
-    | MsgAddNationality {scriptMessageWho :: Text}
     | MsgHasDLC {scriptMessageIcon :: Text, scriptMessageDlc :: Text}
     | MsgSetDemilitarizedZone {scriptMessageYn :: Bool}
     | MsgHasIdea {scriptMessageWhat :: Text, scriptMessageIcon :: Text, scriptMessageKey :: Text, scriptMessageLoc :: Text}
@@ -444,7 +476,6 @@ data ScriptMessage
     | MsgAddEquipmentToStockpile {scriptMessageAmt :: Double, scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageWhat2 :: Text}
     | MsgAddEquipmentToStockpileVar {scriptMessageAmtText :: Text, scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageWhat2 :: Text}
     | MsgFreeBuildingSlots {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
-    | MsgChangeTagFrom {scriptMessageWho :: Text}
     | MsgIsDemilitarizedZone {scriptMessageYn :: Bool}
     | MsgNoBaseWeight
     | MsgAIBaseWeight {scriptMessageAmt :: Double}
@@ -461,10 +492,6 @@ data ScriptMessage
     | MsgHasArmySize {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text}
     | MsgHasNavySize {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text}
     | MsgHasNavySizeVar {scriptMessageCompare :: Text, scriptMessageAmtText :: Text, scriptMessageWhat :: Text}
-    | MsgGiveGuarantee {scriptMessageWhom :: Text}
-    | MsgGiveMilitaryAccess {scriptMessageWhom :: Text}
-    | MsgHasAttacheFrom {scriptMessageWhom :: Text}
-    | MsgHasBorderWarWith {scriptMessageWhom :: Text}
     | MsgSetCapital {scriptMessageWhat :: Text}
     | MsgSetCharacterName {scriptMessageWhat :: Text}
     | MsgSetCharacterNameType {scriptMessageWho :: Text, scriptMessageWhat :: Text}
@@ -476,8 +503,6 @@ data ScriptMessage
     | MsgTransferState {scriptMessageWhat :: Text}
     | MsgSetStateName {scriptMessageWhat :: Text}
     | MsgSetStateCategory {scriptMessageWhat :: Text}
-    | MsgCountryStartResistance {scriptMessageWho :: Text}
-    | MsgStartResistance {scriptMessageYn :: Bool}
     | MsgAlways {scriptMessageYn :: Bool}
     | MsgLockDivision {scriptMessageYn :: Bool}
     | MsgIsUnitLeader {scriptMessageYn :: Bool}
@@ -506,10 +531,6 @@ data ScriptMessage
     | MsgAddThreat {scriptMessageAmt :: Double}
     | MsgSaveEventTargetAs {scriptMessageName :: Text}
     | MsgSaveGlobalEventTargetAs {scriptMessageName :: Text}
-    | MsgRemoveClaimBy {scriptMessageWho :: Text}
-    | MsgRemoveCoreOf {scriptMessageWho :: Text}
-    | MsgRemoveFromFaction {scriptMessageWho :: Text}
-    | MsgSetStateControllerTo {scriptMessageWho :: Text}
     | MsgDismantleFaction
     | MsgDropCosmeticTag
     | MsgSetCompliance {scriptMessageAmt :: Double}
@@ -577,10 +598,6 @@ data ScriptMessage
     | MsgLoadFocusTree { scriptMessageWhat :: Text }
     | MsgLoadFocusTreeKeep {scriptMessage_icon :: Text, scriptMessageWhat :: Text, scriptMessageYesNo :: Text }
     | MsgModifyBuildingResources {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double }
-    | MsgIsExiledIn { scriptMessageWho :: Text }
-    | MsgIsFullyControlledBy { scriptMessageWho :: Text }
-    | MsgIsGuaranteedBy { scriptMessageWho :: Text }
-    | MsgIsHostingExile { scriptMessageWho :: Text }
     | MsgCoreCompliance { scriptMessage_icon :: Text, scriptMessageWho :: Text, scriptMessageCompare :: Text, scriptMessageAmt :: Double }
     | MsgCoreComplianceVar { scriptMessage_icon :: Text, scriptMessageWho :: Text, scriptMessageCompare :: Text, scriptMessageAmtText :: Text }
     | MsgCoreResistance { scriptMessage_icon :: Text, scriptMessageWho :: Text, scriptMessageCompare :: Text, scriptMessageAmt :: Double }
@@ -588,7 +605,6 @@ data ScriptMessage
     | MsgHasVolunteersAmountFrom { scriptMessage_icon :: Text, scriptMessageWho :: Text, scriptMessageCompare :: Text, scriptMessageAmt :: Double }
     | MsgHasVolunteersAmountFromVar { scriptMessage_icon :: Text, scriptMessageWho :: Text, scriptMessageCompare :: Text, scriptMessageAmtText :: Text }
     | MsgHasCivilWar {scriptMessageYn :: Bool}
-    | MsgOrignalTag {scriptMessageWhom :: Text}
     | MsgHasGovernment {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgIsHistoricalFocusOn { scriptMessageYn :: Bool }
     | MsgIsOperativeCaptured { scriptMessageYn :: Bool }
@@ -632,15 +648,10 @@ data ScriptMessage
     | MsgNeutralityCompare {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgNeutralityCompareVar {scriptMessageAmtText :: Text, scriptMessageCompare :: Text}
     | MsgAnnexCountry {scriptMessageWhom :: Text, scriptMessageWhat :: Text}
-    | MsgIsInFactionWith {scriptMessageWhom :: Text}
-    | MsgIsJustifyingWargoalAgainst {scriptMessageWhom :: Text}
     | MsgSetNationality {scriptMessageWhat :: Text}
     | MsgSetNationalityChar {scriptMessageWho :: Text, scriptMessageWhat :: Text}
-    | MsgHasGuaranteed {scriptMessageWhom :: Text}
-    | MsgHasMilitaryAccessTo {scriptMessageWhom :: Text}
     | MsgModifyTechSharingBonus { scriptMessage_icon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgModifyTechSharingBonusVar { scriptMessage_icon :: Text, scriptMessageWho :: Text, scriptMessageAmtText :: Text }
-    | MsgAddToFaction {scriptMessageWhom :: Text}
     | MsgAddResource {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageWhere :: Text}
     | MsgAddResourceVar {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmtText :: Text, scriptMessageWhere :: Text}
     | MsgAddPopularity {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
@@ -662,8 +673,6 @@ data ScriptMessage
     | MsgStockpileRatioVar {scriptMessage_icon :: Text, scriptMessageWhat :: Text, scriptMessageCompare :: Text, scriptMessageAmtText :: Text}
     | MsgStrengthRatio {scriptMessage_icon :: Text, scriptMessageWhom :: Text, scriptMessageCompare :: Text, scriptMessageAmt :: Double}
     | MsgStrengthRatioVar {scriptMessage_icon :: Text, scriptMessageWhom :: Text, scriptMessageCompare :: Text, scriptMessageAmtText :: Text}
-    | MsgHasSubject {scriptMessageWhom :: Text}
-    | MsgOccupiedCountryTag {scriptMessageWhom :: Text}
     | MsgSetCosmeticTag {scriptMessageWhat :: Text}
     | MsgHasCosmeticTag {scriptMessageWhat :: Text}
     | MsgHasFocusTree {scriptMessageWhat :: Text}
@@ -711,7 +720,6 @@ data ScriptMessage
     | MsgIsInTechSharingGroup {scriptMessageWhat :: Text}
     | MsgAddToTechSharingGroup {scriptMessageWhat :: Text}
     | MsgRemoveDynamicMod {scriptMessageWhat :: Text}
-    | MsgIsStateCore {scriptMessageWhat :: Text}
     | MsgHasRule {scriptMessage_icon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgHasCoreOccupationModifier {scriptMessage_icon :: Text, scriptMessageWho :: Text, scriptMessageWhat :: Text}
     | MsgIsPowerBalanceInRange {scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageWhatKey :: Text, scriptMessageAtomKey :: Text, scriptMessageAmt :: Double}
@@ -725,13 +733,8 @@ data ScriptMessage
     | MsgUnlockDecisionCategoryTooltip {scriptMessageWhat :: Text}
     | MsgUnlockDecisionTooltip {scriptMessageWhat :: Text, scriptMessageKey :: Text}
     | MsgIsPuppet {scriptMessageYn :: Bool}
-    | MsgHasNonAggressionPactWith {scriptMessageWhom :: Text}
-    | MsgHasOffensiveWarWith {scriptMessageWhom :: Text}
     | MsgAddDynamicModifier {scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageDaysText :: Text}
     | MsgIsFactionLeader {scriptMessageYn :: Bool}
-    | MsgIsOwnedAndControlledBy {scriptMessageWhom :: Text}
-    | MsgIsPuppetOf {scriptMessageWhom :: Text}
-    | MsgIsClaimedBy {scriptMessageWhom :: Text}
     | MsgHasWargoalAgainst {scriptMessageWhom :: Text}
     | MsgHasWargoalAgainstType {scriptMessage_icon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgAddBuildingConstruction {scriptMessageYn :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageProv :: Text}
@@ -2302,7 +2305,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , _dlc
-                , " is active"
+                , " is enabled"
                 ]
         MsgSetDemilitarizedZone {scriptMessageYn = _yn}
             -> mconcat
@@ -3585,10 +3588,11 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " in a civil war"
                 ]
-        MsgOrignalTag {scriptMessageWhom = _whom}
+        MsgOrignalTag {scriptMessageWhom = _whom, scriptMessageWhat = _what}
             -> mconcat
                 [ "Original country is "
                 , _whom
+                , "<!--",_what,"-->"
                 ]
         MsgHasGovernment {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
@@ -4537,7 +4541,7 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _month
                 , ifThenElseT (_day /= 0) (" " <> toMessage (plainNum _day)) ""
-                , ifThenElseT (_day /= 0) (" of " <> toMessage (plainNum _year)) (toMessage (plainNum _year))
+                , ifThenElseT (_day /= 0) (" of " <> toMessage (roundNumNoSpace _year)) (toMessage (roundNumNoSpace _year))
                 ]
         MsgSendEquipment {scriptMessageAmtText = _amtT, scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageYn = _yn}
             -> mconcat
