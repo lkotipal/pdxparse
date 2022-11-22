@@ -911,6 +911,7 @@ scriptIconFileTable = HM.fromList
     ,("monthly federation favor growth", ("", "Monthly federation favor growth"))
     ,("monthly heir claim increase", ("", "monthly heir claim increase"))
     ,("monthly reform progress", ("", "reform progress growth"))
+    ,("naval combat local bonus off owned coast", ("", "Naval warfare#Combat sequence"))
     ,("norse zealots", ("Norse rebels", "Norse zealots"))
     ,("number of free cities", ("", "Number of free cities"))
     ,("overlord naval force limit", ("", "overlord naval force limit"))
