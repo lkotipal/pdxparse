@@ -2386,7 +2386,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Has opinion modifier {{opinion|"
                 , _modid
-                , "}}"
+                , "|0}}"
                 ]
         MsgHasPowerBalance {scriptMessageWhat = _what}
             -> mconcat
