@@ -2663,9 +2663,9 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (bold (plainNumMin _amt))
                 , " free {{icon|building slot|}} "
                 , plural _amt "building slot" "building slots"
-                , " for {{icon|"
+                , " for "
                 , _what
-                , "|1}} "
+                , " "
                 , toMessage (ifThenElseT _yn "including locked slots" "")
                 ]
         MsgIsDemilitarizedZone {scriptMessageYn = _yn}
