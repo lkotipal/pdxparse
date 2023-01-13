@@ -534,7 +534,7 @@ modifiersTable = HM.fromList
         ,("overlord_trade_cost_factor"      , ("MODIFIER_TRADE_COST_FACTOR", MsgModifierPcNegReduced))
 
             -- Governments in exile
-        ,("dockyard_donations "             , ("MODIFIER_DOCKYARD_DONATIONS", MsgModifierColourPos))
+        ,("dockyard_donations"             , ("MODIFIER_DOCKYARD_DONATIONS", MsgModifierColourPos))
         ,("industrial_factory_donations"    , ("MODIFIER_INDUSTRIAL_FACTORY_DONATIONS", MsgModifierColourPos))
         ,("military_factory_donations"      , ("MODIFIER_MILITARY_FACTORY_DONATIONS", MsgModifierColourPos))
         ,("exile_manpower_factor"           , ("MODIFIER_EXILED_MAPOWER_GAIN_FACTOR", MsgModifierPcPosReduced))
@@ -908,7 +908,7 @@ modifiersTable = HM.fromList
         ,("experience_gain_factor"          , ("MODIFIER_XP_GAIN_FACTOR", MsgModifierPcPosReduced))
         ,("fortification_collateral_chance" , ("MODIFIER_FORTIFICATION_COLLATERAL_CHANCE", MsgModifierPcPosReduced))
         ,("max_commander_army_size"         , ("MODIFIER_ARMY_LEADER_MAX_ARMY_SIZE", MsgModifierColourPos))
-        ,("max_army_group_size "            , ("MODIFIER_ARMY_GROUP_LEADER_MAX_ARMY_GROUP_SIZE", MsgModifierColourPos))
+        ,("max_army_group_size"            , ("MODIFIER_ARMY_GROUP_LEADER_MAX_ARMY_GROUP_SIZE", MsgModifierColourPos))
         ,("promote_cost_factor"             , ("MODIFIER_UNIT_LEADER_PROMOTE_COST_FACTOR", MsgModifierPcNegReduced))
         ,("reassignment_duration_factor"    , ("MODIFIER_REASSIGNMENT_DURATION_FACTOR", MsgModifierPcNegReduced))
         ,("sickness_chance"                 , ("MODIFIER_SICKNESS_CHANCE", MsgModifierPcNegReduced))
