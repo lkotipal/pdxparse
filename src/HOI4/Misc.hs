@@ -452,6 +452,7 @@ parseHOI4UnitLeaderTrait [pdx| $id = @effects |]
             ,   ult_corps_commander_modifier = Nothing
             ,   ult_field_marshal_modifier = Nothing
             ,   ult_sub_unit_modifiers = Nothing
+            ,   ult_trait_xp_factor = Nothing
             ,   ult_attack_skill = Nothing
             ,   ult_defense_skill = Nothing
             ,   ult_planning_skill = Nothing
@@ -468,6 +469,7 @@ parseHOI4UnitLeaderTrait [pdx| $id = @effects |]
             "corps_commander_modifier" -> ult { ult_corps_commander_modifier = Just stmt }
             "field_marshal_modifier" -> ult { ult_field_marshal_modifier = Just stmt }
             "sub_unit_modifiers" -> ult { ult_sub_unit_modifiers = Just stmt }
+            "trait_xp_factor" -> ult { ult_trait_xp_factor = Just stmt }
             "new_commander_weight" -> ult
             "on_add" -> ult
             "on_remove " -> ult
@@ -477,7 +479,6 @@ parseHOI4UnitLeaderTrait [pdx| $id = @effects |]
             "gain_xp" -> ult
             "gain_xp_leader" -> ult
             "gain_xp_on_spotting" -> ult
-            "trait_xp_factor" -> ult
             "show_in_combat" -> ult
             "allowed" -> ult
             "ai_will_do" -> ult

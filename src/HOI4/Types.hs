@@ -520,6 +520,7 @@ data HOI4UnitLeaderTrait = HOI4UnitLeaderTrait
     ,   ult_corps_commander_modifier :: Maybe GenericStatement
     ,   ult_field_marshal_modifier :: Maybe GenericStatement
     ,   ult_sub_unit_modifiers :: Maybe GenericStatement
+    ,   ult_trait_xp_factor :: Maybe GenericStatement
     ,   ult_attack_skill :: Maybe Double
     ,   ult_defense_skill :: Maybe Double
     ,   ult_planning_skill :: Maybe Double

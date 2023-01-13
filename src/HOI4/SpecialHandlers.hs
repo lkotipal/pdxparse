@@ -1455,10 +1455,11 @@ getUnitTraits trait = do
             maneuvering <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Maneuvering") (ult_maneuvering_skill ult)
             coordination <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Coordination") (ult_coordination_skill ult)
             let skillmsg = attack ++ defense ++ logistics ++ planning ++ maneuvering ++ coordination
+            trtxp <- maybe (return []) (indentUp . handleModifier) (ult_trait_xp_factor ult)
             mod <- maybe (return []) (indentUp . handleModifier) (ult_modifier ult)
             nsmod <- maybe (return []) (indentUp . handleModifier) (ult_non_shared_modifier ult)
             ccmod <- maybe (return []) (indentUp . handleModifier) (ult_corps_commander_modifier ult)
             fmmod <- maybe (return []) (indentUp . handleModifier) (ult_field_marshal_modifier ult)
             sumod <- maybe (return []) (indentUp . handleEquipmentBonus) (ult_sub_unit_modifiers ult)
-            return (skillmsg ++ mod ++ nsmod ++ ccmod ++ fmmod ++ sumod)
+            return (trtxp ++ mod ++ nsmod ++ ccmod ++ fmmod ++ sumod ++ skillmsg)
         Nothing -> return []
