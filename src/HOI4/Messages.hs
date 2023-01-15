@@ -520,6 +520,7 @@ data ScriptMessage
     | MsgModifierPcSign {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcReducedSign {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierPcReducedSignMin {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcPos {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcNeg {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcPosReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
@@ -2938,7 +2939,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _what
                 , ": {{yellow|"
-                , toMessage (bold (plainNumSign _amt))
+                , toMessage (plainNumSign _amt)
                 , "}}"
                 ]
         MsgModifierColourPos {scriptMessageWhat = _what, scriptMessageAmt = _amt}
@@ -2975,7 +2976,14 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _what
                 , ": {{yellow|"
-                , toMessage (bold (reducedNum plainPcSign _amt))
+                , toMessage (reducedNum plainPcSign _amt)
+                , "}}"
+                ]
+        MsgModifierPcReducedSignMin {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _what
+                , ": {{yellow|"
+                , toMessage (reducedNum plainPcMin _amt)
                 , "}}"
                 ]
         MsgModifierPcPos {scriptMessageWhat = _what, scriptMessageAmt = _amt}
