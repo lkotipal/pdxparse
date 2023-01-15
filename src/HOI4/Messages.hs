@@ -2937,8 +2937,9 @@ instance RenderMessage Script ScriptMessage where
         MsgModifierSign {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
-                , ": "
+                , ": {{yellow|"
                 , toMessage (bold (plainNumSign _amt))
+                , "}}"
                 ]
         MsgModifierColourPos {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
@@ -2973,8 +2974,9 @@ instance RenderMessage Script ScriptMessage where
         MsgModifierPcReducedSign {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
-                , ": "
+                , ": {{yellow|"
                 , toMessage (bold (reducedNum plainPcSign _amt))
+                , "}}"
                 ]
         MsgModifierPcPos {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
