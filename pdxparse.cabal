@@ -20,9 +20,6 @@ extra-source-files:  README.md
 data-files:          settings.yml
 cabal-version:       >=1.10
 
-program-default-options
-  ghc-options: -haddock
-
 executable pdxparse
 
   main-is:             Main.hs
@@ -42,6 +39,7 @@ executable pdxparse
                        EU4.Templates,
                        EU4.Types,
                        FileIO,
+                       HOI4.CharactersAndTraits
                        HOI4.Common,
                        HOI4.Decisions,
                        HOI4.Events,
@@ -82,7 +80,9 @@ executable pdxparse
                        QuasiQuotes,
                        ScopedTypeVariables,
                        StandaloneDeriving,
+--                       StrictData,
                        TemplateHaskell,
+                       TupleSections,
                        TypeFamilies,
                        ViewPatterns
 
@@ -105,7 +105,7 @@ executable pdxparse
 --                       th-lift-instances >=0.1 && <0.2,
 --                       unordered-containers >=0.2 && <0.3,
 --                       wl-pprint-text >=1.1 && <1.2,
-  build-depends:       base >=4.7,
+  build-depends:       base >=4.9 && >=4.14,
                        array >= 0.5,
                        attoparsec >=0.13,
                        bytestring >=0.10,
@@ -126,6 +126,7 @@ executable pdxparse
                        th-lift >=0.7,
                        th-lift-instances >=0.1,
                        unordered-containers >=0.2,
+                       insert-ordered-containers >=0.2,
                        wl-pprint-text >=1.1,
                        yaml >=0.8
   if os(windows)
@@ -138,7 +139,13 @@ executable pdxparse
     hs-source-dirs:    os/unix
 
   default-language:    Haskell2010
-  ghc-options:         -fwarn-incomplete-patterns -fmax-pmcheck-models=3000000 -Werror -j +RTS -A32m -RTS
+  ghc-options:         -Wincomplete-patterns
+                       -haddock
+                       -fmax-pmcheck-models=3000000
+                       -Werror
+                       -j
+                       +RTS -A32m
+                       -RTS
 
 source-repository head
   type:            git

@@ -20,11 +20,10 @@ import Debug.Trace (trace, traceM)
 import Control.Arrow ((&&&))
 import Control.Monad (foldM, forM, (<=<))
 import Control.Monad.Except (ExceptT (..), MonadError (..))
-import Control.Monad.State (MonadState (..), gets)
+import Control.Monad.State (gets)
 import Control.Monad.Trans (MonadIO (..))
 
-import Data.Maybe (catMaybes, fromMaybe, isJust, mapMaybe)
-import Data.Monoid ((<>))
+import Data.Maybe (catMaybes, fromMaybe, mapMaybe)
 import Data.List (intersperse, foldl', intercalate)
 
 import Data.HashMap.Strict (HashMap)
@@ -42,7 +41,7 @@ import HOI4.Messages -- everything
 import MessageTools (iquotes, italicText)
 import HOI4.Handlers (flagText, getStateLoc)
 import QQ (pdx)
-import SettingsTypes ( PPT, Settings (..), Game (..)
+import SettingsTypes ( PPT, Settings (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
@@ -97,7 +96,7 @@ parseHOI4Decisioncat [pdx| %left = %right |] = case right of
             case ddeccat of
                 Left err -> return (Left err)
                 Right Nothing -> return (Right Nothing)
-                Right (Just deccat) -> withCurrentFile $ \file ->
+                Right (Just deccat) -> withCurrentFile $ \_file ->
                     return (Right (Just deccat ))
         _ -> throwError "unrecognized form for decision category"
     _ -> throwError "unrecognized form for decision category"
@@ -223,7 +222,7 @@ parseHOI4Decisions scripts = HM.unions . HM.elems <$> do
 -- | Parse one file's decision groups scripts into decision data structures.
 parseHOI4DecisionGroup :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
     GenericStatement -> PPT g (ExceptT Text m) [Either Text (Maybe HOI4Decision)]
-parseHOI4DecisionGroup stmt@(StatementBare _) = throwError "bare statement at top level"
+parseHOI4DecisionGroup (StatementBare _) = throwError "bare statement at top level"
 parseHOI4DecisionGroup [pdx| $left = @scr |]
     = forM scr $ \stmt -> (Right <$> parseHOI4Decision stmt left)
                             `catchError` (return . Left)
@@ -301,8 +300,8 @@ decisionAddSection dec stmt
                 GenericRhs "no" [] -> dec { dec_fire_only_once = False }
                 _ -> dec
             "cost" -> case rhs of --var or num
-                GenericRhs var [txt] -> dec { dec_cost = Just (HOI4DecisionCostVariable txt) }
-                GenericRhs txt _ -> dec { dec_cost = Just (HOI4DecisionCostVariable txt) }
+                GenericRhs txt [] -> dec { dec_cost = Just (HOI4DecisionCostVariable txt) }
+                GenericRhs _var [txt] -> dec { dec_cost = Just (HOI4DecisionCostVariable txt) }
                 FloatRhs num -> dec { dec_cost = Just (HOI4DecisionCostSimple num) }
                 _ -> dec
             "custom_cost_trigger" -> case rhs of
@@ -369,11 +368,11 @@ decisionAddSection dec stmt
             "on_map_mode" -> dec
             "modifier" -> case rhs of -- effects that apply when decision is active (timer/mission?)
                 CompoundRhs [] -> dec -- empty, treat as if it wasn't there
-                CompoundRhs scr -> dec { dec_modifier = Just stmt }
+                CompoundRhs _scr -> dec { dec_modifier = Just stmt }
                 _ -> dec
             "targeted_modifier" -> case rhs of -- effects for country/state targeted and duration?
                 CompoundRhs [] -> dec -- empty, treat as if it wasn't there
-                CompoundRhs scr -> let oldstmt = fromMaybe [] (dec_targeted_modifier dec) in
+                CompoundRhs _scr -> let oldstmt = fromMaybe [] (dec_targeted_modifier dec) in
                     dec { dec_targeted_modifier = Just (oldstmt ++ [stmt]) }
                 _ -> dec
             "cancel_if_not_visible" -> case rhs of -- cancels mission if visible is false
@@ -394,7 +393,7 @@ decisionAddSection dec stmt
             "target_non_existing" -> dec -- no clue
             "power_balance" -> dec -- no clue, only seen in debug so far
             other -> trace ("unknown decision section: " ++ show other ++ "  " ++ show stmt) dec
-        decisionAddSection' dec stmt = trace "unrecognised form for decision section" dec
+        decisionAddSection' dec _stmt = trace "unrecognised form for decision section" dec
 
 -- | Present the parsed decisions as wiki text and write them to the
 -- appropriate files.
@@ -515,7 +514,7 @@ ppdecision dec gfx = setCurrentFile (dec_path dec) $ do
         ( if cancelIfNotVisible then
             ["| cancel_if_not_visible = yes", PP.line]
         else []) ++
-        ( if cancelIfNotVisible then
+        ( if targetsDynamic then
             ["| targets_dynamic = yes", PP.line]
         else []) ++
         allow_pp'd ++
@@ -548,7 +547,7 @@ ppdecision dec gfx = setCurrentFile (dec_path dec) $ do
         extractTargets (StatementBare (GenericLhs e [])) = Just e
         extractTargets stmt = trace ("Unknown in targets array statement: " ++ show stmt) Nothing
         extractTargetsStates (StatementBare (IntLhs e)) = Just e
-        extractTargetsStates stmt@[pdx| state = !e |] = Just e
+        extractTargetsStates [pdx| state = !e |] = Just e
         extractTargetsStates stmt = trace ("Unknown in targets array statement: " ++ show stmt) Nothing
 
 
@@ -770,7 +769,7 @@ ppDecisionSource (HOI4DecSrcCharacterOnRemove id loc) =
         , iquotes't loc
         , " is removed"
         ]
-ppDecisionSource (HOI4DecSrcScriptedEffect id weight) =
+ppDecisionSource (HOI4DecSrcScriptedEffect id _weight) =
     return $ Doc.strictText $ mconcat ["When scripted effect "
         , iquotes't id
         , " is activated"
@@ -796,8 +795,8 @@ ppDecisionSource (HOI4DecSrcBopOnDeactivate id) = do
 
 
 findInStmt :: GenericStatement -> [(HOI4DecisionWeight, Text)]
-findInStmt stmt@[pdx| $lhs = $id |] | lhs == "activate_mission" = [(Nothing, id)]
-findInStmt [pdx| %lhs = @scr |] = findInStmts scr
+findInStmt [pdx| $lhs = $id |] | lhs == "activate_mission" = [(Nothing, id)]
+findInStmt [pdx| %_lhs = @scr |] = findInStmts scr
 findInStmt _ = []
 
 findInStmts :: [GenericStatement] -> [(HOI4DecisionWeight, Text)]
@@ -845,7 +844,7 @@ findActivatedDecisionsInOnActions hm scr = foldl' findInAction hm scr
     where
         findInAction :: HOI4DecisionTriggers -> GenericStatement -> HOI4DecisionTriggers
         findInAction hm [pdx|on_actions = @stmts |] = foldl' findInAction hm stmts
-        findInAction hm stmt@[pdx| $lhs = @scr |] = addDecisionTriggers hm (addDecisionSource (HOI4DecSrcOnAction lhs) (findInStmts scr))
+        findInAction hm [pdx| $lhs = @scr |] = addDecisionTriggers hm (addDecisionSource (HOI4DecSrcOnAction lhs) (findInStmts scr))
         findInAction hm stmt = trace ("Unknown on_actions statement: " ++ show stmt) hm
 
 findActivatedDecisionsInNationalFocus :: HOI4DecisionTriggers -> [HOI4NationalFocus] -> HOI4DecisionTriggers
@@ -876,7 +875,7 @@ findActivatedDecisionsInScriptedEffects :: HOI4DecisionTriggers -> [GenericState
 findActivatedDecisionsInScriptedEffects hm scr = foldl' findInScriptEffect hm scr -- needs editing
     where
         findInScriptEffect :: HOI4DecisionTriggers -> GenericStatement -> HOI4DecisionTriggers
-        findInScriptEffect hm stmt@[pdx| $lhs = @scr |] = addDecisionTriggers hm (addDecisionSource (HOI4DecSrcScriptedEffect lhs) (findInStmts scr))
+        findInScriptEffect hm [pdx| $lhs = @scr |] = addDecisionTriggers hm (addDecisionSource (HOI4DecSrcScriptedEffect lhs) (findInStmts scr))
         findInScriptEffect hm stmt = trace ("Unknown on_actions statement: " ++ show stmt) hm
 
 findActivatedDecisionsInBops :: HOI4DecisionTriggers -> [HOI4BopRange] -> HOI4DecisionTriggers

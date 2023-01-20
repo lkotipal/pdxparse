@@ -27,25 +27,24 @@ module SettingsTypes (
     ,   unsnoc, safeLast, safeIndex
     ) where
 
-import Control.Monad (liftM, join, void)
+import Control.Monad (void)
 import Control.Monad.Trans (MonadIO)
 import Control.Monad.Except (ExceptT, runExceptT)
 import Control.Monad.Identity (Identity (..))
-import Control.Monad.Reader (Reader (..), ReaderT (..), MonadReader (..), asks)
-import Control.Monad.State (StateT (..), MonadState (..), execStateT, gets)
+import Control.Monad.Reader (Reader, ReaderT (..), MonadReader (..), asks)
+import Control.Monad.State (StateT (..), gets)
 
 import Data.Foldable (fold)
 import Data.Maybe (isNothing, fromJust, listToMaybe)
 
 import Data.Text (Text)
 import Text.Shakespeare.I18N (Lang)
-import Text.PrettyPrint.Leijen.Text (Doc)
 --import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import qualified Data.HashMap.Strict as HM
 
 import Abstract () -- everything
-import Yaml (L10n, L10nLang, LocEntry (..))
+import Yaml (L10n, L10nLang,LocEntry (..))
 
 -- | Command line arguments.
 data CLArgs
@@ -254,6 +253,7 @@ data Settings = Settings {
     ,   gameVersion :: Text     -- ^ Version of the game (e.g. \"1.22\")
     ,   gameL10n    :: L10n     -- ^ Game localization table. See "Yaml" for
                                 --   the definition of this type.
+    ,   gameL10nKeys :: [Text]
     ,   langs       :: [Lang]   -- ^ Preferential list of output languages.
                                 --   Currently only \"en\" is supported.
     ,   settingsFile :: FilePath -- ^ Path to @settings.yaml@.
@@ -262,8 +262,8 @@ data Settings = Settings {
     }
 
 -- | Set the game localization table. Used by "Settings".
-setGameL10n :: Settings -> L10n -> Settings
-setGameL10n settings l10n = settings { gameL10n = l10n }
+setGameL10n :: Settings -> L10n -> [Text] -> Settings
+setGameL10n settings l10n l10nkeys = settings { gameL10n = l10n, gameL10nKeys = l10nkeys }
 
 -- | Output monad.
 type PP g = StateT (GameData g) (Reader (GameState g)) -- equal to PPT g Identity a

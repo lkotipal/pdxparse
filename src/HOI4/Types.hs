@@ -33,9 +33,6 @@ import Data.List (foldl')
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.HashMap.Strict (HashMap)
-import qualified Data.HashMap.Strict as HM
-import Data.Hashable (Hashable)
-import GHC.Generics (Generic)
 
 import Abstract -- everything
 import QQ (pdx)
@@ -92,6 +89,8 @@ data HOI4Data = HOI4Data {
     ,   hoi4scriptedtriggers :: HashMap Text GenericStatement
     ,   hoi4bopScripts :: HashMap FilePath GenericScript
     ,   hoi4bops :: HashMap Text HOI4BopRange
+    ,   hoi4lockeys :: [Text]
+    ,   hoi4modkeys :: [Text]
 
     ,   hoi4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -202,6 +201,10 @@ class (IsGame g,
     getBopScripts  :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the balance of power parsed
     getBops  :: Monad m => PPT g m (HashMap Text HOI4BopRange)
+    -- | Get the lockeys
+    getLocKeys :: Monad m => PPT g m [Text]
+    -- | Get the modkeys parsed
+    getModKeys :: Monad m => PPT g m [Text]
 
     -- | Get extra scripts parsed from command line arguments
     getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
@@ -315,7 +318,7 @@ data HOI4DecisionSource =
     | HOI4DecSrcIdeaOnRemove Text Text Text Text    -- Effect of removing an idea
     | HOI4DecSrcCharacterOnAdd Text Text            -- Effect of adding an advisor
     | HOI4DecSrcCharacterOnRemove Text Text         -- Effect of removing an advisor
-    | HOI4DecSrcScriptedEffect Text HOI4EventWeight -- Effect of a scripted effect
+    | HOI4DecSrcScriptedEffect Text HOI4DecisionWeight -- Effect of a scripted effect
     | HOI4DecSrcBopOnActivate Text                  -- Effect of a balance of power range activation
     | HOI4DecSrcBopOnDeactivate Text                -- Effect of a balance of power range deactivation
     deriving Show
@@ -342,6 +345,7 @@ data HOI4Idea = HOI4Idea
     ,   id_cancel :: Maybe GenericScript -- ^ tirggers for removing the idea
     ,   id_do_effect :: Maybe GenericScript -- ^ requirements for the idea's modifiers to work
     ,   id_allowed_civil_war :: Maybe GenericScript
+    ,   id_traits :: Maybe GenericScript
     ,   id_category :: Text
     ,   id_path :: FilePath -- ^ Source file
     } deriving (Show)
@@ -603,6 +607,6 @@ awdModifierAddSection aim stmt@[pdx| $left = %right |] = case T.toLower left of
         (floatRhs right)
     _ -> -- the rest of the statements are just the conditions.
         aim { aim_triggers = aim_triggers aim ++ [stmt] }
-awdModifierAddSection aim stmt@[pdx| $left > %right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
-awdModifierAddSection aim stmt@[pdx| $left < %right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
+awdModifierAddSection aim stmt@[pdx| $_left > %_right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
+awdModifierAddSection aim stmt@[pdx| $_left < %_right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
 awdModifierAddSection aim _ = aim

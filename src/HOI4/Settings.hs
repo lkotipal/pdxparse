@@ -7,9 +7,9 @@ module HOI4.Settings (
     ,   module HOI4.Types
     ) where
 
-import Debug.Trace (trace, traceM)
+import Debug.Trace (trace)
 
-import Control.Monad (join, when, forM, filterM, void, unless)
+import Control.Monad (forM, filterM, void)
 import Control.Monad.Trans (MonadIO (..), liftIO)
 import Control.Monad.Reader (MonadReader (..), ReaderT (..), asks)
 import Control.Monad.State (MonadState (..), StateT (..), modify, gets)
@@ -17,22 +17,17 @@ import Control.Monad.State (MonadState (..), StateT (..), modify, gets)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
 
-import Data.Maybe (listToMaybe, catMaybes)
-
-import Data.Text (Text, toLower)
-import Data.Monoid ((<>))
+import Data.Maybe (listToMaybe)
 
 import System.Directory (getDirectoryContents, doesFileExist, doesDirectoryExist)
 import System.FilePath ((</>), isExtensionOf)
-import System.IO (hPutStrLn, stderr)
 
 import Abstract -- everything
-import QQ (pdx)
 import FileIO (buildPath, readScript, readSpecificScript)
-import SettingsTypes ( PPT, Settings (..), Game (..), L10nScheme (..)
+import SettingsTypes ( PPT, Settings (..), L10nScheme (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10nIfPresent
-                     , safeIndex, safeLast, CLArgs (..))
+                     , safeIndex, safeLast)
 import HOI4.Types -- everything
 import Yaml (LocEntry (..))
 
@@ -58,11 +53,11 @@ import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInIdeas, findTriggeredEventsInCharacters
                    , findTriggeredEventsInScriptedEffects
                    , findTriggeredEventsInBops)
-import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface, parseHOI4Characters
-                 , parseHOI4CountryLeaderTraits, parseHOI4UnitLeaderTraits
+import HOI4.CharactersAndTraits (parseHOI4Characters, parseHOI4CountryLeaderTraits, parseHOI4UnitLeaderTraits)
+import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface
                  , parseHOI4Terrain, parseHOI4Ideology
                  , parseHOI4Effects, parseHOI4Triggers
-                 , parseHOI4BopRanges)
+                 , parseHOI4BopRanges, parseHOI4LocKeys)
 
 -- | Temporary (?) fix for CHI and PRC both localizing to "China"
 -- Can be extended/removed as necessary
@@ -137,6 +132,8 @@ instance IsGame HOI4 where
                 ,   hoi4scriptedtriggers = HM.empty
                 ,   hoi4bopScripts = HM.empty
                 ,   hoi4bops = HM.empty
+                ,   hoi4lockeys = []
+                ,   hoi4modkeys = []
 
                 -- unused
                 ,   hoi4extraScripts = HM.empty
@@ -171,7 +168,7 @@ instance HOI4Info HOI4 where
             Just evt -> case hoi4evt_title evt of
                 [] -> return Nothing
                 [HOI4EvtTitleSimple key] -> getGameL10nIfPresent key
-                titles -> return Nothing
+                _titles -> return Nothing
     getEventScripts = do
         HOI4D ed <- get
         return (hoi4eventScripts ed)
@@ -296,6 +293,12 @@ instance HOI4Info HOI4 where
     getBops = do
         HOI4D ed <- get
         return (hoi4bops ed)
+    getLocKeys = do
+        HOI4D ed <- get
+        return (hoi4lockeys ed)
+    getModKeys = do
+        HOI4D ed <- get
+        return (hoi4modkeys ed)
 -- unused
     getExtraScripts = do
         HOI4D ed <- get
@@ -330,9 +333,9 @@ instance IsGameState (GameState HOI4) where
 readHOI4Scripts :: forall m. MonadIO m => PPT HOI4 m ()
 readHOI4Scripts = do
     settings <- gets getSettings
-    let readOneScript :: Bool -> String -> String -> PPT HOI4 m (String, GenericScript)
-        readOneScript specific category target = do
-            content <- if specific then liftIO $ readScript settings target else liftIO $ readSpecificScript settings target
+    let readOneScript :: Bool -> String -> PPT HOI4 m (String, GenericScript)
+        readOneScript specific target = do
+            content <- if specific then liftIO $ readScript settings target else liftIO $ readSpecificScript target
             --traceM (show target)
             --when (null content) $
                 --liftIO $ hPutStrLn stderr $
@@ -370,7 +373,7 @@ readHOI4Scripts = do
                 files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
                                     =<< filterM (pure . isExtensionOf ".txt")
                                      =<< getDirectoryContents sourceDir)
-                results <- forM files $ \filename -> readOneScript True category (sourceSubdir </> filename)
+                results <- forM files $ \filename -> readOneScript True (sourceSubdir </> filename)
                 return $ foldl (flip (uncurry HM.insert)) HM.empty results
             else return $ trace ("WARNING: Unable to find " ++ show sourceDir) HM.empty
 
@@ -409,7 +412,7 @@ readHOI4Scripts = do
                         map (sourceDir </>) sources
                     (_, _, Just sources) -> map (sourceDir </>) sources
                     _ -> error "Something went wrong with the gamepath"
-            results <- forM files $ \filename -> readOneScript False category filename
+            results <- forM files $ \filename -> readOneScript False filename
             return $ foldl (flip (uncurry HM.insert)) HM.empty results
 
         buildCompletePath :: FilePath -> PPT HOI4 m [FilePath]
@@ -440,6 +443,7 @@ readHOI4Scripts = do
     scripted_triggers <- readHOI4Script "scripted_trigger"
 
     bopscript <- readHOI4Script "bop"
+    lockeys <- gets (gameL10nKeys . getSettings)
 
     modify $ \(HOI4D s) -> HOI4D $ s {
             hoi4ideaScripts = ideasScripts
@@ -465,6 +469,7 @@ readHOI4Scripts = do
         ,   hoi4scriptedtriggerScripts = scripted_triggers
 
         ,   hoi4bopScripts = bopscript
+        ,   hoi4lockeys = lockeys
         }
 
 
@@ -492,6 +497,7 @@ parseHOI4Scripts = do
     scriptedeffects <- parseHOI4Effects =<< getScriptedEffectScripts
     scriptedtriggers <- parseHOI4Triggers =<< getScriptedTriggerScripts
     bops <- parseHOI4BopRanges =<< getBopScripts
+    modkeys <- parseHOI4LocKeys =<< getLocKeys
 
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
@@ -535,6 +541,7 @@ parseHOI4Scripts = do
             ,   hoi4scriptedtriggers = scriptedtriggers
 
             ,   hoi4bops = bops
+            ,   hoi4modkeys = modkeys
             }
 
 -- | Output the game data as wiki text.

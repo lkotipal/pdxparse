@@ -12,15 +12,13 @@ module FileIO (
     ,   writeFeatures
     ) where
 
-import Debug.Trace (trace, traceM)
+import Debug.Trace (trace)
 
 import Control.Monad (forM, forM_)
 import Control.Monad.Except (ExceptT)
 import Control.Monad.Trans (MonadIO (..))
 import Control.Monad.State (gets)
 import Control.Exception (try)
-
-import Data.Monoid ((<>))
 
 import qualified Data.ByteString as B
 
@@ -83,10 +81,10 @@ buildPath settings path =
 readScript :: Settings -> FilePath -> IO GenericScript
 readScript settings file = do
     let filepath = buildPath settings file
-    readSpecificScript settings filepath
+    readSpecificScript filepath
 
-readSpecificScript :: Settings -> FilePath -> IO GenericScript
-readSpecificScript settings filepath = do
+readSpecificScript :: FilePath -> IO GenericScript
+readSpecificScript filepath = do
     contents <- readFileRetry filepath
     case runparserAndAddClosingCurlyBrackets filepath contents of
         -- this case probably can't happen with our parser
@@ -130,7 +128,7 @@ readSpecificScript settings filepath = do
                     trace ( "File " ++ filepath ++ ": Missing closing curly bracket, applied fix" )
                         Ap.Done "" newResult
                 -- still didn't work, so we try with two }
-                Ap.Done newLeftover newResult -> case runparser (contents<>"}}") of
+                Ap.Done _newLeftover _newResult -> case runparser (contents<>"}}") of
                     -- good, it worked now and we can return the new result
                     Ap.Done "" newResult -> do
                         trace ("File " ++ filepath ++ ": Missing 2 closing curly brackets, applied fix")
@@ -147,7 +145,7 @@ readScriptFromText contents = case Ap.parseOnly
         *> genericScript
     ) contents of
     Right result -> return result
-    Left err -> return []
+    Left _err -> return []
 
 ------------------------------
 -- Writing features to file --

@@ -526,6 +526,7 @@ data ScriptMessage
     | MsgModifierPcPosReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcNegReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierBop {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierYesNo {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierVar {scriptMessageWhat :: Text, scriptMessageAmtText :: Text}
     | MsgCustomModifierTooltip {scriptMessageLoc :: Text}
     | MsgAddCompliance {scriptMessageAmt :: Double}
@@ -3016,6 +3017,12 @@ instance RenderMessage Script ScriptMessage where
                 , ": "
                 , bopicon _amt
                 , toMessage (bold (reducedNum plainPc _amt))
+                ]
+        MsgModifierYesNo {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _what
+                , ": "
+                , if _amt /= 0 then "{{red|Yes}}" else "{{green|No}} <!-- This should not appear -->"
                 ]
         MsgModifierVar {scriptMessageWhat = _what, scriptMessageAmtText = _amtT}
             -> mconcat

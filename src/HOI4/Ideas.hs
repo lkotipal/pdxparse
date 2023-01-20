@@ -86,7 +86,7 @@ parseHOI4IdeaGroup _ = withCurrentFile $ \file ->
 -- | Empty idea. Starts off Nothing everywhere, except id and name
 -- (should get filled in immediately).
 newIdea :: HOI4Idea
-newIdea = HOI4Idea undefined undefined "<!-- Check Script -->" undefined "GFX_idea_unknown" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined undefined
+newIdea = HOI4Idea undefined undefined "<!-- Check Script -->" undefined "GFX_idea_unknown" Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing undefined undefined
 
 -- | Parse one idea script into a idea data structure.
 parseHOI4Idea :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
@@ -189,7 +189,10 @@ ideaAddSection iidea stmt
             "level"             -> iidea
             "allowed_to_remove" -> iidea
             "cost"              -> iidea
-            "traits"            -> iidea
+            "traits"            -> case rhs of
+                CompoundRhs [] -> iidea
+                CompoundRhs scr -> iidea { id_traits = Just scr }
+                _-> trace "bad idea traits" iidea
             "ledger"            -> iidea
             "default"           -> iidea
             other               -> trace ("unknown idea section: " ++ T.unpack other) iidea

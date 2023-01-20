@@ -1,5 +1,4 @@
 
-{-# LANGUAGE TupleSections #-}
 module HOI4.SpecialHandlers (
         handleIdeas
     ,   handleTimedIdeas
@@ -9,8 +8,10 @@ module HOI4.SpecialHandlers (
     ,   plainmodifiermsg
     ,   modifierMSG
     ,   handleResearchBonus
+    ,   handleHiddenModifier
     ,   handleTargetedModifier
     ,   handleEquipmentBonus
+    ,   modifiersTable
     ,   addDynamicModifier
     ,   removeDynamicModifier
     ,   hasDynamicModifier
@@ -48,7 +49,7 @@ import qualified Data.Trie as Tr
 
 import qualified Text.PrettyPrint.Leijen.Text as PP
 
-import Data.List (foldl', intersperse, intercalate)
+import Data.List (foldl', intersperse, intercalate, sortOn, elemIndex)
 import Data.Maybe
 
 import Control.Applicative (liftA2)
@@ -68,7 +69,7 @@ import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, indentDown, getCurrentIndent, withCurrentIndent, withCurrentIndentZero, withCurrentIndentCustom, alsoIndent, alsoIndent'
                      , getGameL10n, getGameL10nIfPresent, getGameL10nDefault, withCurrentFile
-                     , unfoldM, unsnoc, concatMapM)
+                     , unfoldM, unsnoc, concatMapM, Settings (gameL10nKeys))
 import HOI4.Templates
 import {-# SOURCE #-} HOI4.Common (ppScript, ppMany, ppOne, extractStmt, matchLhsText)
 import HOI4.Types -- everything
@@ -238,6 +239,15 @@ modmessage iidea idea_loc ideaKey ideaIcon = do
             ideaDesc <- case id_desc_loc iidea of
                 Just desc -> return $ Doc.nl2br desc
                 _ -> return ""
+            traitmsg <- case id_traits iidea of
+                Just arr -> do
+                    let traitbare = mapMaybe getbaretraits arr
+                    concatMapM (\t-> do
+                        traitloc <- getGameL10n t
+                        namemsg <- plainMsg' ("'''" <> traitloc <> "'''")
+                        traitmsg <- indentUp $ getLeaderTraits t
+                        return $ namemsg : traitmsg) traitbare
+                _-> return []
             modifier <- maybe (return []) ppOne (id_modifier iidea)
             targeted_modifier <-
                 maybe (return []) (concatMapM handleTargetedModifier) (id_targeted_modifier iidea)
@@ -245,7 +255,7 @@ modmessage iidea idea_loc ideaKey ideaIcon = do
             equipment_bonus <- maybe (return []) ppOne (id_equipment_bonus iidea)
             let boxend = [(0, MsgEffectBoxEnd curindent)]
             withCurrentIndentCustom curindent $ \_ -> do
-                let ideamods = modifier ++ targeted_modifier ++ research_bonus ++ equipment_bonus ++ boxend
+                let ideamods = traitmsg ++modifier ++ targeted_modifier ++ research_bonus ++ equipment_bonus ++ boxend
                 return $ (0, MsgEffectBox idea_loc ideaKey ideaIcon ideaDesc) : ideamods
 
 
@@ -265,21 +275,41 @@ plainmodifiermsg _ stmt = preStatement stmt
 
 handleModifier :: forall g m. (HOI4Info g, Monad m) =>
         StatementHandler g m
-handleModifier [pdx| %_ = @scr |] = fold <$> traverse (modifierMSG False "") scr
+handleModifier [pdx| %_ = @scr |] = do
+    keys <- getModKeys
+    sm <- sortmods scr keys
+    fold <$> traverse (modifierMSG False "") sm
 handleModifier stmt = preStatement stmt
+
+sortmods :: forall g m. (HOI4Info g, Monad m) => GenericScript -> [Text] -> PPT g m GenericScript
+sortmods scr keys = modsrec' keys scr [] [] [] []
+    where
+    modsrec' :: forall g m. (HOI4Info g, Monad m) => [Text] -> GenericScript ->[(Int,GenericStatement)] -> GenericScript -> GenericScript -> GenericScript -> PPT g m GenericScript
+    modsrec' _ [] mo s h c = let moo = map snd $ sortOn fst mo in return $  moo ++ reverse s ++ reverse h ++ reverse c
+    modsrec' z (x:xs) mo s h  c= case x of
+        [pdx| hidden_modifier = %_|] -> let hr = x:h in modsrec' z xs mo s hr c
+        [pdx| custom_modifier_tooltip = %_|] -> let cr = x:c in modsrec' z xs mo s h cr
+        [pdx| $mod = %_|] -> case elemIndex mod z of
+            Just num -> let mor = (num,x):mo in modsrec' z xs mor s h c
+            Nothing -> let sr = x:s in modsrec' z xs mo sr h c
+        _ -> let sr = x:s in modsrec' z xs mo sr h c
 
 modifierMSG :: forall g m. (HOI4Info g, Monad m) =>
         Bool -> Text -> StatementHandler g m
 modifierMSG _ targ stmt@[pdx| $specmod = @scr|]
-    | specmod == "hidden_modifier" = fold <$> traverse (modifierMSG True targ) scr
+    | specmod == "hidden_modifier" = do
+        keys <- getModKeys
+        sm <- sortmods scr keys
+        fold <$> traverse (modifierMSG True targ) sm
     | otherwise = do
-        --terrain <- getTerrain
-        --if specmod `elem` terrain
-        --then do
-            termsg <- plainMsg' . (<> ":") . boldText =<< getGameL10n specmod
+        terrain <- getTerrain
+        if specmod `elem` terrain || specmod `elem` ["fort", "river", "night"]
+        then do
+            ter <- getGameL10n specmod
+            termsg <- plainMsg' ("{{Yellow|" <> ter <> "}}:")
             modmsg <- fold <$> indentUp (traverse (modifierMSG False targ) scr)
             return $ termsg : modmsg
-        --else trace ("unknown modifier type: " ++ show specmod ++ " IN: " ++ show stmt) $ preStatement stmt
+        else trace ("unknown modifier type: " ++ show specmod ++ " IN: " ++ show stmt) $ preStatement stmt
 modifierMSG hidden targ stmt@[pdx| $mod = !num |] = let lmod = T.toLower mod in case HM.lookup lmod modifiersTable of
     Just (key, msg) -> do
         loc <- getGameL10n key
@@ -334,21 +364,6 @@ modifierMSG hidden targ stmt@[pdx| $mod = !num |] = let lmod = T.toLower mod in 
                     let loc' = locprep hidden targ loc in
                     numericLoc loc' MsgModifierColourPos stmt
                 Nothing -> preStatement stmt
-        | lmod == "no_compliance_gain" && num == 1 -> do
-            comploc <- getGameL10n "MODIFIER_NO_COMPLIANCE_GAIN"
-            plainMsg comploc
-        | lmod == "disabled_ideas" && num == 1 -> do
-            idloc <- getGameL10n "MODIFIER_DISABLE_IDEA_TAKING"
-            plainMsg idloc
-        | lmod == "cannot_use_abilities" && num == 1 -> do
-            abloc <- getGameL10n "MODIFIER_CANNOT_USE_ABILITIES"
-            plainMsg abloc
-        | lmod == "disable_strategic_redeployment" && num == 1 -> do
-            strloc <- getGameL10n "MODIFIER_STRATEGIC_REDEPLOYMENT_DISABLED"
-            plainMsg strloc
-         | lmod == "can_master_build_for_us" && num == 1 -> do
-            strloc <- getGameL10n "MODIFIER_CAN_MASTER_BUILD_FOR_US"
-            plainMsg strloc
         | otherwise -> preStatement stmt
 modifierMSG _ _ stmt@[pdx| custom_modifier_tooltip = $key|] = do
     loc <- getGameL10nIfPresent key
@@ -388,9 +403,6 @@ modifierMSG hidden targ stmt@[pdx| $mod = $var|] =  let lmod = T.toLower mod in 
                     let loc' = locprep hidden targ loc in
                     msgToPP $ MsgModifierVar loc' var
                 Nothing -> preStatement stmt
-        | lmod == "disable_strategic_redeployment" && var == "yes" -> do
-            strloc <- getGameL10n "MODIFIER_STRATEGIC_REDEPLOYMENT_DISABLED"
-            plainMsg strloc
         | otherwise -> preStatement stmt
 modifierMSG _ _ stmt = preStatement stmt
 
@@ -408,6 +420,14 @@ handleResearchBonus [pdx| %_ = @scr |] = fold <$> traverse handleResearchBonus' 
         handleResearchBonus' scr = preStatement scr
 handleResearchBonus stmt = preStatement stmt
 
+handleHiddenModifier :: forall g m. (HOI4Info g, Monad m) =>
+        StatementHandler g m
+handleHiddenModifier [pdx| %_ = @scr |] = do
+    keys <- getModKeys
+    sm <- sortmods scr keys
+    fold <$> traverse (modifierMSG True "") sm
+handleHiddenModifier stmt = preStatement stmt
+
 handleTargetedModifier :: forall g m. (HOI4Info g, Monad m) =>
         StatementHandler g m
 handleTargetedModifier stmt@[pdx| %_ = @scr |] = do
@@ -415,9 +435,11 @@ handleTargetedModifier stmt@[pdx| %_ = @scr |] = do
     tagmsg <- case tag of
         Just [pdx| tag = $country |] -> flagText (Just HOI4Country) country
         _ -> return "CHECK SCRIPT"
-    fold <$> traverse (modifierTagMSG tagmsg) rest
+    keys <- getModKeys
+    sm <- sortmods rest keys
+    fold <$> traverse (modifierTagMSG tagmsg) sm
         where
-            modifierTagMSG tagmsg stmt = modifierMSG False tagmsg stmt
+            modifierTagMSG = modifierMSG False
 handleTargetedModifier stmt = preStatement stmt
 
 
@@ -427,12 +449,16 @@ handleEquipmentBonus stmt@[pdx| %_ = @scr |] = fold <$> traverse modifierEquipMS
         where
             modifierEquipMSG [pdx| $tech = @scr |] = do
                 let (_, rest) = extractStmt (matchLhsText "instant") scr
-                techmsg <- plainMsg' . (<> ":") . boldText =<< getGameL10n tech
-                modmsg <- fold <$> indentUp (traverse modifierEquipMSG' rest)
+                techloc <-getGameL10n tech
+                techmsg <- plainMsg' ("{{yellow|"<> techloc <> "}}:")
+                modmsg <- do
+                    keys <- getModKeys
+                    sm <- sortmods rest keys
+                    fold <$> indentUp (traverse modifierEquipMSG' sm)
                 return $ techmsg : modmsg
             modifierEquipMSG stmt = preStatement stmt
 
-            modifierEquipMSG' stmt = modifierMSG False "" stmt
+            modifierEquipMSG' = modifierMSG False ""
 handleEquipmentBonus stmt = preStatement stmt
 
 
@@ -453,6 +479,7 @@ modifiersTable = HM.fromList
         ,("min_export"                      , ("MODIFIER_MIN_EXPORT_FACTOR", MsgModifierPcReducedSign)) -- yellow
         ,("trade_opinion_factor"            , ("MODIFIER_TRADE_OPINION_FACTOR", MsgModifierPcReducedSign))
         ,("economy_cost_factor"             , ("economy_cost_factor", MsgModifierPcNegReduced))
+        ,("disabled_ideas"                  , ("MODIFIER_DISABLE_IDEA_TAKING", MsgModifierYesNo))
         ,("mobilization_laws_cost_factor"   , ("mobilization_laws_cost_factor", MsgModifierPcNegReduced))
         ,("political_advisor_cost_factor"   , ("political_advisor_cost_factor", MsgModifierPcNegReduced))
         ,("trade_laws_cost_factor"          , ("trade_laws_cost_factor", MsgModifierPcNegReduced))
@@ -527,6 +554,7 @@ modifiersTable = HM.fromList
         ,("subjects_autonomy_gain"          , ("MODIFIER_AUTONOMY_SUBJECT_GAIN", MsgModifierColourPos))
         ,("autonomy_gain_trade_factor"      , ("MODIFIER_AUTONOMY_GAIN_TRADE_FACTOR", MsgModifierPcPosReduced))
         ,("autonomy_manpower_share"         , ("MODIFIER_AUTONOMY_MANPOWER_SHARE", MsgModifierPcReducedSign))
+        ,("can_master_build_for_us"         , ("MODIFIER_CAN_MASTER_BUILD_FOR_US", MsgModifierYesNo))
         ,("cic_to_overlord_factor"          , ("MODIFIER_CIC_TO_OVERLORD_FACTOR", MsgModifierPcPosReduced))
         ,("mic_to_overlord_factor"          , ("MODIFIER_MIC_TO_OVERLORD_FACTOR", MsgModifierPcPosReduced))
         ,("extra_trade_to_overlord_factor"  , ("MODIFIER_TRADE_TO_OVERLORD_FACTOR", MsgModifierPcPosReduced))
@@ -534,7 +562,7 @@ modifiersTable = HM.fromList
         ,("overlord_trade_cost_factor"      , ("MODIFIER_TRADE_COST_FACTOR", MsgModifierPcNegReduced))
 
             -- Governments in exile
-        ,("dockyard_donations"             , ("MODIFIER_DOCKYARD_DONATIONS", MsgModifierColourPos))
+        ,("dockyard_donations"              , ("MODIFIER_DOCKYARD_DONATIONS", MsgModifierColourPos))
         ,("industrial_factory_donations"    , ("MODIFIER_INDUSTRIAL_FACTORY_DONATIONS", MsgModifierColourPos))
         ,("military_factory_donations"      , ("MODIFIER_MILITARY_FACTORY_DONATIONS", MsgModifierColourPos))
         ,("exile_manpower_factor"           , ("MODIFIER_EXILED_MAPOWER_GAIN_FACTOR", MsgModifierPcPosReduced))
@@ -629,6 +657,7 @@ modifiersTable = HM.fromList
 
             -- resistance and compliance
         ,("compliance_growth_on_our_occupied_states" , ("MODIFIER_COMPLIANCE_GROWTH_ON_OUR_OCCUPIED_STATES", MsgModifierPcNegReduced))
+        ,("no_compliance_gain"              , ("MODIFIER_NO_COMPLIANCE_GAIN", MsgModifierYesNo))
         ,("occupation_cost"                 , ("MODIFIER_OCCUPATION_COST", MsgModifierColourNeg))
         ,("required_garrison_factor"        , ("MODIFIER_REQUIRED_GARRISON_FACTOR", MsgModifierPcNegReduced))
         ,("resistance_activity"             , ("MODIFIER_RESISTANCE_ACTIVITY_FACTOR", MsgModifierPcNegReduced))
@@ -843,9 +872,9 @@ modifiersTable = HM.fromList
         ,("air_strategic_bomber_defence_factor" , ("MODIFIER_STRATEGIC_BOMBER_DEFENCE_FACTOR", MsgModifierPcPosReduced))
         ,("naval_strike_agility_factor"     , ("MODIFIER_NAVAL_STRIKE_AGILITY_FACTOR", MsgModifierPcPosReduced))
         ,("naval_strike_attack_factor"      , ("MODIFIER_NAVAL_STRIKE_ATTACK_FACTOR", MsgModifierPcPosReduced))
-        ,("air_paradrop_attack_factor" , ("MODIFIER_PARADROP_ATTACK_FACTOR:", MsgModifierPcPosReduced))
-        ,("air_paradrop_agility_factor" , ("MODIFIER_AIR_SUPERIORITY_AGILITY_FACTOR", MsgModifierPcPosReduced))
-        ,("air_paradrop_defence_factor" , ("MODIFIER_PARADROP_DEFENCE_FACTOR", MsgModifierPcPosReduced))
+        ,("air_paradrop_attack_factor"      , ("MODIFIER_PARADROP_ATTACK_FACTOR", MsgModifierPcPosReduced))
+        ,("air_paradrop_agility_factor"     , ("MODIFIER_AIR_SUPERIORITY_AGILITY_FACTOR", MsgModifierPcPosReduced))
+        ,("air_paradrop_defence_factor"     , ("MODIFIER_PARADROP_DEFENCE_FACTOR", MsgModifierPcPosReduced))
 
         ,("naval_strike_targetting_factor"  , ("MODIFIER_NAVAL_STRIKE_TARGETTING_FACTOR", MsgModifierPcPosReduced))
         ,("air_bombing_targetting"          , ("MODIFIER_AIR_BOMBING_TARGETTING", MsgModifierPcPosReduced))
@@ -879,6 +908,7 @@ modifiersTable = HM.fromList
         ,("army_speed_factor_for_controller" , ("MODIFIER_ARMY_SPEED_FACTOR_FOR_CONTROLLER", MsgModifierPcPosReduced))
         ,("compliance_gain"                 , ("MODIFIER_COMPLIANCE_GAIN_ADD", MsgModifierPcPos))
         ,("compliance_growth"               , ("MODIFIER_COMPLIANCE_GROWTH", MsgModifierPcPosReduced))
+        ,("disable_strategic_redeployment"  , ("MODIFIER_STRATEGIC_REDEPLOYMENT_DISABLED", MsgModifierYesNo))
         ,("enemy_intel_network_gain_factor_over_occupied_tag" , ("MODIFIER_ENEMY_INTEL_NETWORK_GAIN_FACTOR_OVER_OCCUPIED_TAG", MsgModifierPcNegReduced))
         ,("local_building_slots"            , ("MODIFIER_LOCAL_BUILDING_SLOTS", MsgModifierPcPos))
         ,("local_building_slots_factor"     , ("MODIFIER_LOCAL_BUILDING_SLOTS_FACTOR", MsgModifierPcPosReduced))
@@ -903,6 +933,7 @@ modifiersTable = HM.fromList
         ,("state_production_speed_buildings_factor" , ("MODIFIER_STATE_PRODUCTION_SPEED_BUILDINGS_FACTOR", MsgModifierPcPosReduced))
 
         -- Unit Leader Scope
+        ,("cannot_use_abilities"            , ("MODIFIER_CANNOT_USE_ABILITIES", MsgModifierYesNo))
         ,("exiled_divisions_attack_factor"  , ("MODIFIER_EXILED_DIVISIONS_ATTACK_FACTOR", MsgModifierPcPosReduced))
         ,("exiled_divisions_defense_factor" , ("MODIFIER_EXILED_DIVISIONS_DEFENSE_FACTOR", MsgModifierPcPosReduced))
         ,("own_exiled_divisions_attack_factor" , ("MODIFIER_OWN_EXILED_DIVISIONS_ATTACK_FACTOR", MsgModifierPcPosReduced))
@@ -910,7 +941,7 @@ modifiersTable = HM.fromList
         ,("experience_gain_factor"          , ("MODIFIER_XP_GAIN_FACTOR", MsgModifierPcPosReduced))
         ,("fortification_collateral_chance" , ("MODIFIER_FORTIFICATION_COLLATERAL_CHANCE", MsgModifierPcPosReduced))
         ,("max_commander_army_size"         , ("MODIFIER_ARMY_LEADER_MAX_ARMY_SIZE", MsgModifierColourPos))
-        ,("max_army_group_size"            , ("MODIFIER_ARMY_GROUP_LEADER_MAX_ARMY_GROUP_SIZE", MsgModifierColourPos))
+        ,("max_army_group_size"             , ("MODIFIER_ARMY_GROUP_LEADER_MAX_ARMY_GROUP_SIZE", MsgModifierColourPos))
         ,("promote_cost_factor"             , ("MODIFIER_UNIT_LEADER_PROMOTE_COST_FACTOR", MsgModifierPcNegReduced))
         ,("reassignment_duration_factor"    , ("MODIFIER_REASSIGNMENT_DURATION_FACTOR", MsgModifierPcNegReduced))
         ,("sickness_chance"                 , ("MODIFIER_SICKNESS_CHANCE", MsgModifierPcNegReduced))
@@ -932,7 +963,7 @@ modifiersTable = HM.fromList
         ,("max_strength"            , ("STAT_COMMON_MAX_STRENGTH", MsgModifierPcPosReduced))
 
         ,("attack"                  , ("STAT_ADJUSTER_ATTACK", MsgModifierPcPosReduced))
-        ,("defense"                 , ("STAT_ADJUSTER_DEFENSE", MsgModifierPcPosReduced))
+        ,("defense"                 , ("STAT_ADJUSTER_DEFENCE", MsgModifierPcPosReduced))
         ,("movement"                , ("STAT_ADJUSTER_MOVEMENT", MsgModifierPcPosReduced))
 
         ,("breakthrough"            , ("STAT_ARMY_BREAKTHROUGH", MsgModifierPcPosReduced))
@@ -1122,7 +1153,7 @@ parseAdvisor stmt@[pdx| %_ = @scr |] = do
     traitmsg <- case traits of
         Just [pdx| %_ = @arr |] -> do
             let traitbare = mapMaybe getbaretraits arr
-            concatMapM getLeaderTraits traitbare
+            concatMapM (indentUp . getLeaderTraits) traitbare
         _-> return []
     slotloc <- maybe (return "") (\case
         [pdx| %_ = $slottype|] -> getGameL10n slottype
@@ -1247,7 +1278,7 @@ ppHt :: (Monad m, HOI4Info g) => Text -> PPT g m IndentedMessages
 ppHt trait = do
     traitloc <- getGameL10n trait
     namemsg <- indentUp $ plainMsg' ("'''" <> traitloc <> "'''")
-    traitmsg' <- indentUp $ getLeaderTraits trait
+    traitmsg' <- indentUp $ indentUp $ getLeaderTraits trait
     return $ namemsg : traitmsg'
 
 getbaretraits :: GenericStatement -> Maybe Text
@@ -1305,7 +1336,7 @@ createOperativeLeader stmt@[pdx| %_ = @scr |]
             traitsmsg <- case co_traits co of
                 Just traits -> concatMapM (\t -> do
                     namemsg <- indentUp $ plainMsg' ("'''" <> t <> "'''")
-                    traitmsg <- indentUp $ getUnitTraits t
+                    traitmsg <- indentUp $ indentUp $ getUnitTraits t
                     return $ namemsg : traitmsg
                     ) traits
                 _ -> return []
@@ -1336,7 +1367,7 @@ handleTrait addremove stmt@[pdx| %_ = @scr |] =
         pp_ht addremove ht = do
             traitloc <- getGameL10n $ ht_trait ht
             namemsg <- indentUp $ plainMsg' ("'''" <> traitloc <> "'''")
-            traitmsg' <- indentUp $ getLeaderTraits (ht_trait ht)
+            traitmsg' <- indentUp $ indentUp $ getLeaderTraits (ht_trait ht)
             let traitmsg = namemsg : traitmsg'
             case (ht_character ht, ht_ideology ht) of
                 (Just char, Just ideo) -> do
@@ -1361,7 +1392,7 @@ addRemoveLeaderTrait :: (Monad m, HOI4Info g) => ScriptMessage -> StatementHandl
 addRemoveLeaderTrait msg stmt@[pdx| %_ = $trait |] = do
     traitloc <- getGameL10n trait
     namemsg <- indentUp $ plainMsg' ("'''" <> traitloc <> "'''")
-    traitmsg' <- indentUp $ getLeaderTraits trait
+    traitmsg' <- indentUp $ indentUp $ getLeaderTraits trait
     let traitmsg = namemsg : traitmsg'
     baseMsg <- msgToPP msg
     return $ baseMsg ++ traitmsg
@@ -1371,7 +1402,7 @@ addRemoveUnitTrait :: (Monad m, HOI4Info g) => ScriptMessage -> StatementHandler
 addRemoveUnitTrait msg stmt@[pdx| %_ = $trait |] = do
     traitloc <- getGameL10n trait
     namemsg <- indentUp $ plainMsg' ("'''" <> traitloc <> "'''")
-    traitmsg' <- indentUp $ getUnitTraits trait
+    traitmsg' <- indentUp $ indentUp $ getUnitTraits trait
     let traitmsg = namemsg : traitmsg'
     baseMsg <- msgToPP msg
     return $ baseMsg ++ traitmsg
@@ -1396,7 +1427,7 @@ addTimedTrait stmt@[pdx| %_ = @scr |] =
         addLine adt stmt = trace ("Unknown in addTimedTrait: " ++ show stmt) adt
         ppADT adt = do
             traitloc <- getGameL10n (adt_trait adt)
-            traitmsg <- getUnitTraits (adt_trait adt)
+            traitmsg <- indentUp $ getUnitTraits (adt_trait adt)
             baseMsg <- case (adt_days adt, adt_daysvar adt) of
                 (Just days,_)-> msgToPP $ MsgAddTimedUnitLeaderTrait traitloc days
                 (_, Just daysvar)->msgToPP $ MsgAddTimedUnitLeaderTraitVar traitloc daysvar
@@ -1425,7 +1456,7 @@ swapLeaderTrait stmt@[pdx| %_ = @scr |] =
             traitremoveloc <- getGameL10n (st_remove st)
             let same = traitaddloc == traitremoveloc
             namemsg <- indentUp $ plainMsg' ("'''" <> traitaddloc <> "'''")
-            traitmsg' <- indentUp $ getLeaderTraits (st_add st)
+            traitmsg' <- indentUp $ indentUp $ getLeaderTraits (st_add st)
             let traitmsg = namemsg : traitmsg'
             baseMsg <- if same
                 then msgToPP MsgModifyCountryLeaderTrait
@@ -1438,10 +1469,10 @@ getLeaderTraits trait = do
     traits <- getCountryLeaderTraits
     case HM.lookup trait traits of
         Just clt-> do
-            mod <- maybe (return []) (\t -> fold <$> indentUp (traverse (modifierMSG False "") t)) (clt_modifier clt)
-            equipmod <- maybe (return []) (indentUp . handleEquipmentBonus) (clt_equipment_bonus clt)
-            tarmod <- maybe (return []) (indentUp . concatMapM handleTargetedModifier) (clt_targeted_modifier clt)
-            hidmod <- maybe (return []) (indentUp . handleModifier) (clt_hidden_modifier clt)
+            mod <- maybe (return []) (fmap fold . traverse (modifierMSG False "")) (clt_modifier clt)
+            equipmod <- maybe (return []) handleEquipmentBonus (clt_equipment_bonus clt)
+            tarmod <- maybe (return []) (concatMapM handleTargetedModifier) (clt_targeted_modifier clt)
+            hidmod <- maybe (return []) handleModifier (clt_hidden_modifier clt)
             return ( mod ++ tarmod ++ equipmod ++ hidmod)
         Nothing -> getUnitTraits trait
 
@@ -1450,18 +1481,18 @@ getUnitTraits trait = do
     traits <- getUnitLeaderTraits
     case HM.lookup trait traits of
         Just ult-> do
-            attack <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Attack") (ult_attack_skill ult)
-            defense <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Defense") (ult_defense_skill ult)
-            logistics <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Logistics") (ult_logistics_skill ult)
-            planning <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Planning") (ult_planning_skill ult)
-            maneuvering <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Maneuvering") (ult_maneuvering_skill ult)
-            coordination <- maybe (return []) (indentUp . msgToPP . MsgAddSkill "Coordination") (ult_coordination_skill ult)
+            attack <- maybe (return []) (msgToPP . MsgAddSkill "Attack") (ult_attack_skill ult)
+            defense <- maybe (return []) (msgToPP . MsgAddSkill "Defense") (ult_defense_skill ult)
+            logistics <- maybe (return []) (msgToPP . MsgAddSkill "Logistics") (ult_logistics_skill ult)
+            planning <- maybe (return []) (msgToPP . MsgAddSkill "Planning") (ult_planning_skill ult)
+            maneuvering <- maybe (return []) (msgToPP . MsgAddSkill "Maneuvering") (ult_maneuvering_skill ult)
+            coordination <- maybe (return []) (msgToPP . MsgAddSkill "Coordination") (ult_coordination_skill ult)
             let skillmsg = attack ++ defense ++ logistics ++ planning ++ maneuvering ++ coordination
-            trtxp <- maybe (return []) (indentUp . handleModifier) (ult_trait_xp_factor ult)
-            mod <- maybe (return []) (indentUp . handleModifier) (ult_modifier ult)
-            nsmod <- maybe (return []) (indentUp . handleModifier) (ult_non_shared_modifier ult)
-            ccmod <- maybe (return []) (indentUp . handleModifier) (ult_corps_commander_modifier ult)
-            fmmod <- maybe (return []) (indentUp . handleModifier) (ult_field_marshal_modifier ult)
-            sumod <- maybe (return []) (indentUp . handleEquipmentBonus) (ult_sub_unit_modifiers ult)
-            return (trtxp ++ mod ++ nsmod ++ ccmod ++ fmmod ++ sumod ++ skillmsg)
+            trtxp <- maybe (return []) handleModifier (ult_trait_xp_factor ult)
+            mod <- maybe (return []) handleModifier (ult_modifier ult)
+            nsmod <- maybe (return []) handleModifier (ult_non_shared_modifier ult)
+            ccmod <- maybe (return []) handleModifier (ult_corps_commander_modifier ult)
+            fmmod <- maybe (return []) handleModifier (ult_field_marshal_modifier ult)
+            sumod <- maybe (return []) handleEquipmentBonus (ult_sub_unit_modifiers ult)
+            return (skillmsg ++ trtxp ++ mod ++ nsmod ++ ccmod ++ fmmod ++ sumod)
         Nothing -> return []
