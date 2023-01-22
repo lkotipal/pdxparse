@@ -360,7 +360,7 @@ getCurrentLang = gets (HM.findWithDefault HM.empty . language . getSettings) <*>
 -- | Get the localization string for a given key. If it doesn't exist, use the
 -- key itself.
 getGameL10n :: (IsGameData (GameData g), Monad m) => Text -> PPT g m Text
-getGameL10n key = getGameL10nDefault key key
+getGameL10n key = content . HM.findWithDefault (LocEntry 0 key) key <$> getCurrentLang
 
 -- | Get the localization string for a given key. If it doesn't exist, use the
 -- given default (the first argument) instead.

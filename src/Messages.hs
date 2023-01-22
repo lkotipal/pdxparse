@@ -1399,7 +1399,6 @@ data ScriptMessage
     | MsgAddManufactoryEffect
     | MsgHasStateEdict {scriptMessageWhat :: Text}
     | MsgOwesFavors {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
-    | MsgCanSwapOutEstateGrantingReform {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -1549,7 +1548,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (colourNum True _amt)
-                , " {{DLC-only|karma}}"
+                , " karma"
                 ]
         MsgGainLegitimacy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -5409,7 +5408,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (colourNum True _amt)
-                , " {{DLC-only|militarization of state}}"
+                , " militarization"
                 ]
         MsgGainProsperity {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -7167,17 +7166,15 @@ instance RenderMessage Script ScriptMessage where
                 , " estate "
                 , gainsOrLoses _amt
                 , " "
-                , toMessage (colourPc False  _amt)
+                , toMessage (colourPcSign False _amt)
                 , " share of the land"
                 ]
         MsgEstateLandShareEffectAll {scriptMessageAmt = _amt}
             -> mconcat
-                -- The value in the code is for all estates together, so it is easier to say
-                -- that the crown gains it instead of the estates losing land.
-                [ "The crown "
-                , gainsOrLoses (-1 * _amt)
+                [ "Every estate "
+                , gainsOrLoses _amt
                 , " "
-                , toMessage (colourPc False _amt)
+                , toMessage (colourPcSign False _amt)
                 , " share of the land"
                 ]
         MsgIsInTradeLeagueWith {scriptMessageWhom = _whom}
@@ -9278,14 +9275,6 @@ instance RenderMessage Script ScriptMessage where
                 , " at least "
                 , toMessage (plainNum _amt)
                 , " favors"
-                ]
-        MsgCanSwapOutEstateGrantingReform {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has no "
-                , _icon
-                , " "
-                , _what
-                , " estate ''or'' the estate has no privileges"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
