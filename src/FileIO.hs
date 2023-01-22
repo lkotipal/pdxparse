@@ -145,7 +145,7 @@ readScriptFromText contents = case Ap.parseOnly
         *> genericScript
     ) contents of
     Right result -> return result
-    Left _err -> return []
+    Left err -> return []
 
 ------------------------------
 -- Writing features to file --

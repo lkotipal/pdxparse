@@ -38,10 +38,14 @@ import Data.Foldable (fold)
 import Data.Maybe (isNothing, fromJust, listToMaybe)
 
 import Data.Text (Text)
+import qualified Data.Text as T
 import Text.Shakespeare.I18N (Lang)
 --import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import qualified Data.HashMap.Strict as HM
+
+import Text.Regex (Regex)
+import qualified Text.Regex as RE
 
 import Abstract () -- everything
 import Yaml (L10n, L10nLang,LocEntry (..))
@@ -357,19 +361,24 @@ alsoIndent' x = withCurrentIndent $ \i -> return (i,x)
 getCurrentLang :: (IsGameData (GameData g), Monad m) => PPT g m L10nLang
 getCurrentLang = gets (HM.findWithDefault HM.empty . language . getSettings) <*> gets (gameL10n . getSettings)
 
+-- | remove formatting markers from a localisation text
+-- currently only simple formattings (§ followed by one character) are handled
+removeLocalisationFormatting :: Text -> Text
+removeLocalisationFormatting text = T.pack (RE.subRegex (RE.mkRegex "§.") (T.unpack text) "")
+
 -- | Get the localization string for a given key. If it doesn't exist, use the
 -- key itself.
 getGameL10n :: (IsGameData (GameData g), Monad m) => Text -> PPT g m Text
-getGameL10n key = content . HM.findWithDefault (LocEntry 0 key) key <$> getCurrentLang
+getGameL10n key = getGameL10nDefault key key
 
 -- | Get the localization string for a given key. If it doesn't exist, use the
 -- given default (the first argument) instead.
 getGameL10nDefault :: (IsGameData (GameData g), Monad m) => Text -> Text -> PPT g m Text
-getGameL10nDefault def key = content . HM.findWithDefault (LocEntry 0 def) key <$> getCurrentLang
+getGameL10nDefault def key = removeLocalisationFormatting <$> (content . HM.findWithDefault (LocEntry 0 def) key <$> getCurrentLang)
 
 -- | Get the localization string for a given key, if it exists.
 getGameL10nIfPresent :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Maybe Text)
-getGameL10nIfPresent key = fmap content . HM.lookup key <$> getCurrentLang
+getGameL10nIfPresent key = fmap (removeLocalisationFormatting . content) . HM.lookup key <$> getCurrentLang
 
 -- | Pass the current file to the action. If there is no current file, set it
 -- to "(unknown)".
