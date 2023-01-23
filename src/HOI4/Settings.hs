@@ -54,7 +54,7 @@ import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInScriptedEffects
                    , findTriggeredEventsInBops)
 import HOI4.CharactersAndTraits (parseHOI4Characters, parseHOI4CountryLeaderTraits, parseHOI4UnitLeaderTraits)
-import HOI4.Misc (parseHOI4CountryHistory, parseHOI4Interface
+import HOI4.Misc (parseHOI4CountryHistory--, parseHOI4Interface
                  , parseHOI4Terrain, parseHOI4Ideology
                  , parseHOI4Effects, parseHOI4Triggers
                  , parseHOI4BopRanges, parseHOI4LocKeys)
@@ -112,8 +112,8 @@ instance IsGame HOI4 where
                 ,   hoi4nationalfocus = HM.empty
                 ,   hoi4countryHistory = HM.empty
                 ,   hoi4countryHistoryScripts = HM.empty
-                ,   hoi4interfacegfxScripts = HM.empty
-                ,   hoi4interfacegfx = HM.empty
+--                ,   hoi4interfacegfxScripts = HM.empty
+--                ,   hoi4interfacegfx = HM.empty
                 ,   hoi4characterScripts = HM.empty
                 ,   hoi4characters = HM.empty
                 ,   hoi4countryleadertraitScripts = HM.empty
@@ -236,12 +236,12 @@ instance HOI4Info HOI4 where
     getCountryHistory = do
         HOI4D ed <- get
         return (hoi4countryHistory ed)
-    getInterfaceGFXScripts = do
-        HOI4D ed <- get
-        return (hoi4interfacegfxScripts ed)
-    getInterfaceGFX = do
-        HOI4D ed <- get
-        return (hoi4interfacegfx ed)
+--    getInterfaceGFXScripts = do
+--        HOI4D ed <- get
+--        return (hoi4interfacegfxScripts ed)
+--    getInterfaceGFX = do
+--        HOI4D ed <- get
+--        return (hoi4interfacegfx ed)
     getCharacterScripts = do
         HOI4D ed <- get
         return (hoi4characterScripts ed)
@@ -434,7 +434,7 @@ readHOI4Scripts = do
     characterScripts <- readHOI4Script "characters"
     countryleadertraitScripts <- readHOI4Script "country_leader_trait"
     unitleadertraitScripts <- readHOI4Script "unit_leader_trait"
-    interface_gfx <- readHOI4SpecificScript "interfacegfx"
+--    interface_gfx <- readHOI4SpecificScript "interfacegfx"
 
     terrainScripts <- readHOI4Script "terrain"
     ideologyScripts <- readHOI4Script "ideology"
@@ -460,7 +460,7 @@ readHOI4Scripts = do
         ,   hoi4characterScripts = characterScripts
         ,   hoi4countryleadertraitScripts = countryleadertraitScripts
         ,   hoi4unitleadertraitScripts = unitleadertraitScripts
-        ,   hoi4interfacegfxScripts = interface_gfx
+--        ,   hoi4interfacegfxScripts = interface_gfx
 
         ,   hoi4terrainScripts = terrainScripts
         ,   hoi4ideologyScripts = ideologyScripts
@@ -488,7 +488,7 @@ parseHOI4Scripts = do
     nationalFocus <- parseHOI4NationalFocuses =<< getNationalFocusScripts
 
     countryHistory <- parseHOI4CountryHistory =<< getCountryHistoryScripts
-    interfaceGFX <- parseHOI4Interface =<< getInterfaceGFXScripts
+--    interfaceGFX <- parseHOI4Interface =<< getInterfaceGFXScripts
     (characters, chartoken) <- parseHOI4Characters =<< getCharacterScripts
     countryleadertraits <- parseHOI4CountryLeaderTraits =<< getCountryLeaderTraitScripts
     unitleadertraits <- parseHOI4UnitLeaderTraits =<< getUnitLeaderTraitScripts
@@ -531,7 +531,7 @@ parseHOI4Scripts = do
             ,   hoi4characters = characters
             ,   hoi4countryleadertraits = countryleadertraits
             ,   hoi4unitleadertraits = unitleadertraits
-            ,   hoi4interfacegfx = interfaceGFX
+--            ,   hoi4interfacegfx = interfaceGFX
             ,   hoi4chartoken = chartoken
 
             ,   hoi4terrain = terrain

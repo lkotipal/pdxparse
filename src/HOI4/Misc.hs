@@ -4,7 +4,7 @@ Description : Feature handler for miscellaneous features in Hearts of Iron IV
 -}
 module HOI4.Misc (
          parseHOI4CountryHistory
-        ,parseHOI4Interface
+--        ,parseHOI4Interface
         ,parseHOI4Terrain
         ,parseHOI4Ideology
         ,parseHOI4Effects
@@ -17,33 +17,25 @@ import Debug.Trace (trace, traceM)
 
 import Control.Arrow ((&&&))
 import Control.Monad (foldM, forM)
-import Control.Monad.Except (ExceptT (..), MonadError (..))
-import Control.Monad.State (MonadState (..), gets)
-import Control.Monad.Trans (MonadIO (..))
+import Control.Monad.Except (MonadError (..))
 
-import Data.Set (toList, fromList)
-import Data.Char (toLower, isUpper, isAlphaNum)
+import Data.Char (isUpper, isAlphaNum)
 import Data.List ( sortOn, foldl', elemIndex )
-import Data.Maybe (catMaybes, fromMaybe, mapMaybe)
-import Data.Monoid ((<>))
+import Data.Maybe (catMaybes, mapMaybe)
 
-import System.FilePath (takeFileName, takeBaseName)
+import System.FilePath (takeFileName)
 
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
 import Data.Text (Text)
 import qualified Data.Text as T
-import Text.PrettyPrint.Leijen.Text (Doc)
-import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import Abstract -- everything
-import qualified Doc
-import FileIO (Feature (..), writeFeatures)
-import HOI4.Messages -- everything
+ -- everything
 import QQ (pdx)
-import SettingsTypes ( PPT, Settings (..), Game (..)
+import SettingsTypes ( PPT
                      , IsGame (..), IsGameData (..), IsGameState (..)
-                     , getGameL10n, getGameL10nIfPresent
+
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions)
 import HOI4.Common -- everything
@@ -122,7 +114,7 @@ processPoliticsAddSection cohi stmt
         processPoliticsAddSection' cohi _
             = trace "unrecognised form for set_politics in history" $ return cohi
 
-
+{-
 parseHOI4Interface :: (IsGameState (GameState g), IsGameData (GameData g), Monad m) =>
     HashMap String GenericScript -> PPT g m (HashMap Text Text)
 parseHOI4Interface scripts = HM.unions . HM.elems <$> do
@@ -171,7 +163,7 @@ processInterface stmt@[pdx| $spriteType = @spr |] | T.toLower spriteType == "spr
             | T.toLower texturefile == "texturefile" = Just $ T.pack $ takeBaseName $ T.unpack id
         getPic (_ : ss) = getPic ss
 processInterface stmt = return (Right Nothing)
-
+-}
 -------------
 -- terrain --
 -------------

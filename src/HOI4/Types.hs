@@ -70,8 +70,8 @@ data HOI4Data = HOI4Data {
 
     ,   hoi4countryHistoryScripts :: HashMap FilePath GenericScript -- Country Tag -> country tag + ideology
     ,   hoi4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
-    ,   hoi4interfacegfxScripts :: HashMap FilePath GenericScript
-    ,   hoi4interfacegfx :: HashMap Text Text
+--    ,   hoi4interfacegfxScripts :: HashMap FilePath GenericScript
+--    ,   hoi4interfacegfx :: HashMap Text Text
     ,   hoi4characterScripts :: HashMap FilePath GenericScript
     ,   hoi4characters :: HashMap Text HOI4Character
     ,   hoi4countryleadertraitScripts :: HashMap FilePath GenericScript
@@ -163,10 +163,10 @@ class (IsGame g,
     getCountryHistoryScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the country history parsed
     getCountryHistory :: Monad m => PPT g m (HashMap Text HOI4CountryHistory)
-    -- | Get the interface, for icon paths, scripts
-    getInterfaceGFXScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | Get the interface, for icon paths, parsed
-    getInterfaceGFX :: Monad m => PPT g m (HashMap Text Text)
+    -- \| Get the interface, for icon paths, scripts
+--    getInterfaceGFXScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- \| Get the interface, for icon paths, parsed
+--    getInterfaceGFX :: Monad m => PPT g m (HashMap Text Text)
     -- | Get character script
     getCharacterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the characters parsed

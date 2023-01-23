@@ -13,34 +13,24 @@ import Debug.Trace (trace, traceM)
 import Control.Arrow ((&&&))
 import Control.Monad (foldM, forM)
 import Control.Monad.Except (ExceptT (..), MonadError (..))
-import Control.Monad.State (MonadState (..), gets)
-import Control.Monad.Trans (MonadIO (..))
 
 import Data.Char (toLower)
-import Data.Maybe (catMaybes, fromMaybe, isJust, mapMaybe)
-import Data.Monoid ((<>))
-import Data.List (intersperse, foldl', intercalate)
+import Data.Maybe (catMaybes, fromMaybe)
 
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
 import Data.Text (Text)
 import qualified Data.Text as T
-import Text.PrettyPrint.Leijen.Text (Doc)
-import qualified Text.PrettyPrint.Leijen.Text as PP
 import System.FilePath ((</>))
 
 import Abstract -- everything
-import qualified Doc
-import FileIO (Feature (..), writeFeatures)
-import HOI4.Messages -- everything
-import MessageTools (iquotes)
-import HOI4.Handlers (flagText, getStateLoc, plainMsg')
+ -- everything
 import QQ (pdx)
-import SettingsTypes ( PPT, Settings (..), Game (..)
+import SettingsTypes ( PPT
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10n, getGameL10nIfPresent
-                     , setCurrentFile, withCurrentFile, withCurrentIndent
-                     , hoistErrors, hoistExceptions)
+                     , setCurrentFile, withCurrentFile
+                     , hoistExceptions)
 import HOI4.Common -- everything
 
 -- | Take the idea group scripts from game data and parse them into idea group

@@ -32,50 +32,36 @@ module HOI4.SpecialHandlers (
     ,   swapLeaderTrait
     ) where
 
-import Data.Char (toUpper, toLower, isUpper)
-import Data.ByteString (ByteString)
-import qualified Data.ByteString as B
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Encoding as TE
 
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
 --import Data.Set (Set)
-import qualified Data.Set as S
-import Data.Trie (Trie)
-import qualified Data.Trie as Tr
 
-import qualified Text.PrettyPrint.Leijen.Text as PP
 
-import Data.List (foldl', intersperse, intercalate, sortOn, elemIndex)
+import Data.List (foldl', sortOn, elemIndex)
 import Data.Maybe
 
-import Control.Applicative (liftA2)
-import Control.Arrow (first)
-import Control.Monad (foldM, mplus, forM, join, when)
+import Control.Monad.State (gets)
 import Data.Foldable (fold)
-import Data.Monoid ((<>))
 
 import Abstract -- everything
-import Doc (Doc)
 import qualified Doc -- everything
 import HOI4.Messages -- everything
-import MessageTools (plural, iquotes, italicText, boldText
-                    , colourNumSign, plainNumSign, plainPc, colourPc, reducedNum
-                    , formatDays, formatHours)
+import MessageTools (iquotes
+
+                    , formatDays)
 import QQ -- everything
+-- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
-                     , indentUp, indentDown, getCurrentIndent, withCurrentIndent, withCurrentIndentZero, withCurrentIndentCustom, alsoIndent, alsoIndent'
-                     , getGameL10n, getGameL10nIfPresent, getGameL10nDefault, withCurrentFile
-                     , unfoldM, unsnoc, concatMapM, Settings (gameL10nKeys))
-import HOI4.Templates
-import {-# SOURCE #-} HOI4.Common (ppScript, ppMany, ppOne, extractStmt, matchLhsText)
+                     , indentUp, getCurrentIndent, withCurrentIndent, withCurrentIndentCustom
+                     , getGameL10n, getGameL10nIfPresent
+                     , concatMapM, Settings (gameInterface))
+import {-# SOURCE #-} HOI4.Common (ppMany, ppOne, extractStmt, matchLhsText)
 import HOI4.Types -- everything
 import Debug.Trace
 import HOI4.Handlers -- everything
-import System.Posix.Internals (st_mtime)
 
 -----------------
 -- handle idea --
@@ -179,7 +165,7 @@ handleIdea :: (HOI4Info g, Monad m) =>
 handleIdea addIdea ide = do
     ides <- getIdeas
     charto <- getCharToken
-    gfx <- getInterfaceGFX
+    gfx <- gets (gameInterface . getSettings)
     let midea = HM.lookup ide ides
     case midea of
         Just iidea -> do

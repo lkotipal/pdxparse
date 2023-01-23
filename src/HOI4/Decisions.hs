@@ -140,7 +140,7 @@ decisioncatAddSection ddeccat stmt
 writeHOI4DecisionCats :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4DecisionCats = do
     decisionCats <- getDecisioncats
-    interface <- getInterfaceGFX
+    interface <- gets (gameInterface . getSettings)
     let pathedDecisionCats :: [Feature HOI4Decisioncat]
         pathedDecisionCats = map (\decc -> Feature {
                                         featurePath = Just $ decc_path decc
@@ -400,7 +400,7 @@ decisionAddSection dec stmt
 writeHOI4Decisions :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4Decisions = do
     decisions <- getDecisions
-    interface <- getInterfaceGFX
+    interface <- gets (gameInterface . getSettings)
     let pathedDecisions :: [Feature HOI4Decision]
         pathedDecisions = map (\dec -> Feature {
                                         featurePath = Just $ dec_path dec
@@ -698,7 +698,7 @@ ppDecisionSource (HOI4DecSrcOnAction act weight) = do
             ,("on_weekly","<!-- on_weekly -->On every week")
             ]
 ppDecisionSource (HOI4DecSrcNFComplete id loc icon) = do
-    gfx <- getInterfaceGFX
+    gfx <- gets (gameInterface . getSettings)
     iconnf <-
         let iconname = HM.findWithDefault "goal_unknown" icon gfx in
         return $ "[[File:" <> iconname <> ".png|28px]]"
@@ -710,7 +710,7 @@ ppDecisionSource (HOI4DecSrcNFComplete id loc icon) = do
         , iquotes't loc
         ]
 ppDecisionSource (HOI4DecSrcNFSelect id loc icon) =  do
-    gfx <- getInterfaceGFX
+    gfx <- gets (gameInterface . getSettings)
     iconnf <-
         let iconname = HM.findWithDefault "goal_unknown" icon gfx in
         return $ "[[File:" <> iconname <> ".png|28px]]"
@@ -722,7 +722,7 @@ ppDecisionSource (HOI4DecSrcNFSelect id loc icon) =  do
         , iquotes't loc
         ]
 ppDecisionSource (HOI4DecSrcIdeaOnAdd id loc icon categ) = do
-    gfx <- getInterfaceGFX
+    gfx <- gets (gameInterface . getSettings)
     iconnf <-
         let iconname = HM.findWithDefault "idea_unknown" icon gfx in
         return $ "[[File:" <> iconname <> ".png|28px]]"
@@ -738,7 +738,7 @@ ppDecisionSource (HOI4DecSrcIdeaOnAdd id loc icon categ) = do
         , " is added"
         ]
 ppDecisionSource (HOI4DecSrcIdeaOnRemove id loc icon categ) = do
-    gfx <- getInterfaceGFX
+    gfx <- gets (gameInterface . getSettings)
     iconnf <-
         let iconname = HM.findWithDefault "idea_unknown" icon gfx in
         return $ "[[File:" <> iconname <> ".png|28px]]"

@@ -13,14 +13,12 @@ import System.FilePath (takeBaseName)
 
 import Control.Arrow ((&&&))
 import Control.Monad (foldM, forM)
-import Control.Monad.Except (ExceptT (..), MonadError (..))
-import Control.Monad.State (MonadState (..), gets)
+import Control.Monad.Except (MonadError (..))
+import Control.Monad.State (gets)
 import Control.Monad.Trans (MonadIO (..))
 
 import Data.Char (toLower)
 import Data.Maybe (catMaybes, fromMaybe, mapMaybe)
-import Data.Monoid ((<>))
-import Data.List (sortOn, intersperse, foldl')
 
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
@@ -32,10 +30,9 @@ import qualified Text.PrettyPrint.Leijen.Text as PP
 import Abstract -- everything
 import qualified Doc
 import FileIO (Feature (..), writeFeatures)
-import HOI4.Messages -- everything
-import MessageTools (italicText)
+ -- everything
 import QQ (pdx)
-import SettingsTypes ( PPT, Settings (..), Game (..)
+import SettingsTypes ( PPT, Settings (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
@@ -204,7 +201,7 @@ writeHOI4NationalFocuses :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4NationalFocuses = do
 --    nationalFocuses <- getNationalFocus
     nationalFocuses <- getNationalFocusScripts
-    interface <- getInterfaceGFX
+    interface <- gets (gameInterface . getSettings)
     pathNF <- parseHOI4NationalFocusesPath nationalFocuses --mkNfPathMap $ HM.elems nationalFocuses
     let pathedNationalFocus :: [Feature [HOI4NationalFocus]]
         pathedNationalFocus = map (\nf -> Feature {

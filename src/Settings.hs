@@ -31,6 +31,7 @@ import System.FilePath ((</>))
 import Control.Monad (when, forM_, unless)
 
 import Localization (readL10n)
+import Interface (readInterface)
 import SettingsTypes ( CLArgs (..), Settings (..), Game (..), IsGame (..)
                      , setGameL10n)
 import Paths_pdxparse (version, getDataFileName)
@@ -160,11 +161,11 @@ readSettings = do
                 modfolder = fromMaybe "" (modNameI settingsIn)
                 modlocation = fromMaybe "C:/thisgoesnowhere" (modDirI settingsIn)
 
-            game <- case gamefolder of
-                "Europa Universalis IV" -> return $ Game EU4
-                "Hearts of Iron IV" -> return $ Game HOI4
-                "Stellaris" -> return $ Game Stellaris
-                "Victoria 2" -> return $ Game Vic2
+            (game, gameString) <- case gamefolder of
+                "Europa Universalis IV" -> return (Game EU4, "EU4")
+                "Hearts of Iron IV" -> return (Game HOI4, "HOI4")
+                "Stellaris" -> return (Game Stellaris, "Stellaris")
+                "Victoria 2" -> return (Game Vic2, "Vic2")
                 other -> do
                     putStrLn $ "I don't know how to handle " ++ other ++ "!"
                     exitFailure
@@ -182,6 +183,7 @@ readSettings = do
                             , steamApps = steamAppsCanonicalized
                             , l10nScheme = case game of Game g -> locScheme g
                             , game = game
+                            , gameString = gameString
                             , gameFolder = gamefolder
                             , gameOrModFolder = gameormodfolder
                             , gameModPath = modlocation
@@ -191,6 +193,7 @@ readSettings = do
                             , languageFolder = langFolder
                             , languageS = "l_" <> T.unpack lang
                             , gameVersion = T.pack (gameVersionI settingsIn)
+                            , gameInterface = HM.empty -- filled in later
                             , gameL10n = HM.empty -- filled in later
                             , gameL10nKeys = [] -- filled in later
                             , langs = ["en"]
@@ -199,8 +202,9 @@ readSettings = do
                             , filesToProcess = nonopts }
 
             (game_l10n, ordered) <- readL10n provisionalSettings
+            interface <- readInterface provisionalSettings
             let l10nkeys = HMO.keys $ HMO.unions (HMO.elems ordered)
-            return $ setGameL10n provisionalSettings game_l10n l10nkeys
+            return $ setGameL10n provisionalSettings game_l10n l10nkeys interface
 
         Left exc -> do
             hPutStrLn stderr $ "Couldn't parse settings: " ++ show exc
