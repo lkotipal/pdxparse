@@ -9,7 +9,7 @@ module HOI4.Settings (
 
 import Debug.Trace (trace)
 
-import Control.Monad (forM, filterM, void)
+import Control.Monad (join, when, forM, filterM, void, unless)
 import Control.Monad.Trans (MonadIO (..), liftIO)
 import Control.Monad.Reader (MonadReader (..), ReaderT (..), asks)
 import Control.Monad.State (MonadState (..), StateT (..), modify, gets)
@@ -21,9 +21,10 @@ import Data.Maybe (listToMaybe)
 
 import System.Directory (getDirectoryContents, doesFileExist, doesDirectoryExist)
 import System.FilePath ((</>), isExtensionOf)
+import System.IO (hPutStrLn, stderr)
 
 import Abstract -- everything
-import FileIO (buildPath, readScript, readSpecificScript)
+import FileIO (buildPath, readScript)
 import SettingsTypes ( PPT, Settings (..), L10nScheme (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10nIfPresent
@@ -333,15 +334,15 @@ instance IsGameState (GameState HOI4) where
 readHOI4Scripts :: forall m. MonadIO m => PPT HOI4 m ()
 readHOI4Scripts = do
     settings <- gets getSettings
-    let readOneScript :: Bool -> String -> PPT HOI4 m (String, GenericScript)
-        readOneScript specific target = do
-            content <- if specific then liftIO $ readScript settings target else liftIO $ readSpecificScript target
+    let readOneScript :: String -> String -> PPT HOI4 m (String, GenericScript)
+        readOneScript category target = do
+            content <- liftIO $ readScript settings target
             --traceM (show target)
-            --when (null content) $
-                --liftIO $ hPutStrLn stderr $
-                    --"Warning: " ++ target
-                       -- ++ " contains no scripts - failed parse? Expected feature type "
-                       -- ++ category
+            when (null content) $
+                liftIO $ hPutStrLn stderr $
+                    "Warning: " ++ target
+                        ++ " contains no scripts - failed parse? Expected feature type "
+                        ++ category
             return (target, content)
 
         readHOI4Script :: String -> PPT HOI4 m (HashMap String GenericScript)
@@ -373,10 +374,10 @@ readHOI4Scripts = do
                 files <- liftIO (filterM (doesFileExist . buildPath settings . (sourceSubdir </>))
                                     =<< filterM (pure . isExtensionOf ".txt")
                                      =<< getDirectoryContents sourceDir)
-                results <- forM files $ \filename -> readOneScript True (sourceSubdir </> filename)
+                results <- forM files $ \filename -> readOneScript category (sourceSubdir </> filename)
                 return $ foldl (flip (uncurry HM.insert)) HM.empty results
             else return $ trace ("WARNING: Unable to find " ++ show sourceDir) HM.empty
-
+        {-
         readHOI4SpecificScript :: String -> PPT HOI4 m (HashMap String GenericScript)
         readHOI4SpecificScript category = do
             settings <- gets getSettings
@@ -419,7 +420,7 @@ readHOI4Scripts = do
         buildCompletePath path = liftIO (filterM (doesFileExist . (path </>))
                                     =<< filterM (pure . isExtensionOf ".gfx")
                                      =<< getDirectoryContents path)
-
+        -}
     ideasScripts <- readHOI4Script "ideas"
     decisioncats <- readHOI4Script "decisioncats"
     decisions <- readHOI4Script "decisions"

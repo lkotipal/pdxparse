@@ -20,6 +20,8 @@ module SettingsTypes (
     ,   getGameL10n
     ,   getGameL10nDefault
     ,   getGameL10nIfPresent
+    ,   getGameInterface
+    ,   getGameInterfaceIfPresent
     ,   setCurrentFile, withCurrentFile
     ,   getLangs
     ,   unfoldM, concatMapM
@@ -39,9 +41,10 @@ import Control.Monad.State (StateT (..), gets)
 import Control.Applicative (Alternative (..))
 
 import Data.Foldable (fold)
-import Data.Maybe (isNothing, fromJust, listToMaybe)
+import Data.Maybe (isNothing, fromJust, listToMaybe, fromMaybe)
 
 import Data.Text (Text)
+import qualified Data.Text as T
 import Text.Shakespeare.I18N (Lang)
 --import qualified Text.PrettyPrint.Leijen.Text as PP
 
@@ -51,6 +54,7 @@ import qualified Data.HashMap.Strict as HM
 import Data.Attoparsec.Text (Parser, (<?>))
 import qualified Data.Attoparsec.Text as Ap
 import Data.Functor (($>))
+import Data.Char (isAlpha, isSpace)
 
 import Abstract () -- everything
 import Yaml (L10n, L10nLang,LocEntry (..))
@@ -276,6 +280,15 @@ data Settings = Settings {
 setGameL10n :: Settings -> L10n -> [Text] -> HashMap Text Text -> Settings
 setGameL10n settings l10n l10nkeys interface = settings { gameL10n = l10n, gameL10nKeys = l10nkeys, gameInterface = interface}
 
+data FormattedTextFragment
+  = PlainText Text -- ^ unformatted text and text that isn't handled
+  | ColoredText Text Text -- ^ contains the color key and text that is formatted using §
+  | IconText Text -- ^ key to text icon using £
+  | KeyText Text -- ^ contains text enclosed by $ for EU4 it's scalar identifiers for HOI4 it's another localization key,
+                 --   $$ is for the actual dollar sign being displayed
+
+type FormatText = [FormattedTextFragment]
+
 -- | Output monad.
 type PP g = StateT (GameData g) (Reader (GameState g)) -- equal to PPT g Identity a
 -- | Transformer version of 'PP'. All statement handlers should be in it.
@@ -377,34 +390,57 @@ handleLocFormat text = do
     game <- gets (gameString . getSettings)
     handleGameFormat game text
 
+handleGameFormat :: (IsGameData (GameData g), Monad m) => Text -> Text -> PPT g m Text
 handleGameFormat g t
     | g == "HOI4" = do
-        gfx <- gets (gameInterface . getSettings)
         case parseFormat t of
             Left err -> return $ trace ("parse failed on: " ++ err) t
-            Right clean -> return clean
+            Right tformat -> mconcat <$> traverse unpackTextfragment tformat
     | g == "EU4" =
         case removeFormat t of
             Left err -> return t
             Right clean -> return clean
     | otherwise = return t
 
-handleLocFormat' :: (IsGameData (GameData g), Monad m) => Maybe Text -> PPT g m (Maybe Text)
-handleLocFormat' = maybe (return Nothing) (\t -> do
-        htext <- handleLocFormat t
-        return $ Just htext)
+unpackTextfragment :: (IsGameData (GameData g), Monad m) => FormattedTextFragment -> PPT g m Text
+unpackTextfragment = \case
+    PlainText t -> return t
+    ColoredText k t -> return $ "{{color|" <> k <> "|" <> t <> "}}"
+    IconText k -> do
+        let kpref = if "GFX_" `T.isPrefixOf` k then k else "GFX_" <> k
+        gfx <- getGameInterfaceIfPresent kpref
+        case gfx of
+            Just f -> return $ "[[File:" <> f <> ".png]]"
+            Nothing -> return $ "£" <> k
+    KeyText k -> do
+        mloc <- getGameL10nIfPresent k
+        case mloc of
+            Just t -> return $ "<!--Localisation key:" <> k <> "-->" <> t
+            Nothing -> return $ "$" <> k <> "$"
 
-parseFormat :: Text -> Either String Text
-parseFormat = Ap.parseOnly parseSymbols
+parseFormat :: Text -> Either String FormatText
+parseFormat = Ap.parseOnly parseFormat'
 
-parseSymbols :: Parser Text
-parseSymbols = mconcat <$> many parseCols
+parseFormat' :: Parser FormatText
+parseFormat' = many (PlainText  <$> Ap.takeWhile1 (not . \c -> '§' == c || '£' == c || '$' == c)
+        <|> PlainText   <$> (Ap.string "$$" *> "$")
+        <|> ColoredText <$> colKey <*> colText
+        <|> KeyText     <$> keyText
+        <|> IconText    <$> iconText)
+    <?> "format characters"
 
-parseCols :: Parser Text
-parseCols = Ap.takeWhile1 (not . \c -> '§' == c )
-         <|> Ap.char '§'
-            *> (Ap.anyChar $> mempty)
-    <?> "color character"
+colKey :: Parser Text
+colKey = "§" *> Ap.take 1
+
+colText :: Parser Text
+colText = Ap.takeWhile1 (not . \c -> '§' == c) <* Ap.char '§' <* Ap.char '!'
+
+keyText :: Parser Text
+keyText = "$" *> Ap.takeWhile1 (Ap.inClass "a-zA-Z._0-9-") <* Ap.char '$'
+
+iconText :: Parser Text
+iconText = "£" *> Ap.takeWhile1 (Ap.inClass "a-zA-Z._0-9|-")
+    <* Ap.option 'e' (Ap.satisfy (not . \c -> isAlpha c || Ap.isHorizontalSpace c)) -- can be end of line or a special character directly after the key
 
 removeFormat :: Text -> Either String Text
 removeFormat = Ap.parseOnly removeCol
@@ -430,7 +466,7 @@ getGameL10nDefault def key = handleLocFormat . content . HM.findWithDefault (Loc
 
 -- | Get the localization string for a given key, if it exists.
 getGameL10nIfPresent :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Maybe Text)
-getGameL10nIfPresent key = handleLocFormat' . fmap content . HM.lookup key =<< getCurrentLang
+getGameL10nIfPresent key = traverse handleLocFormat . fmap content . HM.lookup key =<< getCurrentLang
 
 -- | Pass the current file to the action. If there is no current file, set it
 -- to "(unknown)".
@@ -450,6 +486,16 @@ setCurrentFile f = local (modifyCurrentFile (Just f))
 -- | Get the list of output languages.
 getLangs :: (IsGameData (GameData g), Monad m) => PPT g m [Lang]
 getLangs = gets (langs . getSettings)
+
+getGameInterface :: (IsGameData (GameData g), Monad m) => Text -> Text -> PPT g m Text
+getGameInterface def key = do
+    gfx <- gets (gameInterface . getSettings)
+    return $ HM.findWithDefault def key gfx
+
+getGameInterfaceIfPresent :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Maybe Text)
+getGameInterfaceIfPresent key = do
+    gfx <- gets (gameInterface . getSettings)
+    return $ HM.lookup key gfx
 
 -- Misc. utilities
 
