@@ -1058,7 +1058,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("can_transfer_vassal_wargoal"           , rhsAlwaysYes (MsgGenericText "Allows transfer subject peace treaty at half cost"))
         ,("development_cost_modifier"             , handleModifier "MODIFIER_DEVELOPMENT_COST_MODIFIER" (reducedNum (colourPcSign False)))
         ,("force_march_free"                      , rhsAlwaysYes (MsgGenericText "Force march costs no power"))
-        ,("global_allowed_num_of_buildings"       , handleModifier "MODIFIER_GLOBAL_ALLOWED_NUM_OF_BUILDINGS" (reducedNum (colourPcSign True)))
+        ,("global_allowed_num_of_buildings"       , handleModifier "MODIFIER_GLOBAL_ALLOWED_NUM_OF_BUILDINGS" (colourNumSign True))
         ,("has_carolean"                          , rhsAlwaysYes (MsgGenericText "Allows carolean infantry"))
         ,("ignore_coring_distance"                , rhsAlwaysYes (MsgGenericText "Ignore coring distance"))
         ,("landing_penalty"                       , handleModifier "MODIFIER_FLAGSHIP_LANDING_PENALTY" (colourNumSign False))
