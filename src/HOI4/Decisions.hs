@@ -45,7 +45,7 @@ import SettingsTypes ( PPT, Settings (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
-                     , hoistErrors, hoistExceptions)
+                     , hoistErrors, hoistExceptions, getGameInterface)
 import HOI4.Common -- everything
 
 -- | Empty decision category. Starts off Nothing/empty everywhere, except id and name
@@ -140,7 +140,6 @@ decisioncatAddSection ddeccat stmt
 writeHOI4DecisionCats :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4DecisionCats = do
     decisionCats <- getDecisioncats
-    interface <- gets (gameInterface . getSettings)
     let pathedDecisionCats :: [Feature HOI4Decisioncat]
         pathedDecisionCats = map (\decc -> Feature {
                                         featurePath = Just $ decc_path decc
@@ -149,11 +148,11 @@ writeHOI4DecisionCats = do
                               (HM.elems decisionCats)
     writeFeatures "decisions"
                   pathedDecisionCats
-                  (\d -> scope HOI4Country $ ppdecisioncat d interface)
+                  (scope HOI4Country . ppdecisioncat)
 
 -- | Present a parsed decision category.
-ppdecisioncat :: forall g m. (HOI4Info g, MonadError Text m) => HOI4Decisioncat -> HashMap Text Text -> PPT g m Doc
-ppdecisioncat decc gfx = setCurrentFile (decc_path decc) $ do
+ppdecisioncat :: forall g m. (HOI4Info g, MonadError Text m) => HOI4Decisioncat -> PPT g m Doc
+ppdecisioncat decc = setCurrentFile (decc_path decc) $ do
     version <- gets (gameVersion . getSettings)
     decc_text_loc <- getGameL10nIfPresent (decc_name decc <> "_desc")
     let deccArg :: Text -> (HOI4Decisioncat -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
@@ -174,10 +173,8 @@ ppdecisioncat decc gfx = setCurrentFile (decc_path decc) $ do
         nameD = Doc.strictText name
     name_loc <- getGameL10n name
     let icon = decc_icon decc
-    icon_pp <- (\iconc ->
-                let iconcat = if not $ "GFX_decision_category_" `T.isPrefixOf` iconc then "GFX_decision_category_" <> iconc else iconc in
-                return $ HM.findWithDefault "decision_category_generic" iconcat gfx)
-            icon
+    icon_pp <- let iconcat = if not $ "GFX_decision_category_" `T.isPrefixOf` icon then "GFX_decision_category_" <> icon else icon in
+                getGameInterface  "decision_category_generic" iconcat
     return . mconcat $
         ["== [[File:", Doc.strictText icon_pp, ".png]]" , "<!-- ", nameD, " --> ", Doc.strictText name_loc," ==", PP.line
         ," version = ", Doc.strictText version, PP.line
@@ -400,7 +397,6 @@ decisionAddSection dec stmt
 writeHOI4Decisions :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4Decisions = do
     decisions <- getDecisions
-    interface <- gets (gameInterface . getSettings)
     let pathedDecisions :: [Feature HOI4Decision]
         pathedDecisions = map (\dec -> Feature {
                                         featurePath = Just $ dec_path dec
@@ -409,11 +405,11 @@ writeHOI4Decisions = do
                               (HM.elems decisions)
     writeFeatures "decisions"
                   pathedDecisions
-                  (\d -> scope HOI4Country $ ppdecision d interface)
+                  (scope HOI4Country . ppdecision)
 
 -- | Present a parsed decision.
-ppdecision :: forall g m. (HOI4Info g, MonadError Text m) => HOI4Decision -> HashMap Text Text -> PPT g m Doc
-ppdecision dec gfx = setCurrentFile (dec_path dec) $ do
+ppdecision :: forall g m. (HOI4Info g, MonadError Text m) => HOI4Decision -> PPT g m Doc
+ppdecision dec = setCurrentFile (dec_path dec) $ do
     version <- gets (gameVersion . getSettings)
     dec_text_loc <- getGameL10nIfPresent (dec_name dec <> "_desc")
     let decArg :: Text -> (HOI4Decision -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
@@ -476,7 +472,7 @@ ppdecision dec gfx = setCurrentFile (dec_path dec) $ do
     icon_pp'd <- case dec_icon dec of
             Just (HOI4DecisionIconSimple txt) ->
                 let icond = if not $ "GFX_decision_" `T.isPrefixOf` txt then "GFX_decision_" <> txt else txt in
-                return $ HM.findWithDefault "decision_generic_decision" icond gfx
+                getGameInterface  "decision_generic_decision" icond
             _ -> return "Check script"
     let days_remove = dec_days_remove dec
         days_re_enable = dec_days_re_enable dec
@@ -698,9 +694,8 @@ ppDecisionSource (HOI4DecSrcOnAction act weight) = do
             ,("on_weekly","<!-- on_weekly -->On every week")
             ]
 ppDecisionSource (HOI4DecSrcNFComplete id loc icon) = do
-    gfx <- gets (gameInterface . getSettings)
-    iconnf <-
-        let iconname = HM.findWithDefault "goal_unknown" icon gfx in
+    iconnf <- do
+        iconname <- getGameInterface "goal_unknown" icon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     return $ Doc.strictText $ mconcat ["Completing the national focus "
         , iconnf
@@ -709,10 +704,9 @@ ppDecisionSource (HOI4DecSrcNFComplete id loc icon) = do
         , " -->"
         , iquotes't loc
         ]
-ppDecisionSource (HOI4DecSrcNFSelect id loc icon) =  do
-    gfx <- gets (gameInterface . getSettings)
-    iconnf <-
-        let iconname = HM.findWithDefault "goal_unknown" icon gfx in
+ppDecisionSource (HOI4DecSrcNFSelect id loc icon) = do
+    iconnf <- do
+        iconname <- getGameInterface "goal_unknown" icon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     return $ Doc.strictText $ mconcat ["Selecting the national focus "
         , iconnf
@@ -722,9 +716,8 @@ ppDecisionSource (HOI4DecSrcNFSelect id loc icon) =  do
         , iquotes't loc
         ]
 ppDecisionSource (HOI4DecSrcIdeaOnAdd id loc icon categ) = do
-    gfx <- gets (gameInterface . getSettings)
-    iconnf <-
-        let iconname = HM.findWithDefault "idea_unknown" icon gfx in
+    iconnf <- do
+        iconname <- getGameInterface "idea_unknown" icon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     catloc <- getGameL10n categ
     return $ Doc.strictText $ mconcat ["When the "
@@ -738,9 +731,8 @@ ppDecisionSource (HOI4DecSrcIdeaOnAdd id loc icon categ) = do
         , " is added"
         ]
 ppDecisionSource (HOI4DecSrcIdeaOnRemove id loc icon categ) = do
-    gfx <- gets (gameInterface . getSettings)
-    iconnf <-
-        let iconname = HM.findWithDefault "idea_unknown" icon gfx in
+    iconnf <- do
+        iconname <- getGameInterface "idea_unknown" icon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     catloc <- getGameL10n categ
     return $ Doc.strictText $ mconcat ["When the "

@@ -38,6 +38,7 @@ import Abstract -- everything
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings
                      , IsGame (..), IsGameData (..), IsGameState (..))
+import HOI4.Messages (ScriptMessage)
 --import Doc
 
 --------------------------------------------
@@ -87,6 +88,8 @@ data HOI4Data = HOI4Data {
     ,   hoi4scriptedeffects :: HashMap Text GenericStatement
     ,   hoi4scriptedtriggerScripts :: HashMap FilePath GenericScript
     ,   hoi4scriptedtriggers :: HashMap Text GenericStatement
+    ,   hoi4modifierdefinitionScripts :: HashMap FilePath GenericScript
+    ,   hoi4modifierdefinitions :: HashMap Text (Text -> Double -> ScriptMessage)
     ,   hoi4bopScripts :: HashMap FilePath GenericScript
     ,   hoi4bops :: HashMap Text HOI4BopRange
     ,   hoi4lockeys :: [Text]
@@ -163,10 +166,6 @@ class (IsGame g,
     getCountryHistoryScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the country history parsed
     getCountryHistory :: Monad m => PPT g m (HashMap Text HOI4CountryHistory)
-    -- \| Get the interface, for icon paths, scripts
---    getInterfaceGFXScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- \| Get the interface, for icon paths, parsed
---    getInterfaceGFX :: Monad m => PPT g m (HashMap Text Text)
     -- | Get character script
     getCharacterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the characters parsed
@@ -197,6 +196,10 @@ class (IsGame g,
     getScriptedTriggerScripts  :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the scripted triggers parsed
     getScriptedTriggers  :: Monad m => PPT g m (HashMap Text GenericStatement)
+    -- | Get modifier definition scripts
+    getModifierDefintionScripts  :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the modifier definition  parsed
+    getModifierDefinitions  :: Monad m => PPT g m (HashMap Text (Text -> Double -> ScriptMessage))
     -- | Get balance of power script
     getBopScripts  :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the balance of power parsed

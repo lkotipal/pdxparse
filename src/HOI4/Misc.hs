@@ -4,12 +4,12 @@ Description : Feature handler for miscellaneous features in Hearts of Iron IV
 -}
 module HOI4.Misc (
          parseHOI4CountryHistory
---        ,parseHOI4Interface
         ,parseHOI4Terrain
         ,parseHOI4Ideology
         ,parseHOI4Effects
         ,parseHOI4Triggers
         ,parseHOI4BopRanges
+        ,parseHOI4ModifierDefinitions
         ,parseHOI4LocKeys
     ) where
 
@@ -40,6 +40,7 @@ import SettingsTypes ( PPT
                      , hoistErrors, hoistExceptions)
 import HOI4.Common -- everything
 import HOI4.SpecialHandlers ( modifiersTable)
+import HOI4.Messages (ScriptMessage (..))
 
 newHOI4CountryHistory :: Text -> HOI4CountryHistory
 newHOI4CountryHistory chtag = HOI4CountryHistory chtag undefined
@@ -413,6 +414,88 @@ parseHOI4BopRange stmt@[pdx| range = @scr |]
         addSection bop stmt = trace ("Urecognized statement in bop range: " ++ show stmt) bop
 parseHOI4BopRange stmt = trace (show stmt) $ withCurrentFile $ \file ->
     throwError ("unrecognised form for range in bop in " <> T.pack file)
+
+-- Modifier Definitions
+
+parseHOI4ModifierDefinitions scripts = HM.unions . HM.elems <$> do
+    tryParse <- hoistExceptions $
+        HM.traverseWithKey
+            (\sourceFile scr -> setCurrentFile sourceFile $ mapM parseHOI4ModifierDefinition $ concatMap onlyscripts scr)
+            scripts
+    case tryParse of
+        Left err -> do
+            traceM $ "Completely failed parsing modifier definitions: " ++ T.unpack err
+            return HM.empty
+        Right moddefFilesOrErrors ->
+            flip HM.traverseWithKey moddefFilesOrErrors $ \sourceFile emoddef ->
+                fmap (mkTriggerMap . catMaybes) . forM emoddef $ \case
+                    Left err -> do
+                        traceM $ "Error parsing modifier definitions in " ++ sourceFile
+                                 ++ ": " ++ T.unpack err
+                        return Nothing
+                    Right mmoddef -> return mmoddef
+    where
+        mkTriggerMap :: [(Text,Text-> Double -> ScriptMessage)] -> HashMap Text (Text-> Double -> ScriptMessage)
+        mkTriggerMap = HM.fromList
+        onlyscripts = \case
+            stmt@[pdx| %_ = @_|] -> [stmt]
+            _ -> []
+
+data ModDef = ModDef
+        {   mdef_color_type :: Text
+        ,   mdef_value_type :: Text
+        ,   mdef_precision :: Double
+        ,   mdef_postfix :: Maybe Text
+        }
+
+newMDF :: ModDef
+newMDF = ModDef "<!--Check Script-->" "<!--Check Script-->" 0 Nothing
+
+parseHOI4ModifierDefinition :: (IsGameState (GameState g), IsGameData (GameData g), MonadError Text m) =>
+    GenericStatement -> PPT g m (Either Text (Maybe (Text, Text-> Double -> ScriptMessage)))
+parseHOI4ModifierDefinition (StatementBare _) = throwError "bare statement at top level"
+parseHOI4ModifierDefinition stmt@[pdx| %left = %right |] = case right of
+    CompoundRhs parts -> case left of
+        CustomLhs _ -> throwError "internal error: custom lhs"
+        IntLhs _ -> throwError "int lhs at top level"
+        AtLhs _ -> return (Right Nothing)
+        GenericLhs id [] -> withCurrentFile $ \file -> do
+            let mdefdata = getscrmess id =<< foldM addSection newMDF parts
+            return $ Right mdefdata
+        _ -> throwError "unrecognized form for scripted trigger"
+    _ -> throwError "unrecognized form for scripted trigger@content"
+    where
+        addSection mdf [pdx| color_type = $ctype |] = return $ mdf { mdef_color_type = ctype }
+        addSection mdf [pdx| value_type = $vtype |] = return $ mdf { mdef_value_type = vtype }
+        addSection mdf [pdx| category = %_ |] = return mdf
+        addSection mdf [pdx| precision = !precision |] = return $ mdf { mdef_precision = precision }
+        addSection mdf [pdx| postfix = $psfix |] = return mdf { mdef_postfix = Just psfix }
+        addSection mdf stmt = return $ trace ("Urecognized statement in modifier definition: " ++ show stmt) mdf
+
+        getscrmess :: Text -> ModDef -> Maybe (Text, Text -> Double -> ScriptMessage)
+        getscrmess mdid mdf = case T.toLower $ mdef_color_type mdf of
+            "good" -> case T.toLower $ mdef_value_type mdf of
+                "number" -> Just (mdid, MsgModifierColourPos)
+                "percentage" -> Just (mdid, MsgModifierPcPosReduced)
+                "percentage_in_hundred" -> Just (mdid, MsgModifierPcPos)
+                "yes_no" -> Just (mdid, MsgModifierYesNo)
+                _ -> Nothing
+            "neutral" -> case T.toLower $ mdef_value_type mdf of
+                "number" -> Just (mdid, MsgModifierSign)
+                "percentage" -> Just (mdid, MsgModifierPcReducedSign)
+                "percentage_in_hundred" -> Just (mdid, MsgModifierPcSign)
+                "yes_no" -> Just (mdid, MsgModifierYesNo)
+                _ -> Nothing
+            "bad" -> case T.toLower $ mdef_value_type mdf of
+                "number" -> Just (mdid, MsgModifierColourNeg)
+                "percentage" -> Just (mdid, MsgModifierPcNegReduced)
+                "percentage_in_hundred" -> Just (mdid, MsgModifierPcNeg)
+                "yes_no" -> Just (mdid, MsgModifierYesNo)
+                _ -> Nothing
+            _ -> Nothing
+
+parseHOI4ModifierDefinition _ = withCurrentFile $ \file ->
+    throwError ("unrecognised form for scripted trigger in " <> T.pack file)
 
 
 parseHOI4LocKeys order = return $ map fst (sortOn (\x -> elemIndex (snd x) order) . filter (modchk . snd) . HM.toList . HM.map fst $ modifiersTable)

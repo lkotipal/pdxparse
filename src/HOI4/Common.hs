@@ -368,7 +368,6 @@ handlersLocRhs = Tr.fromList
         ,("custom_effect_tooltip" , withLocAtom MsgCustomEffectTooltip)
         ,("has_country_leader_with_trait" , withLocAtom MsgHasCountryLeaderWithTrait)
         ,("has_decision"          , withLocAtomKey MsgHasDecision)
-        ,("has_opinion_modifier"  , withLocAtom MsgHasOpinionMod)
         ,("has_power_balance"     , withLocAtomCompound MsgHasPowerBalance)
         ,("has_tech"              , withLocAtom MsgHasTech)
         ,("has_template"          , withLocAtom MsgHasTemplate)
@@ -418,6 +417,7 @@ handlersAdvisorId = Tr.fromList
         ]
 
 -- | Simple statements whose RHS should be presented as is, in typewriter face
+--   or just need the RHS unmodified
 handlersTypewriter :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTypewriter = Tr.fromList
         [("clr_character_flag"  , withNonlocAtom2 MsgCharacterFlag MsgClearFlag)

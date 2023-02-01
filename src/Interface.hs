@@ -43,9 +43,10 @@ readInterface settings = do
         dirmod        = gameModPath settings
                         </> "interface"
     modexist <- doesDirectoryExist dirmod
-    dirmodsub <- if modexist then getSubdirsRecursive dirmod else return []
-    let dirmod'       = dirmod : dirmodsub
-        dirs = dirmod'++ [dir]
+    dirmod' <- if modexist then do
+        dirmodsub <- getSubdirsRecursive dirmod
+        return $ dirmod : dirmodsub else return []
+    let dirs = dirmod'++ [dir]
     files <- concatMapM readInterfaceDirs dirs
     scripts <- forM files $ \filename -> liftIO $ readPathScript filename
     let tryParse = map (map processInterface . concatMap (\case

@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module HOI4.Handlers (
         preStatement
+    ,   preStatementText'
     ,   plainStatement
     ,   plainMsg
     ,   plainMsg'
@@ -183,7 +184,7 @@ import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, withCurrentIndent, withCurrentIndentZero, alsoIndent'
                      , getGameL10n, getGameL10nIfPresent, withCurrentFile
-                     , Settings (gameInterface) )
+                     , getGameInterface )
 import HOI4.Templates
 import {-# SOURCE #-} HOI4.Common (ppScript, ppMany, extractStmt, matchLhsText)
 import HOI4.Types -- everything
@@ -748,7 +749,7 @@ withLocAtomCompound msg stmt@[pdx| %_ = %rhs |] = case rhs of
 withLocAtomCompound _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom.
--- with the ability to transform the localization key
+-- with the ability to transform the localization key and also need the key itself
 withLocAtomKey' :: (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage) -> (Text -> Text) -> StatementHandler g m
 withLocAtomKey' msg xform [pdx| %_ = ?key |]
@@ -756,6 +757,7 @@ withLocAtomKey' msg xform [pdx| %_ = ?key |]
 withLocAtomKey' _ _ stmt = preStatement stmt
 
 -- | Generic handler for a statement whose RHS is a localizable atom.
+-- and need to use the
 withLocAtomKey :: (HOI4Info g, Monad m) =>
     (Text -> Text -> ScriptMessage)
     -> GenericStatement -> PPT g m IndentedMessages
@@ -1729,7 +1731,7 @@ hasOpinion msg stmt@[pdx| %_ = @scr |]
         pp_hasOpinion hop = case (hop_target hop, hop_value hop, hop_valuevar hop, hop_ltgt hop) of
             (Just target, Just value, _, ltgt) -> do
                 target_flag <- flagText (Just HOI4Country) target
-                let valuet = Doc.doc2text (colourNumSign True value)
+                let valuet = templateColor' (colourNumSign True value)
                 return (msg valuet target_flag ltgt)
             (Just target, _, Just valuet, ltgt) -> do
                 target_flag <- flagText (Just HOI4Country) target
@@ -1955,13 +1957,12 @@ focusProgress msg stmt@[pdx| $lhs = @compa |] = do
             Just compr -> compr
             _-> "<!-- Check Script -->"
     nfs <- getNationalFocus
-    gfx <- gets (gameInterface . getSettings)
     let mnf = HM.lookup nf nfs
     case mnf of
         Nothing -> preStatement stmt -- unknown national focus
         Just nnf -> do
             let nfKey = nf_id nnf
-                nfIcon = HM.findWithDefault "goal_unknown" (nf_icon nnf) gfx
+            nfIcon <- getGameInterface "goal_unknown" (nf_icon nnf)
             nf_loc <- getGameL10n nfKey
             msgToPP (msg nfIcon nfKey nf_loc compare)
     where
@@ -1983,13 +1984,12 @@ handleFocus :: (HOI4Info g, Monad m) =>
         -> StatementHandler g m
 handleFocus msg stmt@[pdx| $lhs = $nf |] = do
     nfs <- getNationalFocus
-    gfx <- gets (gameInterface . getSettings)
     let mnf = HM.lookup nf nfs
     case mnf of
         Nothing -> preStatement stmt -- unknown national focus
         Just nnf -> do
             let nfKey = nf_id nnf
-                nfIcon = HM.findWithDefault "goal_unknown" (nf_icon nnf) gfx
+            nfIcon <- getGameInterface "goal_unknown" (nf_icon nnf)
             nf_loc <- getGameL10n nfKey
             msgToPP (msg nfIcon nfKey nf_loc)
 handleFocus _ stmt = preStatement stmt
@@ -2020,13 +2020,12 @@ focusUncomplete msg stmt@[pdx| $lhs = @scr |] = do
         ppuf uf = do
             let nf = uf_focus uf
             nfs <- getNationalFocus
-            gfx <- gets (gameInterface . getSettings)
             let mnf = HM.lookup nf nfs
             case mnf of
                 Nothing -> return $ preMessage stmt -- unknown national focus
                 Just nnf -> do
                     let nfKey = nf_id nnf
-                        nfIcon = HM.findWithDefault "goal_unknown" (nf_icon nnf) gfx
+                    nfIcon <- getGameInterface "goal_unknown" (nf_icon nnf)
                     nf_loc <- getGameL10n nfKey
                     return $ msg nfIcon nfKey nf_loc (uf_uncomplete_children uf)
 focusUncomplete _ stmt = preStatement stmt
@@ -2990,7 +2989,7 @@ startCivilWar stmt@[pdx| %_ = @scr |] = do
     let (_ideology, _) = extractStmt (matchLhsText "ideology") scr
         (_size, _) = extractStmt (matchLhsText "size") scr
     size <- case _size of
-        Just [pdx| %_ = !num |] -> return $ Doc.doc2text (reducedNum (colourPc False) num)
+        Just [pdx| %_ = !num |] -> return $ templateColor'(reducedNum (colourPc False) num)
         Just [pdx| %_ = ?var |] -> return var
         _ -> return "<!-- Check Script -->"
     ideology <- case _ideology of

@@ -205,6 +205,7 @@ getAdvinfo = foldM addLine newAI
         addLine ai [pdx| desc = %_|] = return ai
         addLine ai [pdx| picture = %_|] = return ai
         addLine ai [pdx| name = %_|] = return ai
+        addLine ai [pdx| can_be_fired = %_|] = return ai
         addLine ai [pdx| $other = %_ |] = trace ("unknown section in advisor info: " ++ show other) $ return ai
         addLine ai stmt = trace ("unknown form in advisor info: " ++ show stmt) $ return ai
 
@@ -264,6 +265,7 @@ parseHOI4CountryLeaderTrait [pdx| $id = @effects |]
          -- Must be an effect
         addSection clt [pdx| random = %_ |] = clt
         addSection clt [pdx| command_cap = %_ |] = clt
+        addSection clt [pdx| sprite = %_ |] = clt
         addSection clt [pdx| name = $txt |] = clt { clt_name = txt }
         addSection clt stmt =
             let oldmod = fromMaybe [] (clt_modifier clt) in

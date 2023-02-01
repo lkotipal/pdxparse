@@ -282,7 +282,7 @@ setGameL10n settings l10n l10nkeys interface = settings { gameL10n = l10n, gameL
 
 data FormattedTextFragment
   = PlainText Text -- ^ unformatted text and text that isn't handled
-  | ColoredText Text Text -- ^ contains the color key and text that is formatted using §
+  | ColoredText Text FormatText -- ^ contains the color key and text that is formatted using §
   | IconText Text -- ^ key to text icon using £
   | KeyText Text -- ^ contains text enclosed by $ for EU4 it's scalar identifiers for HOI4 it's another localization key,
                  --   $$ is for the actual dollar sign being displayed
@@ -405,7 +405,9 @@ handleGameFormat g t
 unpackTextfragment :: (IsGameData (GameData g), Monad m) => FormattedTextFragment -> PPT g m Text
 unpackTextfragment = \case
     PlainText t -> return t
-    ColoredText k t -> return $ "{{color|" <> k <> "|" <> t <> "}}"
+    ColoredText k t -> do
+        thandled <- mconcat <$> traverse unpackTextfragment t
+        return $ "{{color|" <> k <> "|" <> thandled <> "}}"
     IconText k -> do
         let kpref = if "GFX_" `T.isPrefixOf` k then k else "GFX_" <> k
         gfx <- getGameInterfaceIfPresent kpref
@@ -430,10 +432,14 @@ parseFormat' = many (PlainText  <$> Ap.takeWhile1 (not . \c -> '§' == c || '£'
     <?> "format characters"
 
 colKey :: Parser Text
-colKey = "§" *> Ap.take 1
+colKey = "§" *> (T.singleton <$> Ap.satisfy (Ap.inClass "a-zA-Z0-9"))
 
-colText :: Parser Text
-colText = Ap.takeWhile1 (not . \c -> '§' == c) <* Ap.char '§' <* Ap.char '!'
+colText :: Parser FormatText
+colText = many (PlainText <$> Ap.takeWhile1 (not . \c -> '§' == c || '£' == c || '$' == c)
+        <|> PlainText   <$> (Ap.string "$$" *> "$")
+        <|> ColoredText <$> colKey <*> colText
+        <|> KeyText     <$> keyText
+        <|> IconText    <$> iconText) <* Ap.option "e" (Ap.string "§!")
 
 keyText :: Parser Text
 keyText = "$" *> Ap.takeWhile1 (Ap.inClass "a-zA-Z._0-9-") <* Ap.char '$'
@@ -487,11 +493,14 @@ setCurrentFile f = local (modifyCurrentFile (Just f))
 getLangs :: (IsGameData (GameData g), Monad m) => PPT g m [Lang]
 getLangs = gets (langs . getSettings)
 
+-- | Get the image name for a given key. If it doesn't exist, use the
+-- given default (the first argument) instead.
 getGameInterface :: (IsGameData (GameData g), Monad m) => Text -> Text -> PPT g m Text
 getGameInterface def key = do
     gfx <- gets (gameInterface . getSettings)
     return $ HM.findWithDefault def key gfx
 
+-- | Get the image name for a given key, if it exists.
 getGameInterfaceIfPresent :: (IsGameData (GameData g), Monad m) => Text -> PPT g m (Maybe Text)
 getGameInterfaceIfPresent key = do
     gfx <- gets (gameInterface . getSettings)

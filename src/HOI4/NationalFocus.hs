@@ -37,7 +37,7 @@ import SettingsTypes ( PPT, Settings (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions
-                     , indentUp)
+                     , indentUp, getGameInterface)
 import HOI4.Common -- everything
 
 -- | Empty national focus. Starts off Nothing/empty everywhere, except id and name
@@ -201,7 +201,6 @@ writeHOI4NationalFocuses :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4NationalFocuses = do
 --    nationalFocuses <- getNationalFocus
     nationalFocuses <- getNationalFocusScripts
-    interface <- gets (gameInterface . getSettings)
     pathNF <- parseHOI4NationalFocusesPath nationalFocuses --mkNfPathMap $ HM.elems nationalFocuses
     let pathedNationalFocus :: [Feature [HOI4NationalFocus]]
         pathedNationalFocus = map (\nf -> Feature {
@@ -211,7 +210,7 @@ writeHOI4NationalFocuses = do
                               (HM.elems pathNF)
     writeFeatures "national_focus"
                   pathedNationalFocus
-                  (ppNationalFocuses interface)
+                  ppNationalFocuses
 --    where
 --        mkNfPathMap :: [HOI4NationalFocus] -> HashMap FilePath [HOI4NationalFocus]
 --        mkNfPathMap nf =
@@ -245,10 +244,10 @@ parseHOI4NationalFocusesPath scripts = do
             [pdx| shared_focus = @_ |] -> [scr]
             _ -> []
 
-ppNationalFocuses :: forall g m. (HOI4Info g, Monad m) => HashMap Text Text -> [HOI4NationalFocus] -> PPT g m Doc
-ppNationalFocuses gfx nfs = do
+ppNationalFocuses :: forall g m. (HOI4Info g, Monad m) => [HOI4NationalFocus] -> PPT g m Doc
+ppNationalFocuses nfs = do
     version <- gets (gameVersion . getSettings)
-    nfDoc <- mapM (scope HOI4Country . ppNationalFocus gfx) nfs -- Better to leave unsorted? (sortOn (sortName . nf_name_loc) nfs)
+    nfDoc <- mapM (scope HOI4Country . ppNationalFocus) nfs -- Better to leave unsorted? (sortOn (sortName . nf_name_loc) nfs)
     return . mconcat $
         [ "{{Version|", Doc.strictText version, "}}", PP.line
         , "{| class=\"mildtable\" {{buffer}}", PP.line
@@ -265,8 +264,8 @@ ppNationalFocuses gfx nfs = do
 --        nn = T.stripPrefix "the " ln
 --    in fromMaybe ln nn
 
-ppNationalFocus :: forall g m. (HOI4Info g, Monad m) => HashMap Text Text -> HOI4NationalFocus -> PPT g m Doc
-ppNationalFocus gfx nf = setCurrentFile (nf_path nf) $ do
+ppNationalFocus :: forall g m. (HOI4Info g, Monad m) => HOI4NationalFocus -> PPT g m Doc
+ppNationalFocus nf = setCurrentFile (nf_path nf) $ do
     let nfArg :: (HOI4NationalFocus -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
         nfArg field fmt
             = maybe (return [])
@@ -276,7 +275,7 @@ ppNationalFocus gfx nf = setCurrentFile (nf_path nf) $ do
                         [content_pp'd
                         ,PP.line])
             (field nf)
-    let nfArgExtra :: Doc -> (HOI4NationalFocus -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
+        nfArgExtra :: Doc -> (HOI4NationalFocus -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
         nfArgExtra extra field fmt
             = maybe (return [])
                 (\field_content -> do
@@ -287,7 +286,7 @@ ppNationalFocus gfx nf = setCurrentFile (nf_path nf) $ do
                         ,"}}"
                         ,PP.line])
             (field nf)
-        icon_pp = HM.findWithDefault "goal_unknown" (nf_icon nf) gfx
+    icon_pp <- getGameInterface "goal_unknown" (nf_icon nf)
     prerequisite_pp <- ppPrereq $ catMaybes $ nf_prerequisite nf
     allowBranch_pp <- ppAllowBranch $ nf_allow_branch nf
     mutuallyExclusive_pp <- ppMutuallyExclusive $ nf_mutually_exclusive nf

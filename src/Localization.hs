@@ -48,11 +48,12 @@ readL10n settings = do
                         </> "localisation"
                         </> "replace"
     modexist <- doesDirectoryExist dirmod
-    dirmodsub <- if modexist then getSubdirsRecursive dirmod else return []
+    dirmod' <- if modexist then do
+        dirmodsub <- getSubdirsRecursive dirmod
+        return $ dirmod : dirmodsub else return []
     replaceexist <- doesDirectoryExist dirifYAMLmod
     replaceexistr <- doesDirectoryExist dirifYAMLmodr
-    let dirmod'       = dirmod : dirmodsub
-        dirifYAMLmod'
+    let dirifYAMLmod'
           | replaceexist = dirifYAMLmod
           | replaceexistr = dirifYAMLmodr
           | otherwise = []
