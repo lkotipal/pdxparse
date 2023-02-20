@@ -476,7 +476,7 @@ handleEquipmentBonus stmt@[pdx| %_ = @scr |] = fold <$> traverse modifierEquipMS
         where
             modifierEquipMSG [pdx| $tech = @scr |] = do
                 let (_, rest) = extractStmt (matchLhsText "instant") scr
-                techloc <-getGameL10n tech
+                techloc <- getGameL10n tech
                 techmsg <- plainMsg' ("{{color|yellow|"<> techloc <> "}}:")
                 modmsg <- do
                     keys <- getModKeys
@@ -1523,12 +1523,14 @@ getLeaderTraits trait = do
     traits <- getCountryLeaderTraits
     case HM.lookup trait traits of
         Just clt-> do
-            mod <- maybe (return []) (fmap fold . traverse (modifierMSG False "")) (clt_modifier clt)
+            mod <- maybe (return []) (\ml -> fmap fold $ traverse (modifierMSG False "") =<< sortmod ml) (clt_modifier clt)
             equipmod <- maybe (return []) handleEquipmentBonus (clt_equipment_bonus clt)
             tarmod <- maybe (return []) (concatMapM handleTargetedModifier) (clt_targeted_modifier clt)
             hidmod <- maybe (return []) handleModifier (clt_hidden_modifier clt)
             return ( mod ++ hidmod ++ tarmod ++ equipmod )
         Nothing -> getUnitTraits trait
+    where
+        sortmod scr = sortmods scr =<< getModKeys
 
 getUnitTraits :: (Monad m, HOI4Info g) => Text-> PPT g m IndentedMessages
 getUnitTraits trait = do

@@ -409,7 +409,7 @@ data ScriptMessage
     | MsgOrignalTag {scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     | MsgMakeWhitePeace {scriptMessageWhom :: Text, scriptMessageWhat :: Text}
     -- flagyesno messages
-    | MsgCountryStartResistance {scriptMessageWho :: Text}
+    | MsgCountryStartResistance {scriptMessageWho :: Text, scriptMessageWhat :: Text}
     | MsgStartResistance {scriptMessageYn :: Bool}
     -- other messages
     | MsgAddStateClaim {scriptMessageWhat :: Text}
@@ -495,7 +495,7 @@ data ScriptMessage
     | MsgHasArmySize {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text}
     | MsgHasNavySize {scriptMessageCompare :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text}
     | MsgHasNavySizeVar {scriptMessageCompare :: Text, scriptMessageAmtText :: Text, scriptMessageWhat :: Text}
-    | MsgSetCapital {scriptMessageWhat :: Text}
+    | MsgSetCapital {scriptMessageWhat :: Text, scriptMessageWhere :: Text}
     | MsgSetCharacterName {scriptMessageWhat :: Text}
     | MsgSetCharacterNameType {scriptMessageWho :: Text, scriptMessageWhat :: Text}
     | MsgHasCharacter {scriptMessageWho :: Text}
@@ -744,8 +744,8 @@ data ScriptMessage
     | MsgIsPuppet {scriptMessageYn :: Bool}
     | MsgAddDynamicModifier {scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageDaysText :: Text}
     | MsgIsFactionLeader {scriptMessageYn :: Bool}
-    | MsgHasWargoalAgainst {scriptMessageWhom :: Text}
-    | MsgHasWargoalAgainstType {scriptMessage_icon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
+    | MsgHasWargoalAgainst {scriptMessageWhom :: Text,scriptMessageWhat :: Text}
+    | MsgHasWargoalAgainstType {scriptMessageWhom :: Text, scriptMessageWhat :: Text, scriptMessageWhere :: Text}
     | MsgAddBuildingConstruction {scriptMessageYn :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageProv :: Text}
     | MsgAddBuildingConstructionVar {scriptMessageYn :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmtText :: Text, scriptMessageProv :: Text}
     | MsgSetBuildingLevel {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageProv :: Text}
@@ -2286,6 +2286,18 @@ instance RenderMessage Script ScriptMessage where
                 , _whom
                 , ifThenElseT (T.null _what) "" "<!-- ",_what," -->"
                 ]
+        -- flagyesno messages
+        MsgCountryStartResistance {scriptMessageWho = _who, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Initialize Resistance Activity by "
+                , _who
+                , ifThenElseT (T.null _what) "" "<!-- ",_what," -->"
+                ]
+        MsgStartResistance {scriptMessageYn = _yn}
+            ->  mconcat
+                [ ifThenElseT _yn "Initialize" "Disable"
+                , " Resistance Activity"
+                ]
         -- other unsorted messages
         MsgAddStateClaim {scriptMessageWhat = _what}
             -> mconcat
@@ -2856,10 +2868,11 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " ships"
                 ]
-        MsgSetCapital {scriptMessageWhat = _what}
+        MsgSetCapital {scriptMessageWhat = _what, scriptMessageWhere = _where}
             -> mconcat
                 [ "Change capital to "
                 , _what
+                , ifThenElseT (T.null _where) "" "<!-- ",_where," -->"
                 ]
         MsgSetCharacterName {scriptMessageWhat = _what}
             -> mconcat
@@ -2920,16 +2933,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Set state category to "
                 , _what
-                ]
-        MsgCountryStartResistance {scriptMessageWho = _who}
-            -> mconcat
-                [ "Initialize Resistance Activity by "
-                , _who
-                ]
-        MsgStartResistance {scriptMessageYn = _yn}
-            ->  mconcat
-                [ ifThenElseT _yn "Initialize" "Disable"
-                , " Resistance Activity"
                 ]
         MsgAlways {scriptMessageYn = _yn}
             -> toMessage (ifThenElseT _yn "{{icon|yes}} Always" "{{icon|no}} Never")
@@ -4749,10 +4752,11 @@ instance RenderMessage Script ScriptMessage where
                 , ifThenElseT _yn "" " ''not''"
                 , " leader of a faction"
                 ]
-        MsgHasWargoalAgainst {scriptMessageWhom = _whom}
+        MsgHasWargoalAgainst {scriptMessageWhom = _whom, scriptMessageWhat = _what}
             -> mconcat
                 [ "Has a {{icon|war goal|1}} against "
                 , _whom
+                , ifThenElseT (T.null _what) "" "<!-- ",_what," -->"
                 ]
         MsgHasWargoalAgainstType {scriptMessageWhom = _whom, scriptMessageWhat = _what}
             -> mconcat
