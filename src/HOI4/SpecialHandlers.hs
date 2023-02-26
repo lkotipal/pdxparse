@@ -1022,6 +1022,7 @@ modifiersTable = HM.fromList
 
         ,("breakthrough"            , ("STAT_ARMY_BREAKTHROUGH", MsgModifierPcPosReduced))
         ,("hardness"                , ("STAT_ARMY_HARDNESS", MsgModifierPcPosReduced))
+        ,("supply_consumption"      , ("STAT_ARMY_SUPPLY_CONSUMPTION", MsgModifierPcPosReduced)) --precision 0
         ,("soft_attack"             , ("STAT_ARMY_SOFT_ATTACK", MsgModifierPcPosReduced))
         ,("hard_attack"             , ("STAT_ARMY_HARD_ATTACK", MsgModifierPcPosReduced))
 
