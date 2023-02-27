@@ -71,7 +71,7 @@ parseHOI4Characters scripts = do
             let chaselem = HM.elems chas
                 chastoken = mapMaybe (\c -> case cha_advisor c of
                     Just adv ->
-                        let a = a { adv_cha_name = cha_name c,adv_cha_id = cha_id c} in
+                        let a = a { adv_cha_name = cha_name c,adv_cha_id = cha_id c, adv_cha_portrait = cha_portrait c} in
                         Just $ map (\a -> (adv_idea_token a, a)) adv
                     _ -> Nothing)
                     chaselem
