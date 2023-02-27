@@ -327,7 +327,7 @@ modifierMSG hidden targ stmt@[pdx| $mod = !num |] = let lmod = T.toLower mod in 
                     let loc' = locprep hidden targ loc in
                     numericLoc loc' MsgModifierPcPosReduced stmt
                 Nothing -> preStatement stmt
-        | "_design_cost_factor" `T.isSuffixOf` lmod -> do
+        | "unit_" `T.isPrefixOf` lmod && "_design_cost_factor" `T.isSuffixOf` lmod -> do
             mloc <- getGameL10nIfPresent ("modifier_" <> lmod)
             case mloc of
                 Just loc ->
@@ -342,7 +342,8 @@ modifierMSG hidden targ stmt@[pdx| $mod = !num |] = let lmod = T.toLower mod in 
                     let loc' = locprep hidden targ loc in
                     numericLoc loc' MsgModifierPcPosReduced stmt
                 Nothing -> preStatement stmt
-        | "operation_" `T.isPrefixOf` lmod && ("_risk" `T.isSuffixOf` lmod || "_cost" `T.isSuffixOf` lmod ) -> do
+        | "operation_" `T.isPrefixOf` lmod && ("_risk" `T.isSuffixOf` lmod || "_cost" `T.isSuffixOf` lmod ) ||
+            "_design_cost_factor" `T.isSuffixOf` lmod -> do
             mloc <- getGameL10nIfPresent lmod
             case mloc of
                 Just loc ->
@@ -415,6 +416,7 @@ modifierMSG hidden targ stmt@[pdx| $mod = $var|] =  let lmod = T.toLower mod in 
                 Nothing -> preStatement stmt
         | "modifier_army_sub_" `T.isPrefixOf` lmod ||
             ("operation_" `T.isPrefixOf` lmod && "_outcome" `T.isSuffixOf` lmod) ||
+            "_design_cost_factor" `T.isSuffixOf` lmod ||
             "state_resource_" `T.isPrefixOf` lmod ||
             "country_resource_cost_" `T.isPrefixOf` lmod ||
             "temporary_state_resource_" `T.isPrefixOf` lmod -> do
