@@ -348,6 +348,8 @@ data ScriptMessage
     | MsgNumOfProjectFactoriesVar {scriptMessageAmtText :: Text, scriptMessageCompare :: Text}
     | MsgNumOfFactories {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgNumOfFactoriesVar {scriptMessageAmtText :: Text, scriptMessageCompare :: Text}
+    | MsgNumOfMilitaryFactories {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
+    | MsgNumOfMilitaryFactoriesVar {scriptMessageAmtText :: Text, scriptMessageCompare :: Text}
     | MsgNumOfNukes {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
     | MsgNumOfNukesVar {scriptMessageAmtText :: Text, scriptMessageCompare :: Text}
     | MsgNumOfNavalFactories {scriptMessageAmt :: Double, scriptMessageCompare :: Text}
@@ -514,6 +516,7 @@ data ScriptMessage
     | MsgRemovePowerBalanceModifier { scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageWhoKey :: Text , scriptMessageWhatKey :: Text }
     | MsgHasPowerBalanceModifier { scriptMessageWho :: Text, scriptMessageWhat :: Text, scriptMessageWhoKey :: Text , scriptMessageWhatKey :: Text }
     | MsgModifier {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierYellow {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierSign {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierColourPos {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierColourNeg {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
@@ -527,6 +530,7 @@ data ScriptMessage
     | MsgModifierPcPosReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierPcNegReduced {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierBop {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgModifierNoYes {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierYesNo {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgModifierVar {scriptMessageWhat :: Text, scriptMessageAmtText :: Text}
     | MsgCustomModifierTooltip {scriptMessageLoc :: Text}
@@ -1906,6 +1910,23 @@ instance RenderMessage Script ScriptMessage where
                 , typewriterText _amtT
                 , " factories"
                 ]
+        MsgNumOfMilitaryFactories {scriptMessageAmt = _amt, scriptMessageCompare = _comp}
+            -> mconcat
+                [ "Has "
+                , _comp
+                , " "
+                , toMessage (bold (plainNumMin _amt))
+                , " Military"
+                , plural _amt " factory" " factories"
+                ]
+        MsgNumOfMilitaryFactoriesVar {scriptMessageAmtText = _amtT, scriptMessageCompare = _comp}
+            -> mconcat
+                [ "Has "
+                , _comp
+                , " "
+                , typewriterText _amtT
+                , " Military factories"
+                ]
         MsgNumOfNavalFactories {scriptMessageAmt = _amt, scriptMessageCompare = _comp}
             -> mconcat
                 [ "Has "
@@ -2978,8 +2999,15 @@ instance RenderMessage Script ScriptMessage where
         MsgModifier {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
-                , ": "
+                , ":  "
                 , toMessage (bold (plainNumMin _amt))
+                ]
+        MsgModifierYellow {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _what
+                , ": {{color|yellow|"
+                , toMessage (bold (plainNumMin _amt))
+                , "}}"
                 ]
         MsgModifierSign {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
@@ -3064,11 +3092,17 @@ instance RenderMessage Script ScriptMessage where
                 , bopicon _amt
                 , toMessage (bold (reducedNum plainPc _amt))
                 ]
-        MsgModifierYesNo {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+        MsgModifierNoYes {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
                 [ _what
                 , ": "
                 , if _amt /= 0 then "{{color|red|Yes}}" else "{{color|green|No}} <!-- This should not appear -->"
+                ]
+        MsgModifierYesNo {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _what
+                , ": "
+                , if _amt /= 0 then "{{color|green|Yes}}" else "{{color|red|No}} <!-- This should not appear -->"
                 ]
         MsgModifierVar {scriptMessageWhat = _what, scriptMessageAmtText = _amtT}
             -> mconcat

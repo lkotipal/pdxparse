@@ -173,6 +173,7 @@ handlersNumericCompare = Tr.fromList
         ,("num_of_available_civilian_factories" , numericCompare "more than" "fewer than" MsgNumOfAvailableCivilianFactories MsgNumOfAvailableCivilianFactoriesVar)
         ,("num_of_civilian_factories_available_for_projects" , numericCompare "more than" "less than" MsgNumOfProjectFactories MsgNumOfProjectFactoriesVar)
         ,("num_of_factories"                 , numericCompare "more than" "fewer than" MsgNumOfFactories MsgNumOfFactoriesVar)
+        ,("num_of_military_factories"        , numericCompare "more than" "fewer than" MsgNumOfMilitaryFactories MsgNumOfMilitaryFactoriesVar)
         ,("num_of_nukes"                     , numericCompare "more than" "fewer than" MsgNumOfNukes MsgNumOfNukesVar)
         ,("num_of_naval_factories"           , numericCompare "more than" "fewer than" MsgNumOfNavalFactories MsgNumOfNavalFactoriesVar)
         ,("num_of_operatives"                , numericCompare "more than" "fewer than" MsgNumOfOperatives MsgNumOfOperativesVar)
