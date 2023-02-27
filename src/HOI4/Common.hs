@@ -489,7 +489,7 @@ handlersSimpleFlag = Tr.fromList
         ,("transfer_state_to"       , withFlag MsgTransferStateTo)
         ,("has_war_with"            , withFlag MsgHasWarWith)
         ,("has_war_together_with"   , withFlag MsgHasWarTogetherWith)
-        ,("original_tag"            , withFlagAndTag MsgOrignalTag)
+        ,("original_tag"            , withFlag MsgOrignalTag)
         ,("white_peace"             , withFlag MsgMakeWhitePeace)
         ]
 

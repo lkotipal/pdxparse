@@ -41,7 +41,6 @@ module HOI4.Handlers (
     ,   numericOrTagIcon
     ,   numericIconChange
     ,   withFlag
-    ,   withFlagAndTag
     ,   withBool
     ,   withBoolHOI4Scope
     ,   withFlagOrBool
@@ -1113,20 +1112,10 @@ withFlag msg stmt@[pdx| %_ = $vartag:$var |] = do
 withFlag msg [pdx| %_ = $who |] = do
     whoflag <- flagText (Just HOI4Country) who
     msgToPP $ msg whoflag who
-withFlag _ stmt = preStatement stmt
-
--- | Handler for a statement referring to a country. Use a flag.
-withFlagAndTag :: (HOI4Info g, Monad m) =>
-    (Text -> Text -> ScriptMessage) -> StatementHandler g m
-withFlagAndTag msg stmt@[pdx| %_ = $vartag:$var |] = do
-    mwhoflag <- eflag (Just HOI4Country) (Right (vartag, var))
-    case mwhoflag of
-        Just whoflag -> msgToPP $ msg whoflag ""
-        Nothing -> preStatement stmt
-withFlagAndTag msg [pdx| %_ = $who |] = do
+withFlag msg [pdx| %_ = ?who |] = do
     whoflag <- flagText (Just HOI4Country) who
     msgToPP $ msg whoflag who
-withFlagAndTag _ stmt = preStatement stmt
+withFlag _ stmt = preStatement stmt
 
 -- | Handler for yes-or-no statements.
 withBool :: (HOI4Info g, Monad m) =>
