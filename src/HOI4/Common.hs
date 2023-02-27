@@ -807,7 +807,7 @@ ppOne' stmt lhs rhs = case lhs of
                     characters <- getCharacters
                     case HM.lookup label characters of
                         Just charid -> withCurrentIndent $ \_ -> do  -- force indent level at least 1
-                            lchar <- plainMsg' (chaName charid <> ":")
+                            lchar <- plainMsg' (cha_loc_name charid <> ":")
                             scriptMsgs <- scope HOI4ScopeCharacter $ ppMany scr
                             return (lchar : scriptMsgs)
                         _

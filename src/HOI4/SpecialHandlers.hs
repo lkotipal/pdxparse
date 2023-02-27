@@ -179,9 +179,12 @@ handleIdea addIdea ide = do
         Nothing -> case HM.lookup ide charto of
             Nothing -> return Nothing
             Just cchat -> do
-                let name_loc = chaName cchat
-                    namekey = chaTag cchat
-                slot <- maybe (return "<!-- Check Script -->") getGameL10n (cha_advisor_slot cchat)
+                let namekey = adv_cha_id cchat
+                mloc <- getGameL10nIfPresent $ adv_cha_name cchat
+                name_loc <- case mloc of
+                    Just nloc -> return nloc
+                    _ -> getGameL10n $ adv_idea_token cchat
+                slot <- getGameL10n (adv_advisor_slot cchat)
                 return $ Just (slot, "", namekey, name_loc, Nothing)
 
 
@@ -203,12 +206,15 @@ showIdea stmt@[pdx| $lhs = $idea |] = do
         Nothing -> case HM.lookup idea charto of
             Nothing -> preStatement stmt
             Just ccharto -> do
-                let name_loc = chaName ccharto
-                    traits = case chaAdvisorTraits ccharto of
+                let traits = case adv_traits ccharto of
                         Just trts -> trts
                         _-> []
-                modmsg <- maybe (return []) (indentUp .handleModifier) (cha_adv_modifier ccharto)
-                resmsg <- maybe (return []) (indentUp .handleResearchBonus) (cha_adv_research_bonus ccharto)
+                mloc <- getGameL10nIfPresent $ adv_cha_name ccharto
+                name_loc <- case mloc of
+                    Just nloc -> return nloc
+                    _ -> getGameL10n $ adv_idea_token ccharto
+                modmsg <- maybe (return []) (indentUp .handleModifier) (adv_modifier ccharto)
+                resmsg <- maybe (return []) (indentUp .handleResearchBonus) (adv_research_bonus ccharto)
                 traitmsg <- concatMapM ppHt traits
                 basemsg <- msgToPP $ MsgShowIdea name_loc idea
                 return $ basemsg ++ traitmsg ++ modmsg ++ resmsg
@@ -1311,20 +1317,18 @@ promomessage what atom stmt = do
     ideoloc <- maybe (return "") getGameL10n (HM.lookup atom subideos)
     case HM.lookup what chas of
         Just ccha -> do
-            let nameloc = chaName ccha
+            let nameloc = cha_loc_name ccha
                 ideolocd = if T.null ideoloc
                     then fromMaybe "" (cha_leader_ideology ccha)
                     else ideoloc
-            traitmsg <- case chaLeaderTraits ccha of
+            traitmsg <- case cha_leader_traits ccha of
                 Just trts -> do
                     concatMapM ppHt trts
                 _-> return []
             basemsg <- if not (T.null ideoloc)
                 then msgToPP $ MsgAddCountryLeaderRolePromoted nameloc ideolocd
                 else msgToPP $ MsgPromoteCharacter nameloc
-            modmsg <- maybe (return []) (indentUp .handleModifier) (cha_adv_modifier ccha)
-            resmsg <- maybe (return []) (indentUp .handleResearchBonus) (cha_adv_research_bonus ccha)
-            return $ basemsg ++ traitmsg ++ modmsg ++ resmsg
+            return $ basemsg ++ traitmsg
         _-> if not (T.null what)
             then preStatement stmt
             else msgToPP $ MsgAddCountryLeaderRolePromoted "" ideoloc
@@ -1345,7 +1349,7 @@ getCharacterName :: (Monad m, HOI4Info g) =>
 getCharacterName idn = do
     characters <- getCharacters
     case HM.lookup idn characters of
-        Just charid -> return $ chaName charid
+        Just charid -> return $ cha_loc_name charid
         _ -> getGameL10n idn
 
 -- operatives

@@ -752,18 +752,32 @@ ppDecisionSource (HOI4DecSrcIdeaOnRemove id loc icon categ) = do
         , iquotes't loc
         , " is removed"
         ]
-ppDecisionSource (HOI4DecSrcCharacterOnAdd id loc) =
+ppDecisionSource (HOI4DecSrcCharacterOnAdd idtoken id name) = do
+    loc <- do
+        mloc <- getGameL10nIfPresent name
+        case mloc of
+            Just nloc -> return nloc
+            _-> getGameL10n idtoken
     return $ Doc.strictText $ mconcat ["When the advisor "
         , " <!-- "
         , id
+        , " "
+        , idtoken
         , " -->"
         , iquotes't loc
         , " is added"
         ]
-ppDecisionSource (HOI4DecSrcCharacterOnRemove id loc) =
+ppDecisionSource (HOI4DecSrcCharacterOnRemove idtoken id name) = do
+    loc <- do
+        mloc <- getGameL10nIfPresent name
+        case mloc of
+            Just nloc -> return nloc
+            _-> getGameL10n idtoken
     return $ Doc.strictText $ mconcat ["When the advisor "
         , " <!-- "
         , id
+        , " "
+        , idtoken
         , " -->"
         , iquotes't loc
         , " is removed"
@@ -867,13 +881,13 @@ findActivatedDecisionsInIdeas hm idea = addDecisionTriggers hm (concatMap findIn
             addDecisionSource (const (HOI4DecSrcIdeaOnAdd (id_id idea) (id_name_loc idea) (id_picture idea) (id_category idea))) (maybe [] findInStmts (id_on_add idea)) ++
             addDecisionSource (const (HOI4DecSrcIdeaOnRemove (id_id idea) (id_name_loc idea) (id_picture idea) (id_category idea))) (maybe [] findInStmts (id_on_remove idea))
 
-findActivatedDecisionsInCharacters :: HOI4DecisionTriggers -> [HOI4Character] -> HOI4DecisionTriggers
+findActivatedDecisionsInCharacters :: HOI4DecisionTriggers -> [HOI4Advisor] -> HOI4DecisionTriggers
 findActivatedDecisionsInCharacters hm hChar = addDecisionTriggers hm (concatMap findInCharacter hChar)
     where
-        findInCharacter :: HOI4Character -> [(Text, HOI4DecisionSource)]
+        findInCharacter :: HOI4Advisor -> [(Text, HOI4DecisionSource)]
         findInCharacter hChar =
-            addDecisionSource (const (HOI4DecSrcCharacterOnAdd (chaTag hChar) (chaName hChar))) (maybe [] findInStmts (chaOn_add hChar)) ++
-            addDecisionSource (const (HOI4DecSrcCharacterOnRemove (chaTag hChar) (chaName hChar))) (maybe [] findInStmts (chaOn_remove hChar))
+            addDecisionSource (const (HOI4DecSrcCharacterOnAdd (adv_idea_token hChar) (adv_cha_id hChar) (adv_cha_name hChar))) (maybe [] findInStmts (adv_on_add hChar)) ++
+            addDecisionSource (const (HOI4DecSrcCharacterOnRemove (adv_idea_token hChar) (adv_cha_id hChar) (adv_cha_name hChar))) (maybe [] findInStmts (adv_on_remove hChar))
 
 findActivatedDecisionsInScriptedEffects :: HOI4DecisionTriggers -> [GenericStatement] -> HOI4DecisionTriggers
 findActivatedDecisionsInScriptedEffects hm scr = foldl' findInScriptEffect hm scr -- needs editing
