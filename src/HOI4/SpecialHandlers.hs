@@ -276,14 +276,24 @@ sortmods :: forall g m. (HOI4Info g, Monad m) => GenericScript -> [Text] -> PPT 
 sortmods scr keys = modsrec' keys scr [] [] [] []
     where
     modsrec' :: forall g m. (HOI4Info g, Monad m) => [Text] -> GenericScript ->[(Int,GenericStatement)] -> GenericScript -> GenericScript -> GenericScript -> PPT g m GenericScript
-    modsrec' _ [] mo s h c = let moo = map snd $ sortOn fst mo in return $  moo ++ reverse s ++ reverse h ++ reverse c
-    modsrec' z (x:xs) mo s h  c= case x of
-        [pdx| hidden_modifier = %_|] -> let hr = x:h in modsrec' z xs mo s hr c
-        [pdx| custom_modifier_tooltip = %_|] -> let cr = x:c in modsrec' z xs mo s h cr
-        [pdx| $mod = %_|] -> case elemIndex mod z of
-            Just num -> let mor = (num,x):mo in modsrec' z xs mor s h c
-            Nothing -> let sr = x:s in modsrec' z xs mo sr h c
-        _ -> let sr = x:s in modsrec' z xs mo sr h c
+    modsrec' _ [] ord_mod unord_mod hid_mod custom =
+        let moo = map snd $ sortOn fst ord_mod in
+        return $  moo ++ reverse unord_mod ++ reverse hid_mod ++ reverse custom
+    modsrec' keys (stmt:xs) ord_mod unord_mod hid_mod custom = case stmt of
+        [pdx| hidden_modifier = %_|] ->
+            let hr = stmt:hid_mod in
+            modsrec' keys xs ord_mod unord_mod hr custom
+        [pdx| custom_modifier_tooltip = %_|] ->
+            let cr = stmt:custom in
+            modsrec' keys xs ord_mod unord_mod hid_mod cr
+        [pdx| $mod = %_|] -> case elemIndex mod keys of
+            Just num ->
+                let mor = (num,stmt):ord_mod in
+                modsrec' keys xs mor unord_mod hid_mod custom
+            Nothing ->
+                let sr = stmt:unord_mod in
+                modsrec' keys xs ord_mod sr hid_mod custom
+        _ -> let sr = stmt:unord_mod in modsrec' keys xs ord_mod sr hid_mod custom
 
 modifierMSG :: forall g m. (HOI4Info g, Monad m) =>
         Bool -> Text -> StatementHandler g m
