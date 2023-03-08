@@ -183,7 +183,7 @@ import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, withCurrentIndent, withCurrentIndentZero, alsoIndent'
                      , getGameL10n, getGameL10nIfPresent, withCurrentFile
-                     , getGameInterface )
+                     , getGameInterface, getGameInterfaceIfPresent )
 import HOI4.Templates
 import {-# SOURCE #-} HOI4.Common (ppScript, ppMany, extractStmt, matchLhsText)
 import HOI4.Types -- everything
@@ -1951,7 +1951,11 @@ focusProgress msg stmt@[pdx| $lhs = @compa |] = do
         Nothing -> preStatement stmt -- unknown national focus
         Just nnf -> do
             let nfKey = nf_id nnf
-            nfIcon <- getGameInterface "goal_unknown" (nf_icon nnf)
+            nfIcon <- do
+                micon <- getGameInterfaceIfPresent ("GFX_focus_" <> nfKey)
+                case micon of
+                    Nothing -> getGameInterface "goal_unknown" (nf_icon nnf)
+                    Just idicon -> return idicon
             nf_loc <- getGameL10n nfKey
             msgToPP (msg nfIcon nfKey nf_loc compare)
     where
@@ -1978,7 +1982,11 @@ handleFocus msg stmt@[pdx| $lhs = $nf |] = do
         Nothing -> preStatement stmt -- unknown national focus
         Just nnf -> do
             let nfKey = nf_id nnf
-            nfIcon <- getGameInterface "goal_unknown" (nf_icon nnf)
+            nfIcon <- do
+                micon <- getGameInterfaceIfPresent ("GFX_focus_" <> nfKey)
+                case micon of
+                    Nothing -> getGameInterface "goal_unknown" (nf_icon nnf)
+                    Just idicon -> return idicon
             nf_loc <- getGameL10n nfKey
             msgToPP (msg nfIcon nfKey nf_loc)
 handleFocus _ stmt = preStatement stmt
@@ -2014,7 +2022,11 @@ focusUncomplete msg stmt@[pdx| $lhs = @scr |] = do
                 Nothing -> return $ preMessage stmt -- unknown national focus
                 Just nnf -> do
                     let nfKey = nf_id nnf
-                    nfIcon <- getGameInterface "goal_unknown" (nf_icon nnf)
+                    nfIcon <- do
+                        micon <- getGameInterfaceIfPresent ("GFX_focus_" <> nfKey)
+                        case micon of
+                            Nothing -> getGameInterface "goal_unknown" (nf_icon nnf)
+                            Just idicon -> return idicon
                     nf_loc <- getGameL10n nfKey
                     return $ msg nfIcon nfKey nf_loc (uf_uncomplete_children uf)
 focusUncomplete _ stmt = preStatement stmt

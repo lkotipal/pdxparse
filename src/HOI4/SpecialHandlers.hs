@@ -57,7 +57,8 @@ import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, getCurrentIndent, withCurrentIndent, withCurrentIndentCustom
                      , getGameL10n, getGameL10nIfPresent
-                     , concatMapM, getGameInterface)
+                     , concatMapM
+                     , getGameInterface, getGameInterfaceIfPresent)
 import {-# SOURCE #-} HOI4.Common (ppMany, ppOne, extractStmt, matchLhsText)
 import HOI4.Types -- everything
 import Debug.Trace
@@ -170,7 +171,11 @@ handleIdea addIdea ide = do
         Just iidea -> do
             let ideaKey = id_id iidea
                 ideaname = id_name iidea
-            ideaIcon <- getGameInterface "idea_unknown" (id_picture iidea)
+            ideaIcon <- do
+                micon <- getGameInterfaceIfPresent ("GFX_idea_" <> ideaKey)
+                case micon of
+                    Nothing -> getGameInterface "idea_unknown" (id_picture iidea)
+                    Just idicon -> return idicon
             idea_loc <- getGameL10n ideaname
             category <- if id_category iidea == "country" then getGameL10n "FE_COUNTRY_SPIRIT" else getGameL10n $ id_category iidea
             effectbox <- modmessage iidea idea_loc ideaKey ideaIcon

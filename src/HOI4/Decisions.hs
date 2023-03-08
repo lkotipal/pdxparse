@@ -45,7 +45,8 @@ import SettingsTypes ( PPT, Settings (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
-                     , hoistErrors, hoistExceptions, getGameInterface)
+                     , hoistErrors, hoistExceptions
+                     , getGameInterface, getGameInterfaceIfPresent)
 import HOI4.Common -- everything
 
 -- | Empty decision category. Starts off Nothing/empty everywhere, except id and name
@@ -173,8 +174,12 @@ ppdecisioncat decc = setCurrentFile (decc_path decc) $ do
         nameD = Doc.strictText name
     name_loc <- getGameL10n name
     let icon = decc_icon decc
-    icon_pp <- let iconcat = if not $ "GFX_decision_category_" `T.isPrefixOf` icon then "GFX_decision_category_" <> icon else icon in
-                getGameInterface  "decision_category_generic" iconcat
+    icon_pp <- do
+        micon <- getGameInterfaceIfPresent ("GFX_decision_category_" <> decc_name decc)
+        case micon of
+            Nothing -> let iconcat = if not $ "GFX_decision_category_" `T.isPrefixOf` icon then "GFX_decision_category_" <> icon else icon in
+                    getGameInterface "decision_category_generic" iconcat
+            Just icond -> return icond
     return . mconcat $
         ["== [[File:", Doc.strictText icon_pp, ".png]]" , "<!-- ", nameD, " --> ", Doc.strictText name_loc," ==", PP.line
         ," version = ", Doc.strictText version, PP.line
@@ -474,10 +479,14 @@ ppdecision dec = setCurrentFile (dec_path dec) $ do
     targetedModifier_pp'd <- setIsInEffect True (decArg "targeted_modifier" dec_targeted_modifier ppScript)
     name_loc <- getGameL10n name
     icon_pp'd <- case dec_icon dec of
-            Just (HOI4DecisionIconSimple txt) ->
-                let icond = if not $ "GFX_decision_" `T.isPrefixOf` txt then "GFX_decision_" <> txt else txt in
-                getGameInterface  "decision_generic_decision" icond
-            _ -> return "Check script"
+        Just (HOI4DecisionIconSimple txt) -> do
+            micon <- getGameInterfaceIfPresent ("GFX_decision_" <> dec_name dec)
+            case micon of
+                Nothing ->
+                    let icond = if not $ "GFX_decision_" `T.isPrefixOf` txt then "GFX_decision_" <> txt else txt in
+                    getGameInterface  "decision_generic_decision" icond
+                Just icondd -> return icondd
+        _ -> return "Check script"
     let days_remove = dec_days_remove dec
         days_re_enable = dec_days_re_enable dec
         days_mission_timeout = dec_days_mission_timeout dec
@@ -702,7 +711,11 @@ ppDecisionSource (HOI4DecSrcOnAction act weight) = do
             ]
 ppDecisionSource (HOI4DecSrcNFComplete id loc icon) = do
     iconnf <- do
-        iconname <- getGameInterface "goal_unknown" icon
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_focus_" <> id)
+            case micon of
+                Nothing -> getGameInterface "goal_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     return $ Doc.strictText $ mconcat ["Completing the national focus "
         , iconnf
@@ -713,7 +726,11 @@ ppDecisionSource (HOI4DecSrcNFComplete id loc icon) = do
         ]
 ppDecisionSource (HOI4DecSrcNFSelect id loc icon) = do
     iconnf <- do
-        iconname <- getGameInterface "goal_unknown" icon
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_focus_" <> id)
+            case micon of
+                Nothing -> getGameInterface "goal_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     return $ Doc.strictText $ mconcat ["Selecting the national focus "
         , iconnf
@@ -724,7 +741,11 @@ ppDecisionSource (HOI4DecSrcNFSelect id loc icon) = do
         ]
 ppDecisionSource (HOI4DecSrcIdeaOnAdd id loc icon categ) = do
     iconnf <- do
-        iconname <- getGameInterface "idea_unknown" icon
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_idea_" <> id)
+            case micon of
+                Nothing -> getGameInterface "idea_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     catloc <- getGameL10n categ
     return $ Doc.strictText $ mconcat ["When the "
@@ -739,7 +760,11 @@ ppDecisionSource (HOI4DecSrcIdeaOnAdd id loc icon categ) = do
         ]
 ppDecisionSource (HOI4DecSrcIdeaOnRemove id loc icon categ) = do
     iconnf <- do
-        iconname <- getGameInterface "idea_unknown" icon
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_idea_" <> id)
+            case micon of
+                Nothing -> getGameInterface "idea_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     catloc <- getGameL10n categ
     return $ Doc.strictText $ mconcat ["When the "

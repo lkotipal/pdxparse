@@ -45,7 +45,8 @@ import SettingsTypes ( PPT, Settings (..)
                      , IsGame (..), IsGameData (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
-                     , hoistErrors, hoistExceptions, getGameInterface)
+                     , hoistErrors, hoistExceptions
+                     , getGameInterface, getGameInterfaceIfPresent)
 import HOI4.Handlers (flagText)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
@@ -646,7 +647,11 @@ ppEventSource (HOI4EvtSrcOnAction act weight) = do
             ]
 ppEventSource (HOI4EvtSrcNFComplete id loc icon) = do
     iconnf <- do
-        iconname <- getGameInterface "goal_unknown" icon
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_focus_" <> id)
+            case micon of
+                Nothing -> getGameInterface "goal_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     return $ Doc.strictText $ mconcat ["Completing the national focus "
         , iconnf
@@ -657,7 +662,11 @@ ppEventSource (HOI4EvtSrcNFComplete id loc icon) = do
         ]
 ppEventSource (HOI4EvtSrcNFSelect id loc icon) = do
     iconnf <- do
-        iconname <- getGameInterface "goal_unknown" icon
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_focus_" <> id)
+            case micon of
+                Nothing -> getGameInterface "goal_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     return $ Doc.strictText $ mconcat ["Selecting the national focus "
         , iconnf
@@ -668,7 +677,11 @@ ppEventSource (HOI4EvtSrcNFSelect id loc icon) = do
         ]
 ppEventSource (HOI4EvtSrcIdeaOnAdd id loc icon categ) = do
     iconnf <- do
-        iconname <- getGameInterface "idea_unknown" icon
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_idea_" <> id)
+            case micon of
+                Nothing -> getGameInterface "idea_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     catloc <- getGameL10n categ
     return $ Doc.strictText $ mconcat ["When the "
@@ -683,7 +696,11 @@ ppEventSource (HOI4EvtSrcIdeaOnAdd id loc icon categ) = do
         ]
 ppEventSource (HOI4EvtSrcIdeaOnRemove id loc icon categ) = do
     iconnf <- do
-        iconname <- getGameInterface "idea_unknown" icon
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_idea_" <> id)
+            case micon of
+                Nothing -> getGameInterface "idea_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     catloc <- getGameL10n categ
     return $ Doc.strictText $ mconcat ["When the "
