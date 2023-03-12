@@ -2206,10 +2206,11 @@ instance RenderMessage Script ScriptMessage where
                 , _whom
                 , ifThenElseT (T.null _what) "" "<!-- ",_what," -->"
                 ]
-        MsgIsStateCore {scriptMessageWhom = _what}
+        MsgIsStateCore {scriptMessageWhom = _what, scriptMessageWhat = _what}
             -> mconcat
                 [ "Is a core state of "
                 , _what
+                , ifThenElseT (T.null _what) "" "<!-- ",_what," -->"
                 ]
         MsgIsSubjectOf {scriptMessageWhom = _whom, scriptMessageWhat = _what}
             -> mconcat
@@ -2251,6 +2252,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Claim lost by"
                 ,  _who
+                , ifThenElseT (T.null _what) "" "<!-- ",_what," -->"
                 ]
         MsgRemoveCoreOf {scriptMessageWho = _who, scriptMessageWhat = _what}
             -> mconcat
