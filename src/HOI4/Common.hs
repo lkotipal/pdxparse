@@ -421,11 +421,11 @@ handlersAdvisorId = Tr.fromList
 --   or just need the RHS unmodified
 handlersTypewriter :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTypewriter = Tr.fromList
-        [("clr_character_flag"  , withNonlocAtom2 MsgCharacterFlag MsgClearFlag)
-        ,("clr_country_flag"    , withNonlocAtom2 MsgCountryFlag MsgClearFlag)
-        ,("clr_global_flag"     , withNonlocAtom2 MsgGlobalFlag MsgClearFlag)
-        ,("clr_state_flag"      , withNonlocAtom2 MsgStateFlag MsgClearFlag)
-        ,("clr_unit_leader_flag" , withNonlocAtom2 MsgUnitLeaderFlag MsgClearFlag)
+        [("clr_character_flag"  , withMaybelocAtom2 MsgCharacterFlag MsgClearFlag)
+        ,("clr_country_flag"    , withMaybelocAtom2 MsgCountryFlag MsgClearFlag)
+        ,("clr_global_flag"     , withMaybelocAtom2 MsgGlobalFlag MsgClearFlag)
+        ,("clr_state_flag"      , withMaybelocAtom2 MsgStateFlag MsgClearFlag)
+        ,("clr_unit_leader_flag" , withMaybelocAtom2 MsgUnitLeaderFlag MsgClearFlag)
         ,("has_focus_tree"        , withNonlocAtom MsgHasFocusTree)
         ,("save_event_target_as", withNonlocAtom MsgSaveEventTargetAs)
         ,("save_global_event_target_as", withNonlocAtom MsgSaveGlobalEventTargetAs)

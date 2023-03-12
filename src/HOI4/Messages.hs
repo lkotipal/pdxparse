@@ -287,14 +287,14 @@ data ScriptMessage
     | MsgOwnsState {scriptMessageWhat :: Text}
     | MsgControlsState {scriptMessageWhat :: Text}
     | MsgHasFullControlOfState {scriptMessageWhat :: Text}
-    | MsgClearFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text}
-    | MsgHasFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text}
-    | MsgHasFlagFor {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageAmtText :: Text, scriptMessageTime :: Text, scriptMessageDate :: Text}
-    | MsgSetFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text}
-    | MsgSetFlagFor {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageAmtText :: Text, scriptMessageDaysText :: Text}
-    | MsgHadFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
-    | MsgModifyFlag {scriptMessageFlagType :: Text, scriptMessageFlag :: Text, scriptMessageAmt :: Double}
-    | MsgModifyFlagVar {scriptMessageFlagType :: Text, scriptMessageFlag :: Text, scriptMessageAmtText :: Text}
+    | MsgClearFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageLoc :: Text}
+    | MsgHasFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageLoc :: Text}
+    | MsgHasFlagFor {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageAmtText :: Text, scriptMessageTime :: Text, scriptMessageDate :: Text, scriptMessageLoc :: Text}
+    | MsgSetFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageLoc :: Text}
+    | MsgSetFlagFor {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageAmtText :: Text, scriptMessageDaysText :: Text, scriptMessageLoc :: Text}
+    | MsgHadFlag {scriptMessageFlagType :: Text, scriptMessageName :: Text, scriptMessageDays :: Double, scriptMessageLoc :: Text}
+    | MsgModifyFlag {scriptMessageFlagType :: Text, scriptMessageFlag :: Text, scriptMessageAmt :: Double, scriptMessageLoc :: Text}
+    | MsgModifyFlagVar {scriptMessageFlagType :: Text, scriptMessageFlag :: Text, scriptMessageAmtText :: Text, scriptMessageLoc :: Text}
     | MsgCharacterFlag
     | MsgCountryFlag
     | MsgGlobalFlag
@@ -1447,21 +1447,22 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has full control of state "
                 , _what
                 ]
-        MsgClearFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name}
+        MsgClearFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageLoc = _loc}
             -> mconcat
                 [ "Clear "
                 , _flagType
                 , " flag "
                 , typewriterText _name
                 ]
-        MsgHasFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name}
+        MsgHasFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageLoc = _loc}
             -> mconcat
                 [ toMessage (T.toTitle _flagType)
                 , " flag "
                 , typewriterText _name
-                , " is set "
+                , " is set"
+                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
                 ]
-        MsgHasFlagFor {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageAmtText = _amtT, scriptMessageTime = _time, scriptMessageDate = _date}
+        MsgHasFlagFor {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageAmtText = _amtT, scriptMessageTime = _time, scriptMessageDate = _date, scriptMessageLoc = _loc}
             -> mconcat
                 [ toMessage (T.toTitle _flagType)
                 , " flag "
@@ -1470,15 +1471,17 @@ instance RenderMessage Script ScriptMessage where
                 , _amtT
                 , _time
                 , _date
+                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
                 ]
-        MsgSetFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name}
+        MsgSetFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageLoc = _loc}
             -> mconcat
                 [ "Set "
                 , _flagType
                 , " flag "
                 , typewriterText _name
+                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
                 ]
-        MsgSetFlagFor {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageAmtText = _amtT, scriptMessageDaysText = _days}
+        MsgSetFlagFor {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageAmtText = _amtT, scriptMessageDaysText = _days, scriptMessageLoc = _loc}
             -> mconcat
                 [ "Set "
                 , _flagType
@@ -1486,8 +1489,9 @@ instance RenderMessage Script ScriptMessage where
                 , typewriterText _name
                 , _amtT
                 , _days
+                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
                 ]
-        MsgHadFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageDays = _days}
+        MsgHadFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageDays = _days, scriptMessageLoc = _loc}
             -> mconcat
                 [ "Has had "
                 , _flagType
@@ -1495,8 +1499,9 @@ instance RenderMessage Script ScriptMessage where
                 , typewriterText _name
                 , " for "
                 , toMessage (formatDays _days)
+                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
                 ]
-        MsgModifyFlag {scriptMessageFlagType = _flagType, scriptMessageFlag = _flag, scriptMessageAmt = _amt}
+        MsgModifyFlag {scriptMessageFlagType = _flagType, scriptMessageFlag = _flag, scriptMessageAmt = _amt, scriptMessageLoc = _loc}
             -> mconcat
                 [ "Modify "
                 , _flagType
@@ -1504,8 +1509,9 @@ instance RenderMessage Script ScriptMessage where
                 , typewriterText _flag
                 , " by "
                 , toMessage (plainNumSign _amt)
+                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
                 ]
-        MsgModifyFlagVar {scriptMessageFlagType = _flagType, scriptMessageFlag = _flag, scriptMessageAmtText = _amtT}
+        MsgModifyFlagVar {scriptMessageFlagType = _flagType, scriptMessageFlag = _flag, scriptMessageAmtText = _amtT, scriptMessageLoc = _loc}
             -> mconcat
                 [ "Modify "
                 , _flagType
@@ -1513,6 +1519,7 @@ instance RenderMessage Script ScriptMessage where
                 , typewriterText _flag
                 , " by "
                 , typewriterText _amtT
+                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
                 ]
         MsgCharacterFlag
             -> "character"
@@ -2206,10 +2213,10 @@ instance RenderMessage Script ScriptMessage where
                 , _whom
                 , ifThenElseT (T.null _what) "" "<!-- ",_what," -->"
                 ]
-        MsgIsStateCore {scriptMessageWhom = _what, scriptMessageWhat = _what}
+        MsgIsStateCore {scriptMessageWhom = _whom, scriptMessageWhat = _what}
             -> mconcat
                 [ "Is a core state of "
-                , _what
+                , _whom
                 , ifThenElseT (T.null _what) "" "<!-- ",_what," -->"
                 ]
         MsgIsSubjectOf {scriptMessageWhom = _whom, scriptMessageWhat = _what}

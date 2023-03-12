@@ -23,6 +23,7 @@ module HOI4.Handlers (
     ,   withLocAtomCompound
     ,   withLocAtomKey
     ,   withLocAtom2
+    ,   withMaybelocAtom2
     ,   withLocAtomIcon
     ,   withLocAtomIconHOI4Scope
     ,   locAtomTagOrState
@@ -1407,8 +1408,8 @@ withNonlocTextValue :: forall g m. (HOI4Info g, Monad m) =>
     Text                                             -- ^ Label for "what"
         -> Text                                      -- ^ Label for "how much"
         -> ScriptMessage                             -- ^ submessage to send
-        -> (Text -> Text -> Double -> ScriptMessage) -- ^ Message constructor
-        -> (Text -> Text -> Text -> ScriptMessage) -- ^ Message constructor
+        -> (Text -> Text -> Double -> Text -> ScriptMessage) -- ^ Message constructor
+        -> (Text -> Text -> Text -> Text -> ScriptMessage) -- ^ Message constructor
         -> StatementHandler g m
 withNonlocTextValue whatlabel vallabel submsg valmsg varmsg stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_tv (parseTV whatlabel vallabel scr)
@@ -1416,11 +1417,15 @@ withNonlocTextValue whatlabel vallabel submsg valmsg varmsg stmt@[pdx| %_ = @scr
         pp_tv :: TextValue -> PPT g m ScriptMessage
         pp_tv tv = case (tv_what tv, tv_value tv, tv_var tv) of
             (Just what, Just value, _) -> do
+                mloc <- getGameL10nIfPresent what
+                let loc = fromMaybe "" mloc
                 extratext <- messageText submsg
-                return $ valmsg extratext what value
+                return $ valmsg extratext what value loc
             (Just what, _, Just var) -> do
+                mloc <- getGameL10nIfPresent what
+                let loc = fromMaybe "" mloc
                 extratext <- messageText submsg
-                return $ varmsg extratext what var
+                return $ varmsg extratext what var loc
             _ -> return $ preMessage stmt
 withNonlocTextValue _ _ _ _ _ stmt = preStatement stmt
 
@@ -2675,6 +2680,16 @@ addTechBonus stmt = preStatement stmt
 ------------------------------------------
 -- handlers for various flag statements --
 ------------------------------------------
+withMaybelocAtom2 :: (HOI4Info g, Monad m) =>
+    ScriptMessage
+        -> (Text -> Text -> Text -> ScriptMessage)
+        -> StatementHandler g m
+withMaybelocAtom2 submsg msg [pdx| %_ = ?txt |] = do
+    mloc <- getGameL10nIfPresent txt
+    let loc = fromMaybe "" mloc
+    extratext <- messageText submsg
+    msgToPP $ msg extratext txt loc
+withMaybelocAtom2 _ _ stmt = preStatement stmt
 
 data SetFlag = SetFlag
         {   sf_flag :: Text
@@ -2686,7 +2701,7 @@ data SetFlag = SetFlag
 newSF :: SetFlag
 newSF = SetFlag undefined Nothing Nothing Nothing
 setFlag :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
-setFlag msgft stmt@[pdx| %_ = $flag |] = withNonlocAtom2 msgft MsgSetFlag stmt
+setFlag msgft stmt@[pdx| %_ = $flag |] = withMaybelocAtom2 msgft MsgSetFlag stmt
 setFlag msgft stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_sf =<< foldM addLine newSF scr
     where
@@ -2709,8 +2724,10 @@ setFlag msgft stmt@[pdx| %_ = @scr |]
                     (Just day, _) -> " for " <> formatDays day
                     (_, Just day) -> " for " <> day <> " days"
                     _ -> ""
+            mloc <- getGameL10nIfPresent (sf_flag sf)
+            let loc = fromMaybe "" mloc
             msgfts <- messageText msgft
-            return $ MsgSetFlagFor msgfts (sf_flag sf) value days
+            return $ MsgSetFlagFor msgfts (sf_flag sf) value days loc
 setFlag _ stmt = preStatement stmt
 
 data HasFlag = HasFlag
@@ -2723,7 +2740,7 @@ data HasFlag = HasFlag
 newHF :: HasFlag
 newHF = HasFlag undefined "" "" ""
 hasFlag :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
-hasFlag msgft stmt@[pdx| %_ = $flag |] = withNonlocAtom2 msgft MsgHasFlag stmt
+hasFlag msgft stmt@[pdx| %_ = $flag |] = withMaybelocAtom2 msgft MsgHasFlag stmt
 hasFlag msgft stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_hf =<< foldM addLine newHF scr
     where
@@ -2754,8 +2771,10 @@ hasFlag msgft stmt@[pdx| %_ = @scr |]
         addLine hf stmt
             = trace ("unknown section in has_country_flag: " ++ show stmt) $ return hf
         pp_hf hf = do
+            mloc <- getGameL10nIfPresent (hf_flag hf)
+            let loc = fromMaybe "" mloc
             msgfts <- messageText msgft
-            return $ MsgHasFlagFor msgfts (hf_flag hf) (hf_value hf) (hf_days hf) (hf_date hf)
+            return $ MsgHasFlagFor msgfts (hf_flag hf) (hf_value hf) (hf_days hf) (hf_date hf) loc
 hasFlag _ stmt = preStatement stmt
 
 ----------------------------------
