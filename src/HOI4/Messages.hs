@@ -1448,22 +1448,36 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 ]
         MsgClearFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageLoc = _loc}
-            -> mconcat
+            -> mconcat $ ifThenElse (T.null _loc)
                 [ "Clear "
                 , _flagType
                 , " flag "
                 , typewriterText _name
                 ]
+
+                [ "Remove: ", _loc , " ({{hover|Clear "
+                , _flagType
+                , " flag "
+                ,  _name --typewriterText
+                , "|?}})"
+                ]
         MsgHasFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageLoc = _loc}
-            -> mconcat
+            -> mconcat $ ifThenElse (T.null _loc)
                 [ toMessage (T.toTitle _flagType)
                 , " flag "
                 , typewriterText _name
                 , " is set"
-                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
+                ]
+
+                [ _loc , " ({{hover|"
+                , toMessage (T.toTitle _flagType)
+                , " flag "
+                ,  _name --typewriterText
+                , " is set"
+                , "|?}})"
                 ]
         MsgHasFlagFor {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageAmtText = _amtT, scriptMessageTime = _time, scriptMessageDate = _date, scriptMessageLoc = _loc}
-            -> mconcat
+            -> mconcat $ ifThenElse (T.null _loc)
                 [ toMessage (T.toTitle _flagType)
                 , " flag "
                 , typewriterText _name
@@ -1471,18 +1485,38 @@ instance RenderMessage Script ScriptMessage where
                 , _amtT
                 , _time
                 , _date
-                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
+                ]
+                [ _loc
+                , " is active"
+                , _amtT
+                , _time
+                , _date, " ({{hover|"
+                , toMessage (T.toTitle _flagType)
+                , " flag "
+                , _name
+                , " is set"
+                , _amtT
+                , _time
+                , _date
                 ]
         MsgSetFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageLoc = _loc}
-            -> mconcat
+            -> mconcat $ ifThenElse (T.null _loc)
                 [ "Set "
                 , _flagType
                 , " flag "
                 , typewriterText _name
-                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
+                ]
+
+                [ _loc , " ({{hover|"
+                , toMessage (T.toTitle _flagType)
+                , "Set "
+                , _flagType
+                , " flag "
+                , _name --typewriterText
+                , "|?}})"
                 ]
         MsgSetFlagFor {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageAmtText = _amtT, scriptMessageDaysText = _days, scriptMessageLoc = _loc}
-            -> mconcat
+            -> mconcat $ ifThenElse (T.null _loc)
                 [ "Set "
                 , _flagType
                 , " flag "
@@ -1491,35 +1525,81 @@ instance RenderMessage Script ScriptMessage where
                 , _days
                 , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
                 ]
+
+                [ _loc
+                , _amtT
+                , _days, " ({{hover|"
+                , toMessage (T.toTitle _flagType)
+                , "Set "
+                , _flagType
+                , " flag "
+                , _name --typewriterText
+                , _amtT
+                , _days
+                , "|?}})"
+                ]
         MsgHadFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageDays = _days, scriptMessageLoc = _loc}
-            -> mconcat
+            -> mconcat $ ifThenElse (T.null _loc)
                 [ "Has had "
                 , _flagType
                 , " flag "
                 , typewriterText _name
                 , " for "
                 , toMessage (formatDays _days)
-                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
+                ]
+
+                [ "Has had '''"
+                , _loc, "''' for "
+                , toMessage (formatDays _days)
+                , " ({{hover|Has had "
+                , _flagType
+                , " flag "
+                , _name
+                , " for "
+                , toMessage (formatDays _days)
+                , "|?}})"
                 ]
         MsgModifyFlag {scriptMessageFlagType = _flagType, scriptMessageFlag = _flag, scriptMessageAmt = _amt, scriptMessageLoc = _loc}
-            -> mconcat
+            -> mconcat $ ifThenElse (T.null _loc)
                 [ "Modify "
                 , _flagType
                 , " flag "
                 , typewriterText _flag
                 , " by "
                 , toMessage (plainNumSign _amt)
-                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
+                ]
+
+                [ "Modify '''"
+                , _loc, "''' by "
+                , toMessage (plainNumSign _amt)
+                , " ({{hover|Modify "
+                , _flagType
+                , " flag "
+                , _flag
+                , " by "
+                , toMessage (plainNumSign _amt)
+                , "|?}})"
                 ]
         MsgModifyFlagVar {scriptMessageFlagType = _flagType, scriptMessageFlag = _flag, scriptMessageAmtText = _amtT, scriptMessageLoc = _loc}
-            -> mconcat
+            -> mconcat $ ifThenElse (T.null _loc)
                 [ "Modify "
                 , _flagType
                 , " flag "
                 , typewriterText _flag
                 , " by "
                 , typewriterText _amtT
-                , ifThenElseT (T.null _loc) "" ("<!-- loc: " <> _loc <> " -->")
+                ]
+
+                [ "Modify '''"
+                , _loc, "''' by "
+                , typewriterText _amtT
+                , " ({{hover|Modify "
+                , _flagType
+                , " flag "
+                , _flag
+                , " by "
+                , _amtT
+                , "|?}})"
                 ]
         MsgCharacterFlag
             -> "character"
