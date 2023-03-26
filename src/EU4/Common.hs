@@ -1221,14 +1221,26 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
 handlersForNonModifiersWithinModifiiers :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersForNonModifiersWithinModifiiers = Tr.fromList
         [("is_imperial_modifier"        , rhsAlwaysYes (MsgGenericText "This modifier only applies to members of the HRE"))
+        ,("is_banner_modifier"          , rhsAlwaysYes (MsgGenericText "This modifier only applies to banner regiments"))
+        ,("is_caravel_modifier"         , rhsAlwaysYes (MsgGenericText "This modifier only applies to caravel ships"))
         ,("is_carolean_modifier"        , rhsAlwaysYes (MsgGenericText "This modifier only applies to carolean regiments"))
         ,("is_cawa_modifier"            , rhsAlwaysYes (MsgGenericText "This modifier only applies to cawa regiments"))
+        ,("is_cossack_modifier"         , rhsAlwaysYes (MsgGenericText "This modifier only applies to cossack regiments"))
+        ,("is_galleass_modifier"        , rhsAlwaysYes (MsgGenericText "This modifier only applies to galleass ships"))
+        ,("is_galleon_modifier"         , rhsAlwaysYes (MsgGenericText "This modifier only applies to galleon ships"))
+        ,("is_geobukseon_modifier"      , rhsAlwaysYes (MsgGenericText "This modifier only applies to geobukseon ships"))
         ,("is_hussars_modifier"         , rhsAlwaysYes (MsgGenericText "This modifier only applies to winged hussars regiments"))
         ,("is_janissary_modifier"       , rhsAlwaysYes (MsgGenericText "This modifier only applies to janissary regiments"))
+        ,("is_man_of_war_modifier"      , rhsAlwaysYes (MsgGenericText "This modifier only applies to man of war ships"))
         ,("is_marine_modifier"          , rhsAlwaysYes (MsgGenericText "This modifier only applies to marine regiments"))
         ,("is_mercenary_modifier"       , rhsAlwaysYes (MsgGenericText "This modifier only applies to mercenary regiments"))
+        ,("is_musketeer_modifier"       , rhsAlwaysYes (MsgGenericText "This modifier only applies to musketeer regiments"))
         ,("is_rajput_modifier"          , rhsAlwaysYes (MsgGenericText "This modifier only applies to rajput regiments"))
         ,("is_revolutionary_guard_modifier", rhsAlwaysYes (MsgGenericText "This modifier only applies to revolutionary guard regiments"))
+        ,("is_samurai_modifier"         , rhsAlwaysYes (MsgGenericText "This modifier only applies to samurai regiments"))
+        ,("is_streltsy_modifier"        , rhsAlwaysYes (MsgGenericText "This modifier only applies to streltsy regiments"))
+        ,("is_tercio_modifier"          , rhsAlwaysYes (MsgGenericText "This modifier only applies to tercio regiments"))
+        ,("is_voc_indiamen_modifier"    , rhsAlwaysYes (MsgGenericText "This modifier only applies to VOC indiamen ships"))
         ,("picture"                     , return $ return []) -- Some modifiers have custom pictures
         ]
 
