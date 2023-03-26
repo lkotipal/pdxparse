@@ -2825,17 +2825,18 @@ mapYesValues f args_for_map = do
         getYesValue _ = Nothing
 
 foldCompound "hasCompletedIdeaGroupOfCategory" "HasCompletedIdeaGroupOfCategory" "hcig"
-    []
+    [("_message", [t|Text -> Double -> ScriptMessage|])]
     [CompField "adm_ideas" [t|Text|] Nothing False
     ,CompField "dip_ideas" [t|Text|] Nothing False
     ,CompField "mil_ideas" [t|Text|] Nothing False
+    ,CompField "amount" [t|Double|] (Just [|1|]) False
     ]
     [| do
         -- normally there should only be one of adm_ideas, dip_ideas or mil_ideas, but in the unlikely case
         -- that there is more than one, we join them with a +, because all need to be completed
         -- "and" would be better, but we don't have a localisation for "and"
         loc_ideas <- mapYesValues getGameL10n [(_adm_ideas, "ADM"), (_dip_ideas, "DIP"), (_mil_ideas, "MIL")]
-        return $ MsgHasCompletedIdeaGroupOfCategory (T.intercalate "+" loc_ideas)
+        return $ _message (T.intercalate "+" loc_ideas) _amount
     |]
 
 -- War

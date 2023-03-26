@@ -1392,7 +1392,8 @@ data ScriptMessage
     | MsgAddLatestBuilding {scriptMessageWhat :: Text}
     | MsgHasPointsForLivonianMonarchy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgIsRentingCondottieriTo {scriptMessageWhom :: Text}
-    | MsgHasCompletedIdeaGroupOfCategory {scriptMessageWhat :: Text}
+    | MsgHasCompletedIdeaGroupOfCategory {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgHasActiveIdeaGroupOfCategory {scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgJoinLeague {scriptMessageWhat :: Text}
     | MsgMercTemplate {scriptMessageWhat :: Text}
     | MsgHiredForMonths {scriptMessageAmt :: Double }
@@ -9243,9 +9244,17 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is renting [[condottieri]] to "
                 , _whom
                 ]
-        MsgHasCompletedIdeaGroupOfCategory {scriptMessageWhat = _what}
+        MsgHasCompletedIdeaGroupOfCategory {scriptMessageWhat = _what, scriptMessageAmt = _amt}
             -> mconcat
-                [ "Hast completed at least one "
+                [ "Has completed at least "
+                , toMessage (plainNum _amt)
+                , " "
+                , _what
+                , plural _amt " idea group" " idea groups"
+                ]
+        MsgHasActiveIdeaGroupOfCategory {scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has any active but incomplete "
                 , _what
                 , " idea group"
                 ]
