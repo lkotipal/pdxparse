@@ -1160,8 +1160,6 @@ data ScriptMessage
     | MsgSchoolOpinion {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgSetSchoolOpinion {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgHasReligiousSchoolOf {scriptMessageWhom :: Text}
-    | MsgUsesPiety { scriptMessageYn :: Bool }
-    | MsgUsesDevotion { scriptMessageYn :: Bool }
     | MsgHasBorderWithReligiousEnemy
     | MsgHasSunniSchool
     | MsgHasShiaSchool
@@ -1251,7 +1249,6 @@ data ScriptMessage
     | MsgTradeCompanyRegion {scriptMessageWhat :: Text}
     | MsgPreferredEmperor {scriptMessageWhom :: Text}
     | MsgCurrentIcon {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
-    | MsgUsesIcons {scriptMessageYn :: Bool}
     | MsgPatriarchAuthority {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgIsRevolutionTarget {scriptMessageYn :: Bool}
     | MsgRevolutionaryZeal {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1267,7 +1264,6 @@ data ScriptMessage
     | MsgHasStatePatriach {scriptMessageYn :: Bool}
     | MsgHasForeignConsort {scriptMessageYn :: Bool}
     | MsgSwapFreeIdeaGroup
-    | MsgUsesDoom {scriptMessageYn :: Bool}
     | MsgAverageAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAverageAutonomyAboveMin {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAverageHomeAutonomy {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1402,7 +1398,8 @@ data ScriptMessage
     | MsgOwesFavors {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgCanSwapOutEstateGrantingReform {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasPasha {scriptMessageYn :: Bool}
-    | MsgUsesPatriarchAuthority { scriptMessageIcon :: Text, scriptMessageYn :: Bool }
+    | MsgUses {scriptMessageWhat :: Text, scriptMessageYn :: Bool }
+    | MsgUsesIcon {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -7843,18 +7840,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has the same religious school as "
                 , _whom
                 ]
-        MsgUsesPiety { scriptMessageYn = _yn }
-            -> mconcat
-                [ "The country "
-                , ifThenElseT _yn "uses" "does ''not'' use"
-                , " [[piety]]"
-                ]
-        MsgUsesDevotion { scriptMessageYn = _yn }
-            -> mconcat
-                [ "The country "
-                , ifThenElseT _yn "uses" "does ''not'' use"
-                , " [[devotion]]"
-                ]
         MsgHasBorderWithReligiousEnemy
             -> "The country borders any country of a different religion"
         MsgHasSunniSchool
@@ -8376,11 +8361,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgUsesIcons {scriptMessageYn = _yn}
-            -> mconcat
-                [ ifThenElseT _yn "Uses" "Does ''not'' use"
-                , " [[icons]]"
-                ]
         MsgPatriarchAuthority {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -8462,11 +8442,6 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgSwapFreeIdeaGroup
             -> "Swap to the new [[national ideas]]"
-        MsgUsesDoom {scriptMessageYn = _yn}
-            -> mconcat
-                [ ifThenElseT _yn "Uses" "Does ''not'' use"
-                , " [[doom]]"
-                ]
         MsgAverageAutonomy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
@@ -9303,13 +9278,20 @@ instance RenderMessage Script ScriptMessage where
                 [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
                 , " a pasha"
                 ]
-        MsgUsesPatriarchAuthority {scriptMessageIcon = _icon, scriptMessageYn = _yn }
+        MsgUses {scriptMessageWhat = _what, scriptMessageYn = _yn}
             -> mconcat
-                [ "The country "
-                , ifThenElseT _yn "uses" "does ''not'' use"
+                [ ifThenElseT _yn "Uses" "Does ''not'' use"
+                , " [["
+                , T.toLower _what
+                , "]]"
+                ]
+        MsgUsesIcon {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageYn = _yn }
+            -> mconcat
+                [ ifThenElseT _yn "Uses" "Does ''not'' use"
                 , " "
                 , _icon
-                , " patriarch authority"
+                , " "
+                , T.toLower _what
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

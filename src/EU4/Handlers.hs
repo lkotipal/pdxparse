@@ -42,7 +42,7 @@ module EU4.Handlers (
     ,   withFlagOrBool
     ,   numericIcon
     ,   numericIconLoc
-    ,   boolIcon
+    ,   boolLoc
     ,   boolIconLoc
     ,   tryLoc
     ,   tryLocAndIcon
@@ -761,7 +761,6 @@ scriptIconTable = HM.fromList
     ,("nomad_group", "nomadic")
     ,("norse_pagan_reformed", "norse")
     ,("particularist", "particularists")
-    ,("piety", "being pious") -- chosen arbitrarily
     ,("religious_ideas", "religious")
     ,("shamanism", "fetishism") -- religion reused
     ,("local_state_maintenance_modifier", "state maintenance")
@@ -1319,14 +1318,14 @@ withBool' msg [pdx| %_ = ?yn |] | T.map toLower yn `elem` ["yes","no","false"]
         _     -> error "impossible: withBool matched a string that wasn't yes, no or false"
 withBool' _ _ = return Nothing
 
--- | Like numericIcon, but for booleans
-boolIcon :: (EU4Info g, Monad m) =>
+boolLoc :: (EU4Info g, Monad m) =>
     Text
         -> (Text -> Bool -> ScriptMessage)
         -> StatementHandler g m
-boolIcon the_icon msg stmt
+boolLoc what msg stmt
     = do
-        res <- withBool' (msg (iconText the_icon)) stmt
+        whatloc <- getGameL10n what
+        res <- withBool' (msg whatloc) stmt
         maybe (preStatement stmt)
               return
               res
