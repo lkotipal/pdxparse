@@ -171,6 +171,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("is_hegemon"             , rhsAlwaysYes (MsgGenericText "Is a [[hegemon]]"))
         ,("is_subject_other_than_tributary_trigger" , rhsAlwaysYes MsgIsSubjectOtherThanTributary)
         ,("kill_ruler"             , rhsAlwaysYes MsgRulerDies)
+        ,("kill_consort"           , rhsAlwaysYes (MsgGenericText "Consort dies"))
         ,("make_ruler_to_legendary_pirate" , genericTextLines [
                 "The ruler gains the following:"
                 , T.concat ["* The personality trait ", iconText "legendary_pirate_personality", " Legendary Pirate as long as the ruler doesn't have 3 traits already"]
@@ -205,6 +206,8 @@ handlersRhsIrrelevant = Tr.fromList
         ,("reduce_reform_progress_small_effect", rhsAlwaysYes MsgReduceReformProgressSmallEffect)
         ,("reduce_reform_progress_medium_effect", rhsAlwaysYes MsgReduceReformProgressMediumEffect)
         ,("reduce_reform_progress_big_effect", rhsAlwaysYes MsgReduceReformProgressBigEffect)
+        ,("release_all_possible_countries", rhsAlwaysYes (MsgGenericText "Release all possible countries from this country"))
+        ,("release_all_subjects", rhsAlwaysYes (MsgGenericText "Grant independence to all subjects"))
         ,("remove_advisor_adm_effect", rhsAlwaysYes MsgRemoveAdvisorAdmEffect) -- "The currently employed administrative advisor leaves the country's court."
         ,("remove_cardinal"          , rhsAlwaysYes MsgLoseCardinal)
         ,("remove_consort"           , rhsAlwaysYes MsgRemoveConsort)
