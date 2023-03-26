@@ -1710,6 +1710,7 @@ handlersYesNo = Tr.fromList
         ,("has_owner_culture"           , withBool MsgHasOwnerCulture)
         ,("has_owner_religion"          , withBool MsgHasOwnerReligion)
         ,("has_parliament"              , withBool MsgHasParliament)
+        ,("has_pasha"                   , withBool MsgHasPasha)
         ,("has_port"                    , withBool MsgHasPort)
         ,("has_privateers"              , withBool MsgHasPrivateers)
         ,("has_regency"                 , withBool MsgIsInRegency)

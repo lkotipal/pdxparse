@@ -1400,6 +1400,7 @@ data ScriptMessage
     | MsgHasStateEdict {scriptMessageWhat :: Text}
     | MsgOwesFavors {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgCanSwapOutEstateGrantingReform {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHasPasha {scriptMessageYn :: Bool}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9286,6 +9287,11 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " estate ''or'' the estate has no privileges"
+                ]
+        MsgHasPasha {scriptMessageYn = _yn}
+            -> mconcat
+                [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
+                , " a pasha"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
