@@ -211,6 +211,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("remove_heir"              , rhsAlwaysEmptyCompound MsgHeirRemoved)
         ,("remove_non_electors_emperors_from_empire_effect", rhsAlwaysYes MsgLeaveHRE)
         ,("reset_golden_age"         , rhsAlwaysYes (MsgGenericText "Cancels any existing or previous Golden Age, allowing a new one"))
+        ,("restore_country_name"     , rhsAlwaysYes (MsgGenericText "Restore the country name to its default value"))
         ,("same_govt_as_root_trigger" , rhsAlwaysYes MsgSameGovtAsRoot)
         ,("set_center_level_2_center_of_trade" , rhsAlwaysYes (MsgSetCenterOfTrade2 (iconText "cotlvl2") (iconText "production")))
         ,("set_center_level_3_center_of_trade" , rhsAlwaysYes (MsgSetCenterOfTrade3 (iconText "cotlvl3") (iconText "cotlvl2") (iconText "production")))
