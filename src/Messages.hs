@@ -1401,6 +1401,7 @@ data ScriptMessage
     | MsgOwesFavors {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgCanSwapOutEstateGrantingReform {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasPasha {scriptMessageYn :: Bool}
+    | MsgUsesPatriarchAuthority { scriptMessageIcon :: Text, scriptMessageYn :: Bool }
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9292,6 +9293,14 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
                 , " a pasha"
+                ]
+        MsgUsesPatriarchAuthority {scriptMessageIcon = _icon, scriptMessageYn = _yn }
+            -> mconcat
+                [ "The country "
+                , ifThenElseT _yn "uses" "does ''not'' use"
+                , " "
+                , _icon
+                , " patriarch authority"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

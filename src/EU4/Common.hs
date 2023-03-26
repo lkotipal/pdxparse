@@ -1812,6 +1812,7 @@ handlersYesNo = Tr.fromList
         ,("uses_devotion"               , withBool MsgUsesDevotion)
         ,("uses_doom"                   , withBool MsgUsesDoom)
         ,("uses_piety"                  , withBool MsgUsesPiety)
+        ,("uses_patriarch_authority"    , boolIcon "patriarch authority" MsgUsesPatriarchAuthority)
         ,("valid_for_personal_unions_trigger" , withBool MsgValidForPU)
         ,("was_player"                  , withBool MsgHasBeenPlayer)
         ,("was_never_end_game_tag_trigger" , withBool MsgWasNeverEndGameTag)

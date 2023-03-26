@@ -42,6 +42,7 @@ module EU4.Handlers (
     ,   withFlagOrBool
     ,   numericIcon
     ,   numericIconLoc
+    ,   boolIcon
     ,   boolIconLoc
     ,   tryLoc
     ,   tryLocAndIcon
@@ -1317,6 +1318,18 @@ withBool' msg [pdx| %_ = ?yn |] | T.map toLower yn `elem` ["yes","no","false"]
         "false" -> msg False
         _     -> error "impossible: withBool matched a string that wasn't yes, no or false"
 withBool' _ _ = return Nothing
+
+-- | Like numericIcon, but for booleans
+boolIcon :: (EU4Info g, Monad m) =>
+    Text
+        -> (Text -> Bool -> ScriptMessage)
+        -> StatementHandler g m
+boolIcon the_icon msg stmt
+    = do
+        res <- withBool' (msg (iconText the_icon)) stmt
+        maybe (preStatement stmt)
+              return
+              res
 
 -- | Like numericIconLoc, but for booleans
 boolIconLoc :: (EU4Info g, Monad m) =>
