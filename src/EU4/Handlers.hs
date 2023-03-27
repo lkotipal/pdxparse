@@ -4493,7 +4493,7 @@ handleAtLeastWithIcon :: (EU4Info g, Monad m) =>
         -> StatementHandler g m
 handleAtLeastWithIcon locKey iconKey valueTransformer [pdx| %_ = !amt |] = do
     loc <- getGameL10n locKey
-    msgToPP $ MsgGenericAtLeast (iconText iconKey) amt loc valueTransformer
+    msgToPP $ MsgGenericAtLeast (if T.null iconKey then "" else (iconText iconKey)) amt loc valueTransformer
 handleAtLeastWithIcon _ _ _  stmt = plainMsg $ pre_statement' stmt
 
 -- | statement handler for a list of lines.

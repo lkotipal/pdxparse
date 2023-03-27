@@ -1198,7 +1198,6 @@ data ScriptMessage
     | MsgIsIncidentActive {scriptMessageWhat :: Text}
     | MsgHasIncidentHappened {scriptMessageWhat :: Text}
     | MsgIsIncidentPossible {scriptMessageWhat :: Text}
-    | MsgNumStreltsy {scriptMessageAmt :: Double}
     | MsgSetPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasPersonalDiety {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgNumAspects {scriptMessageAmt :: Double}
@@ -1277,7 +1276,6 @@ data ScriptMessage
     | MsgNumOfStates {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumOfExplorers {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNumOfConquistadors {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNumOfBanners {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMonthlyADM {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMonthlyDIP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMonthlyMIL {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1301,7 +1299,6 @@ data ScriptMessage
     | MsgNumCentersOfTrade {scriptMessageAmt :: Double}
     | MsgNumDiplomaticRelations {scriptMessageAmt :: Double}
     | MsgNumHarmonized {scriptMessageAmt :: Double}
-    | MsgNumRajput {scriptMessageAmt :: Double}
     | MsgNumTimesExpandedInfrastructure {scriptMessageAmt :: Double}
     | MsgNumTimesImproved {scriptMessageAmt :: Double}
     | MsgNumTimesImprovedByOwner {scriptMessageAmt :: Double}
@@ -1333,10 +1330,6 @@ data ScriptMessage
     | MsgRemoveConsort
     | MsgClearRebels
     | MsgMonthsSinceDefection {scriptMessageAmt :: Double}
-    | MsgNumCarolean {scriptMessageAmt :: Double}
-    | MsgNumHussars {scriptMessageAmt :: Double}
-    | MsgNumJanissaries {scriptMessageAmt :: Double}
-    | MsgNumMarines {scriptMessageAmt :: Double}
     | MsgJanissaryPercentage {scriptMessageAmt :: Double}
     | MsgBreakUnion {scriptMessageWhom :: Text}
     | MsgCreateMarriage {scriptMessageWhom :: Text}
@@ -8050,12 +8043,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (iquotes _what)
                 , " incident is possible"
                 ]
-        MsgNumStreltsy {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , toMessage (plainNum _amt)
-                , " streltsy regiments"
-                ]
         MsgSetPersonalDiety {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Choose "
@@ -8540,15 +8527,6 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (plainNum _amt)
                 , plural _amt " conquistador" " conquistadors"
                 ]
-        MsgNumOfBanners {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , _icon
-                , " "
-                , toMessage (plainNum _amt)
-                , " banner "
-                , plural _amt "unit" "units"
-                ]
         MsgMonthlyADM {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 ["Gains at least "
@@ -8690,12 +8668,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has harmonized with at least "
                 , toMessage (plainNum _amt)
                 , " religions or religious groups"
-                ]
-        MsgNumRajput {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , toMessage (plainNum _amt)
-                , " rajput regiments"
                 ]
         MsgNumTimesExpandedInfrastructure {scriptMessageAmt = _amt}
             -> mconcat
@@ -8860,30 +8832,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "It has been at least "
                 , toMessage (formatMonths _amt)
                 , " since the province defected"
-                ]
-        MsgNumCarolean {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , toMessage (plainNum _amt)
-                , " carolean regiments"
-                ]
-        MsgNumHussars {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , toMessage (plainNum _amt)
-                , " winged hussars regiments"
-                ]
-        MsgNumMarines {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , toMessage (plainNum _amt)
-                , " marine regiments"
-                ]
-        MsgNumJanissaries {scriptMessageAmt = _amt}
-            -> mconcat
-                [ "Has at least "
-                , toMessage (plainNum _amt)
-                , " janissary regiments"
                 ]
         MsgJanissaryPercentage {scriptMessageAmt = _amt}
             -> mconcat
