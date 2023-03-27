@@ -2040,6 +2040,7 @@ handlersSpecialComplex = Tr.fromList
         ,("custom_trigger_tooltip"       , customTriggerTooltip)
         ,("build_to_forcelimit"          , buildToForcelimit)
         ,("country_event"                , scope EU4Country . triggerEvent MsgCountryEvent)
+        ,("country_event_with_insight"   , scope EU4Country . triggerEvent MsgCountryEvent)
         ,("declare_war_with_cb"          , declareWarWithCB)
         ,("define_advisor"               , defineAdvisor False)
         ,("define_consort"               , defineConsort)
