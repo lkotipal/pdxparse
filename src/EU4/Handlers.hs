@@ -382,7 +382,11 @@ pronoun expectedScope name = withCurrentFile $ \f -> case T.toLower name of
     "historic_dynasty" -> message MsgHistoricDynasty
     "capital" -> message MsgCapital
     "from" -> return "[From]" -- TODO: Handle this properly (if possible)
-    _ -> return $ Doc.strictText name -- something else; regurgitate untouched
+    _ -> case T.splitOn ":" name of -- for example event_target:X
+        (tag:[var]) -> do
+            taggedText <- tagged tag var
+            return $ Doc.strictText (fromMaybe name taggedText)
+        _ -> return $ Doc.strictText name -- something else; regurgitate untouched
     where
         Nothing `matchScope` _ = True
         Just expect `matchScope` actual
@@ -399,7 +403,7 @@ varTags = Tr.fromList . map (first TE.encodeUtf8) $
     ]
 
 isPronoun :: Text -> Bool
-isPronoun s = T.map toLower s `S.member` pronouns where
+isPronoun s = (T.map toLower s `S.member` pronouns) || (elem ':' (T.unpack s)) where
     pronouns = S.fromList
         ["root"
         ,"prev"
