@@ -1302,6 +1302,7 @@ data ScriptMessage
     | MsgNumDiplomaticRelations {scriptMessageAmt :: Double}
     | MsgNumHarmonized {scriptMessageAmt :: Double}
     | MsgNumRajput {scriptMessageAmt :: Double}
+    | MsgNumTimesExpandedInfrastructure {scriptMessageAmt :: Double}
     | MsgNumTimesImproved {scriptMessageAmt :: Double}
     | MsgNumTimesImprovedByOwner {scriptMessageAmt :: Double}
     | MsgIsHarmonizingWith {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -8695,6 +8696,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has at least "
                 , toMessage (plainNum _amt)
                 , " rajput regiments"
+                ]
+        MsgNumTimesExpandedInfrastructure {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Infrastructure in the province has been expanded at least "
+                , toMessage (plainNum _amt)
+                , plural _amt " time" " times"
                 ]
         MsgNumTimesImproved {scriptMessageAmt = _amt}
             -> mconcat

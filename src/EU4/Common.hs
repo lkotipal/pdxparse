@@ -342,6 +342,7 @@ handlersNumeric = Tr.fromList
         ,("num_of_rebel_controlled_provinces", numeric MsgNumRebelControlledProvinces)
         ,("num_of_streltsy"                  , numeric MsgNumStreltsy)
         ,("num_of_subjects"                  , numeric MsgNumSubjects)
+        ,("num_of_times_expanded_infrastructure", numeric MsgNumTimesExpandedInfrastructure)
         ,("num_of_times_improved"            , numeric MsgNumTimesImproved)
         ,("num_of_times_improved_by_owner"   , numeric MsgNumTimesImprovedByOwner)
         ,("num_of_times_used_transfer_development" , numeric MsgNumTimesUsedTransferDevelopment)
@@ -1892,6 +1893,7 @@ handlersAtLeast = Tr.fromList
         ,("diplomatic_reputation"       , handleAtLeastWithIcon "diplomatic_reputation" "diplomatic reputation" plainNum)
         ,("land_maintenance"            , handleAtLeastWithIcon "land_maintenance" "land maintenance" (reducedNum plainPc))
         ,("naval_maintenance"           , handleAtLeastWithIcon "naval_maintenance" "naval maintenance" (reducedNum plainPc))
+        ,("empire_of_china_num_reforms_passed", handleAtLeastWithIcon "CELESTIAL_DECISIONS" "emperor of china" plainNum)
         ]
 
 -- | Handlers for signed numeric statements
