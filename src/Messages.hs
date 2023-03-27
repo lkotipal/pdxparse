@@ -1255,6 +1255,7 @@ data ScriptMessage
     | MsgRevolutionaryZeal {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSameGovtAsRoot
     | MsgOverrideCountryName {scriptMessageWhat :: Text}
+    | MsgEyaletEffect {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgFervor {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasFlagship {scriptMessageYn :: Bool}
     | MsgIsCapitalOf {scriptMessageWhom :: Text}
@@ -8400,6 +8401,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Country's name changes to "
                 , toMessage (quotes _what)
+                ]
+        MsgEyaletEffect {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Country's name changes to "
+                , toMessage (quotes _what)
+                , " and the color is changed to align with our country"
                 ]
         MsgFervor {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat

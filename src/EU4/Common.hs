@@ -2088,6 +2088,7 @@ handlersSpecialComplex = Tr.fromList
         ,("check_reducing_estate_revolt_size_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize False))
         ,("check_reducing_estate_revolt_size_more_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize True))
         ,("disable_rebels_from_seize_land_for_estate" , simpleEffectAtom "estate" MsgDisableRebelsFromSeizeLand)
+        ,("eyalet_effect"                   , simpleEffectAtom "tag" MsgEyaletEffect)
         ,("generate_exile_advisor_effect"   , simpleEffectAtom "advisor_type" MsgGenerateExileAdvisor)
         ,("generate_scaled_advisor_of_type_and_religion_effect" , defineAdvisor True)
         ,("generate_traitor_advisor_effect" , simpleEffectNum "skill_level" MsgGenerateTraitorAdvisor)
