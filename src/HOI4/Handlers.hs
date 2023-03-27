@@ -3324,7 +3324,7 @@ canBuildRailway stmt@[pdx| %_ = @scr |]
             "target_province" ->
                     return cbr { cbr_target_province = floatRhs rhs }
             "build_only_on_allied" -> return cbr
-            "fallback" -> return br
+            "fallback" -> return cbr
             other -> trace ("unknown section in can_build_railway: " ++ show stmt) $ return cbr
         addLine cbr stmt
             = trace ("unknown form in can_build_railway: " ++ show stmt) $ return cbr
