@@ -580,7 +580,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_death_foreign_slave_ruler", "")
             --,("on_death_has_harem", "")
             --,("on_dependency_gained", "")
-            --,("on_diplomatic_annex", "")
+            ,("on_diplomatic_annex", "<!-- on_diplomatic_annex -->Diplomatically annexing a country")
             --,("on_dismantle_revolution", "")
 
             -- Note: Should probably be "An estate *becoming* more influential", but that doesn't seem to be the behavior in 1.31.3
@@ -595,6 +595,9 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_flagship_captured", "")
             --,("on_flagship_destroyed", "")
             ,("on_four_year_pulse", "The [[List_of_event_lists#4_year_pulse|4 year pulse]]")
+            ,("on_four_year_pulse_2", "The [[List_of_event_lists#4_year_pulse|4 year pulse II]]")
+            ,("on_four_year_pulse_3", "The [[List_of_event_lists#4_year_pulse|4 year pulse III]]")
+            ,("on_four_year_pulse_4", "The [[List_of_event_lists#4_year_pulse|4 year pulse IV]]")
             --,("on_harmonized_buddhism", "")
             --,("on_harmonized_christian", "")
             --,("on_harmonized_dharmic", "")
@@ -607,19 +610,23 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_harmonized_zoroastrian_group", "")
             ,("on_heir_death", "<!-- on_heir_death -->Heir dying")
             ,("on_heir_needed_theocracy", "<!-- on_heir_needed_theocracy -->A theocracy needing an heir")
+            ,("on_hre_dismantled", "<!-- on_hre_dismantled -->When dismantling the HRE")
             --,("on_hre_non_defense", "")
             --,("on_hre_religion_white_peace", "")
             --,("on_integrate", "")
             --,("on_lock_hre_religion", "")
+            ,("on_main_war_won", "<!-- on_main_war_won -->Winning a war against ''From''") -- root = winning country, from = loser country
+            ,("on_main_war_lost", "<!-- on_main_war_lost -->Losing a war against ''From''") -- root = winning country, from = loser country
             ,("on_mandate_of_heaven_gained", "<!-- on_mandate_of_heaven_gained -->Our country becoming the [[Emperor of China]] instead of ''From''")
             ,("on_monarch_death", "<!-- on_monarch_death-->Curent ruler dying")
+            ,("on_new_age", "<!-- on_new_age -->When a new age starts")
             ,("on_new_consort", "<!-- on_new_consort -->Getting a new consort")
             ,("on_new_monarch", "<!-- on_new_monarch -->Getting a new ruler")
             --,("on_new_term_election", "")
             ,("on_overextension_pulse", "The overextension pulse")
             ,("on_peace_actor", "<!-- on_peace_actor -->Sending a peace offer")
             ,("on_peace_recipient", "<!-- on_peace_recipient -->Receiving a peace offer")
-            --,("on_province_owner_change", "")
+            ,("on_province_owner_change", "<!-- on_province_owner_change -->The owner of a province changes")
             --,("on_regent", "")
             ,("on_religion_change", "<!-- on_religion_change -->Changing religion")
             --,("on_remove_free_city", "")
@@ -637,6 +644,11 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             ,("on_thri_yearly_pulse_4", "The [[list_of_event_lists#3_year_pulse|three year pulse IV]]")
             ,("on_war_lost", "<!-- on_war_lost -->Losing a war against ''From''") -- # root = loser country, from = winner country
             ,("on_war_won", "<!-- on_war_won -->Winning a war against ''From''") -- root = winning country, from = loser country
+            ,("on_yearly_pulse", "The [[list_of_event_lists#yearly_pulse|yearly pulse I]]")
+            ,("on_yearly_pulse_2", "The [[list_of_event_lists#yearly_pulse|yearly pulse II]]")
+            ,("on_yearly_pulse_3", "The [[list_of_event_lists#yearly_pulse|yearly pulse III]]")
+            ,("on_yearly_pulse_4", "The [[list_of_event_lists#yearly_pulse|yearly pulse IV]]")
+            ,("on_yearly_pulse_5", "The [[list_of_event_lists#yearly_pulse|yearly pulse V]]")
             --,("on_weak_heir_claim", "")
             ]
 
