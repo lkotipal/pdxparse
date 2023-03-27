@@ -2238,7 +2238,7 @@ handlersMisc = Tr.fromList
         ,("calc_true_if"        , calcTrueIf)
         ,("change_estate_land_share" , changeEstateLandShare)
         ,("create_independent_estate" , createIndependentEstate)
-        ,("create_subject"      , taTypeFlag "subject_type" "subject" MsgCreateSubject)
+        ,("create_subject"      , createSubject)
         ,("change_subject_type" , simpleEffectAtom "subject_type" MsgChangeSubjectType)
         ,("create_succession_crisis" , createSuccessionCrisis)
         ,("development_in_provinces" , numOwnedProvincesWith MsgDevelopmentInProvinces)

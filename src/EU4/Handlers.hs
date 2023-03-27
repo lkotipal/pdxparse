@@ -150,6 +150,7 @@ module EU4.Handlers (
     ,   totalStats
     ,   removeTradeModifier
     ,   hasCompletedIdeaGroupOfCategory
+    ,   createSubject
     ,   hasBuildingTrigger
     ,   addLatestBuilding
     ,   productionLeader
@@ -2840,6 +2841,27 @@ foldCompound "hasCompletedIdeaGroupOfCategory" "HasCompletedIdeaGroupOfCategory"
         -- "and" would be better, but we don't have a localisation for "and"
         loc_ideas <- mapYesValues getGameL10n [(_adm_ideas, "ADM"), (_dip_ideas, "DIP"), (_mil_ideas, "MIL")]
         return $ _message (T.intercalate "+" loc_ideas) _amount
+    |]
+
+-- | Handler for create_subject.
+foldCompound "createSubject" "CreateSubject" "cs"
+    []
+    [CompField "subject_type" [t|Text|] Nothing True
+    ,CompField "subject" [t|Text|] Nothing False
+    ,CompField "who" [t|Text|] Nothing False
+    ]
+    [| do
+        typeLoc <- getGameL10n _subject_type
+
+        case (_subject, _who) of
+            (Just subject, Just who) -> return $ (trace $ ("who and subject can't both be set in create_subject: " ++ show stmt)) $ preMessage stmt
+            (Just subject, _) -> do
+                flagLoc <- flagText (Just EU4Country) subject
+                return $ MsgCreateSubject typeLoc flagLoc
+            (_, Just who) -> do
+                flagLoc <- flagText (Just EU4Country) who
+                return $ MsgCreateSubject typeLoc flagLoc
+            _ -> return $ (trace $ ("either who or subject must be set in create_subject: " ++ show stmt)) $ preMessage stmt
     |]
 
 -- War
