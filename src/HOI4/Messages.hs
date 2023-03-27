@@ -675,6 +675,7 @@ data ScriptMessage
     | MsgBuildRailwayPath {scriptMessageAmt :: Double, scriptMessageWhat :: Text}
     | MsgCanBuildRailway {scriptMessageStart :: Text, scriptMessageEnd :: Text}
     | MsgCanBuildRailwayProv {scriptMessageStartProv :: Double, scriptMessageEndProv :: Double}
+    | MsgCanBuildRailwayPath {scriptMessagePath :: Text}
     | MsgSetProvinceName {scriptMessage_icon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgSetProvinceNameVar {scriptMessage_icon :: Text, scriptMessage_whom :: Text, scriptMessage_amt_text :: Text}
     | MsgSetVictoryPoints {scriptMessageAmt2 :: Double, scriptMessageAmt :: Double}
@@ -4341,6 +4342,11 @@ instance RenderMessage Script ScriptMessage where
                 , ") to province ("
                 , toMessage (roundNumNoSpace _end)
                 , ")"
+                ]
+        MsgCanBuildRailwayPath {scriptMessagePath = _path }
+            -> mconcat
+                [ "Can build {{icon|railway|1}} "
+                , toMessage _path
                 ]
         MsgSetProvinceName {scriptMessageWhom = _whom, scriptMessageAmt = _amt}
             -> mconcat

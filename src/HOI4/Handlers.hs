@@ -3277,12 +3277,13 @@ buildRailway stmt = preStatement stmt
 data CanBuildRailway = CanBuildRailway
         {   cbr_start_state :: Maybe Text
         ,   cbr_target_state :: Maybe Text
+        ,   cbr_path :: Maybe [Double]
         ,   cbr_start_province :: Maybe Double
         ,   cbr_target_province :: Maybe Double
         }
 
 newCBR :: CanBuildRailway
-newCBR = CanBuildRailway Nothing Nothing Nothing Nothing
+newCBR = CanBuildRailway Nothing Nothing Nothing Nothing Nothing
 canBuildRailway  :: forall g m. (HOI4Info g, Monad m) => StatementHandler g m
 canBuildRailway stmt@[pdx| %_ = @scr |]
     = msgToPP =<< pp_cbr =<< foldM addLine newCBR scr
@@ -3299,7 +3300,7 @@ canBuildRailway stmt@[pdx| %_ = @scr |]
                 GenericRhs txt [] -> do
                     stated <- eGetState (Left txt)
                     return cbr { cbr_start_state = stated }
-                _ -> trace "bad start_state in build_railway" $ return cbr
+                _ -> trace "bad start_state in can_build_railway" $ return cbr
             "target_state" -> case rhs of
                 IntRhs num -> do
                     stateloc <- getStateLoc num
@@ -3310,18 +3311,34 @@ canBuildRailway stmt@[pdx| %_ = @scr |]
                 GenericRhs txt [] -> do
                     stated <- eGetState (Left txt)
                     return cbr { cbr_target_state = stated }
-                _ -> trace "bad target_state in build_railway" $ return cbr
+                _ -> trace "bad target_state in can_build_railway" $ return cbr
+
+            "path" -> case rhs of
+                CompoundRhs arr ->
+                    let provs = mapMaybe provinceFromArray arr in
+                    return cbr { cbr_path = Just provs }
+                _ -> trace "bad path in can_build_railway" $ return cbr
 
             "start_province" ->
                     return cbr { cbr_start_province = floatRhs rhs }
             "target_province" ->
                     return cbr { cbr_target_province = floatRhs rhs }
             "build_only_on_allied" -> return cbr
+            "fallback" -> return br
             other -> trace ("unknown section in can_build_railway: " ++ show stmt) $ return cbr
         addLine cbr stmt
             = trace ("unknown form in can_build_railway: " ++ show stmt) $ return cbr
+
+        provinceFromArray :: GenericStatement -> Maybe Double
+        provinceFromArray (StatementBare (IntLhs e)) = Just $ fromIntegral e
+        provinceFromArray stmt = trace ("Unknown in generator array statement: " ++ show stmt) Nothing
+
         pp_cbr cbr =
-            case (cbr_start_state cbr, cbr_target_state cbr,
+            case cbr_path cbr of
+                Just path -> do
+                    let paths = T.pack $ concat ["on the provinces (" , intercalate "), (" (map (show . round) path),")"]
+                    return $ MsgCanBuildRailwayPath paths
+                _ -> case (cbr_start_state cbr, cbr_target_state cbr,
                            cbr_start_province cbr, cbr_target_province cbr) of
                         (Just start, Just end, _,_) -> return $ MsgCanBuildRailway start end
                         (_,_, Just start, Just end) -> return $ MsgCanBuildRailwayProv start end
