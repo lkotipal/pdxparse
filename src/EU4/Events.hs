@@ -9,7 +9,9 @@ module EU4.Events (
     ,   findTriggeredEventsInDecisions
     ,   findTriggeredEventsInOnActions
     ,   findTriggeredEventsInDisasters
+    ,   findTriggeredEventsInGovernmentReforms
     ,   findTriggeredEventsInMissions
+    ,   findTriggeredEventsInProvinceTriggeredModifiers
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -326,6 +328,14 @@ ppEventSource (EU4EvtSrcDisaster id trig weight) = do
         , iquotes't idLoc
         , " disaster"
         , formatWeight weight
+        ]
+ppEventSource (EU4EvtSrcGeneric id trig) = do
+    idLoc <- getGameL10n id
+    return $ Doc.strictText $ mconcat [trig
+        , " <!-- "
+        , id
+        , " -->"
+        , iquotes't idLoc
         ]
 ppEventSource (EU4EvtSrcMission missionId) = do
     title <- getGameL10n (missionId <> "_title")
@@ -670,3 +680,25 @@ findTriggeredEventsInMissions hm mtbs = foldl' (\h -> \m -> foldl' findInMission
     where
         findInMission :: EU4EventTriggers -> EU4Mission -> EU4EventTriggers
         findInMission hm m = addEventTriggers hm $ addEventSource (const (EU4EvtSrcMission (eu4m_id m))) (findInStmts (eu4m_effect m))
+
+findTriggeredEventsInGovernmentReforms :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
+findTriggeredEventsInGovernmentReforms hm scr = foldl' findInGovernmentReform hm scr
+    where
+        findInGovernmentReform :: EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInGovernmentReform hm stmt@[pdx| $id = @scr |] = foldl' (findInGovernmentReform' id) hm scr
+        findInGovernmentReform hm stmt = (trace $ "Unknown top-level government reform statement: " ++ show stmt) $ hm
+
+        findInGovernmentReform' :: Text -> EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInGovernmentReform' id hm [pdx| effect = @scr |] = addEventTriggers hm $ addEventSource (const (EU4EvtSrcGeneric id "Enacting the government reform")) (findInStmts scr)
+        findInGovernmentReform' id hm [pdx| post_removed_effect = @scr |] = addEventTriggers hm $ addEventSource (const (EU4EvtSrcGeneric id "After revoking the government reform")) (findInStmts scr)
+        findInGovernmentReform' id hm [pdx| removed_effect = @scr |] = addEventTriggers hm $ addEventSource (const (EU4EvtSrcGeneric id "Revoking the government reform")) (findInStmts scr)
+        findInGovernmentReform' _ hm _ = hm
+
+findTriggeredEventsInProvinceTriggeredModifiers :: EU4EventTriggers -> [EU4ProvinceTriggeredModifier] -> EU4EventTriggers
+findTriggeredEventsInProvinceTriggeredModifiers hm modifiers = addEventTriggers hm (concatMap findInProvinceTriggeredModifier modifiers)
+    where
+        findInProvinceTriggeredModifier :: EU4ProvinceTriggeredModifier -> [(Text, EU4EventSource)]
+        findInProvinceTriggeredModifier modifier@EU4ProvinceTriggeredModifier{ptmodName = modName} =
+            addEventSource (const (EU4EvtSrcGeneric modName "Activation of the province triggered modifier")) (findInStmts (ptmodOnActivation modifier)) ++
+            addEventSource (const (EU4EvtSrcGeneric modName "Deactivation of the province triggered modifier")) (findInStmts (ptmodOnDeactivation modifier))
+        findInEvent _ = []
