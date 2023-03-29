@@ -1401,6 +1401,7 @@ data ScriptMessage
     | MsgIsGovernmentPowerFrozen {scriptMessageType :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgHasGovernmentMechanic {scriptMessageWhat :: Text }
     | MsgStartDebate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgAddInflationScaledToTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9317,6 +9318,14 @@ instance RenderMessage Script ScriptMessage where
                 , " in "
                 , _icon
                 , " parliament"
+                ]
+        MsgAddInflationScaledToTrade {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                ["Add "
+                , _icon
+                , " "
+                , toMessage (colourNum False _amt)
+                , " inflation for each percentage of trade income"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
