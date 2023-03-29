@@ -751,6 +751,7 @@ data ScriptMessage
     | MsgAddClaimFor {scriptMessageWho :: Text}
     | MsgAddClaimOn {scriptMessageWhere :: Text}
     | MsgAddAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgRemoveAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddAcceptedCultureOrDipPower {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddHarmonizedReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -5487,6 +5488,13 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " Gain "
+                , _what
+                , " as an accepted culture"
+                ]
+        MsgRemoveAcceptedCulture {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ _icon
+                , " Remove "
                 , _what
                 , " as an accepted culture"
                 ]
