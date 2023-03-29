@@ -787,9 +787,6 @@ data ScriptMessage
     | MsgAddSpyNetworkIn {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgEventTarget {scriptMessageTag :: Text}
     | MsgEventTargetVar {scriptMessageTag :: Text}
-    | MsgSudebnikProgress {scriptMessageAmt :: Double}
-    | MsgOprichninaProgress {scriptMessageAmt :: Double}
-    | MsgStreltsyProgress {scriptMessageAmt :: Double}
     | MsgAddLootFromProvinceEffect
     | MsgGenericTemplate {scriptMessageTemplate :: Text}
     | MsgGenericText {text :: Text}
@@ -1396,6 +1393,13 @@ data ScriptMessage
     | MsgHasPasha {scriptMessageYn :: Bool}
     | MsgUses {scriptMessageWhat :: Text, scriptMessageYn :: Bool }
     | MsgUsesIcon {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageYn :: Bool }
+    | MsgAddGovernmentPower {scriptMessageType :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgSetGovernmentPower {scriptMessageType :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgFreezeGovernmentPower {scriptMessageType :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgUnfreezeGovernmentPower {scriptMessageType :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgHasGovernmentPower {scriptMessageType :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgIsGovernmentPowerFrozen {scriptMessageType :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
+    | MsgHasGovernmentMechanic {scriptMessageWhat :: Text }
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -5753,27 +5757,6 @@ instance RenderMessage Script ScriptMessage where
                 , _tag
                 , "</tt>"
                 ]
-        MsgSudebnikProgress {scriptMessageAmt = _amt}
-            -> mconcat
-                [ gainOrLose _amt
-                , " "
-                , toMessage (colourNum True _amt)
-                , " Sudebnik progress"
-                ]
-        MsgOprichninaProgress {scriptMessageAmt = _amt}
-            -> mconcat
-                [ gainOrLose _amt
-                , " "
-                , toMessage (colourNum True _amt)
-                , " Oprichnina progress"
-                ]
-        MsgStreltsyProgress {scriptMessageAmt = _amt}
-            -> mconcat
-                [ gainOrLose _amt
-                , " "
-                , toMessage (colourNum True _amt)
-                , " Streltsy progress"
-                ]
         MsgAddLootFromProvinceEffect
             -> "Gain {{icon|ducats}} ducats and {{icon|mil}} military power scaling with province development"
         MsgGenericTemplate {scriptMessageTemplate = _template}
@@ -9269,6 +9252,61 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , T.toLower _what
+                ]
+        MsgAddGovernmentPower {scriptMessageType = _type, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , toMessage (colourNum True _amt)
+                , " "
+                , toMessage (iquotes _what)
+                , " for "
+                , toMessage (iquotes _type)
+                ]
+        MsgSetGovernmentPower {scriptMessageType = _type, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Set "
+                , toMessage (iquotes _what)
+                , " in "
+                , toMessage (iquotes _type)
+                , " to "
+                , toMessage (plainNum _amt)
+                ]
+        MsgFreezeGovernmentPower {scriptMessageType = _type, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Freeze "
+                , toMessage (iquotes _what)
+                , " in "
+                , toMessage (iquotes _type)
+                , " to its current value"
+                ]
+        MsgUnfreezeGovernmentPower {scriptMessageType = _type, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Unfreeze "
+                , toMessage (iquotes _what)
+                , " in "
+                , toMessage (iquotes _type)
+                ]
+        MsgHasGovernmentPower {scriptMessageType = _type, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has at least "
+                , toMessage (plainNum _amt)
+                , " "
+                , toMessage (iquotes _what)
+                , " in "
+                , toMessage (iquotes _type)
+                ]
+        MsgIsGovernmentPowerFrozen {scriptMessageType = _type, scriptMessageWhat = _what, scriptMessageAmt = _amt}
+            -> mconcat
+                [toMessage (iquotes _what)
+                , " in "
+                , toMessage (iquotes _type)
+                , " is frozen"
+                ]
+        MsgHasGovernmentMechanic {scriptMessageWhat = _what}
+            -> mconcat
+                ["The government has "
+                , toMessage (iquotes _what)
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

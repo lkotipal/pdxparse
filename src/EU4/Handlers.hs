@@ -3314,44 +3314,16 @@ trust stmt = preStatement stmt
 -- Government form-specific mechanics --
 ----------------------------------------
 
--- Currently this form only affects Russian government.
-
-gpMechanicTable :: HashMap (Text, MonarchPower) (Double -> ScriptMessage)
-gpMechanicTable = HM.fromList
-    [(("russian_mechanic", Administrative), MsgSudebnikProgress)
-    ,(("russian_mechanic", Diplomatic), MsgOprichninaProgress)
-    ,(("russian_mechanic", Military), MsgStreltsyProgress)
-    ]
-
-data GovernmentPower = GovernmentPower
-        {   gp_mechanic :: Maybe Text
-        ,   gp_category :: Maybe MonarchPower
-        ,   gp_amount :: Maybe Double
-        }
-newGP :: GovernmentPower
-newGP = GovernmentPower Nothing Nothing Nothing
-governmentPower :: (EU4Info g, Monad m) => StatementHandler g m
-governmentPower stmt@[pdx| %_ = @scr |]
-    = msgToPP =<< pp_gp (foldl' addLine newGP scr)
-    where
-        addLine :: GovernmentPower -> GenericStatement -> GovernmentPower
-        addLine gp [pdx| government_mechanic = $mechanic |]
-            = gp { gp_mechanic = Just mechanic }
-        addLine gp [pdx| which = $cat      |]
-            = case cat of
-                "ADM" -> gp { gp_category = Just Administrative }
-                "DIP" -> gp { gp_category = Just Diplomatic }
-                "MIL" -> gp { gp_category = Just Military }
-                _ -> gp
-        addLine gp [pdx| amount = !amt |]
-            = gp { gp_amount = Just amt }
-        addLine gp _ = gp
-        pp_gp gp
-            | (Just mech, Just cat, Just amt) <- (gp_mechanic gp, gp_category gp, gp_amount gp),
-              Just powmsg <- HM.lookup (mech, cat) gpMechanicTable
-              = return (powmsg amt)
-            | otherwise = return (preMessage stmt)
-governmentPower stmt = preStatement stmt
+foldCompound "governmentPower" "GovernmentPower" "gp"
+    [("_message", [t|Text -> Text -> Double -> ScriptMessage|])]
+    [CompField "mechanic_type" [t|Text|] Nothing True
+    ,CompField "power_type" [t|Text|] Nothing True
+    ,CompField "value" [t|Double|] (Just [|0|]) False]
+    [| do
+        mechanicLoc <- getGameL10n ("ability_" <> _mechanic_type)
+        powerLoc <- getGameL10n _power_type
+        return $ _message mechanicLoc powerLoc _value
+    |]
 
 ----------------------
 -- Employed advisor --
