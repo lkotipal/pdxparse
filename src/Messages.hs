@@ -1403,6 +1403,7 @@ data ScriptMessage
     | MsgHasGovernmentMechanic {scriptMessageWhat :: Text }
     | MsgStartDebate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddInflationScaledToTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgNationalFocus {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9334,6 +9335,13 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum False _amt)
                 , " inflation for each percentage of trade income"
+                ]
+        MsgNationalFocus {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                ["National focus is set to "
+                , _icon
+                , " "
+                , _what
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
