@@ -353,7 +353,7 @@ data ScriptMessage
     | MsgManpowerPercentage {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgMercantilism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgChangeGoods {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgCreateAdvisor {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgCreateAdvisor {scriptMessageInfo :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasIdeaGroup {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgProducesGoods {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgProducesSameGoods {scriptMessageWhere :: Text}
@@ -1400,6 +1400,7 @@ data ScriptMessage
     | MsgHasGovernmentPower {scriptMessageType :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgIsGovernmentPowerFrozen {scriptMessageType :: Text, scriptMessageWhat :: Text, scriptMessageAmt :: Double}
     | MsgHasGovernmentMechanic {scriptMessageWhat :: Text }
+    | MsgStartDebate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -3006,13 +3007,14 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 ]
-        MsgCreateAdvisor {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+        MsgCreateAdvisor { scriptMessageInfo = _extra_information, scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Gain "
                 , _icon
                 , " "
                 , _what
                 , " advisor"
+                , _extra_information
                 ]
         MsgHasIdeaGroup {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
@@ -9307,6 +9309,14 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 ["The government has "
                 , toMessage (iquotes _what)
+                ]
+        MsgStartDebate {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                ["Start a debate on "
+                , toMessage (iquotes _what)
+                , " in "
+                , _icon
+                , " parliament"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
