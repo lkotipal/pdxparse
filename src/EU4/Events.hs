@@ -12,6 +12,8 @@ module EU4.Events (
     ,   findTriggeredEventsInGenericScript
     ,   findTriggeredEventsInMissions
     ,   findTriggeredEventsInProvinceTriggeredModifiers
+    ,   findTriggeredEventsInGovernmentMechanics
+    ,   findTriggeredEventsInImperialIncidents
     ) where
 
 import Debug.Trace (trace, traceM)
@@ -345,6 +347,19 @@ ppEventSource (EU4EvtSrcMission missionId) = do
         , " -->"
         , iquotes't title
         , " mission"
+        ]
+ppEventSource (EU4EvtSrcGovernmentMechanic id sectionId trig) = do
+    idLoc <- getGameL10n ("ability_" <> id)
+    sectionLoc <- getGameL10n sectionId
+    return $ Doc.strictText $ mconcat [trig
+        , " <!-- "
+        , sectionId
+        , " -->"
+        , iquotes't sectionLoc
+        , " in the government mechanic <!-- "
+        , id
+        , " -->"
+        , iquotes't idLoc
         ]
 
 ppTriggeredBy :: (EU4Info g, Monad m) => Text -> PPT g m Doc
@@ -700,3 +715,36 @@ findTriggeredEventsInProvinceTriggeredModifiers hm modifiers = addEventTriggers 
         findInProvinceTriggeredModifier modifier@EU4ProvinceTriggeredModifier{ptmodName = modName} =
             addEventSource (const (EU4EvtSrcGeneric modName "Activation of the province triggered modifier")) (findInStmts (ptmodOnActivation modifier)) ++
             addEventSource (const (EU4EvtSrcGeneric modName "Deactivation of the province triggered modifier")) (findInStmts (ptmodOnDeactivation modifier))
+
+findTriggeredEventsInGovernmentMechanics :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
+findTriggeredEventsInGovernmentMechanics hm scr = foldl' findInGovernmentMechanic hm scr
+    where
+        findInGovernmentMechanic :: EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInGovernmentMechanic hm stmt@[pdx| $id = @scr |] = foldl' (findInGovernmentMechanic' id) hm scr
+        findInGovernmentMechanic hm stmt = trace ("Unknown top-level statement in government mechanic: " ++ show stmt) hm
+
+        findInGovernmentMechanic' :: Text -> EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInGovernmentMechanic' id hm [pdx| interactions = @scr |] = foldl' (findInSection id "interaction") hm scr
+        findInGovernmentMechanic' id hm [pdx| powers = @scr |] = foldl' (findInSection id "power") hm scr
+        findInGovernmentMechanic' _ hm _ = hm
+
+        findInSection :: Text -> Text -> EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInSection id section hm [pdx| $sectionId = @scr |] = foldl' (findInSection' id section sectionId) hm scr
+        findInSection _ _ hm _ = hm
+
+        findInSection' :: Text -> Text -> Text -> EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInSection' id "power" sectionId hm [pdx| on_min_reached = @scr |] = addEventTriggers hm $ addEventSource (const (EU4EvtSrcGovernmentMechanic id sectionId "Reaching the minimum")) (findInStmts scr)
+        findInSection' id "power" sectionId hm [pdx| on_max_reached = @scr |] = addEventTriggers hm $ addEventSource (const (EU4EvtSrcGovernmentMechanic id sectionId "Reaching the maximum")) (findInStmts scr)
+        findInSection' id "interaction" sectionId hm [pdx| effect = @scr |] = addEventTriggers hm $ addEventSource (const (EU4EvtSrcGovernmentMechanic id sectionId "Using the interaction")) (findInStmts scr)
+        findInSection' _ _ _ hm _ = hm
+
+findTriggeredEventsInImperialIncidents :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
+findTriggeredEventsInImperialIncidents hm scr = foldl' findInImperialIncident hm scr
+    where
+        findInImperialIncident :: EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInImperialIncident hm stmt@[pdx| $id = @scr |] = foldl' (findInImperialIncident' id) hm scr
+        findInImperialIncident hm stmt = trace ("Unknown top-level statement in imperial incident: " ++ show stmt) hm
+
+        findInImperialIncident' :: Text -> EU4EventTriggers -> GenericStatement -> EU4EventTriggers
+        findInImperialIncident' id hm [pdx| event = $event |] = addEventTriggers hm [(event, EU4EvtSrcGeneric id "Used as a template for the imperial incident")]
+        findInImperialIncident' _ hm _ = hm

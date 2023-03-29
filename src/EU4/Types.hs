@@ -63,8 +63,6 @@ data EU4Data = EU4Data {
     ,   eu4modifierScripts :: HashMap FilePath GenericScript
     ,   eu4opmodScripts :: HashMap FilePath GenericScript
     ,   eu4missionScripts :: HashMap FilePath GenericScript
-    ,   eu4onactionsScripts :: HashMap FilePath GenericScript
-    ,   eu4disasterScripts :: HashMap FilePath GenericScript
     ,   eu4provtrigmodifierScripts :: HashMap FilePath GenericScript
     ,   eu4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
     ,   eu4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -123,10 +121,6 @@ class (IsGame g,
     getEventTriggers :: Monad m => PPT g m EU4EventTriggers
     -- | Scripts from otherwise unparsed locations which can trigger events
     getGenericScriptsForEventTriggers :: Monad m => PPT g m (HashMap String GenericScript)
-    -- | Get the on actions script files
-    getOnActionsScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | Get the on disaster script files
-    getDisasterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed geographic data
     getGeoData :: Monad m => PPT g m (HashMap Text EU4GeoType)
     -- | Get the contents of all province triggered modifier script files.
@@ -207,6 +201,7 @@ data EU4EventSource =
     | EU4EvtSrcOnAction Text EU4EventWeight         -- An effect from on_actions (args are the trigger and weight)
     | EU4EvtSrcDisaster Text Text EU4EventWeight    -- Effect of a disaster (args are id, trigger and weight)
     | EU4EvtSrcMission Text                         -- Effect of completing a mission (arg is the mission id)
+    | EU4EvtSrcGovernmentMechanic Text Text Text    -- Effect of a government mechanic (args are id, section id, trigger)
     | EU4EvtSrcGeneric Text Text                    -- Some generic triggers (args are id and trigger)
     deriving Show
 

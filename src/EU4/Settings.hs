@@ -49,7 +49,7 @@ import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInEvents, findTriggeredEventsInDecisions
                    , findTriggeredEventsInOnActions, findTriggeredEventsInDisasters
                    , findTriggeredEventsInGenericScript, findTriggeredEventsInMissions
-                   , findTriggeredEventsInProvinceTriggeredModifiers)
+                   , findTriggeredEventsInProvinceTriggeredModifiers, findTriggeredEventsInGovernmentMechanics, findTriggeredEventsInImperialIncidents)
 import EU4.Extra (writeEU4Extra, writeEU4ExtraCountryScope, writeEU4ExtraProvinceScope, writeEU4ExtraModifier)
 
 -- | Temporary (?) fix for HAW and UHW both localizing to "Hawai'i'"
@@ -102,8 +102,6 @@ instance IsGame EU4 where
                 ,   eu4missions = HM.empty
                 ,   eu4eventTriggers = HM.empty
                 ,   eu4genericScriptsForEventTriggers = HM.empty
-                ,   eu4onactionsScripts = HM.empty
-                ,   eu4disasterScripts = HM.empty
                 ,   eu4geoData = HM.empty
                 ,   eu4provtrigmodifiers = HM.empty
                 ,   eu4provtrigmodifierScripts = HM.empty
@@ -185,12 +183,6 @@ instance EU4Info EU4 where
     getGenericScriptsForEventTriggers = do
         EU4D ed <- get
         return (eu4genericScriptsForEventTriggers ed)
-    getOnActionsScripts = do
-        EU4D ed <- get
-        return (eu4onactionsScripts ed)
-    getDisasterScripts = do
-        EU4D ed <- get
-        return (eu4disasterScripts ed)
     getGeoData = do
         EU4D ed <- get
         return (eu4geoData ed)
@@ -300,11 +292,14 @@ readEU4Scripts = do
         processTradeNode stmt = (trace $ "Not handled in processTradeNode: " ++ show stmt) $ Nothing
 
         readGenericScriptsForEventTriggers :: PPT EU4 m (HashMap String GenericScript)
-        readGenericScriptsForEventTriggers = sequence $ HM.mapWithKey readScriptFromFolder locationsForEventTriggers
+        readGenericScriptsForEventTriggers = do
+            scripts <- mapM readScriptFromFolder (HM.keys locationsForEventTriggers ++ HM.keys locationsForEventTriggersWithExtraHandling)
+            return $ HM.fromList scripts
             where
-                readScriptFromFolder folder _ = do
+                readScriptFromFolder :: String -> PPT EU4 m (String, GenericScript)
+                readScriptFromFolder folder = do
                     scriptsWithFilenames <- readEU4Script ("common" </> folder)
-                    return $ concat (HM.elems scriptsWithFilenames)
+                    return (folder, concat (HM.elems scriptsWithFilenames))
 
         getFileFromOpts (ProcessFile f) = [f]
         getFileFromOpts _ = []
@@ -322,8 +317,6 @@ readEU4Scripts = do
     modifiers <- readEU4Script "modifiers"
     opinion_modifiers <- readEU4Script "opinion_modifiers"
     missions <- readEU4Script "missions"
-    on_actions <- readEU4Script "on_actions"
-    disasters <- readEU4Script "disasters"
     provTrigModifiers <- readEU4Script "province_triggered_modifiers"
     genericScriptsForEventTriggers <- readGenericScriptsForEventTriggers
 
@@ -352,8 +345,6 @@ readEU4Scripts = do
         ,   eu4modifierScripts = modifiers
         ,   eu4opmodScripts = opinion_modifiers
         ,   eu4missionScripts = missions
-        ,   eu4onactionsScripts = on_actions
-        ,   eu4disasterScripts = disasters
         ,   eu4genericScriptsForEventTriggers = genericScriptsForEventTriggers
         ,   eu4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
         ,   eu4provtrigmodifierScripts = provTrigModifiers
@@ -366,22 +357,16 @@ readEU4Scripts = do
 
 locationsForEventTriggers :: HashMap String [(Text, Text)]
 locationsForEventTriggers =  HM.fromList [
-                ("government_reforms",
-                    [("effect", "Enacting the government reform")
-                    ,("removed_effect", "Revoking the government reform")
-                    ,("post_removed_effect", "After revoking the government reform")
-                    ])
-                ,("parliament_issues", [("effect", "Enacting the parliament issue")])
-                ,("incidents", [("immediate_effect", "Start of the Shinto incident")])
-                ,("diplomatic_actions",
+                ("diplomatic_actions",
                     [("effect", "The diplomatic action")
                     ,("pre_effect", "The diplomatic action")])
-                ,("imperial_reforms",
-                    [("on_effect", "Enacting the imperial reform")
-                    ,("off_effect", "Revoking the imperial reform")])
-                ,("new_diplomatic_actions",
-                    [("on_accept", "Accepting the diplomatic action")
-                    ,("on_decline", "Declining the diplomatic action")])
+                ,("estate_agendas",
+                    [("pre_effect", "pre_effect of the agenda")
+                    ,("immediate_effect", "Selecting the estate agenda")
+                    ,("on_invalid", "Invalidation of the estate agenda")
+                    ,("failing_effect", "Failing the estate agenda")
+                    ,("task_completed_effect", "Completing the estate agenda")])
+                ,("estate_crown_land", [("effect", "An estate interaction")])
                 ,("estate_privileges",
                     [("on_cooldown_expires", "When the following estate privilege can be revoked:")
                     ,("on_granted", "Granting the estate privilege")
@@ -391,24 +376,38 @@ locationsForEventTriggers =  HM.fromList [
                     ,("on_revoked", "Revoking the estate privilege")
                     ,("on_revoked_province", "Revoking the estate privilege (for each province)")
                     ])
-                ,("estate_agendas",
-                    [("pre_effect", "pre_effect of the agenda")
-                    ,("immediate_effect", "Selecting the estate agenda")
-                    ,("on_invalid", "Invalidation of the estate agenda")
-                    ,("failing_effect", "Failing the estate agenda")
-                    ,("task_completed_effect", "Completing the estate agenda")])
+                ,("government_reforms",
+                    [("effect", "Enacting the government reform")
+                    ,("removed_effect", "Revoking the government reform")
+                    ,("post_removed_effect", "After revoking the government reform")
+                    ])
+                ,("imperial_reforms",
+                    [("on_effect", "Enacting the imperial reform")
+                    ,("off_effect", "Revoking the imperial reform")])
+                ,("incidents", [("immediate_effect", "Start of the Shinto incident")])
+                ,("new_diplomatic_actions",
+                    [("on_accept", "Accepting the diplomatic action")
+                    ,("on_decline", "Declining the diplomatic action")])
+                ,("parliament_issues", [("effect", "Enacting the parliament issue")])
                 ,("peace_treaties", [("effect", "When a peace treaty with the folloing term gets signed:")])
                 ]
+locationsForEventTriggersWithExtraHandling :: HashMap String (EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers)
+locationsForEventTriggersWithExtraHandling = HM.fromList
+    [("disasters", findTriggeredEventsInDisasters)
+    ,("government_mechanics", findTriggeredEventsInGovernmentMechanics)
+    ,("imperial_incidents", findTriggeredEventsInImperialIncidents)
+    ,("on_actions", findTriggeredEventsInOnActions)
+    ]
 
 findTriggeredEventsInUnhandledFiles :: EU4EventTriggers -> HashMap String GenericScript -> EU4EventTriggers
 findTriggeredEventsInUnhandledFiles hm foldersMap = HM.foldlWithKey' findTriggeredEventsInUnhandledFolder hm foldersMap
     where
         findTriggeredEventsInUnhandledFolder :: EU4EventTriggers -> String -> GenericScript -> EU4EventTriggers
-        findTriggeredEventsInUnhandledFolder hm folder script = findTriggeredEventsInUnhandledFolder' hm (HM.lookup folder locationsForEventTriggers) script
-
-        findTriggeredEventsInUnhandledFolder' :: EU4EventTriggers -> Maybe [(Text, Text)] -> GenericScript -> EU4EventTriggers
-        findTriggeredEventsInUnhandledFolder' hm (Just sectionMap) script = findTriggeredEventsInGenericScript hm (HM.fromList sectionMap) script
-        findTriggeredEventsInUnhandledFolder' _ _ _ = hm -- it should not get here as long as all the code uses the folders from locationsForEventTriggers
+        findTriggeredEventsInUnhandledFolder hm folder script = case HM.lookup folder locationsForEventTriggers of
+            (Just sectionMap) -> findTriggeredEventsInGenericScript hm (HM.fromList sectionMap) script
+            Nothing -> case HM.lookup folder locationsForEventTriggersWithExtraHandling of
+              Just handler -> handler hm script
+              Nothing -> hm -- it should not get here as long as all the code uses the folders from locationsForEventTriggers
 
 -- | Interpret the script ASTs as usable data.
 parseEU4Scripts :: Monad m => PPT EU4 m ()
@@ -421,16 +420,12 @@ parseEU4Scripts = do
     decisions <- parseEU4Decisions =<< getDecisionScripts
     events <- parseEU4Events =<< getEventScripts
     missions <- parseEU4Missions =<< getMissionScripts
-    on_actions <- getOnActionsScripts
-    disasters <- getDisasterScripts
     genericScriptsForEventTriggers <- getGenericScriptsForEventTriggers
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
-        te3 = findTriggeredEventsInOnActions te2 (concat (HM.elems on_actions))
-        te4 = findTriggeredEventsInDisasters te3 (concat (HM.elems disasters))
-        te5 = findTriggeredEventsInMissions te4 (HM.elems missions)
-        te6 = findTriggeredEventsInProvinceTriggeredModifiers te5 (HM.elems provTrigModifiers)
-        te7 = findTriggeredEventsInUnhandledFiles te6 genericScriptsForEventTriggers
+        te3 = findTriggeredEventsInMissions te2 (HM.elems missions)
+        te4 = findTriggeredEventsInProvinceTriggeredModifiers te3 (HM.elems provTrigModifiers)
+        te5 = findTriggeredEventsInUnhandledFiles te4 genericScriptsForEventTriggers
     --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))
     modify $ \(EU4D s) -> EU4D $
             s { eu4events = events
@@ -439,7 +434,7 @@ parseEU4Scripts = do
             ,   eu4modifiers = modifiers
             ,   eu4opmods = opinionModifiers
             ,   eu4missions = missions
-            ,   eu4eventTriggers = te7
+            ,   eu4eventTriggers = te5
             ,   eu4provtrigmodifiers = provTrigModifiers
             }
 
