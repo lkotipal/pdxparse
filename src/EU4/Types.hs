@@ -54,6 +54,7 @@ data EU4Data = EU4Data {
     ,   eu4opmods :: HashMap Text EU4OpinionModifier
     ,   eu4missions :: HashMap Text EU4MissionTreeBranch
     ,   eu4eventTriggers :: EU4EventTriggers
+    ,   eu4genericScriptsForEventTriggers :: HashMap String GenericScript
     ,   eu4geoData :: HashMap Text EU4GeoType
     ,   eu4provtrigmodifiers :: HashMap Text EU4ProvinceTriggeredModifier
     ,   eu4eventScripts :: HashMap FilePath GenericScript
@@ -64,7 +65,6 @@ data EU4Data = EU4Data {
     ,   eu4missionScripts :: HashMap FilePath GenericScript
     ,   eu4onactionsScripts :: HashMap FilePath GenericScript
     ,   eu4disasterScripts :: HashMap FilePath GenericScript
-    ,   eu4governmentreformsScripts :: HashMap FilePath GenericScript
     ,   eu4provtrigmodifierScripts :: HashMap FilePath GenericScript
     ,   eu4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
     ,   eu4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -121,14 +121,14 @@ class (IsGame g,
     getMissions :: Monad m => PPT g m (HashMap Text EU4MissionTreeBranch)
     -- | Get the (known) event triggers
     getEventTriggers :: Monad m => PPT g m EU4EventTriggers
+    -- | Scripts from otherwise unparsed locations which can trigger events
+    getGenericScriptsForEventTriggers :: Monad m => PPT g m (HashMap String GenericScript)
     -- | Get the on actions script files
     getOnActionsScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the on disaster script files
     getDisasterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed geographic data
     getGeoData :: Monad m => PPT g m (HashMap Text EU4GeoType)
-    -- | Get the on government reform script files
-    getGovernmentReformScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the contents of all province triggered modifier script files.
     getProvinceTriggeredModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed province triggered modifiers table (keyed on modifier ID).
