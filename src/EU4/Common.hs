@@ -1438,6 +1438,7 @@ handlersFlagOrProvince :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersFlagOrProvince = Tr.fromList
         [("add_claim"          , withFlagOrProvince MsgAddClaimFor MsgAddClaimOn)
         ,("add_core"           , withFlagOrProvince MsgGainCore MsgGainCoreProvince)
+        ,("add_territorial_core", withFlagOrProvince MsgGainTerritorialCore MsgGainTerritorialCoreProvince)
         ,("add_permanent_claim", withFlagOrProvince MsgGainPermanentClaimCountry MsgGainPermanentClaimProvince)
         ,("artillery"          , spawnRegiment Nothing "ARTILLERY" "regiment")
         ,("cavalry"            , spawnRegiment Nothing "CAVALRY" "regiment")

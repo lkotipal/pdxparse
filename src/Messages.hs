@@ -373,6 +373,8 @@ data ScriptMessage
     | MsgGainClaim {scriptMessageWho :: Text}
     | MsgGainCore {scriptMessageWho :: Text}
     | MsgGainCoreProvince {scriptMessageWhat :: Text}
+    | MsgGainTerritorialCore {scriptMessageWho :: Text}
+    | MsgGainTerritorialCoreProvince {scriptMessageWhat :: Text}
     | MsgGainPermanentClaimCountry {scriptMessageWho :: Text}
     | MsgGainPermanentClaimProvince {scriptMessageWhere :: Text}
     | MsgHasDiscovered {scriptMessageWhomOrWhere :: Text}
@@ -3107,6 +3109,16 @@ instance RenderMessage Script ScriptMessage where
         MsgGainCoreProvince {scriptMessageWhat = _what}
             -> mconcat
                 [ "Gains a core on "
+                , _what
+                ]
+        MsgGainTerritorialCore {scriptMessageWho = _who}
+            -> mconcat
+                [ _who
+                , " gains a territorial core on this province"
+                ]
+        MsgGainTerritorialCoreProvince {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Gains a territorial core on "
                 , _what
                 ]
         MsgGainPermanentClaimCountry {scriptMessageWho = _who}
