@@ -780,6 +780,7 @@ data ScriptMessage
     | MsgGenericModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double, locModifierName :: Text, amtTransformer :: Double -> Doc}
     | MsgGenericModifierDlcOnly {scriptMessageIcon :: Text, scriptMessageAmt :: Double, locModifierName :: Text, amtTransformer :: Double -> Doc}
     | MsgGenericAtLeast {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageWhat :: Text, amtTransformer :: Double -> Doc}
+    | MsgGenericAtLeastAs {scriptMessageWhat :: Text, scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgAddStabilityOrAdm
     | MsgAddTrust {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAddTrustMutual {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
@@ -5658,6 +5659,15 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (_amtTransformer _amt)
                 , " "
                 , _what
+                ]
+        MsgGenericAtLeastAs {scriptMessageWhat = _what, scriptMessageIcon = _icon, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has at least as much"
+                , if T.null _icon then "" else T.append _icon " "
+                , " "
+                , _what
+                , " as "
+                , _whom
                 ]
         MsgAddStabilityOrAdm
             -> "{{add stability or adm power}}"

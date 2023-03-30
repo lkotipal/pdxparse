@@ -1929,6 +1929,7 @@ handlersNumericOrTag = Tr.fromList
 handlersAtLeast :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersAtLeast = Tr.fromList
         [("current_institution"         , handleAtLeastWithIcon "Progress towards the newest institution" "institution" plainPc)
+        ,("current_income_balance"      , handleAtLeastWithIconOrTag "INCOME" "income" (colourNum True))
         ,("current_size_of_parliament"  , handleAtLeastWithIcon "Seats in parliament" "parliament" plainNum)
         ,("diplomatic_reputation"       , handleAtLeastWithIcon "diplomatic_reputation" "diplomatic reputation" plainNum)
         ,("empire_of_china_num_reforms_passed", handleAtLeastWithIcon "CELESTIAL_DECISIONS" "emperor of china" plainNum)
