@@ -115,6 +115,7 @@ data ScriptMessage
     | MsgGainMPFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSeparatism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCountryMod
+    | MsgLibertyDesireMod
     | MsgProvMod
     | MsgPermanentProvMod
     | MsgRulerMod
@@ -1853,6 +1854,8 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgCountryMod
             -> "country modifier"
+        MsgLibertyDesireMod
+            -> "liberty desire modifier"
         MsgProvMod
             -> "province modifier"
         MsgPermanentProvMod
