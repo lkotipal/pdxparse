@@ -2214,9 +2214,11 @@ data DefineAdvisor = DefineAdvisor
     ,   da_location_loc :: Maybe Text
     ,   da_skill :: Maybe Double
     ,   da_female :: Maybe Bool
+    ,   da_culture :: Maybe Text
+    ,   da_religion :: Maybe Text
     }
 newDefineAdvisor :: DefineAdvisor
-newDefineAdvisor = DefineAdvisor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+newDefineAdvisor = DefineAdvisor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 defineAdvisor :: forall g m. (EU4Info g, Monad m) => Bool -> Maybe Text -> StatementHandler g m
 defineAdvisor isScaled extraText stmt@[pdx| %_ = @scr |]
@@ -2261,8 +2263,26 @@ defineAdvisor isScaled extraText stmt@[pdx| %_ = @scr |]
                 in if yn == Just "yes" then da { da_female = Just True }
                    else if yn == Just "no" then da { da_female = Just False }
                    else da
-            "culture" -> return da -- TODO: Ignored for now
-            "religion" -> return da -- TODO: Ignored for now
+            "culture" -> do
+                let mculture = case rhs of
+                        GenericRhs a_name [] -> Just a_name
+                        StringRhs a_name -> Just a_name
+                        _ -> Nothing
+                culture_loc <- getGameL10n (fromMaybe "" mculture)
+                if isJust mculture then
+                    return $ da { da_culture = Just culture_loc }
+                else
+                    return da
+            "religion" -> do
+                let mreligion = case rhs of
+                        GenericRhs a_name [] -> Just a_name
+                        StringRhs a_name -> Just a_name
+                        _ -> Nothing
+                religion_loc <- getGameL10n (fromMaybe "" mreligion)
+                if isJust mreligion then
+                    return $ da { da_religion = Just religion_loc }
+                else
+                    return da
             param -> trace ("warning: unknown define_advisor parameter: " ++ show param) $ return da
         addLine da _ = return da
         pp_define_advisor :: DefineAdvisor -> ScriptMessage
@@ -2272,7 +2292,7 @@ defineAdvisor isScaled extraText stmt@[pdx| %_ = @scr |]
                 mlocation_loc = da_location_loc da
                 mlocation = mlocation_loc `mplus` (T.pack . show <$> da_location da)
                 icon = maybe "" iconText (da_type da)
-            in MsgGainAdvisor (da_female da) (da_type_loc da) (da_name da) mlocation (da_skill da) isScaled discount extraText icon
+            in MsgGainAdvisor (da_female da) (da_type_loc da) (da_name da) mlocation (da_skill da) isScaled discount extraText icon (da_culture da) (da_religion da)
 defineAdvisor _ _ stmt = preStatement stmt
 
 -------------

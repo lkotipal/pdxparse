@@ -46,6 +46,7 @@ import Abstract (GenericStatement)
 import qualified Doc
 import MessageTools -- import everything
 import SettingsTypes (PPT, getLangs, GameData (..), IsGameData (..))
+import Data.Maybe (isJust)
 
 -- | Dummy type required by the Shakespeare machinery.
 data Script = Script
@@ -486,7 +487,7 @@ data ScriptMessage
     | MsgTriggerEvent {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text}
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgDeclareWarWithCB {scriptMessageWhom :: Text, scriptMessageCb :: Text}
-    | MsgGainAdvisor {scriptMessageMaybeFemale :: Maybe Bool, scriptMessageMaybeAdvtype :: Maybe Text, scriptMessageMaybeName :: Maybe Text, scriptMessageMaybeWhere :: Maybe Text, scriptMessageMaybeSkill :: Maybe Double, scriptMessageScaled :: Bool, scriptMessageDiscount :: Double, scriptMessageMaybeExtraText :: Maybe Text, scriptMessageIcon :: Text}
+    | MsgGainAdvisor {scriptMessageMaybeFemale :: Maybe Bool, scriptMessageMaybeAdvtype :: Maybe Text, scriptMessageMaybeName :: Maybe Text, scriptMessageMaybeWhere :: Maybe Text, scriptMessageMaybeSkill :: Maybe Double, scriptMessageScaled :: Bool, scriptMessageDiscount :: Double, scriptMessageMaybeExtraText :: Maybe Text, scriptMessageIcon :: Text, scriptMessageMaybeCulture :: Maybe Text, scriptMessageMaybeReligion :: Maybe Text}
     | MsgRebelLeaderRuler
     | MsgNewRuler {scriptMessageRegent :: Bool}
     | MsgNewRulerLeader {scriptMessageRegent :: Bool, scriptMessageName :: Text}
@@ -3857,7 +3858,9 @@ instance RenderMessage Script ScriptMessage where
                             scriptMessageScaled = _scaled,
                             scriptMessageDiscount = _discount,
                             scriptMessageMaybeExtraText = _extra,
-                            scriptMessageIcon = _icon}
+                            scriptMessageIcon = _icon,
+                            scriptMessageMaybeCulture = _culture,
+                            scriptMessageMaybeReligion = _religion}
             -> mconcat
                 [ "Gain"
                 , maybe "" (\s -> " skill " <> toMessage (roundNum s)) _skill
@@ -3867,6 +3870,8 @@ instance RenderMessage Script ScriptMessage where
                 , " advisor"
                 , maybe "" (\name -> " named " <> toMessage (iquotes name)) _name
                 , toMessage (ifThenElseT _scaled " with skill level scaled to monthly income" "")
+                , maybe "" (\c -> " with " <> c <> " culture") _culture
+                , maybe "" (\r -> ifThenElseT (isJust _culture) " and " " with " <> r <> " religion") _religion
                 , maybe "" (" in " <>) _where
                 , toMessage (advisorDiscountText _discount)
                 , maybe "" (\e -> " (" <> e <> ")") _extra
