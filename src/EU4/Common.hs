@@ -354,7 +354,6 @@ handlersNumeric = Tr.fromList
         ,("trade_company_size"               , numeric MsgTradeCompanySize)
         ,("trade_income_percentage"          , numeric MsgTradeIncomePercentage)
         ,("tributary_state"                  , numeric MsgNumTributaryStates)
-        ,("units_in_province"                , numeric MsgUnitsInProvince)
         ,("vassal"                           , numeric MsgHasNumVassals)
         -- Special cases
         ,("legitimacy_or_horde_unity"        , numeric MsgLegitimacyOrHordeUnity)
@@ -1463,6 +1462,7 @@ handlersFlagOrProvince = Tr.fromList
 
         -- normal regiments of specific types which are spawned by some events
         -- TODO: automatically generate this from the files
+        ,("large_cast_bronze_mortar", spawnRegiment (Just "large_cast_bronze_mortar") "ARTILLERY" "regiment")
         ,("steppe_cavalry"     , spawnRegiment (Just "steppe_cavalry") "CAVALRY" "regiment")
         ,("steppe_lancers"     , spawnRegiment (Just "steppe_lancers") "CAVALRY" "regiment")
         ,("steppe_raiders"     , spawnRegiment (Just "steppe_raiders") "CAVALRY" "regiment")
@@ -1884,12 +1884,18 @@ handlersNumericOrTag = Tr.fromList
         ,("army_professionalism" , numericOrTagIcon "army professionalism" MsgArmyProfessionalism MsgArmyProfessionalismAs)
         ,("army_size"            , numericOrTag MsgArmySize MsgArmySizeMatches)
         ,("army_tradition"       , numericOrTagIcon "army tradition" MsgArmyTradition MsgArmyTraditionAs)
+        ,("artillery_in_province", numericOrTag (MsgUnitsInProvince "artillery") (MsgUnitsInProvinceOwnedBy "artillery"))
+        ,("cavalry_in_province"  , numericOrTag (MsgUnitsInProvince "cavalry") (MsgUnitsInProvinceOwnedBy "cavalry"))
         ,("development"          , numericOrTagIcon "development" MsgDevelopment MsgDevelopmentAs) -- Can't really be a tag, but it can be "CAPITAL"
+        ,("galleys_in_province"  , numericOrTag (MsgUnitsInProvince "galley") (MsgUnitsInProvinceOwnedBy "galley"))
+        ,("heavy_ships_in_province", numericOrTag (MsgUnitsInProvince "heavy ship") (MsgUnitsInProvinceOwnedBy "heavy ship"))
+        ,("infantry_in_province" , numericOrTag (MsgUnitsInProvince "infantry") (MsgUnitsInProvinceOwnedBy "infantry"))
         ,("inflation"            , numericOrTagIcon "inflation" MsgInflation MsgInflationAs)
         ,("land_forcelimit"      , numericOrTagIcon "land force limit" MsgLandForcelimit MsgLandForcelimitAs)
         ,("land_morale"          , numericOrTagIcon "morale of armies" MsgMoraleOfArmies MsgMoraleOfArmiesAs)
         ,("legitimacy"           , numericOrTagIcon "legitimacy" MsgLegitimacy MsgLegitimacyAs)
         ,("legitimacy_equivalent", numericOrTagIcon "legitimacy" MsgLegitimacyEquivalent MsgLegitimacyEquivalentAs)
+        ,("light_ships_in_province", numericOrTag (MsgUnitsInProvince "light ship") (MsgUnitsInProvinceOwnedBy "light ship"))
         ,("monthly_income"       , numericOrTagIcon "ducats" MsgMonthlyIncome MsgMonthlyIncomeAs)
         ,("navy_size"            , numericOrTag MsgNavySize MsgNavySizeMatches)
         ,("num_of_artillery"     , numericOrTag MsgNumArtillery MsgNumArtilleryThan)
@@ -1903,6 +1909,8 @@ handlersNumericOrTag = Tr.fromList
         ,("production_efficiency", numericOrTagIcon "production efficiency" MsgProdEff MsgProdEffAs)
         ,("total_development"    , numericOrTagIcon "development" MsgTotalDevelopment MsgTotalDevelopmentAs)
         ,("total_own_and_non_tributary_subject_development" , numericOrTagIcon "development" MsgOwnOrNonTribSubjectDevelopment MsgOwnOrNonTribSubjectDevelopmentAs)
+        ,("transports_in_province", numericOrTag (MsgUnitsInProvince "transport") (MsgUnitsInProvinceOwnedBy "transport"))
+        ,("units_in_province"     , numericOrTag (MsgUnitsInProvince "") (MsgUnitsInProvinceOwnedBy ""))
         ]
 -- | Handlers for triggers with at least
 handlersAtLeast :: (EU4Info g, Monad m) => Trie (StatementHandler g m)

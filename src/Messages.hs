@@ -296,7 +296,8 @@ data ScriptMessage
     | MsgNumRebelArmies {scriptMessageAmt :: Double}
     | MsgNumEmbargoes {scriptMessageAmt :: Double}
     | MsgNumTradingBonuses {scriptMessageAmt :: Double}
-    | MsgUnitsInProvince {scriptMessageAmt :: Double}
+    | MsgUnitsInProvince {scriptMessageUnitType :: Text, scriptMessageAmt :: Double}
+    | MsgUnitsInProvinceOwnedBy {scriptMessageUnitType :: Text, scriptMessageWhom :: Text}
     | MsgNumCities {scriptMessageAmt :: Double}
     | MsgNumCitiesThan {scriptMessageWhom :: Text}
     | MsgToleranceToThis {scriptMessageAmt :: Double}
@@ -2580,12 +2581,19 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (roundNum _amt)
                 , " trade goods to get their [[Trading in]] bonus"
                 ]
-        MsgUnitsInProvince {scriptMessageAmt = _amt}
+        MsgUnitsInProvince {scriptMessageUnitType = _type, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Province contains at least "
                 , toMessage (roundNum _amt)
-                , " "
+                , ifThenElseT (T.null _type) " " (" " <> _type <> " ")
                 , plural (round _amt) "regiment" "regiments"
+                ]
+        MsgUnitsInProvinceOwnedBy {scriptMessageUnitType = _type, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _whom
+                , " has"
+                , ifThenElseT (T.null _type) " " (" " <> _type <> " ")
+                , "regiments in the province"
                 ]
         MsgNumCities {scriptMessageAmt = _amt}
             -> mconcat
