@@ -1805,6 +1805,7 @@ handlersYesNo = Tr.fromList
         ,("is_in_league_war"            , withBool MsgIsInLeagueWar)
         ,("is_iroquois"                 , withBool MsgIsIroquois)
         ,("is_island"                   , withBool MsgIsIsland)
+        ,("is_lacking_institutions"     , withBool MsgIsLackingInstitutions)
         ,("is_league_leader"            , withBool MsgIsLeagueLeader)
         ,("is_lesser_in_union"          , withBool MsgIsLesserInUnion)
         ,("is_looted"                   , withBool MsgIsLooted)

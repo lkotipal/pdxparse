@@ -1392,6 +1392,7 @@ data ScriptMessage
     | MsgIsNeighborOfProvince {scriptMessageWhat :: Text}
     | MsgActiveDecree { scriptMessageWhat :: Text }
     | MsgEocReform { scriptMessageWhat :: Text }
+    | MsgIsLackingInstitutions {scriptMessageYn :: Bool}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9203,6 +9204,11 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Has the {{icon|emperor of china}} celestial reform "
                 , toMessage (iquotes _what)
+                ]
+        MsgIsLackingInstitutions {scriptMessageYn = _yn}
+            -> mconcat
+                [ ifThenElseT _yn "Does ''not'' have" "Has"
+                , " embraced all the active institutions"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
