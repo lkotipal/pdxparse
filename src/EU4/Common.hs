@@ -154,6 +154,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("halves_parliament_bribe_costs", rhsAlwaysYes (MsgGenericText "The costs of [[Parliament bribes]] are reduced by {{green|50%}}."))
         ,("has_holy_order_trigger"  , rhsAlwaysYes MsgHasAnyHolyOrder)
         ,("has_border_with_religious_enemy" , rhsAlwaysYes MsgHasBorderWithReligiousEnemy)
+        ,("has_commanding_three_star", rhsAlwaysYes (MsgGenericText "Have a 3-star admiral or general who is in command of a unit."))
         ,("has_not_any_estate_disaster_active", rhsAlwaysYes (MsgGenericText "Does ''not'' have an ongoing [[Disasters#Estates disasters|estate disaster]]"))
         ,("has_river_estuary_trigger", rhsAlwaysYes MsgHasRiverEstuary)
         ,("has_religious_scholars_trigger", rhsAlwaysYes MsgHasScholar)
