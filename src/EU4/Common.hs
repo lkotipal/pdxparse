@@ -1919,6 +1919,7 @@ handlersNumericOrTag = Tr.fromList
         ,("num_of_artillery"     , numericOrTag MsgNumArtillery MsgNumArtilleryThan)
         ,("num_of_cavalry"       , numericOrTag MsgNumCavalry MsgNumCavalryThan)
         ,("num_of_cities"        , numericOrTag MsgNumCities MsgNumCitiesThan)
+        ,("num_of_infantry"      , numericOrTag MsgNumInfantry MsgNumInfantryThan)
         ,("num_of_light_ship"    , numericOrTagIcon "light ship" MsgNumLightShips MsgNumLightShipsMatches)
         ,("num_of_heavy_ship"    , numericOrTagIcon "heavy ship" MsgNumHeavyShips MsgNumHeavyShipsMatches)
         ,("num_of_galley"        , numericOrTagIcon "galley" MsgNumGalleyShips MsgNumGalleyShipsMatches)

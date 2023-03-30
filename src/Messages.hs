@@ -996,6 +996,8 @@ data ScriptMessage
     | MsgIsReligiousCenterProvince { scriptMessageYn :: Bool }
     | MsgNumCavalry {scriptMessageAmt :: Double}
     | MsgNumCavalryThan {scriptMessageWhom :: Text}
+    | MsgNumInfantry {scriptMessageAmt :: Double}
+    | MsgNumInfantryThan {scriptMessageWhom :: Text}
     | MsgNumArtillery {scriptMessageAmt :: Double}
     | MsgNumArtilleryThan {scriptMessageWhom :: Text}
     | MsgAdoptReformProgress {scriptMessageWhom :: Text}
@@ -6819,6 +6821,18 @@ instance RenderMessage Script ScriptMessage where
         MsgNumCavalryThan {scriptMessageWhom = _whom}
             -> mconcat
                 [ "Owns at least as many cavalry regiments as "
+                , _whom
+                ]
+        MsgNumInfantry {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Owns at least "
+                , toMessage (roundNum _amt)
+                , " infantry "
+                , plural _amt "regiment" "regiments"
+                ]
+        MsgNumInfantryThan {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Owns at least as many infantry regiments as "
                 , _whom
                 ]
         MsgNumArtillery {scriptMessageAmt = _amt}
