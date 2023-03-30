@@ -1400,6 +1400,8 @@ data ScriptMessage
     | MsgReceivesMilitaryAccess {scriptMessageWhom :: Text}
     | MsgGivesFleetBasingRights {scriptMessageWhom :: Text}
     | MsgReceivesFleetBasingRights {scriptMessageWhom :: Text}
+    | MsgTradeValueInNode {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgSetEmperorOfChina {scriptMessageWhom :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9257,6 +9259,19 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Receives fleet basing rights from "
                 , _whom
+                ]
+        MsgTradeValueInNode {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "This trade node has at least "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " trade value"
+                ]
+        MsgSetEmperorOfChina {scriptMessageWhom = _whom}
+            -> mconcat
+                [ _whom
+                , " becomes the {{icon|eoc}} emperor of china"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

@@ -523,6 +523,7 @@ handlersNumericIcons = Tr.fromList
         ,("share_of_starting_income" , numericIcon "income" MsgShareOfStartingIncome)
         ,("spymaster"                , numericIconLoc "spymaster" "spymaster" MsgHasAdvisorLevel)
         ,("total_base_tax"           , numericIcon "base tax" MsgTotalBaseTax)
+        ,("trade_node_value"         , numericIcon "trade value" MsgTradeValueInNode)
         ,("treasurer"                , numericIconLoc "treasurer" "treasurer" MsgHasAdvisorLevel)
         ,("yearly_corruption_increase" , numericIcon "yearly corruption" MsgYearlyCorruptionIncrease)
         -- the number for the following is negated compared to the displayed figure
@@ -1653,6 +1654,7 @@ handlersSimpleFlag = Tr.fromList
         ,("remove_historical_friend" , withFlag MsgRemoveHistoricalFriend)
         ,("remove_historical_rival" , withFlag MsgRemoveHistoricalRival)
         ,("senior_union_with"       , withFlag MsgSeniorUnionWith)
+        ,("set_emperor_of_china"    , withFlag MsgSetEmperorOfChina)
         ,("sieged_by"               , withFlag MsgUnderSiegeBy)
         ,("succession_claim"        , withFlag MsgSuccessionClaim)
         ,("support_independence_of" , withFlag MsgSupportIndependenceOf)
