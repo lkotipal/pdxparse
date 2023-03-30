@@ -1900,6 +1900,7 @@ handlersAtLeast = Tr.fromList
         ,("current_size_of_parliament"  , handleAtLeastWithIcon "Seats in parliament" "parliament" plainNum)
         ,("diplomatic_reputation"       , handleAtLeastWithIcon "diplomatic_reputation" "diplomatic reputation" plainNum)
         ,("empire_of_china_num_reforms_passed", handleAtLeastWithIcon "CELESTIAL_DECISIONS" "emperor of china" plainNum)
+        ,("isolationism"                , handleAtLeast "ISOLATIONISM" plainNum)
         ,("land_maintenance"            , handleAtLeastWithIcon "land_maintenance" "land maintenance" (reducedNum plainPc))
         ,("local_autonomy_above_min"    , handleAtLeastWithIcon "Local autonomy above minimum" "autonomy" plainPc)
         ,("naval_maintenance"           , handleAtLeastWithIcon "naval_maintenance" "naval maintenance" (reducedNum plainPc))
