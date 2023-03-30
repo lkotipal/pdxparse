@@ -384,6 +384,7 @@ data ScriptMessage
     | MsgNeighbors {scriptMessageWhom :: Text}
     | MsgIsRival {scriptMessageWhom :: Text}
     | MsgIsSubjectOf {scriptMessageWhom :: Text}
+    | MsgIsSubjectOfTypeWithOverlord {scriptMessageType :: Text, scriptMessageWhom :: Text}
     | MsgLoseCoreCountry {scriptMessageWho :: Text}
     | MsgLoseCoreProvince {scriptMessageWhere :: Text}
     | MsgRoyalMarriageWith {scriptMessageWhom :: Text}
@@ -3164,6 +3165,13 @@ instance RenderMessage Script ScriptMessage where
         MsgIsSubjectOf {scriptMessageWhom = _whom}
             -> mconcat
                 [ "Is a subject of "
+                , _whom
+                ]
+        MsgIsSubjectOfTypeWithOverlord {scriptMessageType = _type, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Is a "
+                , _type
+                , " subject of "
                 , _whom
                 ]
         MsgLoseCoreCountry {scriptMessageWho = _who}

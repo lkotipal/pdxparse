@@ -2319,6 +2319,7 @@ handlersMisc = Tr.fromList
         ,("heir_total_stats"    , totalStats "HEIR")
         ,("hre_reform_level"    , hreReformLevel)
         ,("is_month"            , isMonth)
+        ,("is_subject_of_type_with_overlord", taTypeFlag "type" "who" MsgIsSubjectOfTypeWithOverlord)
         ,("kill_leader"         , killLeader)
         ,("kill_heir"           , killHeir)
         ,("kill_units"          , killUnits)
