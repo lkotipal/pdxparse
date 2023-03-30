@@ -1928,7 +1928,8 @@ handlersNumericOrTag = Tr.fromList
 -- | Handlers for triggers with at least
 handlersAtLeast :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersAtLeast = Tr.fromList
-        [("current_institution"         , handleAtLeastWithIcon "Progress towards the newest institution" "institution" plainPc)
+        [("colony"                      , handleAtLeastWithIcon "colonial nations" "colonial nation" plainNum)
+        ,("current_institution"         , handleAtLeastWithIcon "Progress towards the newest institution" "institution" plainPc)
         ,("current_income_balance"      , handleAtLeastWithIconOrTag "INCOME" "income" (colourNum True))
         ,("current_size_of_parliament"  , handleAtLeastWithIcon "Seats in parliament" "parliament" plainNum)
         ,("diplomatic_reputation"       , handleAtLeastWithIcon "diplomatic_reputation" "diplomatic reputation" plainNum)
