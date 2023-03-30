@@ -1388,6 +1388,8 @@ data ScriptMessage
     | MsgAddInflationScaledToTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNationalFocus {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgIsNeighborOfProvince {scriptMessageWhat :: Text}
+    | MsgActiveDecree { scriptMessageWhat :: Text }
+    | MsgEocReform { scriptMessageWhat :: Text }
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9180,6 +9182,16 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Neighbors province "
                 , _what
+                ]
+        MsgActiveDecree {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has the {{icon|emperor of china}} decree "
+                , toMessage (iquotes _what)
+                ]
+        MsgEocReform {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has the {{icon|emperor of china}} celestial reform "
+                , toMessage (iquotes _what)
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 

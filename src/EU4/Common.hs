@@ -1369,6 +1369,8 @@ handlersLocRhs = Tr.fromList
         ,("complete_mission"      , withLocAtomTitle MsgCompleteMission)
         ,("council_position"      , withLocAtom MsgCouncilPosition)
         ,("current_debate"        , withLocAtom MsgCurrentDebate)
+        ,("empire_of_china_has_active_decree", withLocAtomTitle MsgActiveDecree)
+        ,("empire_of_china_reform_passed", withLocAtomTitle MsgEocReform)
         ,("end_disaster"          , withLocAtom MsgDisasterEnds)
         ,("end_incident"          , withLocAtomTitle MsgEndIncident)
         ,("government"            , withLocAtom MsgGovernmentIs)
