@@ -486,23 +486,7 @@ data ScriptMessage
     | MsgTriggerEvent {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text}
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgDeclareWarWithCB {scriptMessageWhom :: Text, scriptMessageCb :: Text}
-    | MsgGainAdvisor {scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainAdvisorLoc {scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainAdvisorName {scriptMessageName :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainAdvisorNameLoc {scriptMessageName :: Text, scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainAdvisorType {scriptMessageAdvtype :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainAdvisorTypeLoc {scriptMessageAdvtype :: Text, scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainAdvisorTypeName {scriptMessageAdvtype :: Text, scriptMessageName :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainAdvisorTypeNameLoc {scriptMessageAdvtype :: Text, scriptMessageName :: Text, scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainFemaleAdvisor {scriptMessageFemale :: Bool, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainFemaleAdvisorLoc {scriptMessageFemale :: Bool, scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainFemaleAdvisorName {scriptMessageFemale :: Bool, scriptMessageName :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainFemaleAdvisorNameLoc {scriptMessageFemale :: Bool, scriptMessageName :: Text, scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainFemaleAdvisorType {scriptMessageFemale :: Bool, scriptMessageAdvtype :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainFemaleAdvisorTypeLoc {scriptMessageFemale :: Bool, scriptMessageAdvtype :: Text, scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainFemaleAdvisorTypeName {scriptMessageFemale :: Bool, scriptMessageAdvtype :: Text, scriptMessageName :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainFemaleAdvisorTypeNameLoc {scriptMessageFemale :: Bool, scriptMessageAdvtype :: Text, scriptMessageName :: Text, scriptMessageWhere :: Text, scriptMessageSkill :: Double, scriptMessageDiscount :: Double}
-    | MsgGainScaledAdvisor {scriptMessageAdvtype :: Text, scriptMessageDiscount :: Double}
+    | MsgGainAdvisor {scriptMessageMaybeFemale :: Maybe Bool, scriptMessageMaybeAdvtype :: Maybe Text, scriptMessageMaybeName :: Maybe Text, scriptMessageMaybeWhere :: Maybe Text, scriptMessageMaybeSkill :: Maybe Double, scriptMessageScaled :: Bool, scriptMessageDiscount :: Double, scriptMessageMaybeExtraText :: Maybe Text, scriptMessageIcon :: Text}
     | MsgRebelLeaderRuler
     | MsgNewRuler {scriptMessageRegent :: Bool}
     | MsgNewRulerLeader {scriptMessageRegent :: Bool, scriptMessageName :: Text}
@@ -3865,176 +3849,27 @@ instance RenderMessage Script ScriptMessage where
                 , _cbtype
                 , " casus belli"
                 ]
-        MsgGainAdvisor {scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
+        MsgGainAdvisor { scriptMessageMaybeFemale = _female,
+                            scriptMessageMaybeAdvtype = _advtype,
+                            scriptMessageMaybeName = _name,
+                            scriptMessageMaybeWhere = _where,
+                            scriptMessageMaybeSkill = _skill,
+                            scriptMessageScaled = _scaled,
+                            scriptMessageDiscount = _discount,
+                            scriptMessageMaybeExtraText = _extra,
+                            scriptMessageIcon = _icon}
             -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
+                [ "Gain"
+                , maybe "" (\s -> " skill " <> toMessage (roundNum s)) _skill
+                , maybe "" (\f -> toMessage (ifThenElseT f " female" " male")) _female
+                , if T.null _icon then "" else " " <> _icon
+                , maybe "" (" " <>) _advtype
                 , " advisor"
+                , maybe "" (\name -> " named " <> toMessage (iquotes name)) _name
+                , toMessage (ifThenElseT _scaled " with skill level scaled to monthly income" "")
+                , maybe "" (" in " <>) _where
                 , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainAdvisorLoc {scriptMessageWhere = _where, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " advisor in "
-                , _where
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainAdvisorName {scriptMessageName = _name, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " advisor named "
-                , _name
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainAdvisorNameLoc {scriptMessageName = _name, scriptMessageWhere = _where, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " advisor named "
-                , _name
-                , " in "
-                , _where
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainAdvisorType {scriptMessageAdvtype = _advtype, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , _advtype
-                , " advisor"
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainAdvisorTypeLoc {scriptMessageAdvtype = _advtype, scriptMessageWhere = _where, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , _advtype
-                , " advisor in "
-                , _where
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainAdvisorTypeName {scriptMessageAdvtype = _advtype, scriptMessageName = _name, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , _advtype
-                , " advisor named "
-                , _name
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainAdvisorTypeNameLoc {scriptMessageAdvtype = _advtype, scriptMessageName = _name, scriptMessageWhere = _where, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , _advtype
-                , " advisor named "
-                , _name
-                , " in "
-                , _where
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainFemaleAdvisor {scriptMessageFemale = _female, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , toMessage (ifThenElseT _female "female" "male")
-                , " advisor"
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainFemaleAdvisorLoc {scriptMessageFemale = _female, scriptMessageWhere = _where, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , toMessage (ifThenElseT _female "female" "male")
-                , " advisor in "
-                , _where
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainFemaleAdvisorName {scriptMessageFemale = _female, scriptMessageName = _name, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , toMessage (ifThenElseT _female "female" "male")
-                , " advisor named "
-                , _name
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainFemaleAdvisorNameLoc {scriptMessageFemale = _female, scriptMessageName = _name, scriptMessageWhere = _where, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , toMessage (ifThenElseT _female "female" "male")
-                , " advisor named "
-                , _name
-                , " in "
-                , _where
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainFemaleAdvisorType {scriptMessageFemale = _female, scriptMessageAdvtype = _advtype, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , toMessage (ifThenElseT _female "female" "male")
-                , " "
-                , _advtype
-                , " advisor"
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainFemaleAdvisorTypeLoc {scriptMessageFemale = _female, scriptMessageAdvtype = _advtype, scriptMessageWhere = _where, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , toMessage (ifThenElseT _female "female" "male")
-                , " "
-                , _advtype
-                , " advisor in "
-                , _where
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainFemaleAdvisorTypeName {scriptMessageFemale = _female, scriptMessageAdvtype = _advtype, scriptMessageName = _name, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , toMessage (ifThenElseT _female "female" "male")
-                , " "
-                , _advtype
-                , " advisor named "
-                , _name
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainFemaleAdvisorTypeNameLoc {scriptMessageFemale = _female, scriptMessageAdvtype = _advtype, scriptMessageName = _name, scriptMessageWhere = _where, scriptMessageSkill = _skill, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain skill "
-                , toMessage (roundNum _skill)
-                , " "
-                , toMessage (ifThenElseT _female "female" "male")
-                , " "
-                , _advtype
-                , " advisor named "
-                , _name
-                , " in "
-                , _where
-                , toMessage (advisorDiscountText _discount)
-                ]
-        MsgGainScaledAdvisor {scriptMessageAdvtype = _advtype, scriptMessageDiscount = _discount}
-            -> mconcat
-                [ "Gain a "
-                , _advtype
-                , " with skill level scaled to monthly income"
-                , toMessage (advisorDiscountText _discount)
+                , maybe "" (\e -> " (" <> e <> ")") _extra
                 ]
         MsgRebelLeaderRuler
             -> "The leader of the rebels becomes the country's new ruler"

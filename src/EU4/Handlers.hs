@@ -2218,8 +2218,8 @@ data DefineAdvisor = DefineAdvisor
 newDefineAdvisor :: DefineAdvisor
 newDefineAdvisor = DefineAdvisor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
-defineAdvisor :: forall g m. (EU4Info g, Monad m) => Bool -> StatementHandler g m
-defineAdvisor isScaled stmt@[pdx| %_ = @scr |]
+defineAdvisor :: forall g m. (EU4Info g, Monad m) => Bool -> Maybe Text -> StatementHandler g m
+defineAdvisor isScaled extraText stmt@[pdx| %_ = @scr |]
     = msgToPP . pp_define_advisor =<< foldM addLine newDefineAdvisor scr where
         addLine :: DefineAdvisor -> GenericStatement -> PPT g m DefineAdvisor
         addLine da [pdx| $lhs = %rhs |] = case T.map toLower lhs of
@@ -2267,52 +2267,13 @@ defineAdvisor isScaled stmt@[pdx| %_ = @scr |]
         addLine da _ = return da
         pp_define_advisor :: DefineAdvisor -> ScriptMessage
         pp_define_advisor da =
-            case da_skill da of
-                Just skill ->
-                    let mdiscount = da_discount da
-                        discount = fromMaybe 0.0 mdiscount
-                        mlocation_loc = da_location_loc da
-                        mlocation = mlocation_loc `mplus` (T.pack . show <$> da_location da)
-                    in case (da_female da,
-                               da_type_loc da,
-                               da_name da,
-                               mlocation) of
-                        (Nothing, Nothing, Nothing, Nothing)
-                            -> MsgGainAdvisor skill discount
-                        (Nothing, Nothing, Nothing, Just location)
-                            ->MsgGainAdvisorLoc location skill discount
-                        (Nothing, Nothing, Just name, Nothing)
-                            -> MsgGainAdvisorName name skill discount
-                        (Nothing, Nothing, Just name, Just location)
-                            -> MsgGainAdvisorNameLoc name location skill discount
-                        (Nothing, Just advtype, Nothing, Nothing)
-                            -> MsgGainAdvisorType advtype skill discount
-                        (Nothing, Just advtype, Nothing, Just location)
-                            -> MsgGainAdvisorTypeLoc advtype location skill discount
-                        (Nothing, Just advtype, Just name, Nothing)
-                            -> MsgGainAdvisorTypeName advtype name skill discount
-                        (Nothing, Just advtype, Just name, Just location)
-                            -> MsgGainAdvisorTypeNameLoc advtype name location skill discount
-                        (Just female, Nothing, Nothing, Nothing)
-                            -> MsgGainFemaleAdvisor female skill discount
-                        (Just female, Nothing, Nothing, Just location)
-                            -> MsgGainFemaleAdvisorLoc female location skill discount
-                        (Just female, Nothing, Just name, Nothing)
-                            -> MsgGainFemaleAdvisorName female name skill discount
-                        (Just female, Nothing, Just name, Just location)
-                            -> MsgGainFemaleAdvisorNameLoc female name location skill discount
-                        (Just female, Just advtype, Nothing, Nothing)
-                            -> MsgGainFemaleAdvisorType female advtype skill discount
-                        (Just female, Just advtype, Nothing, Just location)
-                            -> MsgGainFemaleAdvisorTypeLoc female advtype location skill discount
-                        (Just female, Just advtype, Just name, Nothing)
-                            -> MsgGainFemaleAdvisorTypeName female advtype name skill discount
-                        (Just female, Just advtype, Just name, Just location)
-                            -> MsgGainFemaleAdvisorTypeNameLoc female advtype name location skill discount
-                _ -> case (isScaled, da_type_loc da) of
-                        (True, Just advType) -> MsgGainScaledAdvisor advType (fromMaybe 0.0 (da_discount da))
-                        _ -> preMessage stmt
-defineAdvisor _ stmt = preStatement stmt
+            let mdiscount = da_discount da
+                discount = fromMaybe 0.0 mdiscount
+                mlocation_loc = da_location_loc da
+                mlocation = mlocation_loc `mplus` (T.pack . show <$> da_location da)
+                icon = maybe "" iconText (da_type da)
+            in MsgGainAdvisor (da_female da) (da_type_loc da) (da_name da) mlocation (da_skill da) isScaled discount extraText icon
+defineAdvisor _ _ stmt = preStatement stmt
 
 -------------
 -- Dynasty --
