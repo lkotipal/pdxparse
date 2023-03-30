@@ -1459,6 +1459,15 @@ handlersFlagOrProvince = Tr.fromList
         ,("streltsy_infantry"  , spawnRegiment (Just "REGCAT_streltsy") "INFANTRY" "regiment")
         ,("tercio_infantry"    , spawnRegiment (Just "REGCAT_tercio") "INFANTRY" "regiment")
         ,("voc_indiamen_light" , spawnRegiment (Just "REGCAT_voc_indiamen") "LIGHT_SHIP" "ship")
+
+        -- normal regiments of specific types which are spawned by some events
+        -- TODO: automatically generate this from the files
+        ,("steppe_cavalry"     , spawnRegiment (Just "steppe_cavalry") "CAVALRY" "regiment")
+        ,("steppe_lancers"     , spawnRegiment (Just "steppe_lancers") "CAVALRY" "regiment")
+        ,("steppe_raiders"     , spawnRegiment (Just "steppe_raiders") "CAVALRY" "regiment")
+        ,("steppe_riders"      , spawnRegiment (Just "steppe_riders") "CAVALRY" "regiment")
+        ,("steppe_uhlans"      , spawnRegiment (Just "steppe_uhlans") "CAVALRY" "regiment")
+
         ,("remove_core"        , withFlagOrProvince MsgLoseCoreCountry MsgLoseCoreProvince)
         ,("is_colonial_nation_of" , withFlagOrProvince MsgIsColonialNationOf MsgIsColonialNationOf)
         -- RHS is a flag or province id, but the statement's meaning depends on the scope
