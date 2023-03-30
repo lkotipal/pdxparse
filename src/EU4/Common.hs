@@ -1386,6 +1386,7 @@ handlersLocRhs = Tr.fromList
         ,("has_idea"              , withLocAtom MsgHasIdea)
         ,("has_leader"            , withLocAtom MsgHasLeader) -- will usually fail localization
         ,("has_mission"           , withLocAtomTitle MsgHasMission)
+        ,("has_naval_doctrine"    , withLocAtom MsgHasNavalDoctrine)
         ,("has_reform"            , withLocAtom MsgHasReform)
         ,("has_state_edict"       , withLocAtom MsgHasStateEdict)
         ,("has_terrain"           , withLocAtom MsgHasTerrain)

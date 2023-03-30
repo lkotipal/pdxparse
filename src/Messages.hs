@@ -1393,6 +1393,7 @@ data ScriptMessage
     | MsgActiveDecree { scriptMessageWhat :: Text }
     | MsgEocReform { scriptMessageWhat :: Text }
     | MsgIsLackingInstitutions {scriptMessageYn :: Bool}
+    | MsgHasNavalDoctrine { scriptMessageWhat :: Text }
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9209,6 +9210,12 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ ifThenElseT _yn "Does ''not'' have" "Has"
                 , " embraced all the active institutions"
+                ]
+        MsgHasNavalDoctrine {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has "
+                , _what
+                , " naval doctrine"
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
