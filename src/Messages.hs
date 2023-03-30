@@ -1394,6 +1394,10 @@ data ScriptMessage
     | MsgEocReform { scriptMessageWhat :: Text }
     | MsgIsLackingInstitutions {scriptMessageYn :: Bool}
     | MsgHasNavalDoctrine { scriptMessageWhat :: Text }
+    | MsgGivesMilitaryAccess {scriptMessageWhom :: Text}
+    | MsgReceivesMilitaryAccess {scriptMessageWhom :: Text}
+    | MsgGivesFleetBasingRights {scriptMessageWhom :: Text}
+    | MsgReceivesFleetBasingRights {scriptMessageWhom :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9216,6 +9220,26 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has "
                 , _what
                 , " naval doctrine"
+                ]
+        MsgGivesMilitaryAccess {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Gives military access to "
+                , _whom
+                ]
+        MsgReceivesMilitaryAccess {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Receives military access from "
+                , _whom
+                ]
+        MsgGivesFleetBasingRights {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Gives fleet basing rights to "
+                , _whom
+                ]
+        MsgReceivesFleetBasingRights {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Receives fleet basing rights from "
+                , _whom
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
