@@ -1213,6 +1213,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("warscore_from_battles_modifier"        , handleModifier "MODIFIER_WARSCORE_FROM_BATTLES_MODIFIER" (reducedNum (colourPcSign True)))
         ,("yearly_government_power"               , handleModifier "MODIFIER_YEARLY_GOVERNMENT_POWER" (colourNumSign True))
         ,("yearly_innovativeness"                 , handleModifier "MODIFIER_YEARLY_INNOVATIVENESS" (colourNumSign True))
+        ,("fort_level"                            , handleModifier "FORT_LEVEL" (colourNumSign True))
         ]) -- handlersForModifiers
 
 handlersForNonModifiersWithinModifiiers :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
