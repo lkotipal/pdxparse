@@ -1320,6 +1320,7 @@ handlersCompound = Tr.fromList
         ,("every_rival_country"     , scope EU4Country   . compoundMessage MsgEveryRival)
         ,("every_subject_country"   , scope EU4Country   . compoundMessage MsgEverySubject)
         ,("every_trade_node_member_country" , scope EU4Country . compoundMessage MsgEveryTradeNodeMemberCountry)
+        ,("every_trade_node_member_province" , scope EU4Province . compoundMessage (MsgGenericText "All provinces in the trade node:"))
         ,("home_province"           ,                      compoundMessage MsgHomeProvince) -- For mercs
         ,("home_trade_node"         , scope EU4TradeNode . compoundMessage MsgHomeTradeNode)
         ,("home_trade_node_effect_scope" , scope EU4TradeNode . compoundMessage MsgHomeTradeNodeEffectScope)
