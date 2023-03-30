@@ -3152,11 +3152,15 @@ withFlagOrProvinceEU4Scope bothCountryMsg scopeCountryParamGeogMsg scopeGeogPara
 spawnRegiment :: (EU4Info g, Monad m) =>
         Maybe Text  -- localisation key special units(e.g. STRELTSY_REGIMENT_TYPE), Nothing if this is just a normal infantry/cavalry/artillery
         -> Text     -- localisation key for the unit type (e.g. INFANTRY)
+        -> Text     -- is this a regiment or a ship
         -> StatementHandler g m
-spawnRegiment specialUnitType unitType stmt = do
+spawnRegiment specialUnitType unitType regimentOrShip stmt = do
     specialUnitTypeLoc <- getMaybeLoc specialUnitType
     unitTypeLoc <- T.toLower <$> getGameL10n unitType
-    withFlagOrProvince (MsgUnitSpawnsCountry specialUnitTypeLoc unitTypeLoc) (MsgUnitSpawnsProvince specialUnitTypeLoc unitTypeLoc) stmt
+    let unitTypeIcon = case specialUnitType of
+            (Just _) -> ""
+            Nothing -> iconText unitTypeLoc
+    withFlagOrProvince (MsgUnitSpawnsCountry unitTypeIcon specialUnitTypeLoc unitTypeLoc regimentOrShip) (MsgUnitSpawnsProvince unitTypeIcon specialUnitTypeLoc unitTypeLoc regimentOrShip) stmt
     where
         getMaybeLoc :: (IsGameData (GameData g), Monad m) => Maybe Text -> PPT g m (Maybe Text)
         getMaybeLoc (Just locKey) = do

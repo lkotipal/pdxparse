@@ -252,8 +252,8 @@ data ScriptMessage
     | MsgHasAdvisor {scriptMessageWhom :: Text}
     | MsgHasAdvisorType {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasTerrain {scriptMessageWhat :: Text}
-    | MsgUnitSpawnsCountry {scriptMessageSpecialUnitType :: Maybe(Text), scriptMessageUnitType :: Text, scriptMessageWhom :: Text}
-    | MsgUnitSpawnsProvince {scriptMessageSpecialUnitType :: Maybe(Text), scriptMessageUnitType :: Text,scriptMessageWhere :: Text}
+    | MsgUnitSpawnsCountry {scriptMessageIcon :: Text, scriptMessageSpecialUnitType :: Maybe Text, scriptMessageUnitType :: Text, scriptMessageRegimentOrShip :: Text, scriptMessageWhom :: Text}
+    | MsgUnitSpawnsProvince {scriptMessageIcon :: Text, scriptMessageSpecialUnitType :: Maybe Text, scriptMessageUnitType :: Text, scriptMessageRegimentOrShip :: Text, scriptMessageWhere :: Text}
     | MsgAdvisorDies {scriptMessageWho :: Text}
     | MsgDominantCultureIs {scriptMessageWhat :: Text}
     | MsgDominantCultureIsAs {scriptMessageWhat :: Text}
@@ -638,9 +638,6 @@ data ScriptMessage
     | MsgHasTradeModifier {scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageWhat :: Text}
     | MsgIsMonth {scriptMessageWhat :: Text}
     | MsgIsSea {scriptMessageYn :: Bool}
-    | MsgHeavyShip {scriptMessageWhom :: Text}
-    | MsgLightShip {scriptMessageWhom :: Text}
-    | MsgGalley {scriptMessageWhom :: Text}
     | MsgHasMerchant {scriptMessageWho :: Text}
     | MsgNumColonies {scriptMessageAmt :: Double}
     | MsgChangeSameCulture {scriptMessageWhom :: Text}
@@ -2314,24 +2311,26 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " terrain"
                 ]
-        MsgUnitSpawnsCountry {scriptMessageSpecialUnitType = _special_unit_type, scriptMessageUnitType = _unit_type, scriptMessageWhom = _whom}
+        MsgUnitSpawnsCountry {scriptMessageIcon = _icon, scriptMessageSpecialUnitType = _special_unit_type, scriptMessageUnitType = _unit_type, scriptMessageRegimentOrShip = _regiment_or_ship, scriptMessageWhom = _whom}
             -> mconcat
-                [
-                addAOrAn True (T.concat [
+                [ "Create "
+                , addAOrAnWithExtraText False (T.concat [
                     maybe "" (`T.append` " ") _special_unit_type
                    , _unit_type
-                ])
-                , " regiment loyal to "
+                ]) _icon
+                , ifThenElseT (T.null _regiment_or_ship) "" (" " <> _regiment_or_ship)
+                , " belonging to "
                 , _whom
-                , " spawns"
                 ]
-        MsgUnitSpawnsProvince {scriptMessageSpecialUnitType = _special_unit_type, scriptMessageUnitType = _unit_type, scriptMessageWhere = _where}
+        MsgUnitSpawnsProvince {scriptMessageIcon = _icon, scriptMessageSpecialUnitType = _special_unit_type, scriptMessageUnitType = _unit_type, scriptMessageRegimentOrShip = _regiment_or_ship, scriptMessageWhere = _where}
             -> mconcat
-                [ "A"
-                , maybe "" (T.append " ") _special_unit_type
-                , " "
-                , _unit_type
-                , " regiment spawns in "
+                [ "Create "
+                , addAOrAnWithExtraText False (T.concat [
+                    maybe "" (`T.append` " ") _special_unit_type
+                   , _unit_type
+                ]) _icon
+                , ifThenElseT (T.null _regiment_or_ship) "" (" " <> _regiment_or_ship)
+                , " in "
                 , _where
                 ]
         MsgAdvisorDies {scriptMessageWho = _who}
@@ -4769,21 +4768,6 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " sea"
-                ]
-        MsgHeavyShip {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Create a {{icon|heavy ship}} heavy ship belonging to "
-                , _whom
-                ]
-        MsgLightShip {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Create a {{icon|light ship}} light ship belonging to "
-                , _whom
-                ]
-        MsgGalley {scriptMessageWhom = _whom}
-            -> mconcat
-                [ "Create a {{icon|galley}} galley belonging to "
-                , _whom
                 ]
         MsgHasMerchant {scriptMessageWho = _who}
             -> mconcat
