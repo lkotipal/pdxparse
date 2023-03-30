@@ -2333,6 +2333,7 @@ handlersMisc = Tr.fromList
         ,("num_of_completed_idea_groups_by_category", hasCompletedIdeaGroupOfCategory MsgHasCompletedIdeaGroupOfCategory)
         ,("num_of_owned_provinces_with" , numOwnedProvincesWith MsgNumOwnedProvincesWith)
         ,("num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with" , numOwnedProvincesWith MsgNumOwnedProvincesOrNonSovereignSubjectsWith)
+        ,("num_of_provinces_owned_or_owned_by_subjects_with" , numOwnedProvincesWith MsgNumOwnedProvincesOrSubjectsWith)
         ,("num_of_religion"     , numOfReligion)
         ,("num_of_states_owned_or_owned_by_non_sovereign_subjects_with" , numOwnedProvincesWith MsgNumOwnedStatesOrNonSovereignSubjectsWith)
         ,("piety"               , piety)

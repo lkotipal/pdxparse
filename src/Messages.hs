@@ -844,6 +844,7 @@ data ScriptMessage
     | MsgEmployedAdvisorMale {scriptMessageMale :: Bool}
     | MsgNumOwnedProvincesWith {scriptMessageAmt :: Double}
     | MsgNumOwnedProvincesOrNonSovereignSubjectsWith {scriptMessageAmt :: Double}
+    | MsgNumOwnedProvincesOrSubjectsWith {scriptMessageAmt :: Double}
     | MsgNumOwnedStatesOrNonSovereignSubjectsWith {scriptMessageAmt :: Double}
     | MsgSetVariable { scriptMessageVar1 :: Text, scriptMessageVar2 :: Text}
     | MsgSetVariableVal { scriptMessageVar :: Text, scriptMessageAmt :: Double}
@@ -5905,6 +5906,12 @@ instance RenderMessage Script ScriptMessage where
                 [ "At least "
                 , toMessage (plainNum _amt)
                 , " provinces owned by the country or non-tributary subjects with:"
+                ]
+        MsgNumOwnedProvincesOrSubjectsWith {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "At least "
+                , toMessage (plainNum _amt)
+                , " provinces owned by the country or its subjects with:"
                 ]
         MsgNumOwnedStatesOrNonSovereignSubjectsWith {scriptMessageAmt = _amt}
             -> mconcat
