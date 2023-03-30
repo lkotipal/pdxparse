@@ -219,6 +219,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("set_center_level_2_center_of_trade" , rhsAlwaysYes (MsgSetCenterOfTrade2 (iconText "cotlvl2") (iconText "production")))
         ,("set_center_level_3_center_of_trade" , rhsAlwaysYes (MsgSetCenterOfTrade3 (iconText "cotlvl3") (iconText "cotlvl2") (iconText "production")))
         ,("set_estate_led_regency_privilege" , rhsAlways "random" MsgSetEstateLedRegencyPrivilegeRandom) -- Only random used in 1.31.3
+        ,("set_prestige_to_zero"     , rhsAlwaysYes (MsgGenericText "Set {{icon|prestige}} prestige to {{red|0}}"))
         ,("swap_free_idea_group"     , rhsAlwaysYes MsgSwapFreeIdeaGroup)
         ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
         ,("map_setup"              , rhsAlways "map_setup_random" MsgMapSetupRandom) -- In 1.30.6 all uses are "map_setup = map_setup_random"
