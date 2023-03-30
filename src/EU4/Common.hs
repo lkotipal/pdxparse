@@ -1421,6 +1421,7 @@ handlersProvince = Tr.fromList
         ,("controls"          , withProvince MsgControls)
         ,("discover_province" , withProvince MsgDiscoverProvince)
         ,("higher_development_than" , withProvince MsgHigherDevelopmentThan)
+        ,("is_neighbor_of_province", withProvince MsgIsNeighborOfProvince)
         ,("owns"              , withProvince MsgOwns)
         ,("owns_core_province", withProvince MsgOwnsCore)
         ,("owns_or_non_sovereign_subject_of" , withProvince MsgOwnsOrNonTribSubject)

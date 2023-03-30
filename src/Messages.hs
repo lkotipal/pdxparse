@@ -1386,6 +1386,7 @@ data ScriptMessage
     | MsgStartDebate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddInflationScaledToTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNationalFocus {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgIsNeighborOfProvince {scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9165,6 +9166,11 @@ instance RenderMessage Script ScriptMessage where
                 ["National focus is set to "
                 , _icon
                 , " "
+                , _what
+                ]
+        MsgIsNeighborOfProvince {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Neighbors province "
                 , _what
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
