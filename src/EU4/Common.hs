@@ -2294,7 +2294,6 @@ handlersMisc = Tr.fromList
         ,("add_years_of_trade_income"   , yearsOfTradeIncome "trade income")
         ,("add_years_of_owned_provinces_manpower", addYearsOfOwnedProvinceIncome "manpower")
         ,("add_years_of_owned_provinces_production_income", addYearsOfOwnedProvinceIncome "PROD_INCOME")
-        ,("add_core"            , addCore)
         ,("add_manpower"        , gainMen)
         ,("add_sailors"         , gainMen)
         ,("calc_true_if"        , calcTrueIf)

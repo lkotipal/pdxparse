@@ -62,7 +62,6 @@ module EU4.Handlers (
     ,   factionInPower
     ,   factionInPowerEffect
     ,   addModifier
-    ,   addCore
     ,   opinion
     ,   hasOpinion
     ,   spawnRebels
@@ -1836,22 +1835,6 @@ addModifier kind stmt@(Statement _ OpEq (CompoundRhs scr)) =
             _ -> preStatement stmt -- Must have mod id
     else preStatement stmt
 addModifier _ stmt = preStatement stmt
-
--- Add core
-
--- "add_core = <n>" in country scope means "Gain core on <localize PROVn>"
--- "add_core = <tag>" in province scope means "<localize tag> gains core"
-addCore :: (EU4Info g, Monad m) =>
-    StatementHandler g m
-addCore [pdx| %_ = $tag |]
-  = msgToPP =<< do -- tag
-    tagflag <- flagText (Just EU4Country) tag
-    return $ MsgTagGainsCore tagflag
-addCore [pdx| %_ = !num |]
-  = msgToPP =<< do -- province
-    prov <- getProvLoc num
-    return $ MsgGainCoreOnProvince prov
-addCore stmt = preStatement stmt
 
 -- Opinions
 

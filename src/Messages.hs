@@ -536,8 +536,6 @@ data ScriptMessage
     | MsgSpawnRebels {scriptMessageRtype :: Text, scriptMessageSize :: Double, scriptMessageFriend :: Text, scriptMessageLeader :: Text, scriptMessageWin :: Bool, scriptMessageProgress :: Text}
     | MsgSpawnProvinceReligiousRebels {scriptMessageSize :: Double}
     | MsgRebelsHaveRisen {scriptMessageIcon :: Text, scriptMessageRtype :: Text}
-    | MsgTagGainsCore {scriptMessageWho :: Text}
-    | MsgGainCoreOnProvince {scriptMessageProv :: Text}
     | MsgHasDLC {scriptMessageIcon :: Text, scriptMessageDlc :: Text}
     | MsgProvince {scriptMessageWhere :: Text}
     | MsgTechGroup {scriptMessageIcon :: Text, scriptMessageName :: Text}
@@ -4139,16 +4137,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _rtype
                 , " have risen in revolt"
-                ]
-        MsgTagGainsCore {scriptMessageWho = _who}
-            -> mconcat
-                [ _who
-                , " gains a core on this province"
-                ]
-        MsgGainCoreOnProvince {scriptMessageProv = _prov}
-            -> mconcat
-                [ "Gain core on "
-                , _prov
                 ]
         MsgHasDLC {scriptMessageIcon = _icon, scriptMessageDlc = _dlc}
             -> mconcat
