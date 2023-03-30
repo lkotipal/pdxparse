@@ -1972,6 +1972,11 @@ rebel_loc = HM.fromList
         ,("leadered_peasant_rebels",("Leadered peasants", "leadered peasants"))
         ,("nap_republican_rebels",  ("Republican rebels", "republicans"))
         ,("tribal_rebels",          ("Tribal rebels", "tribal rebels"))
+        ,("eunuch_rebels",          ("Eunuch rebels", "eunuch rebels"))
+        ,("janissary_rebels",       ("Janissary rebels", "janissary rebels"))
+        ,("independence_rebels",    ("Independence rebels", "independence rebels"))
+        ,("parliamentarians_rebels",("Parliamentarian rebels", "parliamentarian rebels"))
+        ,("renegade_sultan_son_rebels",("Renegade pretender rebels", "renegade pretender rebels"))
         ]
 
 -- Spawn a rebel stack.
