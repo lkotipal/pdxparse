@@ -1415,6 +1415,9 @@ data ScriptMessage
     | MsgAddRival {scriptMessageWhom :: Text}
     | MsgRemoveRival {scriptMessageWhom :: Text}
     | MsgForceRemoveRival {scriptMessageWhom :: Text}
+    | MsgAddADMTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgAddDIPTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgAddMILTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9377,7 +9380,30 @@ instance RenderMessage Script ScriptMessage where
                 , _whom
                 , " as a [[rival]]. The country can't be selected as a rival again for 15 years."
                 ]
-
+        MsgAddADMTech {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Advance "
+                , _icon
+                , " administrative technology by "
+                , toMessage (roundNum _amt)
+                , plural _amt " level" " levels"
+                ]
+        MsgAddDIPTech {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Advance "
+                , _icon
+                , " diplomatic technology by "
+                , toMessage (roundNum _amt)
+                , plural _amt " level" " levels"
+                ]
+        MsgAddMILTech {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Advance "
+                , _icon
+                , " military technology by "
+                , toMessage (roundNum _amt)
+                , plural _amt " level" " levels"
+                ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
 -- FIXME: What's the significance of this?
