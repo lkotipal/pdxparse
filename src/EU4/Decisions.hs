@@ -113,6 +113,7 @@ decisionAddSection dec [pdx| do_not_integrate = %_   |] = return dec -- maybe me
 decisionAddSection dec [pdx| do_not_core      = %_   |] = return dec -- maybe mention this in AI notes
 decisionAddSection dec [pdx| major            = %_   |] = return dec -- currently no field in the template for this
 decisionAddSection dec [pdx| provinces_to_highlight = %_   |] = return dec -- not interesting
+decisionAddSection dec [pdx| color            = %_   |] = return dec -- not interesting
 decisionAddSection dec [pdx| ai_importance    = %_   |]
             -- TODO: use logging instead of trace
         = -- trace "notice: ai_importance not yet implemented" $ -- TODO: Ignored for now
