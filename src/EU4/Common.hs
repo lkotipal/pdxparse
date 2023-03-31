@@ -1061,7 +1061,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("amount_of_carolean"                    , handleModifier "MODIFIER_AMOUNT_OF_CAROLEAN" (reducedNum (colourPcSign True)))
         ,("amount_of_hussars"                     , handleModifier "MODIFIER_AMOUNT_OF_HUSSARS" (colourNumSign True))
         ,("artillery_levels_available_vs_fort"    , handleModifier "MODIFIER_ARTILLERY_LEVELS_AVAILABLE_VS_FORT" (colourNumSign True))
-        ,("attack_bonus_in_capital_terrain"       , rhsAlwaysYes (MsgGenericText "Combat bonus in terrain of capital: +1"))
+        ,("attack_bonus_in_capital_terrain"       , handleModifier "MODIFIER_ATTACK_BONUS_IN_CAPITAL_TERRAIN" (colourNumSign True))
         ,("can_chain_claim"                       , rhsAlwaysYes (MsgGenericText "Allow claims bordering claims"))
         ,("can_colony_boost_development"          , rhsAlwaysYes (MsgGenericText "+1 tax, +1 production and +1 manpower when colony finished"))
         ,("can_recruit_hussars"                   , rhsAlwaysYes (MsgGenericText "May recruit winged hussars"))
