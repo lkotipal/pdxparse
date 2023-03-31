@@ -1437,6 +1437,7 @@ handlersProvince = Tr.fromList
         ,("owns_or_non_sovereign_subject_of" , withProvince MsgOwnsOrNonTribSubject)
         ,("owns_or_vassal_of" , withProvince MsgOwnsOrVassal)
         ,("province_id"       , withProvince MsgProvinceIs)
+        ,("same_trade_node_as", withProvince MsgSameTradeNodeAs)
         ,("set_capital"       , withProvince MsgSetCapital)
         ]
 

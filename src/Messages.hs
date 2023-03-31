@@ -1407,6 +1407,7 @@ data ScriptMessage
     | MsgSetBT {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSetBP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSetBM {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgSameTradeNodeAs {scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9313,6 +9314,11 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , " base manpower to "
                 , toMessage (plainNum _amt)
+                ]
+        MsgSameTradeNodeAs {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Is in the same trade node as "
+                , _what
                 ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
