@@ -1408,6 +1408,9 @@ data ScriptMessage
     | MsgSetBP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSetBM {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSameTradeNodeAs {scriptMessageWhat :: Text}
+    | MsgAddRival {scriptMessageWhom :: Text}
+    | MsgRemoveRival {scriptMessageWhom :: Text}
+    | MsgForceRemoveRival {scriptMessageWhom :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9320,6 +9323,25 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is in the same trade node as "
                 , _what
                 ]
+        MsgAddRival {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Add "
+                , _whom
+                , " as a [[rival]]."
+                ]
+        MsgRemoveRival {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Remove "
+                , _whom
+                , " as a [[rival]]."
+                ]
+        MsgForceRemoveRival {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Remove "
+                , _whom
+                , " as a [[rival]]. The country can't be selected as a rival again for 15 years."
+                ]
+
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
 -- FIXME: What's the significance of this?
