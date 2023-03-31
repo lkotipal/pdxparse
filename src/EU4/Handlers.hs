@@ -3440,6 +3440,8 @@ setVariable msgWW msgWV stmt@[pdx| %_ = @scr |]
                 sv { sv_which2 = Just val }
         addLine sv [pdx| value = !val |]
             = sv { sv_value = Just val }
+        addLine sv [pdx| $which = !val |]
+            = sv { sv_which = Just which, sv_value = Just val }
         addLine sv _ = sv
         toTT :: Text -> Text
         toTT t = "<tt>" <> t <> "</tt>"
