@@ -1273,6 +1273,9 @@ data ScriptMessage
     | MsgHasTrader {scriptMessageWhom :: Text}
     | MsgArtilleryFraction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgCavalryFraction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgInfantryFraction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGalleyFraction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgHeavyShipFraction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLightShipFraction {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgProsperity {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgIsProsperous {scriptMessageYn :: Bool}
@@ -8477,6 +8480,27 @@ instance RenderMessage Script ScriptMessage where
                 [ "The ratio of "
                 , _icon
                 , " cavalry to total army size is at least "
+                , toMessage (reducedNum plainPc _amt)
+                ]
+        MsgInfantryFraction {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The ratio of "
+                , _icon
+                , " infantry to total army size is at least "
+                , toMessage (reducedNum plainPc _amt)
+                ]
+        MsgGalleyFraction {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The ratio of "
+                , _icon
+                , " galleys to total navy size is at least "
+                , toMessage (reducedNum plainPc _amt)
+                ]
+        MsgHeavyShipFraction {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "The ratio of "
+                , _icon
+                , " heavy ships to total navy size is at least "
                 , toMessage (reducedNum plainPc _amt)
                 ]
         MsgLightShipFraction {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
