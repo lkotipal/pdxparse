@@ -209,7 +209,7 @@ import Abstract -- everything
 import Doc (Doc)
 import qualified Doc -- everything
 import Messages -- everything
-import MessageTools (plural, iquotes)
+import MessageTools (plural, iquotes, plainNum)
 import QQ -- everything
 import SettingsTypes ( PPT, IsGameData (..), GameData (..), IsGameState (..), GameState (..)
                      , indentUp, indentDown, withCurrentIndent, withCurrentIndentZero, alsoIndent, alsoIndent'
@@ -3323,10 +3323,12 @@ data EmployedAdvisor = EmployedAdvisor
         ,   ea_male :: Maybe Bool
         ,   ea_culture :: Maybe Text
         ,   ea_religion :: Maybe Text
+        ,   ea_skill :: Maybe Double
+        ,   ea_name :: Maybe Text
         }
         deriving Show
 newEA :: EmployedAdvisor
-newEA = EmployedAdvisor Nothing Nothing Nothing Nothing Nothing
+newEA = EmployedAdvisor Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 employedAdvisor :: forall g m. (EU4Info g, Monad m) => StatementHandler g m
 employedAdvisor stmt@[pdx| %_ = @scr |] = do
@@ -3354,6 +3356,10 @@ employedAdvisor stmt@[pdx| %_ = @scr |] = do
             = ea { ea_culture = textRhs cul }
         addLine ea [pdx| religion = %rel |]
             = ea { ea_religion = textRhs rel }
+        addLine ea [pdx| skill = !skl |]
+            = ea { ea_skill = Just skl }
+        addLine ea [pdx| name = %nam |]
+            = ea { ea_name = textRhs nam }
         addLine ea line = (trace $ ("Unhandled employed_advisor condition in " ++ currentFile ++ ": " ++ show line)) $ ea
 
 
@@ -3407,6 +3413,12 @@ employedAdvisor stmt@[pdx| %_ = @scr |] = do
                 (t, i) <- tryLocAndIcon religion
                 msg <- msgToPP' $ MsgReligion i t
                 return (Just (msg, ea { ea_religion = Nothing }))
+        pp_employed_advisor_attrib ea@EmployedAdvisor { ea_skill = Just skill } = do
+            msg <- msgToPP' $ MsgGenericAtLeast "" skill "skill" plainNum
+            return (Just (msg, ea { ea_skill = Nothing }))
+        pp_employed_advisor_attrib ea@EmployedAdvisor { ea_name = Just name } = do
+            msg <- msgToPP' $ MsgNamed name
+            return (Just (msg, ea { ea_name = Nothing }))
         pp_employed_advisor_attrib _ = return Nothing
 
     pp_employed_advisor $ foldl' addLine newEA scr
