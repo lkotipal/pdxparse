@@ -1418,6 +1418,7 @@ data ScriptMessage
     | MsgAddADMTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddDIPTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddMILTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgIsHegemon {scriptMessageYn :: Bool}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9404,6 +9405,13 @@ instance RenderMessage Script ScriptMessage where
                 , toMessage (roundNum _amt)
                 , plural _amt " level" " levels"
                 ]
+        MsgIsHegemon {scriptMessageYn = _yn}
+            -> mconcat
+                [ "Is"
+                , ifThenElseT _yn "" " ''not''"
+                ," a [[hegemon]]"
+                ]
+
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
 -- FIXME: What's the significance of this?
