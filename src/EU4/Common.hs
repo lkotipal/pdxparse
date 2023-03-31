@@ -300,7 +300,6 @@ handlersNumeric = Tr.fromList
         ,("convert_heir_to_general"          , numeric (MsgConvertHeirGeneral False))
         ,("convert_female_heir_to_general"   , numeric (MsgConvertHeirGeneral True))
         ,("convert_female_ruler_to_general"  , numeric MsgConvertFemaleRulerGeneral)
-        ,("crown_land_share"                 , numeric MsgCrownlandShare)
         ,("curia_treasury_income"            , numeric MsgCuriaTreasuryIncome)
         ,("curia_treasury_size"              , numeric MsgCuriaTreasurySize)
         ,("extend_golden_age"                , numeric MsgExtendGoldenAge)
@@ -1937,6 +1936,9 @@ handlersNumericOrTag = Tr.fromList
         ,("total_own_and_non_tributary_subject_development" , numericOrTagIcon "development" MsgOwnOrNonTribSubjectDevelopment MsgOwnOrNonTribSubjectDevelopmentAs)
         ,("transports_in_province", numericOrTag (MsgUnitsInProvince "transport") (MsgUnitsInProvinceOwnedBy "transport"))
         ,("units_in_province"     , numericOrTag (MsgUnitsInProvince "") (MsgUnitsInProvinceOwnedBy ""))
+
+        -- not a tag, but an estate:
+        ,("crown_land_share"      , numericOrAtomIcon "crown land" MsgCrownlandShare MsgCrownlandShareThan)
         ]
 -- | Handlers for triggers with at least
 handlersAtLeast :: (EU4Info g, Monad m) => Trie (StatementHandler g m)

@@ -35,6 +35,7 @@ module EU4.Handlers (
     ,   numeric
     ,   numericOrTag
     ,   numericOrTagIcon
+    ,   numericOrAtomIcon
     ,   numericIconChange
     ,   buildingCount
     ,   withFlag
@@ -1286,6 +1287,19 @@ numericOrTagIcon iconkey numMsg _ [pdx| %_ = !num |]
 numericOrTagIcon iconkey _ tagMsg scr@[pdx| %_ = $_ |]
     = withFlagAndIcon iconkey tagMsg (Just EU4Country) scr
 numericOrTagIcon  _ _ _ stmt = plainMsg $ pre_statement' stmt
+
+-- | Handler for statements where the RHS is either a number or a localizable atom, that
+-- also require an icon.
+numericOrAtomIcon :: (EU4Info g, Monad m) =>
+    Text
+        -> (Text -> Double -> ScriptMessage)
+        -> (Text -> Text -> Text -> ScriptMessage)
+        -> StatementHandler g m
+numericOrAtomIcon iconkey numMsg _ [pdx| %_ = !num |]
+    = msgToPP $ numMsg (iconText iconkey) num
+numericOrAtomIcon iconkey _ atomMsg scr@[pdx| %_ = $_ |]
+    = withLocAtomIcon (atomMsg (iconText iconkey)) scr
+numericOrAtomIcon  _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for a statement referring to a country. Use a flag.
 withFlag :: (EU4Info g, Monad m) =>

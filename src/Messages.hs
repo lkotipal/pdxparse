@@ -1042,7 +1042,8 @@ data ScriptMessage
     | MsgNavalStrength {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgRemoveBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHigherDevelopmentThan {scriptMessageWhat :: Text}
-    | MsgCrownlandShare {scriptMessageAmt :: Double}
+    | MsgCrownlandShare {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgCrownlandShareThan {scriptMessageIcon :: Text, scriptMessageIcon2 :: Text, scriptMessageWhom :: Text}
     | MsgNumEstateAgendas {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgNumEstatePrivileges {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgAnyProvinceInState
@@ -7133,11 +7134,22 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has higher development than "
                 , _what
                 ]
-        MsgCrownlandShare {scriptMessageAmt = _amt}
+        MsgCrownlandShare {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ "Has at least "
+                , _icon
+                , " "
                 , toMessage $ (plainPc _amt)
                 , " [[crown land]] ownership"
+                ]
+        MsgCrownlandShareThan {scriptMessageIcon = _icon, scriptMessageIcon2 = _icon2, scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Has at least as much "
+                , _icon
+                , " [[crown land]] ownership as "
+                , _icon2
+                , " "
+                , _whom
                 ]
         MsgNumEstateAgendas {scriptMessageIcon = _icon, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
             -> mconcat
