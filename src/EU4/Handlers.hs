@@ -4088,6 +4088,19 @@ killAdvisorByCategory :: forall g m. (EU4Info g, Monad m) => StatementHandler g 
 killAdvisorByCategory stmt@[pdx| %_ = @scr |] | [[pdx| $typ = yes |]] <- scr = do
     typeLoc <- getGameL10n typ
     msgToPP $ MsgRemoveAdvisor typeLoc
+killAdvisorByCategory stmt@[pdx| %_ = @scr |] | [[pdx| $typ = yes |], [pdx| $typ2 = yes |]] <- scr = do
+    typeLoc <- getGameL10n typ
+    type2Loc <- getGameL10n typ2
+    mapM handleLine [typeLoc, type2Loc]
+    where
+        handleLine x = msgToPP' $ MsgRemoveAdvisor x
+killAdvisorByCategory stmt@[pdx| %_ = @scr |] | [[pdx| $typ = yes |], [pdx| $typ2 = yes |], [pdx| $typ3 = yes |]] <- scr = do
+    typeLoc <- getGameL10n typ
+    type2Loc <- getGameL10n typ2
+    type3Loc <- getGameL10n typ3
+    mapM handleLine [typeLoc, type2Loc, type3Loc]
+    where
+        handleLine x = msgToPP' $ MsgRemoveAdvisor x
 killAdvisorByCategory stmt = (trace $ "Not handled in kill_advisor_by_category_effect: " ++ show stmt) $ preStatement stmt
 
 ------------------------
