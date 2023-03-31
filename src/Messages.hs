@@ -46,7 +46,7 @@ import Abstract (GenericStatement)
 import qualified Doc
 import MessageTools -- import everything
 import SettingsTypes (PPT, getLangs, GameData (..), IsGameData (..))
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, fromMaybe, catMaybes)
 
 -- | Dummy type required by the Shakespeare machinery.
 data Script = Script
@@ -1218,7 +1218,7 @@ data ScriptMessage
     | MsgIsMarch {scriptMessageYn :: Bool}
     | MsgIsSubjectOtherThanTributary
     | MsgSpawnScaledRebels {scriptMessageRtype :: Text, scriptMessageLeader :: Text, scriptMessageYn :: Bool}
-    | MsgCreateIndependentEstate {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageDesc :: Text, scriptMessageYn :: Bool}
+    | MsgCreateIndependentEstate {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageMaybeGovernment :: Maybe Text, scriptMessageMaybeGovernmentReform :: Maybe Text, scriptMessageMaybeCustomNationalIdeas :: Maybe Text, scriptMessageYn :: Bool}
     | MsgHasLeaders {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageDesc :: Text, scriptMessageAmt :: Double}
     | MsgScaledEstateLandShareEffect {scriptMessageYn :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgProvinceDistance {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
@@ -8146,13 +8146,23 @@ instance RenderMessage Script ScriptMessage where
                 , " revolt scaled by total development"
                 , _leader
                 ]
-        MsgCreateIndependentEstate {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageDesc = _desc, scriptMessageYn = _play_as}
+        MsgCreateIndependentEstate {scriptMessageIcon = _icon
+                                   , scriptMessageWhat = _what
+                                   , scriptMessageMaybeGovernment = _government
+                                   , scriptMessageMaybeGovernmentReform = _government_reform
+                                   , scriptMessageMaybeCustomNationalIdeas = _custom_national_ideas
+                                   , scriptMessageYn = _play_as}
             -> mconcat
                 [ _icon
                 , " "
                 , _what
                 , " estate declares independence, forming their own nation"
-                , _desc
+                , ifThenElseT (isJust _government || isJust _government_reform || isJust _custom_national_ideas) " with " ""
+                , T.intercalate " and " (catMaybes
+                    [ fmap (\g -> "a " <> g <> " government") _government
+                    , fmap (\r -> "the " <> r <> " reform") _government_reform
+                    ,  _custom_national_ideas
+                    ])
                 , "."
                 , ifThenElseT _play_as " The human player takes over this new country." ""
                 ]

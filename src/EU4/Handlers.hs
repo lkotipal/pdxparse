@@ -4176,17 +4176,12 @@ createIndependentEstate stmt@[pdx| %_ = @scr |] = msgToPP =<< pp_cie (foldl' add
         addLine cie stmt = (trace $ "Not handled in createIndependentEstate: " ++ show stmt) $ cie
 
         pp_cie :: CreateIndependentEstate -> PPT g m ScriptMessage
-        pp_cie cie@CreateIndependentEstate{cie_estate = Just estate, cie_government = Just gov, cie_government_reform = Just reform, cie_national_ideas = Just ideas} = do
+        pp_cie cie@CreateIndependentEstate{cie_estate = Just estate, cie_government = gov, cie_government_reform = reform, cie_national_ideas = ideas} = do
             estateLoc <- getGameL10n estate
-            govLoc <- getGameL10n gov
-            govReformLoc <- getGameL10n reform
-            ideasLoc <- getGameL10n ideas
-            -- FIXME: Should actually be localizable
-            let desc = " with " <> govLoc <> " government, the " <> govReformLoc <> " reform and " <> ideasLoc
-            return $ MsgCreateIndependentEstate (iconText estate) estateLoc desc (cie_play_as cie)
-        pp_cie cie@CreateIndependentEstate{cie_estate = Just estate, cie_government = Nothing, cie_government_reform = Nothing, cie_national_ideas = Nothing} = do
-            estateLoc <- getGameL10n estate
-            return $ MsgCreateIndependentEstate (iconText estate) estateLoc "" (cie_play_as cie)
+            govLoc <- maybeM getGameL10n gov
+            govReformLoc <- maybeM getGameL10n reform
+            ideasLoc <- maybeM getGameL10n ideas
+            return $ MsgCreateIndependentEstate (iconText estate) estateLoc govLoc govReformLoc ideasLoc (cie_play_as cie)
         pp_cie cie = return $ (trace $ "Not handled in createIndependentEstate: cie=" ++ show cie ++ " stmt=" ++ show stmt) $ preMessage stmt
 createIndependentEstate stmt = (trace $ "Not handled in createIndependentEstate: " ++ show stmt) $ preStatement stmt
 
