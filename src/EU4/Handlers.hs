@@ -1589,6 +1589,8 @@ taTypeFlag _ _ _ stmt = preStatement stmt
 getEffectArg :: Text -> GenericStatement -> Maybe GenericRhs
 getEffectArg tArg stmt@[pdx| %_ = @scr |] = case scr of
         [[pdx| $arg = %val |]] | T.toLower arg == tArg -> Just val
+        [[pdx| $arg = %val |], [pdx| custom_tooltip = %_ |]] | T.toLower arg == tArg -> Just val
+        [[pdx| custom_tooltip = %_ |], [pdx| $arg = %val |]] | T.toLower arg == tArg -> Just val
         _ -> Nothing
 getEffectArg _ _ = Nothing
 
