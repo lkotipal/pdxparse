@@ -14,12 +14,14 @@ module HOI4.Types (
     ,   HOI4Idea (..)
     ,   HOI4OpinionModifier (..)
     ,   HOI4DynamicModifier (..)
+    ,   HOI4Modifier (..)
     ,   HOI4NationalFocus (..)
 
     ,   HOI4CountryHistory (..)
-    ,   HOI4Character (..)
+    ,   HOI4Character (..), HOI4Advisor (..)
     ,   HOI4CountryLeaderTrait (..)
     ,   HOI4UnitLeaderTrait (..)
+    ,   HOI4BopRange (..)
         -- * Low level types
     ,   HOI4Scope (..)
     ,   AIWillDo (..)
@@ -31,14 +33,12 @@ import Data.List (foldl')
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.HashMap.Strict (HashMap)
-import qualified Data.HashMap.Strict as HM
-import Data.Hashable (Hashable)
-import GHC.Generics (Generic)
 
 import Abstract -- everything
 import QQ (pdx)
 import SettingsTypes ( PPT, Settings
                      , IsGame (..), IsGameData (..), IsGameState (..))
+import HOI4.Messages (ScriptMessage)
 --import Doc
 
 --------------------------------------------
@@ -56,6 +56,7 @@ data HOI4Data = HOI4Data {
     ,   hoi4eventTriggers :: HOI4EventTriggers
     ,   hoi4decisionTriggers :: HOI4DecisionTriggers
     ,   hoi4dynamicmodifiers :: HashMap Text HOI4DynamicModifier
+    ,   hoi4modifiers :: HashMap Text HOI4Modifier
     ,   hoi4nationalfocusScripts :: HashMap FilePath GenericScript
     ,   hoi4nationalfocus :: HashMap Text HOI4NationalFocus
     ,   hoi4countryHistory :: HashMap Text HOI4CountryHistory
@@ -66,11 +67,12 @@ data HOI4Data = HOI4Data {
     ,   hoi4opmodScripts :: HashMap FilePath GenericScript
     ,   hoi4onactionsScripts :: HashMap FilePath GenericScript
     ,   hoi4dynamicmodifierScripts :: HashMap FilePath GenericScript
+    ,   hoi4modifierScripts :: HashMap FilePath GenericScript
 
     ,   hoi4countryHistoryScripts :: HashMap FilePath GenericScript -- Country Tag -> country tag + ideology
     ,   hoi4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
-    ,   hoi4interfacegfxScripts :: HashMap FilePath GenericScript
-    ,   hoi4interfacegfx :: HashMap Text Text
+--    ,   hoi4interfacegfxScripts :: HashMap FilePath GenericScript
+--    ,   hoi4interfacegfx :: HashMap Text Text
     ,   hoi4characterScripts :: HashMap FilePath GenericScript
     ,   hoi4characters :: HashMap Text HOI4Character
     ,   hoi4countryleadertraitScripts :: HashMap FilePath GenericScript
@@ -81,11 +83,17 @@ data HOI4Data = HOI4Data {
     ,   hoi4terrain :: [Text]
     ,   hoi4ideologyScripts :: HashMap FilePath GenericScript
     ,   hoi4ideology :: HashMap Text Text
-    ,   hoi4chartoken :: HashMap Text HOI4Character
+    ,   hoi4chartoken :: HashMap Text HOI4Advisor
     ,   hoi4scriptedeffectScripts :: HashMap FilePath GenericScript
     ,   hoi4scriptedeffects :: HashMap Text GenericStatement
     ,   hoi4scriptedtriggerScripts :: HashMap FilePath GenericScript
-    ,   hoi4scriptedtriggers:: HashMap Text GenericStatement
+    ,   hoi4scriptedtriggers :: HashMap Text GenericStatement
+    ,   hoi4modifierdefinitionScripts :: HashMap FilePath GenericScript
+    ,   hoi4modifierdefinitions :: HashMap Text (Text -> Double -> ScriptMessage)
+    ,   hoi4bopScripts :: HashMap FilePath GenericScript
+    ,   hoi4bops :: HashMap Text HOI4BopRange
+    ,   hoi4lockeys :: [Text]
+    ,   hoi4modkeys :: [Text]
 
     ,   hoi4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   hoi4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -145,6 +153,10 @@ class (IsGame g,
     getDynamicModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed dynamic modifiers table (keyed on modifier ID).
     getDynamicModifiers :: Monad m => PPT g m (HashMap Text HOI4DynamicModifier)
+    -- | Get the contents of all modifier script files.
+    getModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the parsed modifiers table (keyed on modifier ID).
+    getModifiers :: Monad m => PPT g m (HashMap Text HOI4Modifier)
     -- | Get the content of all national focus files
     getNationalFocusScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get extra scripts parsed from command line arguments
@@ -154,10 +166,6 @@ class (IsGame g,
     getCountryHistoryScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the country history parsed
     getCountryHistory :: Monad m => PPT g m (HashMap Text HOI4CountryHistory)
-    -- | Get the interface, for icon paths, scripts
-    getInterfaceGFXScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
-    -- | Get the interface, for icon paths, parsed
-    getInterfaceGFX :: Monad m => PPT g m (HashMap Text Text)
     -- | Get character script
     getCharacterScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the characters parsed
@@ -178,8 +186,8 @@ class (IsGame g,
     getIdeologyScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the leader traits parsed
     getIdeology :: Monad m => PPT g m (HashMap Text Text)
-    -- | Get the characters keyed on ideatoken
-    getCharToken :: Monad m => PPT g m (HashMap Text HOI4Character)
+    -- | Get the advisors keyed on ideatoken
+    getCharToken :: Monad m => PPT g m (HashMap Text HOI4Advisor)
     -- | Get scripted effects script
     getScriptedEffectScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the scripted effects parsed
@@ -188,6 +196,18 @@ class (IsGame g,
     getScriptedTriggerScripts  :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the scripted triggers parsed
     getScriptedTriggers  :: Monad m => PPT g m (HashMap Text GenericStatement)
+    -- | Get modifier definition scripts
+    getModifierDefintionScripts  :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the modifier definition  parsed
+    getModifierDefinitions  :: Monad m => PPT g m (HashMap Text (Text -> Double -> ScriptMessage))
+    -- | Get balance of power script
+    getBopScripts  :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | Get the balance of power parsed
+    getBops  :: Monad m => PPT g m (HashMap Text HOI4BopRange)
+    -- | Get the lockeys
+    getLocKeys :: Monad m => PPT g m [Text]
+    -- | Get the modkeys parsed
+    getModKeys :: Monad m => PPT g m [Text]
 
     -- | Get extra scripts parsed from command line arguments
     getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
@@ -276,9 +296,11 @@ data HOI4EventSource =
     | HOI4EvtSrcNFSelect Text Text Text             -- Effect of selecting a national focus
     | HOI4EvtSrcIdeaOnAdd Text Text Text Text       -- Effect of adding an idea
     | HOI4EvtSrcIdeaOnRemove Text Text Text Text    -- Effect of removing an idea
-    | HOI4EvtSrcCharacterOnAdd Text Text            -- Effect of adding an advisor
-    | HOI4EvtSrcCharacterOnRemove Text Text         -- Effect of removing an advisor
+    | HOI4EvtSrcCharacterOnAdd Text Text Text            -- Effect of adding an advisor
+    | HOI4EvtSrcCharacterOnRemove Text Text Text         -- Effect of removing an advisor
     | HOI4EvtSrcScriptedEffect Text HOI4EventWeight -- Effect of a scripted effect
+    | HOI4EvtSrcBopOnActivate Text                  -- Effect of a balance of power range activation
+    | HOI4EvtSrcBopOnDeactivate Text                -- Effect of a balance of power range deactivation
     deriving Show
 
 type HOI4EventTriggers = HashMap Text [HOI4EventSource]
@@ -286,20 +308,22 @@ type HOI4EventTriggers = HashMap Text [HOI4EventSource]
 type HOI4DecisionWeight = Maybe (Integer, Integer) -- Rational reduces the number, which we don't want
 
 data HOI4DecisionSource =
-      HOI4DecSrcImmediate Text                       -- Immediate effect of an decision (arg is decision ID)
-    | HOI4DecSrcOption Text Text                     -- Effect of choosing an decision option (args are decision ID and option ID)
-    | HOI4DecSrcDecComplete Text Text                -- Effect of completing a decision (args are id and localized decision text)
-    | HOI4DecSrcDecRemove Text Text                  -- Effect of taking a timed decision and letting it finish (args are id and localized decision text)
-    | HOI4DecSrcDecCancel Text Text                  -- Effect of taking a decision and it being canceled (args are id and localized decision text)
-    | HOI4DecSrcDecTimeout Text Text                 -- Effect of taking a decision/mission and letting it timeout (args are id and localized decision text)
-    | HOI4DecSrcOnAction Text HOI4DecisionWeight     -- An effect from on_actions (args are the trigger and weight)
-    | HOI4DecSrcNFComplete Text Text                -- Effect of completing a national focus
-    | HOI4DecSrcNFSelect Text Text                  -- Effect of selecting a national focus
+      HOI4DecSrcImmediate Text                      -- Immediate effect of an decision (arg is decision ID)
+    | HOI4DecSrcOption Text Text                    -- Effect of choosing an decision option (args are decision ID and option ID)
+    | HOI4DecSrcDecComplete Text Text               -- Effect of completing a decision (args are id and localized decision text)
+    | HOI4DecSrcDecRemove Text Text                 -- Effect of taking a timed decision and letting it finish (args are id and localized decision text)
+    | HOI4DecSrcDecCancel Text Text                 -- Effect of taking a decision and it being canceled (args are id and localized decision text)
+    | HOI4DecSrcDecTimeout Text Text                -- Effect of taking a decision/mission and letting it timeout (args are id and localized decision text)
+    | HOI4DecSrcOnAction Text HOI4DecisionWeight    -- An effect from on_actions (args are the trigger and weight)
+    | HOI4DecSrcNFComplete Text Text Text           -- Effect of completing a national focus
+    | HOI4DecSrcNFSelect Text Text Text             -- Effect of selecting a national focus
     | HOI4DecSrcIdeaOnAdd Text Text Text Text       -- Effect of adding an idea
     | HOI4DecSrcIdeaOnRemove Text Text Text Text    -- Effect of removing an idea
-    | HOI4DecSrcCharacterOnAdd Text Text            -- Effect of adding an advisor
-    | HOI4DecSrcCharacterOnRemove Text Text         -- Effect of removing an advisor
-    | HOI4DecSrcScriptedEffect Text HOI4EventWeight -- Effect of a scripted effect
+    | HOI4DecSrcCharacterOnAdd Text Text Text            -- Effect of adding an advisor
+    | HOI4DecSrcCharacterOnRemove Text Text Text         -- Effect of removing an advisor
+    | HOI4DecSrcScriptedEffect Text HOI4DecisionWeight -- Effect of a scripted effect
+    | HOI4DecSrcBopOnActivate Text                  -- Effect of a balance of power range activation
+    | HOI4DecSrcBopOnDeactivate Text                -- Effect of a balance of power range deactivation
     deriving Show
 
 type HOI4DecisionTriggers = HashMap Text [HOI4DecisionSource]
@@ -324,6 +348,7 @@ data HOI4Idea = HOI4Idea
     ,   id_cancel :: Maybe GenericScript -- ^ tirggers for removing the idea
     ,   id_do_effect :: Maybe GenericScript -- ^ requirements for the idea's modifiers to work
     ,   id_allowed_civil_war :: Maybe GenericScript
+    ,   id_traits :: Maybe GenericScript
     ,   id_category :: Text
     ,   id_path :: FilePath -- ^ Source file
     } deriving (Show)
@@ -333,7 +358,7 @@ data HOI4Decisioncat = HOI4Decisioncat
     {   decc_name :: Text -- ^ Decision category ID
     ,   decc_name_loc :: Maybe Text -- ^ Localized decision category name
     ,   decc_desc_loc :: Maybe Text
-    ,   decc_icon :: Maybe Text
+    ,   decc_icon :: Text
     ,   decc_picture :: Maybe Text
     ,   decc_custom_icon :: Maybe GenericScript
     ,   decc_visible :: Maybe GenericScript
@@ -348,7 +373,7 @@ data HOI4Decisioncat = HOI4Decisioncat
     } deriving (Show)
 
 data HOI4DecisionCost
-    = HOI4DecisionCostSimple Double
+    = HOI4DecisionCostSimple Int
     | HOI4DecisionCostVariable Text
     deriving Show
 
@@ -368,21 +393,22 @@ data HOI4Decision = HOI4Decision
     ,   dec_target_root_trigger :: Maybe GenericScript
     ,   dec_visible :: Maybe GenericScript
     ,   dec_available :: Maybe GenericScript
+    ,   dec_is_good :: Bool -- ^ changes tooltip on whether timing out or compeleting mission is desirable, default is no and assumes complete_effect is desirable
     ,   dec_complete_effect :: Maybe GenericScript -- ^ the block of effects that gets executed immediately
                                                    --   when the decision is selected (Starting the timer if it has one).
-    ,   dec_days_re_enable :: Maybe Double
+    ,   dec_days_re_enable :: Maybe Int
     ,   dec_fire_only_once :: Bool
     ,   dec_cost :: Maybe HOI4DecisionCost
     ,   dec_custom_cost_trigger  :: Maybe GenericScript
     ,   dec_custom_cost_text :: Maybe Text
-    ,   dec_days_remove :: Maybe Double
+    ,   dec_days_remove :: Maybe Int
     ,   dec_remove_effect :: Maybe GenericScript
     ,   dec_remove_trigger :: Maybe GenericScript
     ,   dec_modifier :: Maybe GenericStatement
     ,   dec_cancel_trigger ::  Maybe GenericScript
     ,   dec_cancel_effect ::  Maybe GenericScript
 
-    ,   dec_days_mission_timeout :: Maybe Double
+    ,   dec_days_mission_timeout :: Maybe Int
     ,   dec_activation :: Maybe GenericScript
     ,   dec_timeout_effect :: Maybe GenericScript
     ,   dec_cancel_if_not_visible :: Bool
@@ -407,6 +433,15 @@ data HOI4DynamicModifier = HOI4DynamicModifier
     ,   dmodEffects :: GenericScript        -- The modifier to apply when the triggered modifier is active
     ,   dmodEnable :: GenericScript      -- Whether the triggered modifier is active
     ,   dmodRemoveTrigger :: Maybe GenericScript        -- Whether the triggered modifier is removed
+    } deriving (Show)
+
+data HOI4Modifier = HOI4Modifier
+    {   modName :: Text
+    ,   modLocName :: Maybe Text
+    ,   modPath :: FilePath
+    ,   modIcon :: Maybe Text
+    ,   modEffects :: GenericScript        -- The modifier to apply when the triggered modifier is active
+    ,   modRemoveTrigger :: Maybe GenericScript        -- Whether the triggered modifier is removed
     } deriving (Show)
 
 data HOI4OpinionModifier = HOI4OpinionModifier
@@ -456,25 +491,41 @@ data HOI4CountryHistory = HOI4CountryHistory
     ,   chRulingTag :: Text
     } deriving (Show)
 
+data HOI4Advisor = HOI4Advisor
+    {   adv_advisor_slot :: Text
+    ,   adv_cha_id     :: Text
+    ,   adv_cha_name     :: Text
+    ,   adv_idea_token   :: Text
+    ,   adv_cha_portrait    :: Maybe Text
+    ,   adv_traits       :: Maybe [Text]
+    ,   adv_allowed      :: Maybe GenericScript
+    ,   adv_visible      :: Maybe GenericScript
+    ,   adv_available    :: Maybe GenericScript
+    ,   adv_on_add       :: Maybe GenericScript
+    ,   adv_on_remove    :: Maybe GenericScript
+    ,   adv_modifier     :: Maybe GenericStatement
+    ,   adv_research_bonus :: Maybe GenericStatement
+    ,   adv_cost        :: Maybe Double
+    ,   adv_can_be_fired :: Bool
+    ,   adv_path         :: FilePath -- ^ Source file
+    } deriving (Show)
+
 data HOI4Character = HOI4Character
-    {   chaTag          :: Text
-    ,   chaName         :: Text
+    {   cha_id          :: Text
+    ,   cha_loc_name    :: Text
+    ,   cha_name        :: Text
+    ,   cha_portrait    :: Maybe Text
 --    ,   chaId :: Maybe Int -- ^ legacy character id system is sometimes still used,
                          --   negative numbers count as not being there
-    ,   chaAdvisorTraits :: Maybe [Text]
-    ,   chaLeaderTraits :: Maybe [Text]
+    ,   cha_leader_traits :: Maybe [Text]
     ,   cha_leader_ideology :: Maybe Text
-    ,   cha_idea_token  :: Maybe Text
-    ,   cha_advisor_slot :: Maybe Text
-    ,   chaOn_add       :: Maybe GenericScript
-    ,   chaOn_remove    :: Maybe GenericScript
-    ,   cha_adv_modifier :: Maybe GenericStatement
-    ,   cha_adv_research_bonus :: Maybe GenericStatement
-    ,   chaPath         :: FilePath -- ^ Source file
+    ,   cha_advisor :: Maybe [HOI4Advisor]
+    ,   cha_path         :: FilePath -- ^ Source file
     } deriving (Show)
 
 data HOI4CountryLeaderTrait = HOI4CountryLeaderTrait
     {   clt_id :: Text
+    ,   clt_name :: Text
     ,   clt_loc_name :: Maybe Text
     ,   clt_path :: FilePath
     ,   clt_targeted_modifier :: Maybe GenericScript
@@ -488,6 +539,7 @@ data HOI4UnitLeaderTrait = HOI4UnitLeaderTrait
     ,   ult_loc_name :: Maybe Text
     ,   ult_path :: FilePath
     ,   ult_modifier :: Maybe GenericStatement
+    ,   ult_trait_xp_factor :: Maybe GenericStatement
     ,   ult_non_shared_modifier :: Maybe GenericStatement
     ,   ult_corps_commander_modifier :: Maybe GenericStatement
     ,   ult_field_marshal_modifier :: Maybe GenericStatement
@@ -500,7 +552,12 @@ data HOI4UnitLeaderTrait = HOI4UnitLeaderTrait
     ,   ult_coordination_skill :: Maybe Double
     } deriving (Show)
 
-
+data HOI4BopRange = HOI4BopRange
+    {   bop_id :: Text
+    ,   bop_on_activate :: Maybe GenericScript
+    ,   bop_on_deactivate :: Maybe GenericScript
+    ,   bop_path :: FilePath
+    } deriving (Show)
 ------------------------------
 -- Shared lower level types --
 ------------------------------
@@ -513,6 +570,7 @@ data HOI4Scope
     | HOI4UnitLeader
     | HOI4Operative
     | HOI4ScopeCharacter
+    | HOI4Division
     | HOI4From -- ^ Usually country or state, varies by context
     | HOI4Misc -- ^ custom for the parser, is used for var and event_target,
                --   because the scope depends on what is loaded into the var
@@ -568,6 +626,6 @@ awdModifierAddSection aim stmt@[pdx| $left = %right |] = case T.toLower left of
         (floatRhs right)
     _ -> -- the rest of the statements are just the conditions.
         aim { aim_triggers = aim_triggers aim ++ [stmt] }
-awdModifierAddSection aim stmt@[pdx| $left > %right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
-awdModifierAddSection aim stmt@[pdx| $left < %right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
+awdModifierAddSection aim stmt@[pdx| $_left > %_right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
+awdModifierAddSection aim stmt@[pdx| $_left < %_right |] = aim { aim_triggers = aim_triggers aim ++ [stmt] }
 awdModifierAddSection aim _ = aim

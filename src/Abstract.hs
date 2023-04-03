@@ -59,14 +59,13 @@ module Abstract (
     ) where
 
 
-import Control.Applicative (Applicative (..), Alternative (..), many)
+import Control.Applicative (Alternative (..), many)
 import Control.Monad (void)
 
 import qualified Data.Foldable as F
-import Data.Char (isAlpha, isAlphaNum, isDigit, isSpace)
+import Data.Char (isAlphaNum, isDigit, isSpace)
 import Data.List (intersperse)
 import Data.Maybe (fromMaybe)
-import Data.Monoid
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
@@ -161,7 +160,7 @@ type GenericScript = [GenericStatement]
 -- syntax for dates.  For example, the start date of Europa Universalis IV is
 -- 11 November 1444, represented as @1444.11.11@. It is big-endian
 -- (YYYY.MM.DD).
-data Date = Date { year :: Int, month :: Int, day :: Int }
+data Date = Date { year :: Int, month :: Int, day :: Int, hour :: Int  }
     deriving (Show, Eq, Ord, Read) -- Ord works with fields in this order only
 
 -- | Class for painlessly getting the type of number we want out of a value
@@ -224,8 +223,8 @@ restOfLine = (Ap.many1' Ap.endOfLine >> return "")
 -- a number (or an @ in weird cases?) (and dots in case of floats) and continue with letters, numbers, underscores, at-signs, dashes, question marks (for variables) and full stops.
 ident :: Parser Text
 ident = do
-        res <- (<>) <$> (T.singleton <$> Ap.satisfy (\c -> c `elem` ['@','_','['] || isAlphaNum c))
-                    <*> Ap.takeWhile (\c -> c `elem` ['_','.','@','-','?','^','/','\'','[',']'] || isAlphaNum c)
+        res <- (<>) <$> (T.singleton <$> Ap.satisfy (\c -> c `elem` ['@','_','[','\x201C'] || isAlphaNum c))
+                    <*> Ap.takeWhile (\c -> c `elem` ['_','.','@','-','?','^','/','\'','[',']','\x201D'] || isAlphaNum c)
         if T.all isDigit res
             then fail "ident: numeric identifier"
             else return res
@@ -281,6 +280,7 @@ dateLit :: Parser Date
 dateLit = Date <$> Ap.decimal
                <*> (Ap.char '.' *> Ap.decimal)
                <*> (Ap.char '.' *> Ap.decimal)
+               <*> Ap.option 0 (Ap.char '.' *> Ap.decimal) -- Hoi4 uses a 4th number to determine hour optionally
     <?> "date literal"
 
 -- | A character within a string, possibly escaped. C escape sequences are
@@ -450,7 +450,7 @@ rhs2doc _ _ (IntRhs rhs) = PP.text (TL.pack (show rhs))
 rhs2doc _ _ (FloatRhs rhs) = Doc.ppFloat rhs
 rhs2doc customLhs customRhs (CompoundRhs rhs)
     = PP.vsep ["{", PP.indent 4 (script2doc customLhs customRhs rhs), PP.text "}"]
-rhs2doc _ _ (DateRhs (Date year month day)) =
+rhs2doc _ _ (DateRhs (Date year month day hour)) =
     mconcat . map (PP.text . TL.pack) $ [show year, ".", show month, ".", show day]
 
 -- | Display a script with no custom elements in an 80-column format.

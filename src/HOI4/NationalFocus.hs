@@ -13,14 +13,12 @@ import System.FilePath (takeBaseName)
 
 import Control.Arrow ((&&&))
 import Control.Monad (foldM, forM)
-import Control.Monad.Except (ExceptT (..), MonadError (..))
-import Control.Monad.State (MonadState (..), gets)
+import Control.Monad.Except (MonadError (..))
+import Control.Monad.State (gets)
 import Control.Monad.Trans (MonadIO (..))
 
 import Data.Char (toLower)
-import Data.Maybe (catMaybes, fromMaybe)
-import Data.Monoid ((<>))
-import Data.List (sortOn, intersperse, foldl')
+import Data.Maybe (catMaybes, fromMaybe, mapMaybe)
 
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
@@ -32,15 +30,15 @@ import qualified Text.PrettyPrint.Leijen.Text as PP
 import Abstract -- everything
 import qualified Doc
 import FileIO (Feature (..), writeFeatures)
-import HOI4.Messages -- everything
-import MessageTools (italicText)
+ -- everything
 import QQ (pdx)
-import SettingsTypes ( PPT, Settings (..), Game (..)
+import SettingsTypes ( PPT, Settings (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
                      , hoistErrors, hoistExceptions
-                     , indentUp)
+                     , indentUp
+                     , getGameInterface, getGameInterfaceIfPresent)
 import HOI4.Common -- everything
 
 -- | Empty national focus. Starts off Nothing/empty everywhere, except id and name
@@ -202,10 +200,10 @@ nationalFocusAddSection nf stmt
 
 writeHOI4NationalFocuses :: (HOI4Info g, MonadIO m) => PPT g m ()
 writeHOI4NationalFocuses = do
-    nationalFocuses <- getNationalFocus
-    interface <- getInterfaceGFX
-    let pathNF = mkNfPathMap $ HM.elems nationalFocuses
-        pathedNationalFocus :: [Feature [HOI4NationalFocus]]
+--    nationalFocuses <- getNationalFocus
+    nationalFocuses <- getNationalFocusScripts
+    pathNF <- parseHOI4NationalFocusesPath nationalFocuses --mkNfPathMap $ HM.elems nationalFocuses
+    let pathedNationalFocus :: [Feature [HOI4NationalFocus]]
         pathedNationalFocus = map (\nf -> Feature {
                                         featurePath = Just $ nf_path $ head nf
                                     ,   featureId = Just (T.pack $ takeBaseName $ nf_path $ head nf) <> Just ".txt"
@@ -213,36 +211,62 @@ writeHOI4NationalFocuses = do
                               (HM.elems pathNF)
     writeFeatures "national_focus"
                   pathedNationalFocus
-                  (ppNationalFocuses interface)
-    where
-        mkNfPathMap :: [HOI4NationalFocus] -> HashMap FilePath [HOI4NationalFocus]
-        mkNfPathMap nf =
-            let xs = reverse $ map (nf_path &&& id) nf in
-            HM.fromListWith (++) [ (k, [v]) | (k, v) <- xs ]
+                  ppNationalFocuses
+--    where
+--        mkNfPathMap :: [HOI4NationalFocus] -> HashMap FilePath [HOI4NationalFocus]
+--        mkNfPathMap nf =
+--            let xs = reverse $ map (nf_path &&& id) nf in
+--            HM.fromListWith (++) [ (k, [v]) | (k, v) <- xs ]
 
-ppNationalFocuses :: forall g m. (HOI4Info g, Monad m) => HashMap Text Text -> [HOI4NationalFocus] -> PPT g m Doc
-ppNationalFocuses gfx nfs = do
+parseHOI4NationalFocusesPath :: (IsGameData (GameData g), IsGameState (GameState g), Monad m) =>
+    HashMap String GenericScript -> PPT g m (HashMap FilePath [HOI4NationalFocus])
+parseHOI4NationalFocusesPath scripts = do
+    tryParse <- hoistExceptions $
+        HM.traverseWithKey
+            (\sourceFile scr ->
+                setCurrentFile sourceFile $ mapM parseHOI4NationalFocus $ concatMap mapTree scr)
+            scripts
+    case tryParse of
+        Left err -> do
+            traceM $ "Completely failed parsing national focus: " ++ T.unpack err
+            return HM.empty
+        Right nfFilesOrErrors ->
+            return $ HM.filter (not . null) $ flip HM.mapWithKey nfFilesOrErrors $ \sourceFile enfs ->
+                mapMaybe (\case
+                    Left err -> do
+                        traceM $ "Error parsing national focus in " ++ sourceFile
+                                 ++ ": " ++ T.unpack err
+                        Nothing
+                    Right nfocus -> nfocus)
+                    enfs
+    where
+        mapTree scr = case scr of
+            [pdx| focus_tree = @focus |] -> focus
+            [pdx| shared_focus = @_ |] -> [scr]
+            _ -> []
+
+ppNationalFocuses :: forall g m. (HOI4Info g, Monad m) => [HOI4NationalFocus] -> PPT g m Doc
+ppNationalFocuses nfs = do
     version <- gets (gameVersion . getSettings)
-    nfDoc <- mapM (scope HOI4Country . ppnationalfocus gfx) (sortOn (sortName . nf_name_loc) nfs)
+    nfDoc <- mapM (scope HOI4Country . ppNationalFocus) nfs -- Better to leave unsorted? (sortOn (sortName . nf_name_loc) nfs)
     return . mconcat $
         [ "{{Version|", Doc.strictText version, "}}", PP.line
-        , "{| class=\"mildtable\"", PP.line
-        , "! style=\"width: 15%;\" | Focus", PP.line
+        , "{| class=\"mildtable\" {{buffer}}", PP.line
+        , "! style=\"width: 30%;\" | Focus", PP.line
         , "! style=\"width: 30%;\" | Prerequisites", PP.line
-        , "! style=\"width: 30%;\" | Effects", PP.line
-        , "! class=\"nomobile\" | Description", PP.line
+        , "! style=\"width: 40%;\" | Effects", PP.line
         ] ++ nfDoc ++
         [ "|}", PP.line
         ]
 
-sortName :: Text -> Text
-sortName n =
-    let ln = T.toLower n
-        nn = T.stripPrefix "the " ln
-    in fromMaybe ln nn
+--sortName :: Text -> Text
+--sortName n =
+--    let ln = T.toLower n
+--        nn = T.stripPrefix "the " ln
+--    in fromMaybe ln nn
 
-ppnationalfocus :: forall g m. (HOI4Info g, Monad m) => HashMap Text Text -> HOI4NationalFocus -> PPT g m Doc
-ppnationalfocus gfx nf = do
+ppNationalFocus :: forall g m. (HOI4Info g, Monad m) => HOI4NationalFocus -> PPT g m Doc
+ppNationalFocus nf = setCurrentFile (nf_path nf) $ do
     let nfArg :: (HOI4NationalFocus -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
         nfArg field fmt
             = maybe (return [])
@@ -252,7 +276,7 @@ ppnationalfocus gfx nf = do
                         [content_pp'd
                         ,PP.line])
             (field nf)
-    let nfArgExtra :: Doc -> (HOI4NationalFocus -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
+        nfArgExtra :: Doc -> (HOI4NationalFocus -> Maybe a) -> (a -> PPT g m Doc) -> PPT g m [Doc]
         nfArgExtra extra field fmt
             = maybe (return [])
                 (\field_content -> do
@@ -263,7 +287,11 @@ ppnationalfocus gfx nf = do
                         ,"}}"
                         ,PP.line])
             (field nf)
-        icon_pp = HM.findWithDefault "GFX_goal_unknown" (nf_icon nf) gfx
+    icon_pp <- do
+        micon <- getGameInterfaceIfPresent ("GFX_focus_" <> nf_id nf)
+        case micon of
+            Nothing -> getGameInterface "goal_unknown" (nf_icon nf)
+            Just idicon -> return idicon
     prerequisite_pp <- ppPrereq $ catMaybes $ nf_prerequisite nf
     allowBranch_pp <- ppAllowBranch $ nf_allow_branch nf
     mutuallyExclusive_pp <- ppMutuallyExclusive $ nf_mutually_exclusive nf
@@ -273,7 +301,9 @@ ppnationalfocus gfx nf = do
     selectEffect_pp <- setIsInEffect True $ nfArgExtra "select" nf_select_effect ppScript
     return . mconcat $
         [ "|- id = \"", Doc.strictText (nf_name_loc nf),"\"" , PP.line
-        , "|style=\"text-align:center\"| [[File:", Doc.strictText icon_pp, ".png|center|bottom|70px]] ", Doc.strictText (nf_name_loc nf) , " <!-- ", Doc.strictText (nf_id nf), " -->", PP.line
+        , "| {{iconbox|image=", Doc.strictText icon_pp, ".png ", PP.line
+        , "| ", Doc.strictText (nf_name_loc nf) , "<!-- ", Doc.strictText (nf_id nf), " -->", PP.line
+        , "| ",maybe mempty (Doc.strictText . Doc.nl2br) (nf_name_desc nf), PP.line , "}}", PP.line
         , "| ", PP.line]++
         allowBranch_pp ++
         prerequisite_pp ++
@@ -282,10 +312,7 @@ ppnationalfocus gfx nf = do
         bypass_pp ++
         [ "| ", PP.line]++
         completionReward_pp ++
-        selectEffect_pp ++
-        [ "| "
-        , maybe mempty (Doc.strictText . italicText . Doc.nl2br)  (nf_name_desc nf), PP.line
-        ]
+        selectEffect_pp
 
 ppPrereq :: (HOI4Info g, Monad m) => [GenericScript] -> PPT g m [Doc]
 ppPrereq [] = return [""]
@@ -295,7 +322,7 @@ ppPrereq prereqs = mapM ppTitle prereqs
             let reqfol = if length prereq == 1 then
                     [Doc.strictText "* Requires the following:", PP.line]
                 else
-                    [Doc.strictText "* Requires one of the following:", PP.line]
+                    [Doc.strictText "* Requires ''one'' of the following:", PP.line]
             reqs <- sequenceA
                 [indentUp (ppScript prereq), pure PP.line
                 ]

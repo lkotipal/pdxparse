@@ -12,25 +12,24 @@ module HOI4.Events (
     ,   findTriggeredEventsInIdeas
     ,   findTriggeredEventsInCharacters
     ,   findTriggeredEventsInScriptedEffects
+    ,   findTriggeredEventsInBops
     ) where
 
 import Debug.Trace (trace, traceM)
 
 import Control.Arrow ((&&&))
-import Control.Monad (liftM, forM, foldM, when, (<=<))
+import Control.Monad (forM, foldM, when, (<=<))
 import Control.Monad.Except (MonadError (..))
-import Control.Monad.State (MonadState (..), gets)
+import Control.Monad.State (gets)
 import Control.Monad.Trans (MonadIO (..))
 
 import Data.List (intersperse, foldl')
 import Data.Maybe (isJust, isNothing, fromMaybe, fromJust, catMaybes, mapMaybe)
-import Data.Monoid ((<>))
 
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HM
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
 
 import Text.PrettyPrint.Leijen.Text (Doc)
 import qualified Text.PrettyPrint.Leijen.Text as PP
@@ -42,11 +41,12 @@ import FileIO (Feature (..), writeFeatures)
 import HOI4.Messages (imsg2doc)
 import MessageTools (iquotes)
 import QQ (pdx)
-import SettingsTypes ( PPT, Settings (..), Game (..)
-                     , IsGame (..), IsGameData (..), IsGameState (..)
+import SettingsTypes ( PPT, Settings (..)
+                     , IsGame (..), IsGameData (..)
                      , getGameL10n, getGameL10nIfPresent
                      , setCurrentFile, withCurrentFile
-                     , hoistErrors, hoistExceptions)
+                     , hoistErrors, hoistExceptions
+                     , getGameInterface, getGameInterfaceIfPresent)
 import HOI4.Handlers (flagText)
 
 -- | Empty event value. Starts off Nothing/empty everywhere.
@@ -111,11 +111,11 @@ parseHOI4Event stmt@[pdx| %left = %right |] = case right of
         GenericLhs etype _ ->
             let mescope = case T.toLower etype of
                     "country_event" -> Just HOI4Country
-                    "unit_leader_event" -> Just HOI4UnitLeader
+                    "unit_leader_event" -> Just HOI4Country
                     "operative_leader_event" -> Just HOI4Operative
                     "state_event" -> Just HOI4ScopeState
                     "news_event" -> Just HOI4Country -- ?
-                    "event" -> Just HOI4NoScope
+                    "event" -> Just HOI4Country -- ?
                     _ -> Nothing
             in case mescope of
                 Nothing -> throwError $ "unrecognized event type " <> etype
@@ -237,6 +237,7 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
 --        _ -> throwError "bad picture"
     eventAddSection' evt stmt@[pdx| goto = %rhs |] = return evt
     eventAddSection' evt stmt@[pdx| trigger = %rhs |] = case rhs of
+        CompoundRhs [] -> return evt
         CompoundRhs trigger_script -> case trigger_script of
             [] -> return evt -- empty, treat as if it wasn't there
             _ -> return evt { hoi4evt_trigger = Just trigger_script }
@@ -247,9 +248,11 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
         GenericRhs "no" [] -> return evt { hoi4evt_is_triggered_only = Just False }
         _ -> throwError "bad trigger"
     eventAddSection' evt stmt@[pdx| mean_time_to_happen = %rhs |] = case rhs of
+        CompoundRhs [] -> return evt
         CompoundRhs mtth -> return evt { hoi4evt_mean_time_to_happen = Just mtth }
         _ -> throwError "bad MTTH"
     eventAddSection' evt stmt@[pdx| immediate = %rhs |] = case rhs of
+        CompoundRhs [] -> return evt
         CompoundRhs immediate -> return evt { hoi4evt_immediate = Just immediate }
         _ -> throwError "bad immediate section"
     eventAddSection' evt stmt@[pdx| option = %rhs |] =  case rhs of
@@ -281,6 +284,7 @@ eventAddSection mevt stmt = sequence (eventAddSection' <$> mevt <*> pure stmt) w
         GenericRhs "no" [] -> return evt { hoi4evt_fire_for_sender = Just True }
         _ -> throwError "bad fire_for_sender"
     eventAddSection' evt stmt@[pdx| timeout_days = %_ |] = return evt
+    eventAddSection' evt stmt@[pdx| minor_flavor = %_ |] = return evt -- unknown effect
     eventAddSection' evt stmt@[pdx| $label = %_ |] =
         withCurrentFile $ \file ->
             throwError $ "unrecognized event section in " <> T.pack file <> ": " <> label
@@ -301,8 +305,10 @@ optionAddStatement opt stmt@[pdx| name = ?name |]
     = return $ opt { hoi4opt_name = Just name }
 optionAddStatement opt stmt@[pdx| ai_chance = @ai_chance |]
     = return $ opt { hoi4opt_ai_chance = Just (aiWillDo ai_chance) } -- hope can re-use the aiWilldo script
-optionAddStatement opt stmt@[pdx| trigger = @trigger_script |]
-    = return $ opt { hoi4opt_trigger = Just trigger_script }
+optionAddStatement opt stmt@[pdx| trigger = %rhs |] = case rhs of
+    CompoundRhs [] -> return opt
+    CompoundRhs trigger_script -> return $ opt { hoi4opt_trigger = Just trigger_script }
+    _ -> return opt
 optionAddStatement opt stmt = do
     -- Not a GenericLhs - presumably an effect.
     effects_pp'd <- setIsInEffect True (optionAddEffect (hoi4opt_effects opt) stmt)
@@ -640,9 +646,12 @@ ppEventSource (HOI4EvtSrcOnAction act weight) = do
             ,("on_weekly","<!-- on_weekly -->On every week")
             ]
 ppEventSource (HOI4EvtSrcNFComplete id loc icon) = do
-    gfx <- getInterfaceGFX
-    iconnf <-
-        let iconname = HM.findWithDefault icon icon gfx in
+    iconnf <- do
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_focus_" <> id)
+            case micon of
+                Nothing -> getGameInterface "goal_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     return $ Doc.strictText $ mconcat ["Completing the national focus "
         , iconnf
@@ -652,9 +661,12 @@ ppEventSource (HOI4EvtSrcNFComplete id loc icon) = do
         , iquotes't loc
         ]
 ppEventSource (HOI4EvtSrcNFSelect id loc icon) = do
-    gfx <- getInterfaceGFX
-    iconnf <-
-        let iconname = HM.findWithDefault icon icon gfx in
+    iconnf <- do
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_focus_" <> id)
+            case micon of
+                Nothing -> getGameInterface "goal_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     return $ Doc.strictText $ mconcat ["Selecting the national focus "
         , iconnf
@@ -664,9 +676,12 @@ ppEventSource (HOI4EvtSrcNFSelect id loc icon) = do
         , iquotes't loc
         ]
 ppEventSource (HOI4EvtSrcIdeaOnAdd id loc icon categ) = do
-    gfx <- getInterfaceGFX
-    iconnf <-
-        let iconname = HM.findWithDefault icon icon gfx in
+    iconnf <- do
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_idea_" <> id)
+            case micon of
+                Nothing -> getGameInterface "idea_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     catloc <- getGameL10n categ
     return $ Doc.strictText $ mconcat ["When the "
@@ -680,9 +695,12 @@ ppEventSource (HOI4EvtSrcIdeaOnAdd id loc icon categ) = do
         , " is added"
         ]
 ppEventSource (HOI4EvtSrcIdeaOnRemove id loc icon categ) = do
-    gfx <- getInterfaceGFX
-    iconnf <-
-        let iconname = HM.findWithDefault icon icon gfx in
+    iconnf <- do
+        iconname <- do
+            micon <- getGameInterfaceIfPresent ("GFX_idea_" <> id)
+            case micon of
+                Nothing -> getGameInterface "idea_unknown" icon
+                Just idicon -> return idicon
         return $ "[[File:" <> iconname <> ".png|28px]]"
     catloc <- getGameL10n categ
     return $ Doc.strictText $ mconcat ["When the "
@@ -695,18 +713,32 @@ ppEventSource (HOI4EvtSrcIdeaOnRemove id loc icon categ) = do
         , iquotes't loc
         , " is removed"
         ]
-ppEventSource (HOI4EvtSrcCharacterOnAdd id loc) =
+ppEventSource (HOI4EvtSrcCharacterOnAdd idtoken id name) = do
+    loc <- do
+        mloc <- getGameL10nIfPresent name
+        case mloc of
+            Just nloc -> return nloc
+            _-> getGameL10n idtoken
     return $ Doc.strictText $ mconcat ["When the advisor "
         , " <!-- "
         , id
+        , " "
+        , idtoken
         , " -->"
         , iquotes't loc
         , " is added"
         ]
-ppEventSource (HOI4EvtSrcCharacterOnRemove id loc) =
+ppEventSource (HOI4EvtSrcCharacterOnRemove idtoken id name) = do
+    loc <- do
+        mloc <- getGameL10nIfPresent name
+        case mloc of
+            Just nloc -> return nloc
+            _-> getGameL10n idtoken
     return $ Doc.strictText $ mconcat ["When the advisor "
         , " <!-- "
         , id
+        , " "
+        , idtoken
         , " -->"
         , iquotes't loc
         , " is removed"
@@ -715,6 +747,24 @@ ppEventSource (HOI4EvtSrcScriptedEffect id weight) =
     return $ Doc.strictText $ mconcat ["When scripted effect "
         , iquotes't id
         , " is activated"
+        ]
+ppEventSource (HOI4EvtSrcBopOnActivate id) = do
+    loc <- getGameL10n id
+    return $ Doc.strictText $ mconcat ["When reaching the "
+        , "<!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        , " balance of power range"
+        ]
+ppEventSource (HOI4EvtSrcBopOnDeactivate id) = do
+    loc <- getGameL10n id
+    return $ Doc.strictText $ mconcat ["When leaving the "
+        , "<!-- "
+        , id
+        , " -->"
+        , iquotes't loc
+        , " balance of power range"
         ]
 
 findInStmt :: GenericStatement -> [(HOI4EventWeight, Text)]
@@ -819,13 +869,13 @@ findTriggeredEventsInIdeas hm idea = addEventTriggers hm (concatMap findInIdea i
             addEventSource (const (HOI4EvtSrcIdeaOnAdd (id_id idea) (id_name_loc idea) (id_picture idea) (id_category idea))) (maybe [] findInStmts (id_on_add idea)) ++
             addEventSource (const (HOI4EvtSrcIdeaOnRemove (id_id idea) (id_name_loc idea) (id_picture idea) (id_category idea))) (maybe [] findInStmts (id_on_remove idea))
 
-findTriggeredEventsInCharacters :: HOI4EventTriggers -> [HOI4Character] -> HOI4EventTriggers
+findTriggeredEventsInCharacters :: HOI4EventTriggers -> [HOI4Advisor] -> HOI4EventTriggers
 findTriggeredEventsInCharacters hm hChar = addEventTriggers hm (concatMap findInCharacter hChar)
     where
-        findInCharacter :: HOI4Character -> [(Text, HOI4EventSource)]
+        findInCharacter :: HOI4Advisor -> [(Text, HOI4EventSource)]
         findInCharacter hChar =
-            addEventSource (const (HOI4EvtSrcCharacterOnAdd (chaTag hChar) (chaName hChar))) (maybe [] findInStmts (chaOn_add hChar)) ++
-            addEventSource (const (HOI4EvtSrcCharacterOnRemove (chaTag hChar) (chaName hChar))) (maybe [] findInStmts (chaOn_remove hChar))
+            addEventSource (const (HOI4EvtSrcCharacterOnAdd (adv_idea_token hChar) (adv_cha_id hChar) (adv_cha_name hChar))) (maybe [] findInStmts (adv_on_add hChar)) ++
+            addEventSource (const (HOI4EvtSrcCharacterOnRemove (adv_idea_token hChar) (adv_cha_id hChar) (adv_cha_name hChar))) (maybe [] findInStmts (adv_on_remove hChar))
 
 findTriggeredEventsInScriptedEffects :: HOI4EventTriggers -> [GenericStatement] -> HOI4EventTriggers
 findTriggeredEventsInScriptedEffects hm scr = foldl' findInScriptEffect hm scr -- needs editing
@@ -833,3 +883,11 @@ findTriggeredEventsInScriptedEffects hm scr = foldl' findInScriptEffect hm scr -
         findInScriptEffect :: HOI4EventTriggers -> GenericStatement -> HOI4EventTriggers
         findInScriptEffect hm stmt@[pdx| $lhs = @scr |] = addEventTriggers hm (addEventSource (HOI4EvtSrcScriptedEffect lhs) (findInStmts scr))
         findInScriptEffect hm stmt = trace ("Unknown on_actions statement: " ++ show stmt) hm
+
+findTriggeredEventsInBops :: HOI4EventTriggers -> [HOI4BopRange] -> HOI4EventTriggers
+findTriggeredEventsInBops hm hBop = addEventTriggers hm (concatMap findInCharacter hBop)
+    where
+        findInCharacter :: HOI4BopRange -> [(Text, HOI4EventSource)]
+        findInCharacter hBop =
+            addEventSource (const (HOI4EvtSrcBopOnActivate (bop_id hBop))) (maybe [] findInStmts (bop_on_activate hBop)) ++
+            addEventSource (const (HOI4EvtSrcBopOnDeactivate (bop_id hBop))) (maybe [] findInStmts (bop_on_deactivate hBop))

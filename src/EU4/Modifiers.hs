@@ -350,4 +350,3 @@ writeEU4ProvTrigModifiers = do
                 [ Doc.strictText hdr, PP.line
                 , stpp'd, PP.line
                 ]
-
