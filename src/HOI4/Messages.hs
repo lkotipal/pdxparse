@@ -1509,7 +1509,6 @@ instance RenderMessage Script ScriptMessage where
                 ]
 
                 [ _loc , " ({{hover|"
-                , toMessage (T.toTitle _flagType)
                 , "Set "
                 , _flagType
                 , " flag "
@@ -1530,7 +1529,6 @@ instance RenderMessage Script ScriptMessage where
                 [ _loc
                 , _amtT
                 , _days, " ({{hover|"
-                , toMessage (T.toTitle _flagType)
                 , "Set "
                 , _flagType
                 , " flag "
