@@ -940,6 +940,7 @@ data ScriptMessage
     | MsgProviceHasCenterOfTrade {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgPrivateerPower {scriptMessageAmt :: Double}
     | MsgPrivateerPowerCountry {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
+    | MsgPrivateerShare {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgDevastation {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHasEstatePrivilege {scriptMessageWhat :: Text}
     | MsgOwnsOrNonTribSubject {scriptMessageWhat :: Text}
@@ -6514,6 +6515,13 @@ instance RenderMessage Script ScriptMessage where
                 [ _whom
                 , " has at least "
                 , toMessage $ bold (plainPc _amt)
+                , " trade power from [[privateering]]"
+                ]
+        MsgPrivateerShare {scriptMessageIcon = _, scriptMessageWhom = _whom, scriptMessageAmt = _amt}
+            -> mconcat
+                [ _whom
+                , " has at least "
+                , toMessage $ bold (reducedNum plainPc _amt)
                 , " trade power from [[privateering]]"
                 ]
         MsgDevastation {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
