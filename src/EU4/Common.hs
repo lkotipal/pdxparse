@@ -131,6 +131,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("add_meritocracy_large_effect", rhsAlwaysYes MsgAddMeritocracyLargeEffect)
         ,("add_reform_progress_medium_effect", rhsAlwaysYes MsgAddReformProgressMediumEffect)
         ,("add_reform_progress_small_effect", rhsAlwaysYes MsgAddReformProgressSmallEffect)
+        ,("add_russian_claim", rhsAlwaysYes (MsgGenericText "Gain a claim on this province. The claim is permanent if the country does ''not'' have the modifier ''“Shift of Administrative Focus”''."))
         ,("add_stability_or_adm_power", rhsAlwaysYes MsgAddStabilityOrAdm)
         ,("boost_bureaucrats_effect", rhsAlwaysYes MsgBoostBureaucratsEffect)
         ,("boost_bureaucrats_large_effect", rhsAlwaysYes MsgBoostBureaucratsLargeEffect)
