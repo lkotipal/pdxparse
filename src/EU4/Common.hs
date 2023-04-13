@@ -1591,8 +1591,7 @@ handlersSimpleIcon = Tr.fromList
 -- | Handlers for simple statements with a flag
 handlersSimpleFlag :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersSimpleFlag = Tr.fromList
-        [("add_claim"               , withFlag MsgGainClaim)
-        ,("add_historical_friend"   , withFlag MsgAddHistoricalFriend)
+        [("add_historical_friend"   , withFlag MsgAddHistoricalFriend)
         ,("add_historical_rival"    , withFlag MsgAddHistoricalRival)
         ,("add_rival"               , withFlag MsgAddRival)
         ,("add_truce_with"          , withFlag MsgAddTruceWith)

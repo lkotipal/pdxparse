@@ -370,7 +370,6 @@ data ScriptMessage
     | MsgDefensiveWarAgainst {scriptMessageWhom :: Text}
     | MsgDiscoverCountry {scriptMessageWhom :: Text}
     | MsgDiscoverProvince {scriptMessageWhat :: Text}
-    | MsgGainClaim {scriptMessageWho :: Text}
     | MsgGainCore {scriptMessageWho :: Text}
     | MsgGainCoreProvince {scriptMessageWhat :: Text}
     | MsgGainTerritorialCore {scriptMessageWho :: Text}
@@ -3122,11 +3121,6 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Discover "
                 , _what
-                ]
-        MsgGainClaim {scriptMessageWho = _who}
-            -> mconcat
-                [ _who
-                , " gains a claim on this province"
                 ]
         MsgGainCore {scriptMessageWho = _who}
             -> mconcat
