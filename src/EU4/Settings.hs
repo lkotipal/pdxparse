@@ -28,7 +28,7 @@ import System.IO (hPutStrLn, stderr)
 
 import Abstract -- everything
 import QQ (pdx)
-import FileIO (buildPath, readScript)
+import FileIO (buildPath, readScript, readFileRetry)
 import SettingsTypes ( PPT, Settings (..), Game (..), L10nScheme (..)
                      , IsGame (..), IsGameData (..), IsGameState (..)
                      , getGameL10nIfPresent
@@ -39,7 +39,7 @@ import EU4.Types -- everything
 import Yaml (LocEntry (..))
 
 -- Handlers
-import EU4.Decisions (parseEU4Decisions, writeEU4Decisions)
+import EU4.Decisions (parseEU4Decisions, writeEU4Decisions, findEstateActions)
 import EU4.IdeaGroups (parseEU4IdeaGroups, writeEU4IdeaGroups)
 import EU4.Modifiers ( parseEU4Modifiers, writeEU4Modifiers
                      , parseEU4OpinionModifiers, writeEU4OpinionModifiers
@@ -106,6 +106,8 @@ instance IsGame EU4 where
                 ,   eu4provtrigmodifiers = HM.empty
                 ,   eu4provtrigmodifierScripts = HM.empty
                 ,   eu4tradeNodes = HM.empty
+                ,   eu4estateActions = HM.empty
+                ,   eu4scriptedEffectsForEstates = ""
                 ,   eu4extraScripts = HM.empty
                 ,   eu4extraScriptsCountryScope = HM.empty
                 ,   eu4extraScriptsProvinceScope = HM.empty
@@ -195,6 +197,12 @@ instance EU4Info EU4 where
     getTradeNodes = do
         EU4D ed <- get
         return (eu4tradeNodes ed)
+    getEstateActions = do
+        EU4D ed <- get
+        return (eu4estateActions ed)
+    getScriptedEffectsForEstates = do
+        EU4D ed <- get
+        return (eu4scriptedEffectsForEstates ed)
     getExtraScripts = do
         EU4D ed <- get
         return (eu4extraScripts ed)
@@ -319,6 +327,7 @@ readEU4Scripts = do
     missions <- readEU4Script "missions"
     provTrigModifiers <- readEU4Script "province_triggered_modifiers"
     genericScriptsForEventTriggers <- readGenericScriptsForEventTriggers
+    scriptedEffectsForEstates <- liftIO (readFileRetry (buildPath settings "common/scripted_effects/01_scripted_effects_for_estates.txt"))
 
     extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
     extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
@@ -349,6 +358,7 @@ readEU4Scripts = do
         ,   eu4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
         ,   eu4provtrigmodifierScripts = provTrigModifiers
         ,   eu4tradeNodes = HM.fromList (catMaybes (map processTradeNode (concatMap snd (HM.toList tradeNodeScripts))))
+        ,   eu4scriptedEffectsForEstates = scriptedEffectsForEstates
         ,   eu4extraScripts = foldl (flip (uncurry HM.insert)) HM.empty extra
         ,   eu4extraScriptsCountryScope = foldl (flip (uncurry HM.insert)) HM.empty extraCountryScope
         ,   eu4extraScriptsProvinceScope = foldl (flip (uncurry HM.insert)) HM.empty extraProvinceScope
@@ -421,11 +431,13 @@ parseEU4Scripts = do
     events <- parseEU4Events =<< getEventScripts
     missions <- parseEU4Missions =<< getMissionScripts
     genericScriptsForEventTriggers <- getGenericScriptsForEventTriggers
+    scriptedEffectsForEstates <- getScriptedEffectsForEstates
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
         te2 = findTriggeredEventsInDecisions te1 (HM.elems decisions)
         te3 = findTriggeredEventsInMissions te2 (HM.elems missions)
         te4 = findTriggeredEventsInProvinceTriggeredModifiers te3 (HM.elems provTrigModifiers)
         te5 = findTriggeredEventsInUnhandledFiles te4 genericScriptsForEventTriggers
+        estateActions = findEstateActions (HM.elems decisions) (HM.findWithDefault [] "estate_privileges" genericScriptsForEventTriggers) scriptedEffectsForEstates
     --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))
     modify $ \(EU4D s) -> EU4D $
             s { eu4events = events
@@ -436,6 +448,7 @@ parseEU4Scripts = do
             ,   eu4missions = missions
             ,   eu4eventTriggers = te5
             ,   eu4provtrigmodifiers = provTrigModifiers
+            ,   eu4estateActions = estateActions
             }
 
 -- | Output the game data as wiki text.

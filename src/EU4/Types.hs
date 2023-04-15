@@ -14,6 +14,7 @@ module EU4.Types (
     ,   EU4Modifier (..), EU4OpinionModifier (..)
     ,   EU4MissionTreeBranch (..), EU4Mission (..)
     ,   EU4ProvinceTriggeredModifier (..)
+    ,   EU4EstateAction (..)
         -- * Low level types
     ,   MonarchPower (..)
     ,   EU4Scope (..)
@@ -65,6 +66,8 @@ data EU4Data = EU4Data {
     ,   eu4missionScripts :: HashMap FilePath GenericScript
     ,   eu4provtrigmodifierScripts :: HashMap FilePath GenericScript
     ,   eu4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
+    ,   eu4estateActions :: HashMap Text EU4EstateAction -- the key is the internal name of an estate action (e.g. RECRUIT_MINISTER_BRAHMINS)
+    ,   eu4scriptedEffectsForEstates :: Text -- the contents of common/scripted_effects/01_scripted_effects_for_estates.txt
     ,   eu4extraScripts :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   eu4extraScriptsCountryScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
     ,   eu4extraScriptsProvinceScope :: HashMap FilePath GenericScript -- Extra scripts parsed on the command line
@@ -129,6 +132,10 @@ class (IsGame g,
     getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text EU4ProvinceTriggeredModifier)
     -- | Get the trade nodes
     getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
+    -- | Get the decisions which enact estate actions
+    getEstateActions :: Monad m => PPT g m (HashMap Text EU4EstateAction)
+    -- | Get the contents of the file common/scripted_effects/01_scripted_effects_for_estates.txt which can't be parsed normally
+    getScriptedEffectsForEstates :: Monad m => PPT g m Text
     -- | Get extra scripts parsed from command line arguments
     getExtraScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     getExtraScriptsCountryScope :: Monad m => PPT g m (HashMap FilePath GenericScript)
@@ -294,6 +301,14 @@ data EU4MissionTreeBranch = EU4MissionTreeBranch
     ,   eu4mtb_potential :: Maybe GenericScript
     ,   eu4mtb_missions :: [EU4Mission]
     } deriving (Show)
+
+data EU4EstateAction = EU4EstateAction
+    {
+        eaName :: Text
+    ,   eaDecision :: EU4Decision
+    ,   eaPrivilege :: Text -- the (non-localised) name of the privilege which enables the estate action
+    ,   eaScript :: GenericScript -- the scripted effect estate_action_
+    }
 
 ------------------------------
 -- Shared lower level types --

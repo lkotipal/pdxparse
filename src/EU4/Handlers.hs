@@ -161,6 +161,9 @@ module EU4.Handlers (
     ,   hasIdeaGroup
     ,   killUnits
     ,   addBuildingConstruction
+    ,   handleGenericEstateAction
+    ,   handleEstateActionCoolDown
+    ,   handleEstateAction
     ,   hasGovernmentReforTier
     -- testing
     ,   isPronoun
@@ -1761,7 +1764,7 @@ factionInPowerEffect stmt@[pdx| %_ = @stmts |] = do
                 Just [pdx| %_ = ?effectText |] -> do
                     facLoc <- getGameL10n faction
                     let facKey = fromMaybe faction (fac_iconkey faction)
-                    effectStmt2 <- readScriptFromText effectText
+                    let effectStmt2 = readScriptFromText effectText
                     effectMsgs <- ppMany effectStmt2
                     withCurrentIndent $ \i ->
                         return $  (i, MsgFactionInPowerEffect (iconText facKey) facLoc) : effectMsgs
@@ -4381,6 +4384,46 @@ foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
         buildingLoc <- getGameL10n ("building_" <> _building)
         return $ MsgConstructBuilding (iconText _building) buildingLoc _speed _cost
     |]
+
+-- | Get the estate action by its name
+getEstateAction :: (EU4Info g, Monad m) => Text -> PPT g m (Maybe EU4EstateAction)
+getEstateAction name = do
+        HM.lookup name <$> getEstateActions
+
+-------------------------------------------
+-- Handler for estate action related triggers and effects --
+-------------------------------------------
+foldCompound "handleGenericEstateAction" "EstateActionGeneric" "eag"
+    [("_message", [t|Text -> Text -> Text -> Text -> Text -> ScriptMessage|])]
+    [CompField "estate_action" [t|Text|] Nothing True
+    ]
+    [| do
+        mAction <- getEstateAction _estate_action
+        case mAction of
+            Nothing -> return $ trace ("Unknown estate action " ++ T.unpack _estate_action ++ " in: " ++ show stmt) $ preMessage stmt
+            Just estateAction -> do
+                let privilege = eaPrivilege estateAction
+                privilegeLoc <- getGameL10n privilege
+                return $ _message _estate_action (dec_name (eaDecision estateAction)) (dec_name_loc (eaDecision estateAction)) privilege privilegeLoc
+    |]
+
+foldCompound "handleEstateActionCoolDown" "EstateActionCoolDown" "eacd"
+    [("_message", [t|Text -> Double -> ScriptMessage|])]
+    [CompField "estate_action" [t|Text|] Nothing True
+    ,CompField "days" [t|Double|] Nothing True
+    ]
+    [| do
+        return $ _message _estate_action _days
+    |]
+
+handleEstateAction :: (EU4Info g, Monad m) => StatementHandler g m
+handleEstateAction stmt = case getEffectArg "estate_action" stmt of
+        Just (GenericRhs actionName _) -> do
+            mAction <- getEstateAction actionName
+            case mAction of
+                Nothing -> trace ("warning: Not handled by handleEstateAction: " ++ show stmt) $ preStatement stmt
+                Just estateAction -> ppMany (eaScript estateAction)
+        _ -> trace ("warning: Not handled by handleEstateAction: " ++ show stmt) $ preStatement stmt
 
 ----------------------------------------------------
 -- Handler for has_reached_government_reform_tier --

@@ -1419,6 +1419,9 @@ data ScriptMessage
     | MsgAddDIPTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddMILTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgIsHegemon {scriptMessageYn :: Bool}
+    | MsgEnableEstateAction {scriptMessageEstateAction :: Text, scriptMessageDecisionName :: Text, scriptMessageDecisionLoc :: Text, scriptMessagePrivilegeName :: Text, scriptMessagePrivilegeLoc :: Text}
+    | MsgHasEnabledEstateAction {scriptMessageEstateAction :: Text, scriptMessageDecisionName :: Text, scriptMessageDecisionLoc :: Text, scriptMessagePrivilegeName :: Text, scriptMessagePrivilegeLoc :: Text}
+    | MsgEstateActionCoolDown {scriptMessageEstateAction :: Text, scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9422,6 +9425,37 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is"
                 , ifThenElseT _yn "" " ''not''"
                 ," a [[hegemon]]"
+                ]
+        MsgEnableEstateAction {scriptMessageEstateAction = _action, scriptMessageDecisionName = _decName, scriptMessageDecisionLoc = _decLoc, scriptMessagePrivilegeName = _privName, scriptMessagePrivilegeLoc = _privLoc}
+            -> mconcat
+                [ "Enable the decision [[List of estate actions#"
+                , _decName
+                , "|"
+                , _decLoc
+                , "]].<!-- enable_estate_action "
+                , _action
+                , " -->"
+                ]
+        MsgHasEnabledEstateAction {scriptMessageEstateAction = _action, scriptMessageDecisionName = _decName, scriptMessageDecisionLoc = _decLoc, scriptMessagePrivilegeName = _privName, scriptMessagePrivilegeLoc = _privLoc}
+            -> mconcat
+                [ ifThenElseT (T.null _privLoc)
+                    ("Has unlocked the estate action <tt>" <> _action <> "</tt> ''(No way to do this has been found in the game files)''" )
+                    ("Has the estate privilege " <> toMessage (iquotes _privLoc))
+                , ".<!-- "
+                , _privName
+                , " / has_enabled_estate_action "
+                , _action
+                , " -->"
+                ]
+        MsgEstateActionCoolDown {scriptMessageEstateAction = _action, scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has ''not'' enacted this decision nor any other decision which uses the cooldown timer <tt>"
+                , _action
+                ,"</tt> in the last "
+                , toMessage (formatDays _amt)
+                , ".<!-- estate_action_off_cooldown "
+                , _action
+                , " -->"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

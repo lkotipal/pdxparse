@@ -2139,12 +2139,17 @@ handlersSpecialComplex = Tr.fromList
         ,("define_general"               , defineMilitaryLeader "general" False MsgDefineGeneral)
         ,("define_leader_to_ruler"       , defineDynMember (\_ -> MsgDefinerLeaderToRuler) (\_ -> \_ -> MsgDefinerLeaderToRuler) (\_ -> MsgDefinerLeaderToRuler) (\_ -> \_ -> MsgDefinerLeaderToRuler))
         ,("define_ruler_to_general"      , defineMilitaryLeader "general" False MsgDefineRulerToGeneral)
+        ,("enable_estate_action"         , handleGenericEstateAction MsgEnableEstateAction)
         ,("employed_advisor"             , employedAdvisor)
+        ,("estate_action_off_cooldown"   , handleEstateActionCoolDown MsgEstateActionCoolDown)
+        ,("estate_action_off_shared_cooldown" , handleEstateActionCoolDown MsgEstateActionCoolDown)
+        ,("estate_action"                , handleEstateAction)
         ,("expulsion_target"             , expulsionTarget)
         ,("faction_influence"            , factionInfluence MsgFactionHasInfluence)
         ,("faction_in_power_effect"      , factionInPowerEffect)
         ,("freeze_government_power"      , governmentPower MsgFreezeGovernmentPower)
         ,("government_power_frozen"      , governmentPower MsgIsGovernmentPowerFrozen)
+        ,("has_enabled_estate_action"    , handleGenericEstateAction MsgHasEnabledEstateAction)
         ,("has_estate_led_regency"       , hasEstateLedRegency)
         ,("has_estate_influence_modifier", hasEstateModifier MsgEstateHasInfluenceModifier)
         ,("has_estate_loyalty_modifier"  , hasEstateModifier MsgEstateHasLoyaltyModifier)
@@ -2469,8 +2474,10 @@ handlersIgnored = Tr.fromList
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
         ,("show_points_needed_for_livionian_government_of_category" , return $ return []) -- this is a scripted effect which just shows tooltips
-        -- @TODO: revisit the decision to ignore restore_country_name_effect if the effect does anything useful
+        -- @TODO: revisit the decision to ignore these they do anything useful
         ,("restore_country_name_effect", return $ return []) -- as of 1.34, this effect undoes just one of the many name changes and because of this, it has been ignored by the wiki
+        ,("increase_estate_action_counter", return $ return []) -- increases two counters which are never read (general_estate_action_counter and $estate$_action_counter)
+        ,("set_estate_action_cooldown", return $ return []) -- just resets the flag which is used in the scripted trigger estate_action_off_cooldown
         ]
 
 getStatementHandlerByScope :: (EU4Info g, Monad m) => Text -> Maybe EU4Scope -> Maybe (StatementHandler g m)
