@@ -1424,6 +1424,8 @@ data ScriptMessage
     | MsgEstateActionCoolDown {scriptMessageEstateAction :: Text, scriptMessageAmt :: Double}
     | MsgHasEstateAgenda {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAutoCompleteEstateAgenda {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgEstateActionMonarchPower {scriptMessageText :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgEstateActionTradition {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9476,6 +9478,27 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " estate if it is active"
+                ]
+        MsgEstateActionMonarchPower {scriptMessageText = _estate_name, scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Gain "
+                , _icon
+                , " 50/100/150/200 "
+                , _what
+                , " power if the "
+                , _estate_name
+                , " estate has below 50%/at least 50%/75%/100% influence"
+                ]
+        MsgEstateActionTradition {scriptMessageIcon = _icon, scriptMessageWhom = _estate_name, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Gain "
+                , " 10/15/20/25 "
+                , _what
+                , " tradition if the "
+                , _icon
+                , " "
+                , _estate_name
+                , " estate has below 50%/at least 50%/75%/100% influence"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

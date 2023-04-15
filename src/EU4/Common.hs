@@ -2097,6 +2097,8 @@ handlersTextAtom :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextAtom = Tr.fromList
         [("create_flagship"      , taDescAtomIcon "name" "type" MsgCreateFlagShip)
         ,("create_named_ship"    , taDescAtomIcon "name" "type" MsgCreateNamedShip)
+        ,("estate_action_monarch_power" , taDescAtomIcon "estate" "type" MsgEstateActionMonarchPower)
+        ,("estate_action_tradition" , textAtom "estate" "type" MsgEstateActionTradition tryLoc)
         ,("pick_random_estate_if_present" , textAtom "flag" "estate_action" MsgPickRandomEstateIfPresent tryLoc) -- Localization/icon ignored
         ,("religious_school"     , textAtom "school" "group" MsgReligiousSchool tryLoc)
         ,("set_religious_school" , textAtom "school" "group" MsgSetReligiousSchool tryLoc)
