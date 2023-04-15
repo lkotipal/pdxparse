@@ -2182,6 +2182,7 @@ handlersSpecialComplex = Tr.fromList
         ,("add_loot_from_rich_province_general_effect" , simpleEffectAtom "looter" MsgAddLootFromRichProvince) -- Note: RHS ignored
         ,("add_prestige_or_monarch_power"  , simpleEffectNumIcon "prestige" "amount" MsgAddPrestigeOrMonarchPower)
         ,("allow_baseline_invite_scholar"   , simpleEffectAtom "religious_school" MsgAllowBaselineInviteScholar)
+        ,("auto_complete_estate_agenda"     , simpleEffectAtom "estate" MsgAutoCompleteEstateAgenda)
         ,("can_swap_out_of_estate_granting_reform", simpleEffectAtom "estate" MsgCanSwapOutEstateGrantingReform)
         ,("check_reducing_estate_revolt_size_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize False))
         ,("check_reducing_estate_revolt_size_more_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize True))

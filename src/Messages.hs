@@ -1423,6 +1423,7 @@ data ScriptMessage
     | MsgHasEnabledEstateAction {scriptMessageEstateAction :: Text, scriptMessageDecisionName :: Text, scriptMessageDecisionLoc :: Text, scriptMessagePrivilegeName :: Text, scriptMessagePrivilegeLoc :: Text}
     | MsgEstateActionCoolDown {scriptMessageEstateAction :: Text, scriptMessageAmt :: Double}
     | MsgHasEstateAgenda {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgAutoCompleteEstateAgenda {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9467,6 +9468,14 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " agenda"
+                ]
+        MsgAutoCompleteEstateAgenda {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Automatically complete the estate agenda of the "
+                , _icon
+                , " "
+                , _what
+                , " estate if it is active"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
