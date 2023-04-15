@@ -1422,6 +1422,7 @@ data ScriptMessage
     | MsgEnableEstateAction {scriptMessageEstateAction :: Text, scriptMessageDecisionName :: Text, scriptMessageDecisionLoc :: Text, scriptMessagePrivilegeName :: Text, scriptMessagePrivilegeLoc :: Text}
     | MsgHasEnabledEstateAction {scriptMessageEstateAction :: Text, scriptMessageDecisionName :: Text, scriptMessageDecisionLoc :: Text, scriptMessagePrivilegeName :: Text, scriptMessagePrivilegeLoc :: Text}
     | MsgEstateActionCoolDown {scriptMessageEstateAction :: Text, scriptMessageAmt :: Double}
+    | MsgHasEstateAgenda {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9456,6 +9457,14 @@ instance RenderMessage Script ScriptMessage where
                 , ".<!-- estate_action_off_cooldown "
                 , _action
                 , " -->"
+                ]
+        MsgHasEstateAgenda {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has an active "
+                , _icon
+                , " "
+                , _what
+                , " agenda"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

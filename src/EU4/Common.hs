@@ -2191,6 +2191,7 @@ handlersSpecialComplex = Tr.fromList
         ,("generate_exile_advisor_effect"   , simpleEffectAtom "advisor_type" MsgGenerateExileAdvisor)
         ,("generate_scaled_advisor_of_type_and_religion_effect" , defineAdvisor True Nothing)
         ,("generate_traitor_advisor_effect" , simpleEffectNum "skill_level" MsgGenerateTraitorAdvisor)
+        ,("has_estate_agenda_of_estate"     , simpleEffectAtom "estate" MsgHasEstateAgenda)
         ,("has_points_for_livonian_monarchy", simpleEffectAtom "government_reform" MsgHasPointsForLivonianMonarchy)
         ,("has_primary_cult"                , simpleEffectAtom "cult" MsgHasPrimaryCult)
         ,("has_unlocked_government_reform"  , simpleEffectAtom "government_reform" MsgHasUnlockedGovernmentReform)
