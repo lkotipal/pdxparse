@@ -491,7 +491,7 @@ data ScriptMessage
     | MsgTriggerEvent {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text}
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgDeclareWarWithCB {scriptMessageWhom :: Text, scriptMessageCb :: Text}
-    | MsgGainAdvisor {scriptMessageMaybeFemale :: Maybe Bool, scriptMessageMaybeAdvtype :: Maybe Text, scriptMessageMaybeName :: Maybe Text, scriptMessageMaybeWhere :: Maybe Text, scriptMessageMaybeSkill :: Maybe Double, scriptMessageScaled :: Bool, scriptMessageDiscount :: Double, scriptMessageMaybeExtraText :: Maybe Text, scriptMessageIcon :: Text, scriptMessageMaybeCulture :: Maybe Text, scriptMessageMaybeReligion :: Maybe Text}
+    | MsgGainAdvisor {scriptMessageMaybeFemale :: Maybe Bool, scriptMessageMaybeAdvtype :: Maybe Text, scriptMessageMaybeName :: Maybe Text, scriptMessageMaybeWhere :: Maybe Text, scriptMessageMaybeSkill :: Maybe Double, scriptMessageScaled :: Bool, scriptMessageDiscount :: Double, scriptMessageMaybeExtraText :: Maybe Text, scriptMessageIcon :: Text, scriptMessageMaybeCulture :: Maybe Text, scriptMessageMaybeReligion :: Maybe Text, scriptMessageMaybeEstate :: Maybe Text}
     | MsgRebelLeaderRuler
     | MsgNewRuler {scriptMessageRegent :: Bool}
     | MsgNewRulerLeader {scriptMessageRegent :: Bool, scriptMessageName :: Text}
@@ -3917,7 +3917,8 @@ instance RenderMessage Script ScriptMessage where
                             scriptMessageMaybeExtraText = _extra,
                             scriptMessageIcon = _icon,
                             scriptMessageMaybeCulture = _culture,
-                            scriptMessageMaybeReligion = _religion}
+                            scriptMessageMaybeReligion = _religion,
+                            scriptMessageMaybeEstate = _estate}
             -> mconcat
                 [ "Gain"
                 , maybe "" (\s -> " skill " <> toMessage (roundNum s)) _skill
@@ -3931,6 +3932,7 @@ instance RenderMessage Script ScriptMessage where
                 , maybe "" (\r -> ifThenElseT (isJust _culture) " and " " with " <> r <> " religion") _religion
                 , maybe "" (" in " <>) _where
                 , toMessage (advisorDiscountText _discount)
+                , maybe "" (\e -> " (25%/50% cheaper to employ if the " <> e <> " estate has at least 60%/80% influence)") _estate
                 , maybe "" (\e -> " (" <> e <> ")") _extra
                 ]
         MsgRebelLeaderRuler

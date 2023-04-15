@@ -2188,6 +2188,7 @@ handlersSpecialComplex = Tr.fromList
         ,("disable_rebels_from_seize_land_for_estate" , simpleEffectAtom "estate" MsgDisableRebelsFromSeizeLand)
         ,("eyalet_effect"                   , simpleEffectAtom "tag" MsgEyaletEffect)
         ,("generate_advisor"                , defineAdvisor True (Just "if the flag <tt>cheaper_selected_advisor</tt> is set, the advisor is cheaper to hire"))
+        ,("generate_estate_advisor"         , defineAdvisor True Nothing)
         ,("generate_exile_advisor_effect"   , simpleEffectAtom "advisor_type" MsgGenerateExileAdvisor)
         ,("generate_scaled_advisor_of_type_and_religion_effect" , defineAdvisor True Nothing)
         ,("generate_traitor_advisor_effect" , simpleEffectNum "skill_level" MsgGenerateTraitorAdvisor)
