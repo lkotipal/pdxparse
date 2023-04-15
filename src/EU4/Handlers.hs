@@ -2968,7 +2968,7 @@ estateInfluenceModifier msg stmt@[pdx| %_ = @scr |]
                         Just desc -> getGameL10n desc
                         _ -> return "(Missing)"
                     dur <- timeOrIndef (fromMaybe (-1) mduration)
-                    return (msg estate_icon estate_loc desc_loc inf dur)
+                    return (msg estate_icon estate_loc (T.replace ": $VAL$%" "" (T.replace ": $VAL|Y$%" "" desc_loc)) inf dur)
                 _ -> return (preMessage stmt)
 estateInfluenceModifier _ stmt = preStatement stmt
 
