@@ -2200,6 +2200,9 @@ handlersSpecialComplex = Tr.fromList
         ,("generate_scaled_advisor_of_type_and_religion_effect" , defineAdvisor True Nothing)
         ,("generate_traitor_advisor_effect" , simpleEffectNum "skill_level" MsgGenerateTraitorAdvisor)
         ,("has_estate_agenda_of_estate"     , simpleEffectAtom "estate" MsgHasEstateAgenda)
+        ,("has_issue_unlocked"              , simpleEffectAtomIcon "parliament" "issue" MsgHasParliamentIssueUnlocked)
+        ,("has_issue_unlocked_tooltip"      , simpleEffectAtomIcon "parliament" "issue" MsgHasParliamentIssueUnlocked)
+        ,("has_not_enacted_parliament_action", simpleEffectAtomIcon "parliament" "parliament_action" MsgHasNotEnactedParliamentAction)
         ,("has_points_for_livonian_monarchy", simpleEffectAtom "government_reform" MsgHasPointsForLivonianMonarchy)
         ,("has_primary_cult"                , simpleEffectAtom "cult" MsgHasPrimaryCult)
         ,("has_unlocked_government_reform"  , simpleEffectAtom "government_reform" MsgHasUnlockedGovernmentReform)
@@ -2218,7 +2221,8 @@ handlersSpecialComplex = Tr.fromList
         ,("scaled_estate_land_share_add_effect" , simpleEffectAtom "estate" (MsgScaledEstateLandShareEffect True))
         ,("subsidised_percent_amount"       , simpleEffectNum "value" MsgSubsidisedPercentAmount)
         ,("unlock_estate_privilege"         , simpleEffectAtom "estate_privilege" MsgUnlockEstatePrivilege)
-        ,("unlock_government_reform"         , simpleEffectAtom "government_reform" MsgUnlockGovernmentReform)
+        ,("unlock_issue"                    , simpleEffectAtomIcon "parliament" "issue" MsgUnlockParliamentIssue)
+        ,("unlock_government_reform"        , simpleEffectAtom "government_reform" MsgUnlockGovernmentReform)
 
         -- Variables
         ,("set_variable"                 , setVariable MsgSetVariable MsgSetVariableVal)

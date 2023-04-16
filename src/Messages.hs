@@ -1426,6 +1426,9 @@ data ScriptMessage
     | MsgAutoCompleteEstateAgenda {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEstateActionMonarchPower {scriptMessageText :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEstateActionTradition {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
+    | MsgUnlockParliamentIssue {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHasParliamentIssueUnlocked {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHasNotEnactedParliamentAction {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9499,6 +9502,27 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _estate_name
                 , " estate has below 50%/at least 50%/75%/100% influence"
+                ]
+        MsgUnlockParliamentIssue {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Unlock the "
+                , _icon
+                , " parliament issue "
+                , toMessage (iquotes _what)
+                ]
+        MsgHasParliamentIssueUnlocked {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has unlocked the "
+                , _icon
+                , " parliament issue "
+                , toMessage (iquotes _what)
+                ]
+        MsgHasNotEnactedParliamentAction {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has not enacted the "
+                , _icon
+                , " parliament issue "
+                , toMessage (iquotes _what)
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
