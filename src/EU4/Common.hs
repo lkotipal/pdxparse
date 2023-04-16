@@ -2096,6 +2096,7 @@ handlersTextValue = Tr.fromList
 handlersTextAtom :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTextAtom = Tr.fromList
         [("create_flagship"      , taDescAtomIcon "name" "type" MsgCreateFlagShip)
+        ,("create_leader_scaling_with_tradition" , taDescAtomIcon "type" "leader" MsgCreateScalingLeader)
         ,("create_named_ship"    , taDescAtomIcon "name" "type" MsgCreateNamedShip)
         ,("estate_action_monarch_power" , taDescAtomIcon "estate" "type" MsgEstateActionMonarchPower)
         ,("estate_action_tradition" , textAtom "estate" "type" MsgEstateActionTradition tryLoc)

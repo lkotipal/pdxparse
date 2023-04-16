@@ -1426,6 +1426,7 @@ data ScriptMessage
     | MsgAutoCompleteEstateAgenda {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEstateActionMonarchPower {scriptMessageText :: Text, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEstateActionTradition {scriptMessageIcon :: Text, scriptMessageWhom :: Text, scriptMessageWhat :: Text}
+    | MsgCreateScalingLeader {scriptMessageWhat :: Text, scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgUnlockParliamentIssue {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasParliamentIssueUnlocked {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasNotEnactedParliamentAction {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -9502,6 +9503,16 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _estate_name
                 , " estate has below 50%/at least 50%/75%/100% influence"
+                ]
+        MsgCreateScalingLeader {scriptMessageIcon = _icon, scriptMessageWhom = _leader, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Gain "
+                , _icon
+                , " "
+                , _leader
+                , " with 20 more "
+                , _what
+                , " tradition than the country currently has"
                 ]
         MsgUnlockParliamentIssue {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
