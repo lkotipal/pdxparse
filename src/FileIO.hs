@@ -144,7 +144,7 @@ readScriptFromText contents = case Ap.parseOnly
         *> genericScript
     ) contents of
     Right result -> result
-    Left err -> []
+    Left err -> trace ("Error \"" ++ err ++ "\" in readScriptFromText with the text:" ++ show contents) []
 
 ------------------------------
 -- Writing features to file --

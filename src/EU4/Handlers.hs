@@ -165,7 +165,7 @@ module EU4.Handlers (
     ,   handleEstateActionCoolDown
     ,   handleEstateAction
     ,   hasGovernmentReforTier
-    ,   handleSimpleDynamicEffect
+    ,   handleDynamicEffect
     -- testing
     ,   isPronoun
     ,   flag
@@ -4440,31 +4440,69 @@ handleEstateAction stmt = case getEffectArg "estate_action" stmt of
 -------------------------------------------
 -- Handler for simple_dynamic_effect --
 -------------------------------------------
-foldCompound "handleSimpleDynamicEffect" "SimpleDynamicEffect" "sde"
+foldCompound "handleDynamicEffect" "DynamicEffect" "dynEff"
     [("_use_else_if", [t|Bool|])]
     [CompField "first_limit" [t|Text|] Nothing True
     ,CompField "first_effect" [t|Text|] Nothing True
-    ,CompField "second_limit" [t|Text|] Nothing True
-    ,CompField "second_effect" [t|Text|] Nothing True
+    ,CompField "second_limit" [t|Text|] Nothing False
+    ,CompField "second_effect" [t|Text|] Nothing False
+    ,CompField "third_limit" [t|Text|] Nothing False
+    ,CompField "third_effect" [t|Text|] Nothing False
+    ,CompField "fourth_limit" [t|Text|] Nothing False
+    ,CompField "fourth_effect" [t|Text|] Nothing False
+    ,CompField "fifth_limit" [t|Text|] Nothing False
+    ,CompField "fifth_effect" [t|Text|] Nothing False
+    ,CompField "sixth_limit" [t|Text|] Nothing False
+    ,CompField "sixth_effect" [t|Text|] Nothing False
+    ,CompField "seventh_limit" [t|Text|] Nothing False
+    ,CompField "seventh_effect" [t|Text|] Nothing False
+    ,CompField "eighth_limit" [t|Text|] Nothing False
+    ,CompField "eighth_effect" [t|Text|] Nothing False
+    ,CompField "nineth_limit" [t|Text|] Nothing False
+    ,CompField "nineth_effect" [t|Text|] Nothing False
+    ,CompField "tenth_limit" [t|Text|] Nothing False
+    ,CompField "tenth_effect" [t|Text|] Nothing False
     ,CompField "first_custom_tooltip" [t|Text|] Nothing False -- ignored
     ,CompField "second_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ,CompField "third_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ,CompField "fourth_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ,CompField "fifth_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ,CompField "sixth_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ,CompField "seventh_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ,CompField "eighth_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ,CompField "nineth_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ,CompField "tenth_custom_tooltip" [t|Text|] Nothing False -- ignored
     ]
     [| do
-        let effectText = "if = {\n\
-            \limit = { " <> _first_limit <> " }\n\
-            \" <> _first_effect <> "\n\
-            \}\n\
-            \" <> (if _use_else_if then "else_if" else "if") <> " = {\n\
-            \limit = { " <> _second_limit <> " }\n\
-            \" <> _second_effect <> "\n\
+        let formatOneDynamicEffect :: Text -> Text -> Text -> Text
+            formatOneDynamicEffect ifToken trigger effect = ifToken <> " = {\n\
+            \limit = { " <> trigger <> " }\n\
+            \" <> effect <> "\n\
             \}"
-            script = readScriptFromText effectText
-        -- TODO: ideally we could just do "indentDown (ppMany script)", but this would require a different version of foldCompound
-        effectMsgs <- imsg2doc =<< indentDown (ppMany script)
-        let effectText = Doc.doc2text effectMsgs
-            -- remove one or more * from the first line, because they are added both by ppMany and later on when handling the MsgGenericText which we return
-            fixedPrefix = T.dropWhile (\c -> c == '*' || c == ' ') effectText
-        return $ MsgGenericText fixedPrefix
+            handleMaybeEffects :: Bool -> (Maybe Text, Maybe Text) -> Text
+            handleMaybeEffects useElseIf (Just trigger, Just effect) = formatOneDynamicEffect (if useElseIf then "else_if" else "if") trigger effect
+            handleMaybeEffects _ _ = ""
+            otherEffects = [(_second_limit, _second_effect)
+                           ,(_third_limit, _third_effect)
+                           ,(_fourth_limit, _fourth_effect)
+                           ,(_fifth_limit, _fifth_effect)
+                           ,(_sixth_limit, _sixth_effect)
+                           ,(_seventh_limit, _seventh_effect)
+                           ,(_eighth_limit, _eighth_effect)
+                           ,(_nineth_limit, _nineth_effect)
+                           ,(_tenth_limit, _tenth_effect)
+                            ]
+            firstBlock = formatOneDynamicEffect "if" _first_limit _first_effect
+            otherBlocks = T.concat (map (handleMaybeEffects _use_else_if) otherEffects)
+        case readScriptFromText (firstBlock <> otherBlocks) of
+            []      -> return $ MsgGenericText "''here should be a dynamic effect, but pdxparse failed to parse it''"
+            script  -> do
+                -- TODO: ideally we could just return "indentDown (ppMany script)", but this would require a different version of foldCompound
+                effectMsgs <- imsg2doc =<< indentDown (ppMany script)
+                let effectText = Doc.doc2text effectMsgs
+                    -- remove one or more * from the first line, because they are added both by ppMany and later on when handling the MsgGenericText which we return
+                    fixedPrefix = T.dropWhile (\c -> c == '*' || c == ' ') effectText
+                return $ MsgGenericText fixedPrefix
     |]
 
 ----------------------------------------------------
