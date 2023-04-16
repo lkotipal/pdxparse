@@ -165,6 +165,7 @@ module EU4.Handlers (
     ,   handleEstateActionCoolDown
     ,   handleEstateAction
     ,   hasGovernmentReforTier
+    ,   handleSimpleDynamicEffect
     -- testing
     ,   isPronoun
     ,   flag
@@ -4435,6 +4436,36 @@ handleEstateAction stmt = case getEffectArg "estate_action" stmt of
                 Nothing -> trace ("warning: Not handled by handleEstateAction: " ++ show stmt) $ preStatement stmt
                 Just estateAction -> ppMany (eaScript estateAction)
         _ -> trace ("warning: Not handled by handleEstateAction: " ++ show stmt) $ preStatement stmt
+
+-------------------------------------------
+-- Handler for simple_dynamic_effect --
+-------------------------------------------
+foldCompound "handleSimpleDynamicEffect" "SimpleDynamicEffect" "sde"
+    [("_use_else_if", [t|Bool|])]
+    [CompField "first_limit" [t|Text|] Nothing True
+    ,CompField "first_effect" [t|Text|] Nothing True
+    ,CompField "second_limit" [t|Text|] Nothing True
+    ,CompField "second_effect" [t|Text|] Nothing True
+    ,CompField "first_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ,CompField "second_custom_tooltip" [t|Text|] Nothing False -- ignored
+    ]
+    [| do
+        let effectText = "if = {\n\
+            \limit = { " <> _first_limit <> " }\n\
+            \" <> _first_effect <> "\n\
+            \}\n\
+            \" <> (if _use_else_if then "else_if" else "if") <> " = {\n\
+            \limit = { " <> _second_limit <> " }\n\
+            \" <> _second_effect <> "\n\
+            \}"
+            script = readScriptFromText effectText
+        -- TODO: ideally we could just do "indentDown (ppMany script)", but this would require a different version of foldCompound
+        effectMsgs <- imsg2doc =<< indentDown (ppMany script)
+        let effectText = Doc.doc2text effectMsgs
+            -- remove one or more * from the first line, because they are added both by ppMany and later on when handling the MsgGenericText which we return
+            fixedPrefix = T.dropWhile (\c -> c == '*' || c == ' ') effectText
+        return $ MsgGenericText fixedPrefix
+    |]
 
 ----------------------------------------------------
 -- Handler for has_reached_government_reform_tier --

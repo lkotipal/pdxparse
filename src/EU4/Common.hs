@@ -2172,6 +2172,8 @@ handlersSpecialComplex = Tr.fromList
         ,("religion_years"               , religionYears)
         ,("set_ai_attitude"              , aiAttitude MsgSetAiAttitude)
         ,("set_government_power"         , governmentPower MsgSetGovernmentPower)
+        ,("simple_dynamic_effect"        , handleSimpleDynamicEffect True)
+        ,("simple_dynamic_effect_without_alternative" , handleSimpleDynamicEffect False)
         ,("reverse_add_casus_belli"      , addCB False)
         ,("trading_bonus"                , tradingBonus)
         ,("trading_policy_in_node"       , tradingPolicyInNode)
