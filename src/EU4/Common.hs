@@ -2492,6 +2492,7 @@ handlersIgnored = Tr.fromList
         ,("restore_country_name_effect", return $ return []) -- as of 1.34, this effect undoes just one of the many name changes and because of this, it has been ignored by the wiki
         ,("increase_estate_action_counter", return $ return []) -- increases two counters which are never read (general_estate_action_counter and $estate$_action_counter)
         ,("set_estate_action_cooldown", return $ return []) -- just resets the flag which is used in the scripted trigger estate_action_off_cooldown
+        ,("on_change_tag_effect", return $ return []) -- just resets some flags for england
         ]
 
 getStatementHandlerByScope :: (EU4Info g, Monad m) => Text -> Maybe EU4Scope -> Maybe (StatementHandler g m)
