@@ -639,7 +639,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             ,("on_hre_dismantled", "<!-- on_hre_dismantled -->When dismantling the HRE")
             --,("on_hre_non_defense", "")
             --,("on_hre_religion_white_peace", "")
-            --,("on_integrate", "")
+            ,("on_integrate", "Diplomatically integrating a junior partner")
             --,("on_lock_hre_religion", "")
             ,("on_main_war_won", "<!-- on_main_war_won -->Winning a war against ''From''") -- root = winning country, from = loser country
             ,("on_main_war_lost", "<!-- on_main_war_lost -->Losing a war against ''From''") -- root = winning country, from = loser country
@@ -675,7 +675,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             ,("on_yearly_pulse_3", "The [[list_of_event_lists#yearly_pulse|yearly pulse III]]")
             ,("on_yearly_pulse_4", "The [[list_of_event_lists#yearly_pulse|yearly pulse IV]]")
             ,("on_yearly_pulse_5", "The [[list_of_event_lists#yearly_pulse|yearly pulse V]]")
-            --,("on_weak_heir_claim", "")
+            ,("on_weak_heir_claim", "The rise to the throne of an heir with a weak claim")
             ]
 
 findTriggeredEventsInDisasters :: EU4EventTriggers -> [GenericStatement] -> EU4EventTriggers
