@@ -1633,7 +1633,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (colourNum True _amt)
-                , " prestige. Each exess prestige will be converted into one of each type of monarch power."
+                , " prestige. Each excess prestige will be converted into one of each type of monarch power."
                 ]
         MsgGainRepTrad {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
