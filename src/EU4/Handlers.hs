@@ -905,9 +905,12 @@ scriptIconFileTable = HM.fromList
     [("all estates loyalty equilibrium", ("", "all estates loyalty equilibrium"))
     ,("auto explore adjacent to colony", ("", "discovery"))
     ,("average monarch lifespan", ("", "average monarch lifespan"))
+    ,("can chain claim", ("", "Claims bordering claims"))
+    ,("can create client states", ("Allow client states", "Client state"))
     ,("cost to promote mercantilism", ("", "cost to promote mercantilism"))
     ,("establish holy order cost", ("", "establish holy order cost"))
     ,("fleet movement speed", ("", "fleet movement speed"))
+    ,("force march free", ("Force march free", "Force march"))
     ,("global monthly devastation", ("", "Devastation"))
     ,("hostile fleet attrition", ("", "hostile fleet attrition"))
     ,("local center of trade upgrade cost", ("", "Local center of trade upgrade cost"))
@@ -916,12 +919,14 @@ scriptIconFileTable = HM.fromList
     ,("local defender dice roll bonus", ("", "Local defender dice roll bonus"))
     ,("maximum tolerance of heathens", ("", "maximum tolerance of heathens"))
     ,("maximum tolerance of heretics", ("", "maximum tolerance of heretics"))
+    ,("may build supply depots", ("May build supply depot", "Supply depot"))
     ,("may establish siberian frontiers", ("", "Siberian frontier"))
     ,("may fabricate claims for subjects", ("", "Fabricate claims"))
     ,("monthly federation favor growth", ("", "Monthly federation favor growth"))
     ,("monthly heir claim increase", ("", "monthly heir claim increase"))
     ,("monthly reform progress", ("", "reform progress growth"))
     ,("naval combat local bonus off owned coast", ("", "Naval warfare#Combat sequence"))
+    ,("no stability loss on monarch death", ("No stability loss on ruler's death", "No stability loss on monarch death"))
     ,("norse zealots", ("Norse rebels", "Norse zealots"))
     ,("number of free cities", ("", "Number of free cities"))
     ,("overlord naval force limit", ("", "overlord naval force limit"))
@@ -4587,8 +4592,12 @@ handleModifierDlcOnly _ _ _  stmt = plainMsg $ pre_statement' stmt
 -- "{{icon|may recruit female generals|28px}} May recruit female generals"
 handleModifierAlwaysYesWithIcon :: (EU4Info g, Monad m) => Text -> Text -> StatementHandler g m
 -- handleModifierAlwaysYesWithIcon message iconKey [pdx| %_ = "yes" |] = do
-handleModifierAlwaysYesWithIcon message iconKey [pdx| %_ = ?rhs |] | T.toLower rhs == "yes" = do
-    msgToPP $ MsgGenericTextWithIcon (iconText iconKey) message
+handleModifierAlwaysYesWithIcon locKey iconKey [pdx| %_ = ?rhs |] | T.toLower rhs == "yes" = do
+    modifierLoc <- getGameL10nIfPresent locKey
+    let capitalizedText = case modifierLoc of
+            Nothing -> locKey
+            Just str -> capitalizeFirstLetter (T.toLower str)
+    msgToPP $ MsgGenericTextWithIcon (iconText iconKey) capitalizedText
 handleModifierAlwaysYesWithIcon _ _  stmt = plainMsg $ pre_statement' stmt
 
 handleAtLeast :: (EU4Info g, Monad m) => Text -> (Double -> Doc) -> StatementHandler g m
