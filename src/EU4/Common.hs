@@ -2144,6 +2144,7 @@ handlersSpecialComplex = Tr.fromList
         ,("define_general"               , defineMilitaryLeader "general" False MsgDefineGeneral)
         ,("define_leader_to_ruler"       , defineDynMember (\_ -> MsgDefinerLeaderToRuler) (\_ -> \_ -> MsgDefinerLeaderToRuler) (\_ -> MsgDefinerLeaderToRuler) (\_ -> \_ -> MsgDefinerLeaderToRuler))
         ,("define_ruler_to_general"      , defineMilitaryLeader "general" False MsgDefineRulerToGeneral)
+        ,("disable_estate_action"        , handleGenericEstateAction MsgDisableEstateAction)
         ,("enable_estate_action"         , handleGenericEstateAction MsgEnableEstateAction)
         ,("employed_advisor"             , employedAdvisor)
         ,("estate_action_off_cooldown"   , handleEstateActionCoolDown MsgEstateActionCoolDown)

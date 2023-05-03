@@ -1419,6 +1419,7 @@ data ScriptMessage
     | MsgAddDIPTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddMILTech {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgIsHegemon {scriptMessageYn :: Bool}
+    | MsgDisableEstateAction {scriptMessageEstateAction :: Text, scriptMessageDecisionName :: Text, scriptMessageDecisionLoc :: Text, scriptMessagePrivilegeName :: Text, scriptMessagePrivilegeLoc :: Text}
     | MsgEnableEstateAction {scriptMessageEstateAction :: Text, scriptMessageDecisionName :: Text, scriptMessageDecisionLoc :: Text, scriptMessagePrivilegeName :: Text, scriptMessagePrivilegeLoc :: Text}
     | MsgHasEnabledEstateAction {scriptMessageEstateAction :: Text, scriptMessageDecisionName :: Text, scriptMessageDecisionLoc :: Text, scriptMessagePrivilegeName :: Text, scriptMessagePrivilegeLoc :: Text}
     | MsgEstateActionCoolDown {scriptMessageEstateAction :: Text, scriptMessageAmt :: Double}
@@ -9435,6 +9436,16 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is"
                 , ifThenElseT _yn "" " ''not''"
                 ," a [[hegemon]]"
+                ]
+        MsgDisableEstateAction {scriptMessageEstateAction = _action, scriptMessageDecisionName = _decName, scriptMessageDecisionLoc = _decLoc, scriptMessagePrivilegeName = _privName, scriptMessagePrivilegeLoc = _privLoc}
+            -> mconcat
+                [ "Disable the decision [[List of estate actions#"
+                , _decName
+                , "|"
+                , _decLoc
+                , "]].<!-- disable_estate_action "
+                , _action
+                , " -->"
                 ]
         MsgEnableEstateAction {scriptMessageEstateAction = _action, scriptMessageDecisionName = _decName, scriptMessageDecisionLoc = _decLoc, scriptMessagePrivilegeName = _privName, scriptMessagePrivilegeLoc = _privLoc}
             -> mconcat
