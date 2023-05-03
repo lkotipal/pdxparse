@@ -812,7 +812,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("global_heathen_missionary_strength"    , handleModifier "MODIFIER_GLOBAL_HEATHEN_MISSIONARY_STRENGTH" (reducedNum (colourPcSign True)))
         ,("global_heretic_missionary_strength"    , handleModifierWithIcon "MODIFIER_GLOBAL_HERETIC_MISSIONARY_STRENGTH" "global heretic missionary strength" (reducedNum (colourPcSign True)))
         ,("global_institution_spread"             , handleModifier "MODIFIER_GLOBAL_INSTITUTION_SPREAD" (reducedNum (colourPcSign True)))
-        ,("global_manpower"                       , handleModifierWithIcon "MANPOWER" "manpower" (colourNumSign True))
+        ,("global_manpower"                       , handleModifierWithIcon "MANPOWER" "manpower" (colourNumSign True . (*1000)))
         ,("global_manpower_modifier"              , handleModifier "GLOBAL_MANPOWER" (reducedNum (colourPcSign True)))
         ,("global_missionary_strength"            , handleModifier "GLOBAL_MISSIONARY_STRENGTH" (reducedNum (colourPcSign True)))
         ,("global_naval_engagement_modifier"      , handleModifier "MODIFIER_GLOBAL_NAVAL_ENGAGEMENT" (reducedNum (colourPcSign True)))
