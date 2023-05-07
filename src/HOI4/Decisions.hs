@@ -351,8 +351,8 @@ decisionAddSection dec stmt
                 CompoundRhs scr -> dec { dec_timeout_effect = Just scr }
                 _ -> trace "DEBUG: bad decisions trimeout_effect" dec
             "is_good" ->  case rhs of --bool, standard false but not really, says wether finishing the mission is good or bad
-                GenericRhs "yes" [] -> dec { dec_cancel_if_not_visible = True }
-                GenericRhs "no" [] -> dec { dec_cancel_if_not_visible = False }
+                GenericRhs "yes" [] -> dec { dec_is_good = True }
+                GenericRhs "no" [] -> dec { dec_is_good = False }
                 _ -> trace "DEBUG: bad decisions cancel_if_not_visible" dec
             "targets" -> case rhs of -- weirdo array , checks countries for which decision can be targeted to, turn decisions into targeted decision
                 CompoundRhs [] -> dec -- empty, treat as if it wasn't there
