@@ -342,7 +342,7 @@ decisionAddSection dec stmt
             "war_with_on_timeout" -> dec -- used to inform if a decison declares war when selected
             "fixed_random_seed" -> dec --bool, standard True
             "days_mission_timeout" -> case rhs of -- how long the mission takes to finish, and turns decision into mission
-                (floatRhs -> num)  -> dec { dec_days_remove = num }
+                (floatRhs -> num)  -> dec { dec_days_mission_timeout = num }
                 --_ -> trace "DEBUG: bad decisions days_mission_timeout" dec
             "activation" -> dec -- checks for if a mission starts
             "selectable_mission" -> dec --bool, standard false
