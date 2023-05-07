@@ -765,13 +765,14 @@ handlersMisc = Tr.fromList
         ,("set_popularities"    , setPopularities)
         ,("set_rule"            , setRule MsgSetRule)
         ,("set_technology"      , setTechnology)
+
+        ,("effect_tooltip"        , customTriggerTooltip) -- shows the effects but doesn't execute them, don't know if I want it to show up in the parser
         ]
 
 -- | Handlers for ignored statements
 handlersIgnored :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersIgnored = Tr.fromList
         [("custom_tooltip", return $ return [])
-        ,("effect_tooltip", return $ return []) -- shows the effects but doesn't execute them, don't know if I want it to show up in the parser
         ,("goto"          , return $ return [])
         ,("log"           , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"

@@ -1488,7 +1488,6 @@ instance RenderMessage Script ScriptMessage where
                 , _date
                 ]
                 [ _loc
-                , " is active"
                 , _amtT
                 , _time
                 , _date, " ({{hover|"
@@ -1499,6 +1498,7 @@ instance RenderMessage Script ScriptMessage where
                 , _amtT
                 , _time
                 , _date
+                , "|?}})"
                 ]
         MsgSetFlag {scriptMessageFlagType = _flagType, scriptMessageName = _name, scriptMessageLoc = _loc}
             -> mconcat $ ifThenElse (T.null _loc)

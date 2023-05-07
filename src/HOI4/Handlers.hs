@@ -2732,13 +2732,13 @@ setFlag _ stmt = preStatement stmt
 
 data HasFlag = HasFlag
         {   hf_flag :: Text
-        ,   hf_value :: Text
-        ,   hf_days :: Text
-        ,   hf_date :: Text
+        ,   hf_value :: Maybe Text
+        ,   hf_days :: Maybe Text
+        ,   hf_date :: Maybe Text
         }
 
 newHF :: HasFlag
-newHF = HasFlag undefined "" "" ""
+newHF = HasFlag undefined Nothing Nothing Nothing
 hasFlag :: forall g m. (HOI4Info g, Monad m) => ScriptMessage -> StatementHandler g m
 hasFlag msgft stmt@[pdx| %_ = $flag |] = withMaybelocAtom2 msgft MsgHasFlag stmt
 hasFlag msgft stmt@[pdx| %_ = @scr |]
@@ -2748,33 +2748,40 @@ hasFlag msgft stmt@[pdx| %_ = @scr |]
         addLine hf [pdx| flag = $flag |] =
             return hf { hf_flag = flag }
         addLine hf [pdx| value = !amt |] =
-            let amtd = " equal to or more than " <> show (amt :: Int) in
-            return hf { hf_value = T.pack amtd }
+            let amtd = " Is set equal to or more than " <> show (amt :: Int) <> "." in
+            return hf { hf_value = Just $ T.pack amtd }
         addLine hf [pdx| value < !amt |] =
-            let amtd = " to less than " <> show (amt :: Int) in
-            return hf { hf_value = T.pack amtd }
+            let amtd = " Is set to less than " <> show (amt :: Int) <> "." in
+            return hf { hf_value = Just $ T.pack amtd }
         addLine hf [pdx| value > !amt |] =
-            let amtd = " to more than " <> show (amt :: Int) in
-            return hf { hf_value = T.pack amtd }
+            let amtd = " Is set to more than " <> show (amt :: Int) <> "." in
+            return hf { hf_value = Just $ T.pack amtd }
         addLine hf [pdx| days < !amt |] =
-            let amtd = " for less than " <> show (amt :: Int) <> " days" in
-            return hf { hf_days = T.pack amtd }
+            let amtd = " Has been set for less than " <> show (amt :: Int) <> " days." in
+            return hf { hf_days = Just $ T.pack amtd }
         addLine hf [pdx| days > !amt |] =
-            let amtd = " for more than " <> show (amt :: Int) <> " days" in
-            return hf { hf_days = T.pack amtd }
+            let amtd = " Has been set for more than " <> show (amt :: Int) <> " days." in
+            return hf { hf_days = Just $ T.pack amtd }
         addLine hf [pdx| date > %amt |] =
-            let amtd = " later than " <> show amt in
-            return hf { hf_date = T.pack amtd }
+            let amtd = " Has been set later than " <> show amt <> "." in
+            return hf { hf_date = Just $ T.pack amtd }
         addLine hf [pdx| date < %amt |] =
-            let amtd = " earlier than " <> show amt in
-            return hf { hf_date = T.pack amtd }
+            let amtd = " Has been set earlier than " <> show amt <> "." in
+            return hf { hf_date = Just $ T.pack amtd }
         addLine hf stmt
             = trace ("unknown section in has_country_flag: " ++ show stmt) $ return hf
-        pp_hf hf = do
-            mloc <- getGameL10nIfPresent (hf_flag hf)
-            let loc = fromMaybe "" mloc
-            msgfts <- messageText msgft
-            return $ MsgHasFlagFor msgfts (hf_flag hf) (hf_value hf) (hf_days hf) (hf_date hf) loc
+        pp_hf hf =
+            case (hf_value hf, hf_days hf, hf_date hf) of
+                (Nothing, Nothing, Nothing) -> do
+                    mloc <- getGameL10nIfPresent (hf_flag hf)
+                    let loc = fromMaybe "" mloc
+                    msgfts <- messageText msgft
+                    return $ MsgHasFlag msgfts (hf_flag hf) loc
+                _ -> do
+                    mloc <- getGameL10nIfPresent (hf_flag hf)
+                    let loc = fromMaybe "" mloc
+                    msgfts <- messageText msgft
+                    return $ MsgHasFlagFor msgfts (hf_flag hf) (fromMaybe "" (hf_value hf)) (fromMaybe "" (hf_days hf)) (fromMaybe "" (hf_date hf)) loc
 hasFlag _ stmt = preStatement stmt
 
 ----------------------------------
