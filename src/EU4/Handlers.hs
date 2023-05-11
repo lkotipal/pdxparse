@@ -2834,18 +2834,23 @@ mapYesValues f args_for_map = do
         getYesValue (Just "yes", value) = Just value
         getYesValue _ = Nothing
 
+-- | used for has_completed_idea_group_of_category and num_of_completed_idea_groups_by_category
 foldCompound "hasCompletedIdeaGroupOfCategory" "HasCompletedIdeaGroupOfCategory" "hcig"
     [("_message", [t|Text -> Double -> ScriptMessage|])]
     [CompField "adm_ideas" [t|Text|] Nothing False
     ,CompField "dip_ideas" [t|Text|] Nothing False
     ,CompField "mil_ideas" [t|Text|] Nothing False
+    ,CompField "type" [t|Text|] Nothing False
     ,CompField "amount" [t|Double|] (Just [|1|]) False
     ]
     [| do
-        -- normally there should only be one of adm_ideas, dip_ideas or mil_ideas, but in the unlikely case
+        -- normally there should only be one of adm_ideas, dip_ideas, mil_ideas or type, but in the unlikely case
         -- that there is more than one, we join them with a +, because all need to be completed
         -- "and" would be better, but we don't have a localisation for "and"
-        loc_ideas <- mapYesValues getGameL10n [(_adm_ideas, "ADM"), (_dip_ideas, "DIP"), (_mil_ideas, "MIL")]
+        let type_yes = case _type of
+                    (Just _) -> Just "yes"
+                    Nothing -> Nothing
+        loc_ideas <- mapYesValues getGameL10n [(_adm_ideas, "ADM"), (_dip_ideas, "DIP"), (_mil_ideas, "MIL"), (type_yes, (maybe "" T.toUpper _type ))]
         return $ _message (T.intercalate "+" loc_ideas) _amount
     |]
 
