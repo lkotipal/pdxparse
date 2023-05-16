@@ -112,7 +112,7 @@ ppHandlers = foldl' Tr.unionL Tr.empty
 -- | Handlers for statements where RHS is irrelevant (usually "yes")
 handlersRhsIrrelevant :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersRhsIrrelevant = Tr.fromList
-        [("active_imperial_incident" , rhsAlways "any" MsgAnyActiveTradeNode)
+        [("active_imperial_incident" , rhsAlways "any" MsgAnyActiveImperialIncident)
         ,("add_cardinal"             , rhsAlwaysYes MsgAddCardinal)
         ,("add_estate_burghers_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_burghers_loyalty_effect"))
         ,("add_estate_church_loyalty_effect", rhsAlwaysYes (MsgGenericTemplate "add_estate_church_loyalty_effect"))
