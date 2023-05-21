@@ -1431,6 +1431,7 @@ data ScriptMessage
     | MsgUnlockParliamentIssue {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasParliamentIssueUnlocked {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasNotEnactedParliamentAction {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgTooltip {scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9545,6 +9546,12 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " parliament issue "
                 , toMessage (iquotes _what)
+                ]
+        MsgTooltip {scriptMessageWhat = _what}
+            -> mconcat
+                [ "''Tooltip: "
+                , toMessage (quotes (T.replace "\n" "<br />" _what))
+                , "''"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

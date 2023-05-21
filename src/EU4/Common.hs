@@ -222,8 +222,9 @@ handlersRhsIrrelevant = Tr.fromList
         ,("set_estate_led_regency_privilege" , rhsAlways "random" MsgSetEstateLedRegencyPrivilegeRandom) -- Only random used in 1.31.3
         ,("set_prestige_to_zero"     , rhsAlwaysYes (MsgGenericText "Set {{icon|prestige}} prestige to {{red|0}}"))
         ,("swap_free_idea_group"     , rhsAlwaysYes MsgSwapFreeIdeaGroup)
-        ,("swap_non_generic_missions" , rhsAlwaysYes MsgGainNewMissions)
-        ,("map_setup"              , rhsAlways "map_setup_random" MsgMapSetupRandom) -- In 1.30.6 all uses are "map_setup = map_setup_random"
+        ,("swap_non_generic_missions", rhsAlwaysYes MsgGainNewMissions)
+        ,("tooltip"                  , genericTextLines ["''The game displays a tooltip block without any actual effects in this place''"])
+        ,("map_setup"                , rhsAlways "map_setup_random" MsgMapSetupRandom) -- In 1.30.6 all uses are "map_setup = map_setup_random"
         ,("was_never_german_regional_tag_trigger" , rhsAlwaysYes MsgWasNeverGermanReigionalTag)
 
         -- Various effects from from common/scripted_effects/01_scripted_effects_for_simple_bonuses_penalties.txt
@@ -1382,6 +1383,7 @@ handlersLocRhs = Tr.fromList
         ,("complete_mission"      , withLocAtomTitle MsgCompleteMission)
         ,("council_position"      , withLocAtom MsgCouncilPosition)
         ,("current_debate"        , withLocAtom MsgCurrentDebate)
+        ,("custom_tooltip"        , withLocAtom MsgTooltip)
         ,("empire_of_china_has_active_decree", withLocAtomTitle MsgActiveDecree)
         ,("empire_of_china_reform_passed", withLocAtomTitle MsgEocReform)
         ,("end_disaster"          , withLocAtom MsgDisasterEnds)
@@ -2482,10 +2484,8 @@ handlersMisc = Tr.fromList
 -- | Handlers for ignored statements
 handlersIgnored :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersIgnored = Tr.fromList
-        [("custom_tooltip", return $ return [])
-        ,("goto"          , return $ return [])
+        [("goto"          , return $ return [])
         ,("log"           , return $ return [])
-        ,("tooltip"       , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
         ,("highlight"     , return $ return [])
         ,("show_points_needed_for_livionian_government_of_category" , return $ return []) -- this is a scripted effect which just shows tooltips
