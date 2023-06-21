@@ -635,6 +635,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_harmonized_vajrayana", "")
             --,("on_harmonized_zoroastrian_group", "")
             ,("on_heir_death", "<!-- on_heir_death -->Heir dying")
+            ,("on_heir_disinherited", "<!-- on_heir_disinherited -->Heir disinherited")
             ,("on_heir_needed_theocracy", "<!-- on_heir_needed_theocracy -->A theocracy needing an heir")
             ,("on_hre_dismantled", "<!-- on_hre_dismantled -->When dismantling the HRE")
             --,("on_hre_non_defense", "")
