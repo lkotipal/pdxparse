@@ -157,6 +157,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("has_border_with_religious_enemy" , rhsAlwaysYes MsgHasBorderWithReligiousEnemy)
         ,("has_commanding_three_star", rhsAlwaysYes (MsgGenericText "Have a 3-star admiral or general who is in command of a unit."))
         ,("has_not_any_estate_disaster_active", rhsAlwaysYes (MsgGenericText "Does ''not'' have an ongoing [[Disasters#Estates disasters|estate disaster]]"))
+        ,("has_owner_harmonized_religion", rhsAlwaysYes (MsgGenericText "Has a religion which was harmonized by its owner"))
         ,("has_river_estuary_trigger", rhsAlwaysYes MsgHasRiverEstuary)
         ,("has_religious_scholars_trigger", rhsAlwaysYes MsgHasScholar)
         ,("has_shia_school_trigger", rhsAlwaysYes MsgHasShiaSchool)
