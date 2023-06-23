@@ -1687,7 +1687,7 @@ rhsAlwaysEmptyCompound _ stmt = (trace $ "Expectation is wrong in statement " ++
 facInfluence_iconkey :: Text -> Maybe Text
 facInfluence_iconkey fac = case fac of
         -- Celestial empire
-        "enuchs" {- sic -} -> Just "eunuchs influence"
+        "enuchs" {- sic -} -> Just "offices of maritime trade influence"
         "temples"          -> Just "temples influence"
         "bureaucrats"      -> Just "bureaucrats influence"
         -- Merchant republic
@@ -1709,7 +1709,7 @@ facInfluence_iconkey fac = case fac of
 fac_iconkey :: Text -> Maybe Text
 fac_iconkey fac = case fac of
         -- Celestial empire
-        "enuchs" {- sic -} -> Just "eunuchs"
+        "enuchs" {- sic -} -> Just "offices of maritime trade"
         "temples"          -> Just "temples"
         "bureaucrats"      -> Just "bureaucrats"
         -- Merchant republic
