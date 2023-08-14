@@ -1107,7 +1107,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("allowed_geobukseon_fraction"           , handleModifier "MODIFIER_ALLOWED_GEOBUKSEON_FRACTION" (reducedNum (colourPcSign True)))
         ,("allowed_man_of_war_fraction"           , handleModifier "MODIFIER_ALLOWED_MAN_OF_WAR_FRACTION" (reducedNum (colourPcSign True)))
         ,("allowed_musketeer_fraction"            , handleModifier "MODIFIER_ALLOWED_MUSKETEER_FRACTION" (reducedNum (colourPcSign True)))
-        ,("allowed_samurai_fraction"              , handleModifier "MODIFIER_ALLOWED_SAMURAI_FRACTION" (reducedNum (colourPcSign True)))
+        ,("allowed_samurai_fraction"              , handleModifier "Samurai force limit fraction" (reducedNum (colourPcSign True)))
         ,("allowed_streltsy_fraction"             , handleModifier "MODIFIER_ALLOWED_STRELTSY_FRACTION" (reducedNum (colourPcSign True)))
         ,("allowed_tercio_fraction"               , handleModifier "MODIFIER_ALLOWED_TERCIO_FRACTION" (reducedNum (colourPcSign True)))
         ,("allowed_voc_indiamen_fraction"         , handleModifier "MODIFIER_ALLOWED_VOC_INDIAMEN_FRACTION" (reducedNum (colourPcSign True)))
