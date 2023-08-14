@@ -6878,7 +6878,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAdoptReformProgress {scriptMessageWhom = _whom}
             -> mconcat
-                [ "Changes government to that of "
+                [ "Adopts the same amount of reform progress as "
                 , _whom
                 ]
         MsgCuriaTreasurySize {scriptMessageAmt = _amt}
