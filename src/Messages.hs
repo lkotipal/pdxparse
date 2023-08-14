@@ -3495,7 +3495,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
-                , " overseas"
+                , " [[overseas]]"
                 ]
         MsgIsPartOfHRE {scriptMessageYn = _yn}
             -> mconcat
