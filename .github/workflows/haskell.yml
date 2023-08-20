@@ -30,21 +30,8 @@ jobs:
 
     - name: Configure the build
       run: |
-        cabal configure --enable-tests --enable-benchmarks --disable-documentation
-        cabal build --dry-run
-      # The last step generates dist-newstyle/cache/plan.json for the cache key.
-        
-    - name: Cache
-      uses: actions/cache@v3
-      env:
-        cache-name: cache-cabal
-      with:
-        path: ~/.cabal
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
-        restore-keys: |
-          ${{ runner.os }}-build-${{ env.cache-name }}-
-          ${{ runner.os }}-build-
-          ${{ runner.os }}-
+        cabal configure
+        cabal freeze
 
     - name: Restore cached dependencies
       uses: actions/cache/restore@v3
@@ -53,7 +40,7 @@ jobs:
         key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}
       with:
         path: ${{ steps.setup.outputs.cabal-store }}
-        key: ${{ env.key }}-plan-${{ hashFiles('**/plan.json') }}
+        key: ${{ env.key }}-freeze-${{ hashFiles('cabal.project.freeze') }}
         restore-keys: ${{ env.key }}-
 
     - name: Install dependencies
@@ -69,9 +56,9 @@ jobs:
         key: ${{ steps.cache.outputs.cache-primary-key }}
     - name: Build
 #      run: cabal build all
-      run: cabal install --install-method=copy --overwrite-policy=always --installdir=bin
+      run: cabal install --install-method=copy --overwrite-policy=always --installdir=dist
     - name: Store binary
       uses: actions/upload-artifact@v3
       with:
         name: pdxparse-binary-${{ matrix.os }}
-        path: bin/pdxparse*
+        path: dist/pdxparse*
