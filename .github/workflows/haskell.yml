@@ -11,16 +11,29 @@ permissions:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        os:
+#          - windows-latest
+          - ubuntu-latest
+#          - macos-latest
 
-    runs-on: ubuntu-latest
+    name: 'build_prod: ${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-haskell@v1
+    - uses: haskell/actions/setup@v2
       with:
-        ghc-version: '8.10'
+        ghc-version: '8.10.7'
         cabal-version: '3.6.2.0'
 
+    - name: Configure the build
+      run: |
+        cabal configure --enable-tests --enable-benchmarks --disable-documentation
+        cabal build --dry-run
+      # The last step generates dist-newstyle/cache/plan.json for the cache key.
+        
     - name: Cache
       uses: actions/cache@v3
       env:
@@ -33,15 +46,32 @@ jobs:
           ${{ runner.os }}-build-
           ${{ runner.os }}-
 
+    - name: Restore cached dependencies
+      uses: actions/cache/restore@v3
+      id: cache
+      env:
+        key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}
+      with:
+        path: ${{ steps.setup.outputs.cabal-store }}
+        key: ${{ env.key }}-plan-${{ hashFiles('**/plan.json') }}
+        restore-keys: ${{ env.key }}-
+
     - name: Install dependencies
-      run: |
-        cabal update
-        cabal build --only-dependencies --enable-tests --enable-benchmarks
+      run: cabal build all --only-dependencies
+
+    # Cache dependencies already here, so that we do not have to rebuild them should the subsequent steps fail.
+    - name: Save cached dependencies
+      uses: actions/cache/save@v3
+      # Caches are immutable, trying to save with the same key would error.
+      if: ${{ steps.cache.outputs.cache-primary-key != steps.cache.outputs.cache-matched-key }}
+      with:
+        path: ${{ steps.setup.outputs.cabal-store }}
+        key: ${{ steps.cache.outputs.cache-primary-key }}
     - name: Build
-      run: cabal build all
+#      run: cabal build all
+      run: cabal install --install-method=copy --overwrite-policy=always --installdir=bin
     - name: Store binary
       uses: actions/upload-artifact@v3
       with:
-#        name: log-parser-binary-${{ matrix.os }}
-        name: pdxparse-binary
+        name: pdxparse-binary-${{ matrix.os }}
         path: bin/pdxparse*
