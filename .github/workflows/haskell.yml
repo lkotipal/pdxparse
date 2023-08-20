@@ -60,7 +60,7 @@ jobs:
         key: ${{ steps.cache.outputs.cache-primary-key }}
     - name: Build
       run: |
-        cp settings_example_${{ GAME }}.yml settings.yml
+        cp settings_example_${{ env.GAME }}.yml settings.yml
         cabal install --install-method=copy --overwrite-policy=always --installdir=dist
     - name: Include extra files
       run: |
@@ -69,5 +69,5 @@ jobs:
     - name: Store binary
       uses: actions/upload-artifact@v3
       with:
-        name: pdxparse-binary-${{ GAME }}-${{ matrix.os }}
+        name: pdxparse-binary-${{ env.GAME }}-${{ matrix.os }}
         path: dist
