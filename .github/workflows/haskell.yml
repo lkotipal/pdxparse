@@ -73,7 +73,7 @@ jobs:
     - name: Store binary
       uses: actions/upload-artifact@v3
       with:
-        name: pdxparse-binary-${{ env.GAME }}-${{ matrix.os }}
+        name: pdxparse-${{ env.GAME }}-${{ matrix.os }}
         path: dist
   release:
     needs: build
@@ -81,12 +81,20 @@ jobs:
     permissions:
       contents: write
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.ref }}
+    - name: Get tag annotation
+      id: tag_annotation
+      run: 'echo "annotation=$(git tag -l --format="%(contents:body)" $GITHUB_REF_NAME)" >> "$GITHUB_OUTPUT"'
     - name: Download all workflow run artifacts
       uses: actions/download-artifact@v3
     - name: Release
       uses: softprops/action-gh-release@v1
 #      if: startsWith(github.ref, 'refs/tags/')
       with:
+        name: ${{ steps.tag_annotation.outputs.annotation }}
         generate_release_notes: true
         draft: true
-        files: '*'
+        files: pdxparse*/*
