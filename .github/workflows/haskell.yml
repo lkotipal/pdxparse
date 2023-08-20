@@ -1,5 +1,7 @@
 name: Haskell CI
-
+env:
+  # used to get the correct settings file
+  GAME: eu4
 on:
   push:
     branches: [ "master" ]
@@ -57,10 +59,15 @@ jobs:
         path: ${{ steps.setup.outputs.cabal-store }}
         key: ${{ steps.cache.outputs.cache-primary-key }}
     - name: Build
-#      run: cabal build all
-      run: cabal install --install-method=copy --overwrite-policy=always --installdir=dist
+      run: |
+        cp settings_example_${{ GAME }}.yml settings.yml
+        cabal install --install-method=copy --overwrite-policy=always --installdir=dist
+    - name: Include extra files
+      run: |
+        cp settings.yml dist/
+        cp README.md dist/
     - name: Store binary
       uses: actions/upload-artifact@v3
       with:
-        name: pdxparse-binary-${{ matrix.os }}
-        path: dist/pdxparse*
+        name: pdxparse-binary-${{ GAME }}-${{ matrix.os }}
+        path: dist
