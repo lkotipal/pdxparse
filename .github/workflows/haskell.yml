@@ -65,7 +65,7 @@ jobs:
     - name: Build
       run: |
         cp settings_example_${{ env.GAME }}.yml settings.yml
-        cabal install --install-method=copy --overwrite-policy=always --installdir=dist
+        cabal install -v --install-method=copy --overwrite-policy=always --installdir=dist
     - name: Include extra files
       run: |
         cp settings.yml dist/
@@ -90,8 +90,8 @@ jobs:
       id: tagannotation
       run: |
         echo "Ref name is $GITHUB_REF_NAME"
-        git tag -l --format='%(contents:body)' $GITHUB_REF_NAME
-        echo "annotation=$(git tag -l --format='%(contents:body)' $GITHUB_REF_NAME)" >> "$GITHUB_OUTPUT"
+        echo "annotation=$(git tag -l --format='%(contents)' $GITHUB_REF_NAME)"
+        echo "annotation=$(git tag -l --format='%(contents)' $GITHUB_REF_NAME)" >> "$GITHUB_OUTPUT"
     - name: Download all workflow run artifacts
       uses: actions/download-artifact@v3
     - name: Zip artifacts
