@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         os:
-#          - windows
+          - windows
           - ubuntu
           - macos
 
@@ -76,6 +76,7 @@ jobs:
         name: pdxparse-${{ env.GAME }}-${{ matrix.os }}
         path: dist
   release:
+    if: ${{ always() }}
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -87,7 +88,10 @@ jobs:
         ref: ${{ github.ref }}
     - name: Get tag annotation
       id: tagannotation
-      run: echo "annotation=$(git tag -l --format='%(contents:body)' $GITHUB_REF_NAME)" >> "$GITHUB_OUTPUT"
+      run: |
+        echo "Ref name is $GITHUB_REF_NAME"
+        git tag -l --format='%(contents:body)' $GITHUB_REF_NAME
+        echo "annotation=$(git tag -l --format='%(contents:body)' $GITHUB_REF_NAME)" >> "$GITHUB_OUTPUT"
     - name: Download all workflow run artifacts
       uses: actions/download-artifact@v3
     - name: Zip artifacts
