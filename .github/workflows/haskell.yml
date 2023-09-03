@@ -65,7 +65,13 @@ jobs:
     - name: Build
       run: |
         cp settings_example_${{ env.GAME }}.yml settings.yml
-        cabal install -v --install-method=copy --overwrite-policy=always --installdir=dist
+        cabal install --install-method=copy --installdir=dist
+    - name: store build errors
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: fail-logs-${{ matrix.os }}
+        path: C:\cabal\logs\*\pdxparse*.log
     - name: Include extra files
       run: |
         cp settings.yml dist/
