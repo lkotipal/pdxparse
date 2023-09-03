@@ -34,7 +34,7 @@ jobs:
       id: setup
       with:
         ghc-version: '8.10.7'
-        cabal-version: '3.6.2.0'
+        cabal-version: '3.10.1.0'
 
     - name: Configure the build
       run: |
