@@ -77,7 +77,7 @@ jobs:
     - name: Store binary
       uses: actions/upload-artifact@v3
       with:
-        name: pdxparse-${{ vars.GAME }}-${{ matrix.os }}
+        name: pdxparse-${{github.ref_name}}-${{ vars.GAME }}-${{ matrix.os }}
         path: dist
   release:
     if: ${{ always() }}
@@ -99,11 +99,11 @@ jobs:
     - name: Download all workflow run artifacts
       uses: actions/download-artifact@v3
     - name: Zip artifacts
-      run: for folder in pdxparse-${{ vars.GAME }}-*; do echo "creating ${folder}.zip ..."; zip -r ${folder}.zip $folder; done
+      run: for folder in pdxparse-${{github.ref_name}}-${{ vars.GAME }}-*; do echo "creating ${folder}.zip ..."; zip -r ${folder}.zip $folder; done
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
         name: ${{ steps.tagannotation.outputs.annotation }}
         generate_release_notes: true
         draft: true
-        files: pdxparse-${{ vars.GAME }}-*.zip
+        files: pdxparse-${{github.ref_name}}-${{ vars.GAME }}-*.zip
