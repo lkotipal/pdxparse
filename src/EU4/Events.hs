@@ -24,7 +24,8 @@ import Control.Monad.Except (MonadError (..))
 import Control.Monad.State (MonadState (..), gets)
 import Control.Monad.Trans (MonadIO (..))
 
-import Data.List (intersperse, foldl')
+import Data.ByteString (ByteString)
+import Data.List (intersperse, foldl', sortOn)
 import Data.Maybe (isJust, isNothing, fromMaybe, fromJust, catMaybes)
 import Data.Monoid ((<>))
 
@@ -36,6 +37,9 @@ import qualified Data.Text.Lazy as TL
 
 import Text.PrettyPrint.Leijen.Text (Doc)
 import qualified Text.PrettyPrint.Leijen.Text as PP
+
+import Text.Regex.TDFA (Regex)
+import qualified Text.Regex.TDFA as RE
 
 import Abstract -- everything
 import qualified Doc
@@ -373,9 +377,18 @@ ppTriggeredBy eventId = do
             let ts' = if length ts < 2 then
                     ts
                 else
-                    map (\d -> Doc.strictText $ "* " <> (Doc.doc2text d)) ts
+                    -- to give consistent results, the triggers are sorted while ignoring HTML comments in the sort(because they often contain an event ID)
+                    map (\d -> Doc.strictText $ "* " <> (Doc.doc2text d)) (sortOn removeComments ts)
             return $ mconcat $ [PP.line] ++ (intersperse PP.line ts')
         _ -> return $ Doc.strictText "(please describe trigger here)"
+    where
+        commentRE :: Regex
+        commentRE = RE.makeRegex ("<!--[^>]*-->"::ByteString)
+        removeComments :: Doc -> Text
+        removeComments s = case RE.matchOnceText commentRE (Doc.doc2text s) of
+            Just (pre, matcharr, post) -> mconcat
+                [pre, post]
+            Nothing -> Doc.doc2text s
 
 -- | Pretty-print an event. If some essential parts are missing from the data,
 -- throw an exception.
