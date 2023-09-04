@@ -1,7 +1,7 @@
 name: Haskell Release
-env:
+#env:
   # used to get the correct settings file
-  GAME: eu4
+  #GAME: eu4
 #on:
 #  push:
 #    branches: [ "master" ]
@@ -71,10 +71,10 @@ jobs:
         key: ${{ steps.cache.outputs.cache-primary-key }}
     - name: Build
       run: |
-        cp settings_example_${{ env.GAME }}.yml settings.yml
+        cp settings_example_${{ vars.GAME }}.yml settings.yml
         cabal install --install-method=copy --installdir=dist
-    - name: store build errors
-      if: failure()
+    - name: store windows build errors
+      if: failure() && ( matrix.os == 'windows' )
       uses: actions/upload-artifact@v3
       with:
         name: fail-logs-${{ matrix.os }}
@@ -86,7 +86,7 @@ jobs:
     - name: Store binary
       uses: actions/upload-artifact@v3
       with:
-        name: pdxparse-${{ env.GAME }}-${{ matrix.os }}
+        name: pdxparse-${{ vars.GAME }}-${{ matrix.os }}
         path: dist
   release:
     if: ${{ always() }}
@@ -108,7 +108,7 @@ jobs:
     - name: Download all workflow run artifacts
       uses: actions/download-artifact@v3
     - name: Zip artifacts
-      run: for folder in pdxparse-${{ env.GAME }}-*; do echo "creating ${folder}.zip ..."; zip -r ${folder}.zip $folder; done
+      run: for folder in pdxparse-${{ vars.GAME }}-*; do echo "creating ${folder}.zip ..."; zip -r ${folder}.zip $folder; done
     - name: Release
       uses: softprops/action-gh-release@v1
 #      if: startsWith(github.ref, 'refs/tags/')
@@ -116,4 +116,4 @@ jobs:
         name: ${{ steps.tagannotation.outputs.annotation }}
         generate_release_notes: true
         draft: true
-        files: pdxparse-${{ env.GAME }}-*.zip
+        files: pdxparse-${{ vars.GAME }}-*.zip
