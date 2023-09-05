@@ -24,6 +24,7 @@ import Control.Monad.Except (MonadError (..))
 import Control.Monad.State (MonadState (..), gets)
 import Control.Monad.Trans (MonadIO (..))
 
+import Data.Array ((!))
 import Data.ByteString (ByteString)
 import Data.List (intersperse, foldl', sortOn)
 import Data.Maybe (isJust, isNothing, fromMaybe, fromJust, catMaybes)
@@ -387,7 +388,7 @@ ppTriggeredBy eventId = do
         removeComments :: Doc -> Text
         removeComments s = case RE.matchOnceText commentRE (Doc.doc2text s) of
             Just (pre, matcharr, post) -> mconcat
-                [pre, post]
+                [pre, post, fst (matcharr ! 0)]
             Nothing -> Doc.doc2text s
 
 -- | Pretty-print an event. If some essential parts are missing from the data,
