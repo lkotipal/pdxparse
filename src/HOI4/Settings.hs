@@ -44,7 +44,7 @@ import HOI4.Ideas (parseHOI4Ideas
     --, writeHOI4Ideas
     )
 import HOI4.Modifiers (
-                      parseHOI4OpinionModifiers, writeHOI4OpinionModifiers
+                      parseHOI4OpinionModifiers, writeHOI4OpinionModifiers, writeHOI4OpinionModifiers'
                     , parseHOI4DynamicModifiers, writeHOI4DynamicModifiers
                     , parseHOI4Modifiers)
 import HOI4.NationalFocus(parseHOI4NationalFocuses, writeHOI4NationalFocuses)
@@ -519,5 +519,6 @@ writeHOI4Scripts = do
         writeHOI4NationalFocuses
         liftIO $ putStrLn "Writing opinion modifiers."
         writeHOI4OpinionModifiers
+--        writeHOI4OpinionModifiers'
         liftIO $ putStrLn "Writing dynamic modifiers."
         writeHOI4DynamicModifiers
