@@ -2166,6 +2166,8 @@ handlersSpecialComplex = Tr.fromList
         ,("complex_dynamic_effect"        , handleDynamicEffect True)
         ,("complex_dynamic_effect_without_alternative" , handleDynamicEffect False)
         ,("country_event"                , scope EU4Country . triggerEvent MsgCountryEvent)
+        ,("country_event_with_effect_insight" , scope EU4Country . triggerEvent MsgCountryEvent)
+        ,("country_event_with_option_insight" , scope EU4Country . triggerEvent MsgCountryEvent)
         ,("country_event_with_insight"   , scope EU4Country . triggerEvent MsgCountryEvent)
         ,("declare_war_with_cb"          , declareWarWithCB)
         ,("define_advisor"               , defineAdvisor False Nothing)
