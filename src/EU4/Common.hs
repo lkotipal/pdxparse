@@ -2186,6 +2186,7 @@ handlersSpecialComplex = Tr.fromList
         ,("expulsion_target"             , expulsionTarget)
         ,("faction_influence"            , factionInfluence MsgFactionHasInfluence)
         ,("faction_in_power_effect"      , factionInPowerEffect)
+        ,("give_claims"                  , giveClaims)
         ,("freeze_government_power"      , governmentPower MsgFreezeGovernmentPower)
         ,("government_power_frozen"      , governmentPower MsgIsGovernmentPowerFrozen)
         ,("has_enabled_estate_action"    , handleGenericEstateAction MsgHasEnabledEstateAction)

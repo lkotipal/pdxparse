@@ -165,6 +165,7 @@ module EU4.Handlers (
     ,   handleEstateActionCoolDown
     ,   handleEstateAction
     ,   hasGovernmentReforTier
+    ,   giveClaims
     ,   handleDynamicEffect
     -- testing
     ,   isPronoun
@@ -201,7 +202,7 @@ import qualified Data.Trie as Tr
 import qualified Text.PrettyPrint.Leijen.Text as PP
 
 import Data.List (foldl', intersperse)
-import Data.Maybe (isJust, isNothing, fromMaybe, mapMaybe)
+import Data.Maybe (isJust, isNothing, fromMaybe, mapMaybe, catMaybes)
 
 import Control.Applicative (liftA2)
 import Control.Arrow (first)
@@ -4448,6 +4449,27 @@ handleEstateAction stmt = case getEffectArg "estate_action" stmt of
                 Nothing -> trace ("warning: Not handled by handleEstateAction: " ++ show stmt) $ preStatement stmt
                 Just estateAction -> ppMany (eaScript estateAction)
         _ -> trace ("warning: Not handled by handleEstateAction: " ++ show stmt) $ preStatement stmt
+
+
+foldCompound "giveClaims" "GiveClaims" "gic"
+    []
+    [CompField "province" [t|Int|] Nothing False
+    ,CompField "id" [t|Int|] Nothing False
+    ,CompField "area" [t|Text|] Nothing False
+    ,CompField "region" [t|Text|] Nothing False
+    ]
+    [| do
+        -- normally there should only be one parameter, but in the unlikely case
+        -- that there is more than one, we join them with an english message. A localised message would be better,
+        -- but this case doesn't exit yet in the game files. Returning just one message would be easier, but
+        -- then a wiki editor might miss the fact that the effect adds multiple claims
+        provMsg <- maybeM getProvLoc _province
+        idMsg <- maybeM getProvLoc _id
+        regionMsg <- maybeM (fmap ("the region " <>) . getGameL10n) _region
+        areaMsg <- maybeM (fmap ("the area " <>) . getGameL10n) _area
+        let messages = catMaybes [idMsg, provMsg, regionMsg, areaMsg]
+        return $ MsgGainPermanentClaimProvince (T.intercalate ", " messages)
+    |]
 
 -------------------------------------------
 -- Handler for simple_dynamic_effect --
