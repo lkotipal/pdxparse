@@ -1605,6 +1605,8 @@ getEffectArg tArg stmt@[pdx| %_ = @scr |] = case scr of
         [[pdx| $arg = %val |]] | T.toLower arg == tArg -> Just val
         [[pdx| $arg = %val |], [pdx| custom_tooltip = %_ |]] | T.toLower arg == tArg -> Just val
         [[pdx| custom_tooltip = %_ |], [pdx| $arg = %val |]] | T.toLower arg == tArg -> Just val
+        [[pdx| $arg = %val |], [pdx| modifier_tooltip = %_ |]] | T.toLower arg == tArg -> Just val
+        [[pdx| $arg = %val |], [pdx| modifier_tooltip = %_ |], [pdx| effect_tooltip = %_ |]] | T.toLower arg == tArg -> Just val
         _ -> Nothing
 getEffectArg _ _ = Nothing
 
