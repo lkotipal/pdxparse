@@ -1300,6 +1300,8 @@ numericOrTagIcon iconkey numMsg _ [pdx| %_ = !num |]
     = msgToPP $ numMsg (iconText iconkey) num
 numericOrTagIcon iconkey _ tagMsg scr@[pdx| %_ = $_ |]
     = withFlagAndIcon iconkey tagMsg (Just EU4Country) scr
+numericOrTagIcon iconkey _ tagMsg scr@[pdx| %_ = $_:$_ |]
+    = withFlagAndIcon iconkey tagMsg (Just EU4Country) scr
 numericOrTagIcon  _ _ _ stmt = plainMsg $ pre_statement' stmt
 
 -- | Handler for statements where the RHS is either a number or a localizable atom, that
