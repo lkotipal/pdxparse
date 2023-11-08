@@ -166,6 +166,7 @@ module EU4.Handlers (
     ,   handleEstateAction
     ,   hasGovernmentReforTier
     ,   giveClaims
+    ,   addAcceptedCultureOrDipPower
     ,   handleDynamicEffect
     -- testing
     ,   isPronoun
@@ -4477,6 +4478,20 @@ foldCompound "giveClaims" "GiveClaims" "gic"
         areaMsg <- maybeM (fmap ("the area " <>) . getGameL10n) _area
         let messages = catMaybes [idMsg, provMsg, regionMsg, areaMsg]
         return $ MsgGainPermanentClaimProvince (T.intercalate ", " messages)
+    |]
+
+foldCompound "addAcceptedCultureOrDipPower" "AddAcceptedCultureOrDipPower" "acodp"
+    []
+    [CompField "free" [t|Text|] Nothing False
+    ,CompField "dip_reward" [t|Text|] Nothing False -- ignored, because this only influences the tooltip and not the actual reward
+    ,CompField "new_line" [t|Text|] Nothing False -- ignored, because it is just a newline in the tooltip
+    ,CompField "culture" [t|Text|] Nothing True
+    ]
+    [| do
+        culture <- getGameL10n _culture
+        let dip_reward = isJust _dip_reward
+        let free = isJust _free
+        return $ MsgAddAcceptedCultureOrDipPower (iconText "max promoted cultures") culture free
     |]
 
 -------------------------------------------

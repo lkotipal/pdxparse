@@ -736,7 +736,7 @@ data ScriptMessage
     | MsgAddClaimOn {scriptMessageWhere :: Text}
     | MsgAddAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddAcceptedCultureOrDipPower {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgAddAcceptedCultureOrDipPower {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageFree :: Bool}
     | MsgAddBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddHarmonizedReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddHeirPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -5383,9 +5383,14 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " as an accepted culture"
                 ]
-        MsgAddAcceptedCultureOrDipPower {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+        MsgAddAcceptedCultureOrDipPower {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageFree = _free}
             -> mconcat
-                [ _icon
+                [ if _free then "Gain " else ""
+                , if _free then _icon else ""
+                , if _free then " {{green|+1}} Max promoted culture until "  else ""
+                , if _free then toMessage(iquotes _what) else ""
+                , if _free then " is demoted. " else ""
+                , _icon
                 , " Gain "
                 , toMessage(iquotes _what)
                 , " as an accepted culture. If the culture is already an accepted culture, or if there are not enough slots, gain "

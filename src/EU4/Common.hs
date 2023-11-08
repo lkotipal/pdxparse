@@ -2235,7 +2235,7 @@ handlersSpecialComplex = Tr.fromList
         ,("unfreeze_government_power"    , governmentPower MsgUnfreezeGovernmentPower)
 
         -- Effects/Triggers
-        ,("add_accepted_culture_or_dip_power", simpleEffectAtomIcon "max promoted cultures" "culture" MsgAddAcceptedCultureOrDipPower)
+        ,("add_accepted_culture_or_dip_power", addAcceptedCultureOrDipPower)
         ,("add_inflation_scaled_to_trade"   , simpleEffectNumIcon "inflation" "inflation" MsgAddInflationScaledToTrade)
         ,("add_loot_from_rich_province_general_effect" , simpleEffectAtom "looter" MsgAddLootFromRichProvince) -- Note: RHS ignored
         ,("add_permanent_claim_multi_provinces" , simpleEffectWithExtraHandler "target" (locAtomTagOrProvince (\icon target -> MsgGainPermanentClaimProvince target) MsgGainPermanentClaimProvince)) -- ignore the icon which locAtomTagOrProvince usually adds
