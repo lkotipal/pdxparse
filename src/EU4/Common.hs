@@ -2173,6 +2173,7 @@ handlersSpecialComplex = Tr.fromList
         ,("create_conquistador"          , createMilitaryLeader "conquistador" False MsgCreateConquistador MsgDefineConquistador)
         ,("create_explorer"              , createMilitaryLeader "explorer" True MsgCreateExplorer MsgDefineExplorer)
         ,("create_general"               , createMilitaryLeader "general" False MsgCreateGeneral MsgDefineGeneral)
+        ,("create_general_with_pips"     , createMilitaryLeader "general" False MsgCreateGeneral MsgDefineGeneral)
         ,("custom_trigger_tooltip"       , customTriggerTooltip)
         ,("build_to_forcelimit"          , buildToForcelimit)
         ,("complex_dynamic_effect"        , handleDynamicEffect True)

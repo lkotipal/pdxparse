@@ -920,14 +920,14 @@ data ScriptMessage
     | MsgConsortADM { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
     | MsgConsortDIP { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
     | MsgConsortMIL { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
-    | MsgLandLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgLandLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgLandLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgLandLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavalLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavalLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavalLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
-    | MsgNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgLandLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageAddToBase :: Bool}
+    | MsgLandLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageAddToBase :: Bool}
+    | MsgLandLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageAddToBase :: Bool}
+    | MsgLandLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageAddToBase :: Bool}
+    | MsgNavalLeaderFire {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageAddToBase :: Bool}
+    | MsgNavalLeaderShock {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageAddToBase :: Bool}
+    | MsgNavalLeaderManeuver {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageAddToBase :: Bool}
+    | MsgNavalLeaderSiege {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageAddToBase :: Bool}
     | MsgCountryOrNonSovereignSubjectHolds {scriptMessageWhom :: Text}
     | MsgCountryOrSubjectHolds {scriptMessageWhom :: Text}
     | MsgGlobalSailorsModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -6409,60 +6409,60 @@ instance RenderMessage Script ScriptMessage where
                 , " military skill is at least "
                 , toMessage (roundNum _amt)
                 ]
-        MsgLandLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgLandLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageAddToBase = _addToBase}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage $ bold (roundNum _amt)
+                , toMessage $ bold (roundNumSign _addToBase _amt )
                 , " fire"
                 ]
-        MsgLandLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgLandLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageAddToBase = _addToBase}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage $ bold (roundNum _amt)
+                , toMessage $ bold (roundNumSign _addToBase _amt)
                 , " shock"
                 ]
-        MsgLandLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgLandLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageAddToBase = _addToBase}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage $ bold (roundNum _amt)
+                , toMessage $ bold (roundNumSign _addToBase _amt)
                 , " maneuver"
                 ]
-        MsgLandLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgLandLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageAddToBase = _addToBase}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage $ bold (roundNum _amt)
+                , toMessage $ bold (roundNumSign _addToBase _amt)
                 , " siege"
                 ]
-        MsgNavalLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgNavalLeaderFire {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageAddToBase = _addToBase}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage $ bold (roundNum _amt)
+                , toMessage $ bold (roundNumSign _addToBase _amt)
                 , " fire"
                 ]
-        MsgNavalLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgNavalLeaderShock {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageAddToBase = _addToBase}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage $ bold (roundNum _amt)
+                , toMessage $ bold (roundNumSign _addToBase _amt)
                 , " shock"
                 ]
-        MsgNavalLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgNavalLeaderManeuver {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageAddToBase = _addToBase}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage $ bold (roundNum _amt)
+                , toMessage $ bold (roundNumSign _addToBase _amt)
                 , " maneuver"
                 ]
-        MsgNavalLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+        MsgNavalLeaderSiege {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageAddToBase = _addToBase}
             -> mconcat
                 [ _icon
                 , " "
-                , toMessage $ bold (roundNum _amt)
+                , toMessage $ bold (roundNumSign _addToBase _amt)
                 , " siege"
                 ]
         MsgCountryOrNonSovereignSubjectHolds {scriptMessageWhom = _whom}
@@ -6642,8 +6642,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgLeaderTradition {scriptMessageNaval = _yn, scriptMessageAmt = _amt}
             -> mconcat
-                [ "With "
-                , toMessage (plainNum _amt)
+                [ toMessage (plainNum _amt)
                 , " "
                 , toMessage (ifThenElseT _yn "naval" "army")
                 , " tradition"

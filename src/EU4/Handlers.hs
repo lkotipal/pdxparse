@@ -3549,13 +3549,17 @@ data MilitaryLeader = MilitaryLeader
         ,   ml_fire :: Maybe Double
         ,   ml_manuever :: Maybe Double
         ,   ml_siege :: Maybe Double
+        ,   ml_add_shock :: Maybe Double
+        ,   ml_add_fire :: Maybe Double
+        ,   ml_add_manuever :: Maybe Double
+        ,   ml_add_siege :: Maybe Double
         ,   ml_name :: Maybe Text
         ,   ml_female :: Maybe Bool
         ,   ml_trait :: Maybe Text
         }
         deriving Show
 newML :: MilitaryLeader
-newML = MilitaryLeader Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+newML = MilitaryLeader Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- Also used for hasLeaderWith
 pp_mil_leader_attrib :: forall g m. (EU4Info g, Monad m) => Bool -> MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
@@ -3570,17 +3574,29 @@ pp_mil_leader_attrib naval ml =
             msg <- msgToPP' $ MsgLeaderTradition naval trad
             return (Just (msg, ml { ml_tradition = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_shock = Just shock } = do
-            msg <- msgToPP' $ msgShock shock
+            msg <- msgToPP' $ msgShock shock False
             return (Just (msg, ml { ml_shock = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_fire = Just fire } = do
-            msg <- msgToPP' $ msgFire fire
+            msg <- msgToPP' $ msgFire fire False
             return (Just (msg, ml { ml_fire = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_manuever = Just manuever } = do
-            msg <- msgToPP' $ msgManuever manuever
+            msg <- msgToPP' $ msgManuever manuever False
             return (Just (msg, ml { ml_manuever = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_siege = Just siege } = do
-            msg <- msgToPP' $ msgSiege siege
+            msg <- msgToPP' $ msgSiege siege False
             return (Just (msg, ml { ml_siege = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_add_shock = Just shock } = do
+            msg <- msgToPP' $ msgShock shock True
+            return (Just (msg, ml { ml_add_shock = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_add_fire = Just fire } = do
+            msg <- msgToPP' $ msgFire fire True
+            return (Just (msg, ml { ml_add_fire = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_add_manuever = Just manuever } = do
+            msg <- msgToPP' $ msgManuever manuever True
+            return (Just (msg, ml { ml_add_manuever = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_add_siege = Just siege } = do
+            msg <- msgToPP' $ msgSiege siege True
+            return (Just (msg, ml { ml_add_siege = Nothing }))
         pp_mil_leader_attrib' ml@MilitaryLeader { ml_name = Just name } = do
             msg <- msgToPP' $ MsgNamed name
             return (Just (msg, ml { ml_name = Nothing }))
@@ -3610,6 +3626,14 @@ defineMilitaryLeader icon naval headline stmt@[pdx| %_ = @scr |] = do
             = ml { ml_manuever = floatRhs rhs }
         addLine ml [pdx| siege = %rhs |]
             = ml { ml_siege = floatRhs rhs }
+        addLine ml [pdx| add_shock = %rhs |]
+            = ml { ml_add_shock = floatRhs rhs }
+        addLine ml [pdx| add_fire = %rhs |]
+            = ml { ml_add_fire = floatRhs rhs }
+        addLine ml [pdx| add_manuever = %rhs |]
+            = ml { ml_add_manuever = floatRhs rhs }
+        addLine ml [pdx| add_siege = %rhs |]
+            = ml { ml_add_siege = floatRhs rhs }
         addLine ml [pdx| name = %name |]
             = ml { ml_name = textRhs name }
         addLine ml [pdx| female = yes |]
