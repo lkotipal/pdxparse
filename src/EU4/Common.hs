@@ -2240,7 +2240,8 @@ handlersSpecialComplex = Tr.fromList
         ,("add_inflation_scaled_to_trade"   , simpleEffectNumIcon "inflation" "inflation" MsgAddInflationScaledToTrade)
         ,("add_loot_from_rich_province_general_effect" , simpleEffectAtom "looter" MsgAddLootFromRichProvince) -- Note: RHS ignored
         ,("add_permanent_claim_multi_provinces" , simpleEffectWithExtraHandler "target" (locAtomTagOrProvince (\icon target -> MsgGainPermanentClaimProvince target) MsgGainPermanentClaimProvince)) -- ignore the icon which locAtomTagOrProvince usually adds
-        ,("add_prestige_or_monarch_power"  , simpleEffectNumIcon "prestige" "amount" MsgAddPrestigeOrMonarchPower)
+        ,("add_power_projection_mission"    , simpleEffectNumIcon "power projection" "amount" (MsgAddPowerProjection ""))
+        ,("add_prestige_or_monarch_power"   , simpleEffectNumIcon "prestige" "amount" MsgAddPrestigeOrMonarchPower)
         ,("allow_baseline_invite_scholar"   , simpleEffectAtom "religious_school" MsgAllowBaselineInviteScholar)
         ,("auto_complete_estate_agenda"     , simpleEffectAtom "estate" MsgAutoCompleteEstateAgenda)
         ,("can_swap_out_of_estate_granting_reform", simpleEffectAtom "estate" MsgCanSwapOutEstateGrantingReform)
