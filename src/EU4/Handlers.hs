@@ -168,6 +168,7 @@ module EU4.Handlers (
     ,   giveClaims
     ,   addAcceptedCultureOrDipPower
     ,   handleDynamicEffect
+    ,   handleForLoop
     -- testing
     ,   isPronoun
     ,   flag
@@ -4585,6 +4586,35 @@ foldCompound "handleDynamicEffect" "DynamicEffect" "dynEff"
                     fixedPrefix = T.dropWhile (\c -> c == '*' || c == ' ') effectText
                 return $ MsgGenericText fixedPrefix
     |]
+
+-------------------------------------------
+-- Handler for the for loop --
+-------------------------------------------
+handleForLoop :: (EU4Info g, Monad m) => StatementHandler g m
+handleForLoop stmt@[pdx| %_ = @stmts |] = do
+    let (amountStmt, rest) = extractStmt (matchLhsText "amount") stmts
+        (effectStmt, rest') = extractStmt (matchLhsText "effect") rest
+        (tooltipStmt, rest'') = case rest' of
+            [] -> (Nothing, [])
+            _ -> extractStmt (matchLhsText "custom_tooltip") rest'
+    case rest'' of
+        [] -> case amountStmt of
+            Just [pdx| %_ = !amount |] -> case effectStmt of
+                Just [pdx| %_ = ?effectText |] -> do
+                    let effectStmt2 = readScriptFromText effectText
+                    effectMsgs <- ppMany effectStmt2
+                    case tooltipStmt of
+                        Just [pdx| %_ = ?tooltipText |] -> do
+                            tooltipLoc <- getGameL10n tooltipText
+                            withCurrentIndent $ \i ->
+                                return $ (i, MsgTooltip tooltipLoc) : (i, MsgFor amount) : effectMsgs
+                        _ -> do
+                            withCurrentIndent $ \i ->
+                                return $  (i, MsgFor amount) : effectMsgs
+                _ -> preStatement stmt
+            _ -> preStatement stmt
+        unhandledStatements -> trace ("handleForLoop: Unhandled statements " ++ show unhandledStatements) $ preStatement stmt
+handleForLoop stmt = preStatement stmt
 
 ----------------------------------------------------
 -- Handler for has_reached_government_reform_tier --

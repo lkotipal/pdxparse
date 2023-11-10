@@ -1433,6 +1433,7 @@ data ScriptMessage
     | MsgHasNotEnactedParliamentAction {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgTooltip {scriptMessageWhat :: Text}
     | MsgAddRandomDev {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgFor {scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9566,6 +9567,12 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True _amt)
                 , " random development"
+                ]
+        MsgFor {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Repeat the following effects "
+                , toMessage (bold (plainNum _amt))
+                , " times:"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
