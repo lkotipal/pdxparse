@@ -2249,6 +2249,8 @@ handlersSpecialComplex = Tr.fromList
         ,("check_reducing_estate_revolt_size_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize False))
         ,("check_reducing_estate_revolt_size_more_trigger" , simpleEffectAtom "flag" (MsgCheckEstateRevoltSize True))
         ,("disable_rebels_from_seize_land_for_estate" , simpleEffectAtom "estate" MsgDisableRebelsFromSeizeLand)
+        ,("disable_trading_policy"          , simpleEffectAtom "policy" MsgDisableTradingPolicy)
+        ,("enable_trading_policy"           , simpleEffectAtom "policy" MsgEnableTradingPolicy)
         ,("eyalet_effect"                   , simpleEffectAtom "tag" MsgEyaletEffect)
         ,("generate_advisor"                , defineAdvisor True (Just "if the flag <tt>cheaper_selected_advisor</tt> is set, the advisor is cheaper to hire"))
         ,("generate_estate_advisor"         , defineAdvisor True Nothing)

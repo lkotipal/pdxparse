@@ -1434,6 +1434,8 @@ data ScriptMessage
     | MsgTooltip {scriptMessageWhat :: Text}
     | MsgAddRandomDev {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgFor {scriptMessageAmt :: Double}
+    | MsgDisableTradingPolicy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgEnableTradingPolicy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9573,6 +9575,16 @@ instance RenderMessage Script ScriptMessage where
                 [ "Repeat the following effects "
                 , toMessage (bold (plainNum _amt))
                 , " times:"
+                ]
+        MsgDisableTradingPolicy {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Disable the [[trade policy]] "
+                , toMessage (iquotes _what)
+                ]
+        MsgEnableTradingPolicy {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Enable the [[trade policy]] "
+                , toMessage (iquotes _what)
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
