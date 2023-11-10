@@ -2264,6 +2264,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_not_enacted_parliament_action", simpleEffectAtomIcon "parliament" "parliament_action" MsgHasNotEnactedParliamentAction)
         ,("has_points_for_livonian_monarchy", simpleEffectAtom "government_reform" MsgHasPointsForLivonianMonarchy)
         ,("has_primary_cult"                , simpleEffectAtom "cult" MsgHasPrimaryCult)
+        ,("has_unlocked_estate_privilege"   , simpleEffectAtom "estate_privilege" MsgHasUnlockedEstatePrivilege)
         ,("has_unlocked_government_reform"  , simpleEffectAtom "government_reform" MsgHasUnlockedGovernmentReform)
         ,("has_unlocked_government_reform_tooltip", simpleEffectAtom "government_reform" MsgHasUnlockedGovernmentReform)
         ,("is_or_was_tag"                   , simpleEffectWithExtraHandler "tag" (withFlag MsgIsOrWasTag))

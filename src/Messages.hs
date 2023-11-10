@@ -1349,6 +1349,7 @@ data ScriptMessage
     | MsgSelectPrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgChangePrimaryCult {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgUnlockEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHasUnlockedEstatePrivilege {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgUnlockGovernmentReform {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgKillUnits {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double}
     | MsgConstructBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
@@ -8947,6 +8948,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Unlock the "
                 , toMessage (iquotes _what)
                 , " estate privilege"
+                ]
+        MsgHasUnlockedEstatePrivilege {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has unlocked the estate privilege "
+                , toMessage (iquotes _what)
                 ]
         MsgUnlockGovernmentReform {scriptMessageWhat = _what}
             -> mconcat
