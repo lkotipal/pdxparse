@@ -186,6 +186,7 @@ data ScriptMessage
     | MsgCapital
     | MsgAllCountries
     | MsgAllNeighborCountries
+    | MsgAllNeighborProvinces
     | MsgAllSubjectCountries
     | MsgElse
     | MsgElseIf
@@ -2156,6 +2157,8 @@ instance RenderMessage Script ScriptMessage where
             -> "All countries in the world:"
         MsgAllNeighborCountries
             -> "All neighbouring countries:"
+        MsgAllNeighborProvinces
+            -> "All neighbouring provinces:"
         MsgEveryActiveTradeNode
             -> "Every trade node with a merchant present:"
         MsgEveryAlly

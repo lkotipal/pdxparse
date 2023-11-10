@@ -1311,6 +1311,7 @@ handlersCompound = Tr.fromList
         ,("all_federation_members"  , scope EU4Country   . compoundMessage MsgAllFederationMembers)
         ,("all_known_country"       , scope EU4Country   . compoundMessage MsgAllKnownCountries)
         ,("all_neighbor_country"    , scope EU4Country   . compoundMessage MsgAllNeighborCountries)
+        ,("all_neighbor_province"   , scope EU4Province  . compoundMessage MsgAllNeighborProvinces)
         ,("all_owned_province"      , scope EU4Province  . compoundMessage MsgEveryOwnedProvince)
         ,("all_province"            , scope EU4Province  . compoundMessage MsgAllProvince)
         ,("all_rival_country"       , scope EU4Country   . compoundMessage MsgAllRivalCountries)
