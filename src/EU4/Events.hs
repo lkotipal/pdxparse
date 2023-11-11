@@ -514,7 +514,7 @@ pp_option evtid hidden triggered opt = do
                 ]
 
 findInStmt :: GenericStatement -> [(EU4EventWeight, Text)]
-findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "province_event" || lhs == "country_event_with_insight" = case getId scr of
+findInStmt stmt@[pdx| $lhs = @scr |] | lhs == "country_event" || lhs == "province_event" || lhs == "country_event_with_insight" || lhs == "country_event_with_effect_insight" || lhs == "country_event_with_option_insight" = case getId scr of
     Just triggeredId -> [(Nothing, triggeredId)]
     _ -> (trace $ "Unrecognized event trigger: " ++ show stmt) $ []
     where
