@@ -1482,11 +1482,15 @@ tryLocAndLocMod atom = do
         locTable :: HashMap Text Text
         locTable = HM.fromList
             [("female_advisor_chance", "MODIFIER_FEMALE_ADVISOR_CHANCE")
+            ,("artillery_power", "ARTILLERY_POWER")
             ,("cavalry_power", "CAVALRY_POWER")
             ,("development_cost", "DEVELOPMENT_COST")
             ,("discipline", "MODIFIER_DISCIPLINE")
+            ,("global_tax_modifier", "GLOBAL_TAX_MODIFIER")
             ,("global_trade_goods_size_modifier", "MODIFIER_GLOBAL_TRADE_GOODS_SIZE_MODIFIER")
             ,("infantry_power", "INFANTRY_POWER")
+            ,("land_morale", "LAND_MORALE")
+            ,("movement_speed", "MODIFIER_MOVEMENT_SPEED")
             ,("missionaries" , "MISSIONARY_CONSTRUCTIONS") -- ?
             ,("ship_durability", "MODIFIER_SHIP_DURABILITY")
             ,("tolerance_heathen", "MODIFIER_TOLERANCE_HEATHEN")
