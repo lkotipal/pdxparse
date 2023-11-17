@@ -3561,10 +3561,11 @@ data MilitaryLeader = MilitaryLeader
         ,   ml_name :: Maybe Text
         ,   ml_female :: Maybe Bool
         ,   ml_trait :: Maybe Text
+        ,   ml_culture :: Maybe Text
         }
         deriving Show
 newML :: MilitaryLeader
-newML = MilitaryLeader Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+newML = MilitaryLeader Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 -- Also used for hasLeaderWith
 pp_mil_leader_attrib :: forall g m. (EU4Info g, Monad m) => Bool -> MilitaryLeader -> PPT g m (Maybe (IndentedMessage, MilitaryLeader))
@@ -3612,6 +3613,10 @@ pp_mil_leader_attrib naval ml =
             text <- getGameL10n trait
             msg <- msgToPP' $ MsgMilitaryLeaderTrait text
             return (Just (msg, ml { ml_trait = Nothing }))
+        pp_mil_leader_attrib' ml@MilitaryLeader { ml_culture = Just culture } = do
+            text <- getGameL10n culture
+            msg <- msgToPP' $ MsgNewDynMemberCulture text
+            return (Just (msg, ml { ml_culture = Nothing }))
         pp_mil_leader_attrib' _ = return Nothing
     in
         pp_mil_leader_attrib' ml
@@ -3645,6 +3650,8 @@ defineMilitaryLeader icon naval headline stmt@[pdx| %_ = @scr |] = do
             = ml { ml_female = Just True }
         addLine ml [pdx| trait = %trait |]
             = ml { ml_trait = textRhs trait }
+        addLine ml [pdx| culture = %culture |]
+            = ml { ml_culture = textRhs culture }
         addLine ml line = (trace $ ("Unhandled military leader condition in " ++ currentFile ++ ": " ++ show line)) $ ml
 
         pp_mil_leader :: MilitaryLeader -> PPT g m IndentedMessages
