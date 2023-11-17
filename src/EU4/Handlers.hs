@@ -888,6 +888,13 @@ scriptIconTable = HM.fromList
     ,("well_advised_personality", "well advised")
     ,("well_connected_personality", "well connected")
     ,("zealot_personality", "zealot")
+    -- AI personalities
+    ,("ai_balanced"    , "personality balanced")
+    ,("ai_capitalist"  , "personality capitalist")
+    ,("ai_colonialist" , "personality colonialist")
+    ,("ai_diplomat"    , "personality diplomat")
+    ,("ai_militarist"  , "personality militarist")
+    ,("human"          , "personality human")
     -- AI attitudes
     ,("attitude_allied"      , "ally attitude")
     ,("attitude_defensive"   , "defensive attitude")

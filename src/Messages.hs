@@ -1441,6 +1441,7 @@ data ScriptMessage
     | MsgFor {scriptMessageAmt :: Double}
     | MsgDisableTradingPolicy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEnableTradingPolicy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgHasAiPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9639,6 +9640,13 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Enable the [[trade policy]] "
                 , toMessage (iquotes _what)
+                ]
+        MsgHasAiPersonality {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Has the AI personality "
+                , _icon
+                , " "
+                , _what
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

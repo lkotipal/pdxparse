@@ -1622,6 +1622,7 @@ handlersSimpleIcon = Tr.fromList
         ,("is_monarch_leader"       , withLocAtomAndIcon "ruler general" MsgRulerIsGeneral)
         ,("is_religion_enabled"     , withLocAtomIcon MsgReligionEnabled)
         ,("national_focus"          , withLocAtomIcon MsgNationalFocus)
+        ,("personality"             , withLocAtomIcon MsgHasAiPersonality)
         ,("remove_accepted_culture" , withLocAtomAndIcon "max promoted cultures" MsgRemoveAcceptedCulture)
         ,("remove_building"         , withLocAtomIconBuilding MsgRemoveBuilding)
         ,("remove_estate"           , withLocAtomIcon MsgRemoveFromEstate )
