@@ -1209,7 +1209,7 @@ iconOrFlag _ flagmsg expectScope stmt@[pdx| %_ = $vartag:$var |] = do
     case mwhoflag of
         Just whoflag -> msgToPP . flagmsg $ whoflag
         Nothing -> preStatement stmt
-iconOrFlag iconmsg flagmsg expectScope [pdx| $head = $name |] = msgToPP =<< do
+iconOrFlag iconmsg flagmsg expectScope [pdx| $head = ?name |] = msgToPP =<< do
     nflag <- flag expectScope name -- laziness means this might not get evaluated
 --   when (T.toLower name == "prev") . withCurrentFile $ \f -> do
 --       traceM $ f ++ ": iconOrFlag: " ++ T.unpack head ++ " = " ++ T.unpack name

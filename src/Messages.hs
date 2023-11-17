@@ -1442,6 +1442,8 @@ data ScriptMessage
     | MsgDisableTradingPolicy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgEnableTradingPolicy {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgHasAiPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgSetDynasty {scriptMessageWhat :: Text}
+    | MsgSetDynastySameAs {scriptMessageWhom :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9646,6 +9648,16 @@ instance RenderMessage Script ScriptMessage where
                 [ "Has the AI personality "
                 , _icon
                 , " "
+                , _what
+                ]
+        MsgSetDynasty {scriptMessageWhat = _whom}
+            -> mconcat
+                [ "Change dynasty to "
+                , toMessage (iquotes _whom)
+                ]
+        MsgSetDynastySameAs {scriptMessageWhom = _what}
+            -> mconcat
+                [ "Change dynasty to that of "
                 , _what
                 ]
 
