@@ -1901,8 +1901,8 @@ opinion msgIndef msgDur stmt@[pdx| %_ = @scr |]
         addLine op [pdx| modifier      = ?label       |] = op { op_modifier = Just label }
         addLine op [pdx| years         = !n           |] = op { op_years = Just n }
         -- following two for add_mutual_opinion_modifier_effect
-        addLine op [pdx| scope_country = $tag         |] = op { op_who = Just (Left tag) }
-        addLine op [pdx| scope_country = $vartag:$var |] = op { op_who = Just (Right (vartag, var)) }
+        addLine op [pdx| target = $tag         |] = op { op_who = Just (Left tag) }
+        addLine op [pdx| target = $vartag:$var |] = op { op_who = Just (Right (vartag, var)) }
         addLine op [pdx| opinion_modifier = ?label    |] = op { op_modifier = Just label }
         addLine op _ = op
         pp_add_opinion op = case (op_who op, op_modifier op) of
