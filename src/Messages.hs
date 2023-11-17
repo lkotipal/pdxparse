@@ -791,6 +791,9 @@ data ScriptMessage
     | MsgTribalAllegiance {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainTribalAllegiance {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgArmySizePc {scriptMessageAmt :: Double}
+    | MsgBuildInfantry {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
+    | MsgBuildCavalry {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
+    | MsgBuildArtillery {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
     | MsgBuildHeavyShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
     | MsgBuildLightShips {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
     | MsgBuildGalleys {scriptMessageIcon :: Text, scriptMessageAmt :: Double, scriptMessageSpeed :: Double, scriptMessageCost :: Double}
@@ -5771,6 +5774,48 @@ instance RenderMessage Script ScriptMessage where
                 [ "Army size is at least "
                 , toMessage (reducedNum plainPc _amt)
                 , " of force limit"
+                ]
+        MsgBuildInfantry {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
+            -> mconcat
+                [ "Build "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " infantry "
+                , plural _amt "regiment" "regiments"
+                , " at "
+                , toMessage (reducedNum plainPc _cost)
+                , " of normal cost, taking "
+                , toMessage (reducedNum plainPc _speed)
+                , " of normal time"
+                ]
+        MsgBuildCavalry {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
+            -> mconcat
+                [ "Build "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " cavalry "
+                , plural _amt "regiment" "regiments"
+                , " at "
+                , toMessage (reducedNum plainPc _cost)
+                , " of normal cost, taking "
+                , toMessage (reducedNum plainPc _speed)
+                , " of normal time"
+                ]
+        MsgBuildArtillery {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
+            -> mconcat
+                [ "Build "
+                , _icon
+                , " "
+                , toMessage (plainNum _amt)
+                , " artillery "
+                , plural _amt "regiment" "regiments"
+                , " at "
+                , toMessage (reducedNum plainPc _cost)
+                , " of normal cost, taking "
+                , toMessage (reducedNum plainPc _speed)
+                , " of normal time"
                 ]
         MsgBuildHeavyShips {scriptMessageIcon = _icon, scriptMessageAmt = _amt, scriptMessageSpeed = _speed, scriptMessageCost = _cost}
             -> mconcat

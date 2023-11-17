@@ -2646,6 +2646,9 @@ data UnitType
     deriving (Show)
 
 instance Param UnitType where
+    toParam (textRhs -> Just "infantry")  = Just UnitInfantry
+    toParam (textRhs -> Just "cavalry")  = Just UnitCavalry
+    toParam (textRhs -> Just "artillery")  = Just UnitArtillery
     toParam (textRhs -> Just "heavy_ship") = Just UnitHeavyShip
     toParam (textRhs -> Just "light_ship") = Just UnitLightShip
     toParam (textRhs -> Just "galley")     = Just UnitGalley
@@ -2706,6 +2709,9 @@ foldCompound "addUnitConstruction" "UnitConstruction" "uc"
     ,CompField "speed" [t|Double|] (Just [|1|]) False
     ,CompField "cost" [t|Double|] (Just [|1|]) False]
     [| return $ (case _type of
+            UnitInfantry -> MsgBuildInfantry (iconText "infantry")
+            UnitCavalry -> MsgBuildCavalry (iconText "cavalry")
+            UnitArtillery -> MsgBuildHeavyShips (iconText "artillery")
             UnitHeavyShip -> MsgBuildHeavyShips (iconText "heavy ship")
             UnitLightShip -> MsgBuildLightShips (iconText "light ship")
             UnitGalley    -> MsgBuildGalleys    (iconText "galley")
