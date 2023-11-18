@@ -1768,6 +1768,7 @@ handlersIconFlagOrPronoun = Tr.fromList
         ,("ruler_culture"    , iconOrFlag MsgRulerCultureIs MsgRulerCultureIsSame Nothing)
         ,("ruler_religion"   , iconOrFlag MsgRulerReligionIs MsgRulerReligionIsSame Nothing)
         ,("set_consort_culture" , locAtomTagOrProvince (const MsgChangeConsortCulture) MsgChangeConsortSameCulture)
+        ,("set_consort_religion" , iconOrFlag MsgChangeConsortReligion MsgChangeConsortSameReligion Nothing)
         ,("set_dynasty"      , iconOrFlag (const MsgSetDynasty) MsgSetDynastySameAs (Just EU4Country))
         ,("set_heir_culture" , locAtomTagOrProvince (const MsgChangeHeirCulture) MsgChangeHeirSameCulture)
         ,("set_heir_religion", locAtomTagOrProvince MsgSetHeirReligion MsgSetHeirReligionAs)
