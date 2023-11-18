@@ -751,6 +751,7 @@ data ScriptMessage
     | MsgHeirHasPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgConsortHasPersonality { scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text }
     | MsgAddCenterOfReformation {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgRemoveCenterOfReformation {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddTruceWith {scriptMessageWho :: Text}
     | MsgGainSailors {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainSailorsFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -5510,6 +5511,14 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " Center of Reformation"
+                ]
+        MsgRemoveCenterOfReformation {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Removes the "
+                , _icon
+                , " "
+                , _what
+                , " Center of Reformation from this province"
                 ]
         MsgAddTruceWith {scriptMessageWho = _who}
             -> mconcat

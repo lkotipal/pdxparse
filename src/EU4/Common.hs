@@ -1630,6 +1630,7 @@ handlersSimpleIcon = Tr.fromList
         ,("remove_accepted_culture" , withLocAtomAndIcon "max promoted cultures" MsgRemoveAcceptedCulture)
         ,("remove_building"         , withLocAtomIconBuilding MsgRemoveBuilding)
         ,("remove_estate"           , withLocAtomIcon MsgRemoveFromEstate )
+        ,("remove_reform_center"    , withLocAtomIcon MsgRemoveCenterOfReformation)
         ,("remove_ruler_personality"  , withLocAtomIcon (MsgRemoveRulerPersonality False))
         ,("ruler_has_personality"   , withLocAtomIcon (MsgRulerHasPersonality False))
         ,("secondary_religion"      , withLocAtomIcon MsgSecondaryReligion)
