@@ -1575,6 +1575,7 @@ handlersTypewriter = Tr.fromList
         ,("has_ruler"        , withNonlocAtom MsgHasRuler)
         ,("has_ruler_flag"   , withNonlocAtom2 MsgRulerFlag MsgHasFlag)
         ,("has_saved_event_target", withNonlocAtom MsgHasSavedEventTarget)
+        ,("has_saved_global_event_target", withNonlocAtom MsgHasSavedGlobalEventTarget)
         ,("save_event_target_as", withNonlocAtom MsgSaveEventTargetAs)
         ,("save_global_event_target_as", withNonlocAtom MsgSaveGlobalEventTargetAs)
         ,("set_consort_flag" , withNonlocAtom2 MsgConsortFlag MsgSetFlag)

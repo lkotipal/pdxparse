@@ -791,6 +791,7 @@ data ScriptMessage
     | MsgSaveGlobalEventTargetAs {scriptMessageName :: Text}
     | MsgClearGlobalEventTarget {scriptMessageName :: Text}
     | MsgHasSavedEventTarget {scriptMessageName :: Text}
+    | MsgHasSavedGlobalEventTarget {scriptMessageName :: Text}
     | MsgRemoveClaim {scriptMessageWho :: Text}
     | MsgTribalAllegiance {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainTribalAllegiance {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -5774,6 +5775,12 @@ instance RenderMessage Script ScriptMessage where
         MsgHasSavedEventTarget {scriptMessageName = _name}
             -> mconcat
                 [ "An event target named <tt>"
+                , _name
+                , "</tt> has been saved"
+                ]
+        MsgHasSavedGlobalEventTarget {scriptMessageName = _name}
+            -> mconcat
+                [ "A global event target named <tt>"
                 , _name
                 , "</tt> has been saved"
                 ]
