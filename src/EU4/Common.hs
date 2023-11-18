@@ -2167,6 +2167,7 @@ handlersTextAtom = Tr.fromList
         ,("pick_random_estate_if_present" , textAtom "flag" "estate_action" MsgPickRandomEstateIfPresent tryLoc) -- Localization/icon ignored
         ,("religious_school"     , textAtom "school" "group" MsgReligiousSchool tryLoc)
         ,("set_religious_school" , textAtom "school" "group" MsgSetReligiousSchool tryLoc)
+        ,("set_defender_of_the_faith" , setDefenderOftheFaith)
         ]
 
 -- | Handlers for special complex statements

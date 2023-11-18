@@ -150,6 +150,7 @@ module EU4.Handlers (
     ,   totalStats
     ,   removeTradeModifier
     ,   hasCompletedIdeaGroupOfCategory
+    ,   setDefenderOftheFaith
     ,   createSubject
     ,   hasBuildingTrigger
     ,   addLatestBuilding
@@ -2901,6 +2902,21 @@ foldCompound "createSubject" "CreateSubject" "cs"
                 flagLoc <- flagText (Just EU4Country) who
                 return $ MsgCreateSubject typeLoc flagLoc
             _ -> return $ (trace $ ("either who or subject must be set in create_subject: " ++ show stmt)) $ preMessage stmt
+    |]
+
+foldCompound "setDefenderOftheFaith" "SetDefenderOftheFaith" "sdotf"
+    []
+    [CompField "who" [t|Text|] Nothing True
+    ,CompField "religion" [t|Text|] Nothing True
+    ]
+    [| do
+        whoLoc <- flagText (Just EU4Country) _who
+        if isTag _religion || isPronoun _religion then do
+            religionLoc <- flagText (Just EU4Country) _religion
+            return $ MsgSetDefenderOfTheFaithAsReligion religionLoc whoLoc
+        else do
+            religionLoc <- getGameL10n _religion
+            return $ MsgSetDefenderOfTheFaith religionLoc whoLoc
     |]
 
 -- War

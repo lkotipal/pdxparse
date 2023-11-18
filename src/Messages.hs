@@ -1450,6 +1450,8 @@ data ScriptMessage
     | MsgSetDynasty {scriptMessageWhat :: Text}
     | MsgSetDynastySameAs {scriptMessageWhom :: Text}
     | MsgJoinAllDefensiveWarsOf {scriptMessageWhom :: Text}
+    | MsgSetDefenderOfTheFaithAsReligion {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgSetDefenderOfTheFaith {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9695,6 +9697,19 @@ instance RenderMessage Script ScriptMessage where
         MsgJoinAllDefensiveWarsOf {scriptMessageWhom = _what}
             -> mconcat
                 [ "Join all defensive wars of "
+                , _what
+                ]
+        MsgSetDefenderOfTheFaith {scriptMessageWhat = _what, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _whom
+                , " becomes {{icon|dotf}} Defender of the Faith of the "
+                , _what
+                , " religion"
+                ]
+        MsgSetDefenderOfTheFaithAsReligion {scriptMessageWhat = _what, scriptMessageWhom = _whom}
+            -> mconcat
+                [ _whom
+                , " becomes {{icon|dotf}} Defender of the Faith of the religion of "
                 , _what
                 ]
 
