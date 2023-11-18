@@ -1555,6 +1555,7 @@ handlersTypewriter :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersTypewriter = Tr.fromList
         [("clr_consort_flag" , withNonlocAtom2 MsgConsortFlag MsgClearFlag)
         ,("clr_country_flag" , withNonlocAtom2 MsgCountryFlag MsgClearFlag)
+        ,("clear_global_event_target"  , withNonlocAtom MsgClearGlobalEventTarget)
         ,("clr_global_flag"  , withNonlocAtom2 MsgGlobalFlag MsgClearFlag)
         ,("clr_heir_flag"    , withNonlocAtom2 MsgHeirFlag MsgClearFlag)
         ,("clr_province_flag", withNonlocAtom2 MsgProvinceFlag MsgClearFlag)

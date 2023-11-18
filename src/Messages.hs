@@ -786,6 +786,7 @@ data ScriptMessage
     | MsgAddTrustMutual {scriptMessageWhom :: Text, scriptMessageAmt :: Double}
     | MsgSaveEventTargetAs {scriptMessageName :: Text}
     | MsgSaveGlobalEventTargetAs {scriptMessageName :: Text}
+    | MsgClearGlobalEventTarget {scriptMessageName :: Text}
     | MsgHasSavedEventTarget {scriptMessageName :: Text}
     | MsgRemoveClaim {scriptMessageWho :: Text}
     | MsgTribalAllegiance {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -5743,6 +5744,12 @@ instance RenderMessage Script ScriptMessage where
         MsgSaveGlobalEventTargetAs {scriptMessageName = _name}
             -> mconcat
                 [ "Save as global event target named <tt>"
+                , _name
+                , "</tt>"
+                ]
+        MsgClearGlobalEventTarget {scriptMessageName = _name}
+            -> mconcat
+                [ "Clear global event target <tt>"
                 , _name
                 , "</tt>"
                 ]
