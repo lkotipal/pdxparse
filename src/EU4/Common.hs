@@ -595,6 +595,7 @@ handlersModifiers = Tr.fromList
         ,("has_trade_modifier"             , tradeMod)
         ,("remove_country_modifier"        , withLocAtom2 MsgCountryMod MsgRemoveModifier)
         ,("remove_province_modifier"       , withLocAtom2 MsgProvMod MsgRemoveModifier)
+        ,("remove_province_triggered_modifier" , withLocAtom2 MsgProvTriggeredMod MsgRemoveModifier)
         ]
 
 -- | Handlers for actual modifiers

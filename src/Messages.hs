@@ -118,6 +118,7 @@ data ScriptMessage
     | MsgLibertyDesireMod
     | MsgProvMod
     | MsgPermanentProvMod
+    | MsgProvTriggeredMod
     | MsgRulerMod
     | MsgTradeMod
     | MsgAddMod {scriptMessageModid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
@@ -1912,6 +1913,8 @@ instance RenderMessage Script ScriptMessage where
             -> "liberty desire modifier"
         MsgProvMod
             -> "province modifier"
+        MsgProvTriggeredMod
+            -> "triggered province modifier"
         MsgPermanentProvMod
             -> "permanent province modifier"
         MsgRulerMod
@@ -8746,7 +8749,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgAddProvinceTriggeredModifier {scriptMessageWhat = _what}
             -> mconcat
-                [ "Gain province modifier "
+                [ "Gain triggered province modifier "
                 , _what
                 , " until the end of the campaign, providing the following effects:"
                 ]
