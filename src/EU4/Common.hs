@@ -2014,11 +2014,12 @@ handlersAtLeast = Tr.fromList
         ,("land_maintenance"            , handleAtLeastWithIcon "land_maintenance" "land maintenance" (reducedNum plainPc))
         ,("local_autonomy_above_min"    , handleAtLeastWithIcon "Local autonomy above minimum" "autonomy" plainPc)
         ,("naval_maintenance"           , handleAtLeastWithIcon "naval_maintenance" "naval maintenance" (reducedNum plainPc))
+        ,("production_income_percentage", handleAtLeastWithIcon "of the income is from production" "production"  (reducedNum plainPc))
         ,("num_of_free_diplomatic_relations" , handleAtLeast "unused diplomatic relations" plainNum)
         ,("num_of_regiments_at_full_drill" , handleAtLeast "regiments at full drill" plainNum)
         ,("num_ships_privateering" , handleAtLeast "ships privateering" plainNum)
         ,("num_ships_protecting_trade" , handleAtLeast "ships protecting trade" plainNum)
-        ,("num_of_trade_companies"      , handleAtLeastWithIcon "trade company" "trade companies" plainNum)
+        ,("num_of_trade_companies"      , handleAtLeastWithIcon "trade companies" "trade company" plainNum)
         -- special units
         ,("num_of_banners"              , handleAtLeastWithIcon "banner regiments" "banners" plainNum)
         ,("num_of_caravel"              , handleAtLeast "caravel ships" plainNum)
