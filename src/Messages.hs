@@ -1448,6 +1448,7 @@ data ScriptMessage
     | MsgHasAiPersonality {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgSetDynasty {scriptMessageWhat :: Text}
     | MsgSetDynastySameAs {scriptMessageWhom :: Text}
+    | MsgJoinAllDefensiveWarsOf {scriptMessageWhom :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9682,6 +9683,11 @@ instance RenderMessage Script ScriptMessage where
         MsgSetDynastySameAs {scriptMessageWhom = _what}
             -> mconcat
                 [ "Change dynasty to that of "
+                , _what
+                ]
+        MsgJoinAllDefensiveWarsOf {scriptMessageWhom = _what}
+            -> mconcat
+                [ "Join all defensive wars of "
                 , _what
                 ]
 

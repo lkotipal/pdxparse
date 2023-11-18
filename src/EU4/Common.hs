@@ -1699,6 +1699,7 @@ handlersSimpleFlag = Tr.fromList
         ,("is_strongest_trade_power", withFlag MsgIsStrongestTradePower)
         ,("is_subject_of"           , withFlag MsgIsSubjectOf)
         ,("is_threat"               , withFlag MsgIsThreat)
+        ,("join_all_defensive_wars_of" , withFlag MsgJoinAllDefensiveWarsOf)
         ,("junior_union_with"       , withFlag MsgJuniorUnionWith)
         ,("knows_country"           , withFlag MsgKnowsCountry)
         ,("marriage_with"           , withFlag MsgRoyalMarriageWith)
