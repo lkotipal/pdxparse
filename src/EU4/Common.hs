@@ -2040,6 +2040,25 @@ handlersAtLeast = Tr.fromList
         ,("num_of_streltsy"             , handleAtLeast "streltsy regiments" plainNum)
         ,("num_of_tercio"               , handleAtLeast "tercio regiments" plainNum)
         ,("num_of_voc_indiamen"         , handleAtLeast "VOC indiamen ships" plainNum)
+
+        ,("banner_percentage"           , handleAtLeast "of the army as banner regiments" (reducedNum plainPc))
+        ,("caravel_percentage"          , handleAtLeast "of the navy as caravel ships"(reducedNum plainPc))
+        ,("carolean_percentage"         , handleAtLeast "of the army as carolean regiments" (reducedNum plainPc))
+        ,("cossacks_percentage"         , handleAtLeast "of the army as cossack regiments" (reducedNum plainPc))
+        ,("galleass_percentage"         , handleAtLeast "of the navy as galleass ships"  (reducedNum plainPc))
+        ,("galleon_percentage"          , handleAtLeast "of the navy as galleon ships" (reducedNum plainPc))
+        ,("geobukseon_percentage"       , handleAtLeast "of the navy as geobukseon ships" (reducedNum plainPc))
+        ,("hussars_percentage"          , handleAtLeast "of the army as winged hussars regiments" (reducedNum plainPc))
+        ,("janissary_percentage"        , handleAtLeast "of the army as janissary regiments" (reducedNum plainPc))
+        ,("mamluks_percentage"          , handleAtLeast "of the army as mamluks regiments" (reducedNum plainPc))
+        ,("man_of_war_percentage"       , handleAtLeast "of the navy as man of war ships" (reducedNum plainPc))
+        ,("musketeer_percentage"        , handleAtLeast "of the army as musketeer regiments" (reducedNum plainPc))
+        ,("qizilbash_percentage"        , handleAtLeast "of the army as qizilbash regiments" (reducedNum plainPc))
+        ,("rajput_percentage"           , handleAtLeast "of the army as rajput regiments" (reducedNum plainPc))
+        ,("samurai_percentage"          , handleAtLeast "of the army as samurai regiments" (reducedNum plainPc))
+        ,("streltys_percentage"         , handleAtLeast "of the army as streltsy regiments" (reducedNum plainPc))
+        ,("tercio_percentage"           , handleAtLeast "of the army as tercio regiments" (reducedNum plainPc))
+        ,("voc_indiamen_percentage"     , handleAtLeast "of the navy as VOC indiamen ships" (reducedNum plainPc))
         ]
 
 -- | Handlers for signed numeric statements
