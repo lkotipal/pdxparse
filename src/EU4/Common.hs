@@ -1751,6 +1751,7 @@ handlersIconFlagOrPronoun = Tr.fromList
         ,("change_culture"   , locAtomTagOrProvince (const MsgChangeCulture) MsgChangeSameCulture)
         ,("change_religion"  , iconOrFlag MsgChangeReligion MsgChangeSameReligion Nothing)
         ,("consort_culture"  , locAtomTagOrProvince (const MsgConsortCultureIs) MsgConsortCultureIsSame)
+        ,("consort_religion" , iconOrFlag MsgConsortReligionIs MsgConsortReligionIsSame Nothing)
         ,("continent"        , locAtomTagOrProvince (const MsgContinentIs) MsgContinentIsAs)
         ,("culture"          , locAtomTagOrProvince (const MsgCultureIs) MsgCultureIsAs)
         ,("culture_group"    , locAtomTagOrProvince (const MsgCultureIsGroup) MsgCultureGroupAs)

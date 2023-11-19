@@ -412,6 +412,8 @@ data ScriptMessage
     | MsgChangeConsortReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRulerReligionIs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRulerReligionIsSame {scriptMessageWhom :: Text}
+    | MsgConsortReligionIs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
+    | MsgConsortReligionIsSame {scriptMessageWhom :: Text}
     | MsgRulerCultureIs {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRulerCultureIsSame {scriptMessageWhom :: Text}
     | MsgIsCoreOf {scriptMessageWhom :: Text}
@@ -3383,6 +3385,18 @@ instance RenderMessage Script ScriptMessage where
         MsgRulerReligionIs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
                 [ "Ruler religion is "
+                , _icon
+                , " "
+                , _what
+                ]
+        MsgConsortReligionIsSame {scriptMessageWhom = _whom}
+            -> mconcat
+                [ "Consort's religion is the same as that of "
+                , _whom
+                ]
+        MsgConsortReligionIs {scriptMessageIcon = _icon, scriptMessageWhat = _what}
+            -> mconcat
+                [ "Consort's religion is "
                 , _icon
                 , " "
                 , _what
