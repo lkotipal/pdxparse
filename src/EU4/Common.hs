@@ -2257,6 +2257,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_opinion_modifier"         , opinion MsgHasOpinionMod (\modid what who _years -> MsgHasOpinionMod modid what who))
         ,("has_reached_government_reform_tier" , hasGovernmentReforTier)
         ,("has_trade_company_investment_in_area", hasTradeCompanyInvestment)
+        ,("hire_advisor"                 , defineAdvisor False (Just "this advisor is hired immediately"))
         ,("is_in_war"                    , isInWar)
         ,("privateer_power"              , privateerPower)
         ,("province_event"               , scope EU4Province . triggerEvent MsgProvinceEvent)
