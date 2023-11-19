@@ -912,6 +912,7 @@ data ScriptMessage
     | MsgHasSpyNetworkFrom { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgHasSpyNetworkIn { scriptMessageIcon :: Text, scriptMessageWho :: Text, scriptMessageAmt :: Double }
     | MsgDefineGeneral { scriptMessageIcon :: Text }
+    | MsgDefineHeirToGeneral { scriptMessageIcon :: Text }
     | MsgDefineRulerToGeneral { scriptMessageIcon :: Text }
     | MsgDefineConquistador { scriptMessageIcon :: Text }
     | MsgDefineAdmiral { scriptMessageIcon :: Text }
@@ -6392,6 +6393,12 @@ instance RenderMessage Script ScriptMessage where
         MsgDefineGeneral { scriptMessageIcon = _icon }
             -> mconcat
                 [ "Gain a new "
+                , _icon
+                , " general with:"
+                ]
+        MsgDefineHeirToGeneral { scriptMessageIcon = _icon }
+            -> mconcat
+                [ "Make heir a "
                 , _icon
                 , " general with:"
                 ]

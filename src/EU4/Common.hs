@@ -2234,6 +2234,7 @@ handlersSpecialComplex = Tr.fromList
         ,("define_explorer"              , defineMilitaryLeader "explorer" True MsgDefineExplorer)
         ,("define_general"               , defineMilitaryLeader "general" False MsgDefineGeneral)
         ,("define_leader_to_ruler"       , defineDynMember (\_ -> MsgDefinerLeaderToRuler) (\_ -> \_ -> MsgDefinerLeaderToRuler) (\_ -> MsgDefinerLeaderToRuler) (\_ -> \_ -> MsgDefinerLeaderToRuler))
+        ,("define_heir_to_general"       , defineMilitaryLeader "general" False MsgDefineHeirToGeneral)
         ,("define_ruler_to_general"      , defineMilitaryLeader "general" False MsgDefineRulerToGeneral)
         ,("disable_estate_action"        , handleGenericEstateAction MsgDisableEstateAction)
         ,("enable_estate_action"         , handleGenericEstateAction MsgEnableEstateAction)
