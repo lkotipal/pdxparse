@@ -841,6 +841,8 @@ data ScriptMessage
     | MsgRemoveAdvisorAdmEffect
     | MsgDivorceConsortEffect
     | MsgADMTechAs {scriptMessageIcon :: Text, scriptMessageWho :: Text}
+    | MsgDIPTechAs {scriptMessageIcon :: Text, scriptMessageWho :: Text}
+    | MsgMILTechAs {scriptMessageIcon :: Text, scriptMessageWho :: Text}
     | MsgAddGovernmentReform {scriptMessageWhat :: Text}
     | MsgRemoveGovernmentReform {scriptMessageWhat :: Text}
     | MsgAddCOTLevel {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -2700,6 +2702,18 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ _icon
                 , " Administrative technology is at least that of "
+                , _who
+                ]
+        MsgDIPTechAs {scriptMessageIcon = _icon, scriptMessageWho = _who}
+            -> mconcat
+                [ _icon
+                , " Diplomatic technology is at least that of "
+                , _who
+                ]
+        MsgMILTechAs {scriptMessageIcon = _icon, scriptMessageWho = _who}
+            -> mconcat
+                [ _icon
+                , " Military technology is at least that of "
                 , _who
                 ]
         MsgArmyTradition {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
