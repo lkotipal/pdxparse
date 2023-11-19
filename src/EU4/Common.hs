@@ -2011,6 +2011,7 @@ handlersAtLeast = Tr.fromList
         ,("current_size_of_parliament"  , handleAtLeastWithIcon "Seats in parliament" "parliament" plainNum)
         ,("diplomatic_reputation"       , handleAtLeastWithIcon "diplomatic_reputation" "diplomatic reputation" plainNum)
         ,("empire_of_china_num_reforms_passed", handleAtLeastWithIcon "CELESTIAL_DECISIONS" "emperor of china" plainNum)
+        ,("gold_income"                 , handleAtLeastWithIcon "gold income" "gold" plainNum)
         ,("has_company_manpower"        , handleAtLeast "of its initial manpower remaining" (reducedNum plainPc))
         ,("isolationism"                , handleAtLeast "ISOLATIONISM" plainNum)
         ,("land_maintenance"            , handleAtLeastWithIcon "land_maintenance" "land maintenance" (reducedNum plainPc))
