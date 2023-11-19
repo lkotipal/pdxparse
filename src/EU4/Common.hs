@@ -1379,6 +1379,7 @@ handlersCompound = Tr.fromList
         ,("most_province_trade_power", scope EU4Country  . compoundMessage MsgMostProvinceTradePower)
         ,("overlord"                , scope EU4Country   . compoundMessage MsgOverlord)
         ,("owner"                   , scope EU4Country   . compoundMessage MsgOwner)
+        ,("owns_all_provinces"      , scope EU4Country   . compoundMessage (MsgGenericText "Owns all provinces which fulfill the following conditions:"))
         ,("random_active_trade_node", scope EU4TradeNode . compoundMessage MsgRandomActiveTradeNode)
         ,("random_ally"             , scope EU4Country   . compoundMessage MsgRandomAlly)
         ,("random_core_country"     , scope EU4Country   . compoundMessage MsgRandomCoreCountry)
