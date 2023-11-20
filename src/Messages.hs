@@ -484,6 +484,7 @@ data ScriptMessage
     | MsgRemoveOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgReverseRemoveOpinionMod {scriptMessageModid :: Text, scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgAddTreasury {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgAddYearsOfEstateLandIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgAddYearsOfIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgNewHeir
     | MsgNewHeirAttribs
@@ -1458,6 +1459,7 @@ data ScriptMessage
     | MsgJoinAllDefensiveWarsOf {scriptMessageWhom :: Text}
     | MsgSetDefenderOfTheFaithAsReligion {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgSetDefenderOfTheFaith {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgIronman {scriptMessageYn :: Bool}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -3861,6 +3863,17 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True _amt)
                 , " ducats"
+                ]
+        MsgAddYearsOfEstateLandIncome {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , _icon
+                , " ducats equal to "
+                , toMessage (colourNum True _amt)
+                , " "
+                , plural (round _amt) "year" "years"
+                , " of income (scaled by the land share of all estates)."
                 ]
         MsgAddYearsOfIncome {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -9756,6 +9769,12 @@ instance RenderMessage Script ScriptMessage where
                 [ _whom
                 , " becomes {{icon|dotf}} Defender of the Faith of the religion of "
                 , _what
+                ]
+        MsgIronman {scriptMessageYn  = _yn}
+            -> mconcat
+                [ "The game is"
+                , ifThenElseT _yn "" " ''not''"
+                , " {{icon|ironman}} ironman"
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
