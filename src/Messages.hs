@@ -669,7 +669,7 @@ data ScriptMessage
     | MsgIsInColonialRange {scriptMessageWhom :: Text}
     | MsgConstructingGreatProject {scriptMessageWhat :: Text}
     | MsgConstructing {scriptMessageWhat :: Text}
-    | MsgStartConstructingGreatProject {scriptMessageWhat :: Text}
+    | MsgStartConstructingGreatProject {scriptMessageIcon :: Text, scriptMessageWhom :: Text}
     | MsgCancelConstruction
     | MsgYearsOfIncome {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgLibertyDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -5024,10 +5024,11 @@ instance RenderMessage Script ScriptMessage where
                 [ "Is constructing a "
                 , _what
                 ]
-        MsgStartConstructingGreatProject {scriptMessageWhat = _what}
+        MsgStartConstructingGreatProject {scriptMessageWhom = _what}
             -> mconcat
-                [ "Begin constructing the "
+                [ "Begin constructing the [["
                 , _what
+                , "]]"
                 ]
         MsgCancelConstruction
             -> "Cancel construction"

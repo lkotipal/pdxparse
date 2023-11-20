@@ -1410,8 +1410,7 @@ withLocAtomTitle msg = withLocAtom' msg (\t -> t <> "_title")
 -- | Handlers for simple statements where RHS is a localizable atom
 handlersLocRhs :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
 handlersLocRhs = Tr.fromList
-        [("add_great_project"     , withLocAtom MsgStartConstructingGreatProject)
-        ,("add_government_reform" , withLocAtom MsgAddGovernmentReform)
+        [("add_government_reform" , withLocAtom MsgAddGovernmentReform)
         ,("can_be_overlord"       , withLocAtom MsgCanBeOverlord)
         ,("change_government"     , withLocAtom MsgChangeGovernment)
         ,("change_province_name"  , withLocAtom MsgChangeProvinceName) -- will usually fail localization
@@ -2283,6 +2282,7 @@ handlersSpecialComplex = Tr.fromList
         -- Effects/Triggers
         ,("add_accepted_culture_or_dip_power", addAcceptedCultureOrDipPower)
         ,("add_inflation_scaled_to_trade"   , simpleEffectNumIcon "inflation" "inflation" MsgAddInflationScaledToTrade)
+        ,("add_great_project"               , simpleEffectAtom "type" MsgStartConstructingGreatProject)
         ,("add_loot_from_rich_province_general_effect" , simpleEffectAtom "looter" MsgAddLootFromRichProvince) -- Note: RHS ignored
         ,("add_permanent_claim_multi_provinces" , simpleEffectWithExtraHandler "target" (locAtomTagOrProvince (\icon target -> MsgGainPermanentClaimProvince target) MsgGainPermanentClaimProvince)) -- ignore the icon which locAtomTagOrProvince usually adds
         ,("add_power_projection_mission"    , simpleEffectNumIcon "power projection" "amount" (MsgAddPowerProjection ""))
