@@ -1896,6 +1896,7 @@ handlersYesNo = Tr.fromList
         ,("is_papal_controller"         , withBool MsgIsPapalController)
         ,("is_part_of_hre"              , withBool MsgIsPartOfHRE)
         ,("is_playing_custom_nation"    , withBool MsgIsCustomNation)
+        ,("is_primitive"                , withBool MsgPrimitives)
         ,("is_prosperous"               , withBool MsgIsProsperous)
         ,("is_random_new_world"         , withBool MsgRandomNewWorld)
         ,("is_reformation_center"       , withBool MsgIsCenterOfReformation)
