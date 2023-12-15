@@ -4690,13 +4690,7 @@ instance RenderMessage Script ScriptMessage where
                 , " a former colonial nation"
                 ]
         MsgIsFreeOrTributaryTrigger {scriptMessageYn = _yn}
-            -> mconcat
-                [ "Is"
-                , toMessage (ifThenElseT _yn "" " ''neither''")
-                , " independent "
-                , toMessage (ifThenElseT _yn "or" "''nor''")
-                , " a tributary"
-                ]
+            -> toMessage (ifThenElseT _yn "{{is_free_or_tributary_trigger}}" "{{is_subject_other_than_tributary_trigger}}")
         MsgIsNomad {scriptMessageYn = _yn}
             -> mconcat
                 [ "Is"
@@ -8306,7 +8300,7 @@ instance RenderMessage Script ScriptMessage where
                 , " a march"
                 ]
         MsgIsSubjectOtherThanTributary
-            -> "Is a non-tributary subject"
+            -> "{{is_subject_other_than_tributary_trigger}}"
         MsgSpawnScaledRebels {scriptMessageRtype = _rtype, scriptMessageLeader = _leader, scriptMessageYn = _large}
             -> mconcat
                 [ _rtype
