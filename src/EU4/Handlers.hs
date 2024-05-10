@@ -2895,7 +2895,7 @@ foldCompound "createSubject" "CreateSubject" "cs"
     ,CompField "keep_liberty_desire" [t|Text|] Nothing False
     ]
     [| do
-        typeLoc <- getGameL10n _subject_type
+        typeLoc <- getGameL10n (_subject_type <> "_title")
 
         case (_subject, _who) of
             (Just subject, Just who) -> return $ (trace $ ("who and subject can't both be set in create_subject: " ++ show stmt)) $ preMessage stmt
