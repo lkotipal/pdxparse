@@ -4481,8 +4481,8 @@ foldCompound "killUnits" "KillUnits" "ku"
 foldCompound "addBuildingConstruction" "BuildingConstruction" "bc"
     []
     [CompField "building" [t|Text|] Nothing True
-    ,CompField "speed" [t|Double|] Nothing True
-    ,CompField "cost" [t|Double|] Nothing True]
+    ,CompField "speed" [t|Double|] (Just [|1|]) False
+    ,CompField "cost" [t|Double|] (Just [|1|]) False]
     [| do
         buildingLoc <- getGameL10n ("building_" <> _building)
         return $ MsgConstructBuilding (iconText _building) buildingLoc _speed _cost
