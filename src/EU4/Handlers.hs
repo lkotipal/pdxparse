@@ -2815,7 +2815,7 @@ addYearsOfOwnedProvinceIncome _ stmt = preStatement stmt
 foldCompound "addLegitimacyEquivalent" "AddLegitimacyEquivalent" "le"
     []
     [CompField "amount" [t|Double|] Nothing True
-    ,CompField "republican_tradition" [t|Double|] Nothing True
+    ,CompField "republican_tradition" [t|Double|] (Just [|0|]) False
     ]
     [| do
         return $ MsgAddLegitimacyEquivalent _amount _republican_tradition
