@@ -1492,6 +1492,7 @@ tryLocAndLocMod atom = do
             [("female_advisor_chance", "MODIFIER_FEMALE_ADVISOR_CHANCE")
             ,("artillery_power", "ARTILLERY_POWER")
             ,("cavalry_power", "CAVALRY_POWER")
+            ,("defensiveness", "DEFENSIVENESS")
             ,("development_cost", "DEVELOPMENT_COST")
             ,("discipline", "MODIFIER_DISCIPLINE")
             ,("global_tax_modifier", "GLOBAL_TAX_MODIFIER")
