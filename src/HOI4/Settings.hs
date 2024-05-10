@@ -44,7 +44,7 @@ import HOI4.Ideas (parseHOI4Ideas
     --, writeHOI4Ideas
     )
 import HOI4.Modifiers (
-                      parseHOI4OpinionModifiers, writeHOI4OpinionModifiers
+                      parseHOI4OpinionModifiers, writeHOI4OpinionModifiers, writeHOI4OpinionModifiers'
                     , parseHOI4DynamicModifiers, writeHOI4DynamicModifiers
                     , parseHOI4Modifiers)
 import HOI4.NationalFocus(parseHOI4NationalFocuses, writeHOI4NationalFocuses)
@@ -55,6 +55,8 @@ import HOI4.Events (parseHOI4Events, writeHOI4Events
                    , findTriggeredEventsInScriptedEffects
                    , findTriggeredEventsInBops)
 import HOI4.CharactersAndTraits (parseHOI4Characters, parseHOI4CountryLeaderTraits, parseHOI4UnitLeaderTraits)
+
+import HOI4.TechAndEquipment (parseHOI4TechnologiesPath, writeHOI4Technologies, parseHOI4UnitTags, parseHOI4Units)
 import HOI4.Misc (parseHOI4CountryHistory
                  , parseHOI4Terrain, parseHOI4Ideology
                  , parseHOI4Effects, parseHOI4Triggers
@@ -122,6 +124,10 @@ instance IsGame HOI4 where
                 ,   hoi4unitleadertraits = HM.empty
                 ,   hoi4terrainScripts = HM.empty
                 ,   hoi4terrain = []
+                ,   hoi4unittagScripts = HM.empty
+                ,   hoi4unittag = []
+                ,   hoi4unitScripts = HM.empty
+                ,   hoi4unit = []
                 ,   hoi4ideologyScripts = HM.empty
                 ,   hoi4ideology = HM.empty
                 ,   hoi4chartoken = HM.empty
@@ -134,6 +140,8 @@ instance IsGame HOI4 where
                 ,   hoi4modifierdefinitions = HM.empty
                 ,   hoi4bopScripts = HM.empty
                 ,   hoi4bops = HM.empty
+                ,   hoi4techScripts = HM.empty
+                ,   hoi4techs = HM.empty
                 ,   hoi4lockeys = []
                 ,   hoi4modkeys = []
 
@@ -262,6 +270,18 @@ instance HOI4Info HOI4 where
     getTerrain = do
         HOI4D ed <- get
         return (hoi4terrain ed)
+    getUnitTagScripts = do
+        HOI4D ed <- get
+        return (hoi4unittagScripts ed)
+    getUnitTag = do
+        HOI4D ed <- get
+        return (hoi4unittag ed)
+    getUnitScripts = do
+        HOI4D ed <- get
+        return (hoi4unitScripts ed)
+    getUnit = do
+        HOI4D ed <- get
+        return (hoi4unit ed)
     getIdeologyScripts = do
         HOI4D ed <- get
         return (hoi4ideologyScripts ed)
@@ -295,6 +315,12 @@ instance HOI4Info HOI4 where
     getBops = do
         HOI4D ed <- get
         return (hoi4bops ed)
+    getTechnologyScripts = do
+        HOI4D ed <- get
+        return (hoi4techScripts ed)
+    getTechnologies = do
+        HOI4D ed <- get
+        return (hoi4techs ed)
     getLocKeys = do
         HOI4D ed <- get
         return (hoi4lockeys ed)
@@ -363,11 +389,14 @@ readHOI4Scripts = do
                     "country_leader_trait" -> "common" </> "country_leader"
                     "unit_leader_trait" -> "common" </> "unit_leader"
                     "terrain" -> "common" </> "terrain"
+                    "unit_tags" -> "common" </> "unit_tags"
+                    "units" -> "common" </> "units"
                     "ideology" -> "common" </> "ideologies"
                     "scripted_effect" -> "common" </> "scripted_effects"
                     "scripted_trigger" -> "common" </> "scripted_triggers"
                     "modifier_definitions" -> "common" </> "modifier_definitions"
                     "bop" -> "common" </> "bop"
+                    "technologies" -> "common" </> "technologies"
                     _          -> category
                 sourceDir = buildPath settings sourceSubdir
             direxist <- liftIO $ doesDirectoryExist sourceDir
@@ -395,6 +424,8 @@ readHOI4Scripts = do
     unitleadertraitScripts <- readHOI4Script "unit_leader_trait"
 
     terrainScripts <- readHOI4Script "terrain"
+    unittagScripts <- readHOI4Script "unit_tags"
+    unitScripts <- readHOI4Script "units"
     ideologyScripts <- readHOI4Script "ideology"
 
     scripted_effects <- readHOI4Script "scripted_effect"
@@ -402,6 +433,7 @@ readHOI4Scripts = do
 
     moddefs <- readHOI4Script "modifier_definitions"
     bopscript <- readHOI4Script "bop"
+    techscript <- readHOI4Script "technologies"
     lockeys <- gets (gameL10nKeys . getSettings)
 
     modify $ \(HOI4D s) -> HOI4D $ s {
@@ -421,6 +453,8 @@ readHOI4Scripts = do
         ,   hoi4unitleadertraitScripts = unitleadertraitScripts
 
         ,   hoi4terrainScripts = terrainScripts
+        ,   hoi4unittagScripts = unittagScripts
+        ,   hoi4unitScripts = unitScripts
         ,   hoi4ideologyScripts = ideologyScripts
 
         ,   hoi4scriptedeffectScripts = scripted_effects
@@ -429,6 +463,7 @@ readHOI4Scripts = do
         ,   hoi4modifierdefinitionScripts = moddefs
 
         ,   hoi4bopScripts = bopscript
+        ,   hoi4techScripts = techscript
         ,   hoi4lockeys = lockeys
         }
 
@@ -452,11 +487,14 @@ parseHOI4Scripts = do
     countryleadertraits <- parseHOI4CountryLeaderTraits =<< getCountryLeaderTraitScripts
     unitleadertraits <- parseHOI4UnitLeaderTraits =<< getUnitLeaderTraitScripts
     terrain <- parseHOI4Terrain =<< getTerrainScripts
+    unittag <- parseHOI4UnitTags =<< getUnitTagScripts
+    unit <- parseHOI4Units =<< getUnitScripts
     ideology <- parseHOI4Ideology =<< getIdeologyScripts
     scriptedeffects <- parseHOI4Effects =<< getScriptedEffectScripts
     scriptedtriggers <- parseHOI4Triggers =<< getScriptedTriggerScripts
     moddef <- parseHOI4ModifierDefinitions =<< getModifierDefintionScripts
     bops <- parseHOI4BopRanges =<< getBopScripts
+    techspathed <- parseHOI4TechnologiesPath =<< getTechnologyScripts
     modkeys <- parseHOI4LocKeys =<< getLocKeys
 
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
@@ -494,6 +532,8 @@ parseHOI4Scripts = do
             ,   hoi4chartoken = chartoken
 
             ,   hoi4terrain = terrain
+            ,   hoi4unittag = unittag
+            ,   hoi4unit = unit
             ,   hoi4ideology = ideology
 
             ,   hoi4scriptedeffects = scriptedeffects
@@ -501,6 +541,7 @@ parseHOI4Scripts = do
 
             ,   hoi4modifierdefinitions = moddef
             ,   hoi4bops = bops
+            ,   hoi4techs = techspathed
             ,   hoi4modkeys = modkeys
             }
 
@@ -517,7 +558,10 @@ writeHOI4Scripts = do
         writeHOI4Decisions
         liftIO $ putStrLn "Writing national focuses."
         writeHOI4NationalFocuses
+        liftIO $ putStrLn "Writing technologies."
+        writeHOI4Technologies
         liftIO $ putStrLn "Writing opinion modifiers."
         writeHOI4OpinionModifiers
+--        writeHOI4OpinionModifiers'
         liftIO $ putStrLn "Writing dynamic modifiers."
         writeHOI4DynamicModifiers

@@ -2,6 +2,7 @@
 Module      : HOI4.Misc
 Description : Feature handler for miscellaneous features in Hearts of Iron IV
 -}
+{-# LANGUAGE LambdaCase #-}
 module HOI4.Misc (
          parseHOI4CountryHistory
         ,parseHOI4Terrain
@@ -490,7 +491,7 @@ parseHOI4ModifierDefinition stmt@[pdx| %left = %right |] = case right of
                 "number" -> Just (mdid, MsgModifierColourNeg)
                 "percentage" -> Just (mdid, MsgModifierPcNegReduced)
                 "percentage_in_hundred" -> Just (mdid, MsgModifierPcNeg)
-                "yes_no" -> Just (mdid, MsgModifierYesNo)
+                "yes_no" -> Just (mdid, MsgModifierNoYes)
                 _ -> Nothing
             _ -> Nothing
 

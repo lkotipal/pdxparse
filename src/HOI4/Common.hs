@@ -125,6 +125,7 @@ handlersNumeric = Tr.fromList
         ,("reset_province_name"              , numeric MsgResetProvinceName)
         ,("set_compliance"                   , numeric MsgSetCompliance)
         ,("set_political_power"              , numeric MsgSetPoliticalPower)
+        ,("set_resistance"                   , numeric MsgSetResistance)
         ,("set_stability"                    , numeric MsgSetStability)
         ,("set_war_support"                  , numeric MsgSetWarSupport)
         ,("add_logistics"                    , numeric MsgAddLogistics)
@@ -490,7 +491,7 @@ handlersSimpleFlag = Tr.fromList
         ,("transfer_state_to"       , withFlag MsgTransferStateTo)
         ,("has_war_with"            , withFlag MsgHasWarWith)
         ,("has_war_together_with"   , withFlag MsgHasWarTogetherWith)
-        ,("original_tag"            , withFlag MsgOrignalTag)
+        ,("original_tag"            , withFlag MsgOriginalTag)
         ,("white_peace"             , withFlag MsgMakeWhitePeace)
         ]
 
@@ -765,13 +766,14 @@ handlersMisc = Tr.fromList
         ,("set_popularities"    , setPopularities)
         ,("set_rule"            , setRule MsgSetRule)
         ,("set_technology"      , setTechnology)
+
+        ,("effect_tooltip"        , customTriggerTooltip) -- shows the effects but doesn't execute them, don't know if I want it to show up in the parser
         ]
 
 -- | Handlers for ignored statements
 handlersIgnored :: (HOI4Info g, Monad m) => Trie (StatementHandler g m)
 handlersIgnored = Tr.fromList
         [("custom_tooltip", return $ return [])
-        ,("effect_tooltip", return $ return []) -- shows the effects but doesn't execute them, don't know if I want it to show up in the parser
         ,("goto"          , return $ return [])
         ,("log"           , return $ return [])
         ,("required_personality", return $ return[]) -- From the 1.30 patch notes: "The required_personality field will now be ignored"
