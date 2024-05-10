@@ -1501,7 +1501,9 @@ tryLocAndLocMod atom = do
             ,("land_morale", "LAND_MORALE")
             ,("movement_speed", "MODIFIER_MOVEMENT_SPEED")
             ,("missionaries" , "MISSIONARY_CONSTRUCTIONS") -- ?
+            ,("naval_morale", "NAVAL_MORALE")
             ,("ship_durability", "MODIFIER_SHIP_DURABILITY")
+            ,("siege_ability", "MODIFIER_SIEGE_ABILITY")
             ,("tolerance_heathen", "MODIFIER_TOLERANCE_HEATHEN")
             ]
 
