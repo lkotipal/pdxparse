@@ -498,7 +498,7 @@ data ScriptMessage
     | MsgTriggerEvent {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text}
     | MsgTriggerEventDays {scriptMessageEvttype :: Text, scriptMessageEvtid :: Text, scriptMessageName :: Text, scriptMessageDays :: Double}
     | MsgDeclareWarWithCB {scriptMessageWhom :: Text, scriptMessageCb :: Text}
-    | MsgGainAdvisor {scriptMessageMaybeFemale :: Maybe Bool, scriptMessageMaybeAdvtype :: Maybe Text, scriptMessageMaybeName :: Maybe Text, scriptMessageMaybeWhere :: Maybe Text, scriptMessageMaybeSkill :: Maybe Double, scriptMessageScaled :: Bool, scriptMessageDiscount :: Double, scriptMessageMaybeExtraText :: Maybe Text, scriptMessageIcon :: Text, scriptMessageMaybeCulture :: Maybe Text, scriptMessageMaybeReligion :: Maybe Text, scriptMessageMaybeEstate :: Maybe Text}
+    | MsgGainAdvisor {scriptMessageMaybeFemale :: Maybe Bool, scriptMessageMaybeAdvtype :: Maybe Text, scriptMessageMaybeName :: Maybe Text, scriptMessageMaybeWhere :: Maybe Text, scriptMessageMaybeSkill :: Maybe Double, scriptMessageScaled :: Bool, scriptMessageDiscount :: Double, scriptMessageMaybeExtraText :: Maybe Text, scriptMessageIcon :: Text, scriptMessageMaybeCulture :: Maybe Text, scriptMessageMaybeReligion :: Maybe Text, scriptMessageMaybeEstate :: Maybe Text, scriptMessageMaybeMinAge :: Maybe Double, scriptMessageMaybeMaxAge :: Maybe Double}
     | MsgRebelLeaderRuler
     | MsgNewRuler {scriptMessageRegent :: Bool}
     | MsgNewRulerLeader {scriptMessageRegent :: Bool, scriptMessageName :: Text}
@@ -4006,7 +4006,10 @@ instance RenderMessage Script ScriptMessage where
                             scriptMessageIcon = _icon,
                             scriptMessageMaybeCulture = _culture,
                             scriptMessageMaybeReligion = _religion,
-                            scriptMessageMaybeEstate = _estate}
+                            scriptMessageMaybeEstate = _estate,
+                            scriptMessageMaybeMinAge = _min_age,
+                            scriptMessageMaybeMaxAge = _max_age
+                            }
             -> mconcat
                 [ "Gain"
                 , maybe "" (\s -> " skill " <> toMessage (roundNum s)) _skill
@@ -4017,6 +4020,8 @@ instance RenderMessage Script ScriptMessage where
                 , maybe "" (\name -> " named " <> toMessage (iquotes name)) _name
                 , toMessage (ifThenElseT _scaled " with skill level scaled to monthly income" "")
                 , maybe "" (\c -> " with " <> c <> " culture") _culture
+                , maybe "" (\a -> " and a minumum age of " <> toMessage(roundNum a) <> " years")  _min_age
+                , maybe "" (\a -> " and a maximum age of " <> toMessage(roundNum a) <> " years")  _max_age
                 , maybe "" (\r -> ifThenElseT (isJust _culture) " and " " with " <> r <> " religion") _religion
                 , maybe "" (" in " <>) _where
                 , toMessage (advisorDiscountText _discount)

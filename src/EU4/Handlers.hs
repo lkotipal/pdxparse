@@ -2257,9 +2257,11 @@ data DefineAdvisor = DefineAdvisor
     ,   da_culture :: Maybe Text
     ,   da_religion :: Maybe Text
     ,   da_estate :: Maybe Text
+    ,   da_min_age :: Maybe Double
+    ,   da_max_age :: Maybe Double
     }
 newDefineAdvisor :: DefineAdvisor
-newDefineAdvisor = DefineAdvisor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+newDefineAdvisor = DefineAdvisor Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 defineAdvisor :: forall g m. (EU4Info g, Monad m) => Bool -> Maybe Text -> StatementHandler g m
 defineAdvisor isScaled extraText stmt@[pdx| %_ = @scr |]
@@ -2334,6 +2336,8 @@ defineAdvisor isScaled extraText stmt@[pdx| %_ = @scr |]
                     return $ da { da_estate = Just estate_loc }
                 else
                     return da
+            "min_age" -> return $ da { da_min_age = floatRhs rhs }
+            "max_age" -> return $ da { da_max_age = floatRhs rhs }
             param -> trace ("warning: unknown define_advisor parameter: " ++ show param) $ return da
         addLine da _ = return da
         pp_define_advisor :: DefineAdvisor -> ScriptMessage
@@ -2343,7 +2347,7 @@ defineAdvisor isScaled extraText stmt@[pdx| %_ = @scr |]
                 mlocation_loc = da_location_loc da
                 mlocation = mlocation_loc `mplus` (T.pack . show <$> da_location da)
                 icon = maybe "" iconText (da_type da)
-            in MsgGainAdvisor (da_female da) (da_type_loc da) (da_name da) mlocation (da_skill da) isScaled discount extraText icon (da_culture da) (da_religion da) (da_estate da)
+            in MsgGainAdvisor (da_female da) (da_type_loc da) (da_name da) mlocation (da_skill da) isScaled discount extraText icon (da_culture da) (da_religion da) (da_estate da) (da_min_age da) (da_max_age da)
 defineAdvisor _ _ stmt = preStatement stmt
 
 -------------
