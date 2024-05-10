@@ -4549,15 +4549,17 @@ foldCompound "giveClaims" "GiveClaims" "gic"
 foldCompound "addAcceptedCultureOrDipPower" "AddAcceptedCultureOrDipPower" "acodp"
     []
     [CompField "free" [t|Text|] Nothing False
-    ,CompField "dip_reward" [t|Text|] Nothing False -- ignored, because this only influences the tooltip and not the actual reward
+    ,CompField "dip_reward" [t|Text|] Nothing False
     ,CompField "new_line" [t|Text|] Nothing False -- ignored, because it is just a newline in the tooltip
+    ,CompField "value" [t|Double|] Nothing False -- default is 100 if dip_reward is set and 0 otherwise
     ,CompField "culture" [t|Text|] Nothing True
     ]
     [| do
         culture <- getGameL10n _culture
         let dip_reward = isJust _dip_reward
         let free = isJust _free
-        return $ MsgAddAcceptedCultureOrDipPower (iconText "max promoted cultures") culture free
+        let value = fromMaybe (if dip_reward then 100 else 0) _value
+        return $ MsgAddAcceptedCultureOrDipPower (iconText "max promoted cultures") culture free value
     |]
 
 -------------------------------------------

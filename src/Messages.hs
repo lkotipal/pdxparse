@@ -743,7 +743,7 @@ data ScriptMessage
     | MsgAddClaimOn {scriptMessageWhere :: Text}
     | MsgAddAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRemoveAcceptedCulture {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgAddAcceptedCultureOrDipPower {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageFree :: Bool}
+    | MsgAddAcceptedCultureOrDipPower {scriptMessageIcon :: Text, scriptMessageWhat :: Text, scriptMessageFree :: Bool, scriptMessageAmt :: Double}
     | MsgAddBuilding {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddHarmonizedReligion {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAddHeirPersonality {scriptMessageAncestor :: Bool, scriptMessageIcon :: Text, scriptMessageWhat :: Text}
@@ -5456,7 +5456,7 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " as an accepted culture"
                 ]
-        MsgAddAcceptedCultureOrDipPower {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageFree = _free}
+        MsgAddAcceptedCultureOrDipPower {scriptMessageIcon = _icon, scriptMessageWhat = _what, scriptMessageFree = _free, scriptMessageAmt = _value}
             -> mconcat
                 [ if _free then "Gain " else ""
                 , if _free then _icon else ""
@@ -5466,9 +5466,10 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " Gain "
                 , toMessage(iquotes _what)
-                , " as an accepted culture. If the culture is already an accepted culture, or if there are not enough slots, gain "
-                , toMessage (colourNum True 100)
-                , " diplomatic power instead."
+                , " as an accepted culture."
+                , if _value > 0 then " If the culture is already an accepted culture, or if there are not enough slots, gain " else ""
+                , if _value > 0 then toMessage (colourNum True _value) else ""
+                , if _value > 0 then " diplomatic power instead." else ""
                 ]
         MsgAddBuilding {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
