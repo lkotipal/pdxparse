@@ -2892,6 +2892,7 @@ foldCompound "createSubject" "CreateSubject" "cs"
     [CompField "subject_type" [t|Text|] Nothing True
     ,CompField "subject" [t|Text|] Nothing False
     ,CompField "who" [t|Text|] Nothing False
+    ,CompField "keep_liberty_desire" [t|Text|] Nothing False
     ]
     [| do
         typeLoc <- getGameL10n _subject_type
@@ -2900,10 +2901,10 @@ foldCompound "createSubject" "CreateSubject" "cs"
             (Just subject, Just who) -> return $ (trace $ ("who and subject can't both be set in create_subject: " ++ show stmt)) $ preMessage stmt
             (Just subject, _) -> do
                 flagLoc <- flagText (Just EU4Country) subject
-                return $ MsgCreateSubject typeLoc flagLoc
+                return $ MsgCreateSubject typeLoc flagLoc  (_keep_liberty_desire == Just "yes")
             (_, Just who) -> do
                 flagLoc <- flagText (Just EU4Country) who
-                return $ MsgCreateSubject typeLoc flagLoc
+                return $ MsgCreateSubject typeLoc flagLoc (_keep_liberty_desire == Just "yes")
             _ -> return $ (trace $ ("either who or subject must be set in create_subject: " ++ show stmt)) $ preMessage stmt
     |]
 

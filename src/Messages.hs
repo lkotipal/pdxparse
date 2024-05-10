@@ -1142,7 +1142,7 @@ data ScriptMessage
     | MsgGovernmentReformProgress {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgHumiliatedBy {scriptMessageWhom :: Text}
     | MsgCreateGuarantee {scriptMessageWhom :: Text}
-    | MsgCreateSubject {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
+    | MsgCreateSubject {scriptMessageWhat :: Text, scriptMessageWhom :: Text, scriptMessageYn :: Bool}
     | MsgHeirClaim { scriptMessageIcon :: Text, scriptMessageAmt :: Double }
     | MsgExtendGoldenAge { scriptMessageAmt :: Double }
     | MsgExtendRegency { scriptMessageAmt :: Double }
@@ -7772,12 +7772,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "Start guaranteeing "
                 , _whom
                 ]
-        MsgCreateSubject {scriptMessageWhat = _what, scriptMessageWhom = _whom}
+        MsgCreateSubject {scriptMessageWhat = _what, scriptMessageWhom = _whom, scriptMessageYn = _keep_liberty_desire}
             -> mconcat
                 [ "Make "
                 , _whom
                 , " a "
                 , _what
+                , if _keep_liberty_desire then " while keeping the previous liberty desire" else ""
                 ]
         MsgHeirClaim {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
