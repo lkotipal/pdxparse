@@ -469,7 +469,7 @@ stripMissionColor loc_title = case RE.matchOnceText strip_color_RE loc_title of
     Just (pre, matcharr, post) -> fst (matcharr ! 2)
     _                          -> loc_title
     where
-        strip_color_RE = RE.makeRegex("^\\[(Root.GetPreviewColor[^]]*)\\](.*)\\[Root.GetPreviewColor[^]]*_end]$"::Text)::Regex
+        strip_color_RE = RE.makeRegexOpts RE.defaultCompOpt{RE.caseSensitive=False} RE.defaultExecOpt ("^\\[(Root.GetPreviewColor[^]]*)\\](.*)\\[Root.GetPreviewColor[^]]*_end]$"::Text)::Regex
 
 -- | Get the localization string for a given key. If it doesn't exist, use the
 -- key itself.
