@@ -2288,6 +2288,7 @@ handlersSpecialComplex = Tr.fromList
         ,("add_inflation_scaled_to_trade"   , simpleEffectNumIcon "inflation" "inflation" MsgAddInflationScaledToTrade)
         ,("add_great_project"               , simpleEffectAtom "type" MsgStartConstructingGreatProject)
         ,("add_loot_from_rich_province_general_effect" , simpleEffectAtom "looter" MsgAddLootFromRichProvince) -- Note: RHS ignored
+        ,("add_mercantilism_or_monarch_power", simpleEffectNumIcon "mercantilism" "amount" MsgGainMercantilismOrMonarchPower)
         ,("add_permanent_claim_multi_provinces" , simpleEffectWithExtraHandler "target" (locAtomTagOrProvince (\icon target -> MsgGainPermanentClaimProvince target) MsgGainPermanentClaimProvince)) -- ignore the icon which locAtomTagOrProvince usually adds
         ,("add_power_projection_mission"    , simpleEffectNumIcon "power projection" "amount" (MsgAddPowerProjection ""))
         ,("add_prestige_or_monarch_power"   , simpleEffectNumIcon "prestige" "amount" MsgAddPrestigeOrMonarchPower)

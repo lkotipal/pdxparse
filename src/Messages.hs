@@ -112,6 +112,7 @@ data ScriptMessage
     | MsgReformDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainReformDesire {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMercantilism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainMercantilismOrMonarchPower {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainMPFrac {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgSeparatism {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1903,6 +1904,15 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourPc True _amt)
                 , " mercantilism"
+                ]
+        MsgGainMercantilismOrMonarchPower {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourPc True _amt)
+                , " mercantilism. All the excess mercantilism will be converted into 50 monarch power of each category."
                 ]
         MsgGainMP {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
