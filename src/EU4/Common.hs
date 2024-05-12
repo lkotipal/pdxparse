@@ -2284,6 +2284,7 @@ handlersSpecialComplex = Tr.fromList
 
         -- Effects/Triggers
         ,("add_accepted_culture_or_dip_power", addAcceptedCultureOrDipPower)
+        ,("add_army_tradition_or_mil_power" , simpleEffectNumIcon "army tradition" "amount" MsgGainATorMil)
         ,("add_inflation_scaled_to_trade"   , simpleEffectNumIcon "inflation" "inflation" MsgAddInflationScaledToTrade)
         ,("add_great_project"               , simpleEffectAtom "type" MsgStartConstructingGreatProject)
         ,("add_loot_from_rich_province_general_effect" , simpleEffectAtom "looter" MsgAddLootFromRichProvince) -- Note: RHS ignored

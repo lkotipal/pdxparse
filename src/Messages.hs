@@ -70,6 +70,7 @@ data ScriptMessage
     | MsgIsImperialMod
     | MsgGainADM {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainAT {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
+    | MsgGainATorMil {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainAuth {scriptMessageAmt :: Double}
     | MsgGainBT {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
     | MsgGainBP {scriptMessageIcon :: Text, scriptMessageAmt :: Double}
@@ -1517,6 +1518,15 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (colourNum True _amt)
                 , " army tradition"
+                ]
+        MsgGainATorMil {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
+            -> mconcat
+                [ gainOrLose _amt
+                , " "
+                , _icon
+                , " "
+                , toMessage (colourNum True _amt)
+                , " army tradition. All the excess army tradition will be converted into {{icon|mil}} 3 military power per 1 army tradition."
                 ]
         MsgGainAuth {scriptMessageAmt = _amt}
             -> mconcat
