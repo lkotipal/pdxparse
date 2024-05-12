@@ -2314,6 +2314,7 @@ handlersSpecialComplex = Tr.fromList
         ,("has_unlocked_government_reform"  , simpleEffectAtom "government_reform" MsgHasUnlockedGovernmentReform)
         ,("has_unlocked_government_reform_tooltip", simpleEffectAtom "government_reform" MsgHasUnlockedGovernmentReform)
         ,("is_or_was_tag"                   , simpleEffectWithExtraHandler "tag" (withFlag MsgIsOrWasTag))
+        ,("is_ahead_of_time_in_technology"  , simpleEffectWithExtraHandler "tech"  (withLocAtom' MsgIsAheadOfTimeInTechnology (\t -> t <> "_tech") ))
         ,("kill_advisor_by_category_effect" , killAdvisorByCategory)
         ,("num_of_ruler_traits"             , simpleEffectNum "amount" MsgNumRulerTraits)
         ,("our_scholar_matches_their_school_trigger" , simpleEffectAtom "school" MsgOurScholarMatchesTheirSchool)

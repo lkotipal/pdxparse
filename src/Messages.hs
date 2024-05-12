@@ -1460,6 +1460,7 @@ data ScriptMessage
     | MsgSetDefenderOfTheFaithAsReligion {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgSetDefenderOfTheFaith {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgIronman {scriptMessageYn :: Bool}
+    | MsgIsAheadOfTimeInTechnology {scriptMessageWhat :: Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9776,6 +9777,13 @@ instance RenderMessage Script ScriptMessage where
                 [ "The game is"
                 , ifThenElseT _yn "" " ''not''"
                 , " {{icon|ironman}} ironman"
+                ]
+        MsgIsAheadOfTimeInTechnology {scriptMessageWhat = _what}
+            -> mconcat
+                [ "Is ahead of time in {{icon|"
+                , _what
+                , "}} "
+                , _what
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
