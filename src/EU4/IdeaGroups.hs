@@ -201,24 +201,7 @@ ppIdeaGroup ig = fixup <$> do
         (Just bonus, 7) -> do
             let rawideas = ig_ideas ig
                 unindent = map (first (const 0))
-            ideas <- forM rawideas $ \idea -> do
-                effmsgs <- ppMany (idea_effects idea)
-                case effmsgs of
-                    -- Remove the bullets from a single effect
-                    [_] -> imsg2doc (unindent effmsgs)
-                    {- This doesn't work, due to the template's abuse of
-                       deflist markup and misbehaviour of MediaWiki.
-                    -- Wrap multiple effects in a plainlist
-                    _ -> do
-                        effsdoc <- imsg2doc effmsgs
-                        return $ templateDoc "plainlist" [effsdoc]
-                    -}
-                    -- Instead, replace bullets with colons.
-                    [] -> return mempty
-                    (msg:msgs) -> do
-                        firstmsg <- imsg2doc (unindent [msg])
-                        rest <- mapM (\m -> (":" <>) <$> imsg2doc [m]) (unindent msgs)
-                        return (firstmsg <> PP.line <> PP.vsep rest)
+            ideas <- forM rawideas $ \idea -> do (formatideas (idea_effects idea))
             bonus_pp'd <- imsg2doc . unindent =<< ppMany bonus
             mtrigger_pp'd <- case ig_trigger ig of
                 Nothing -> return Nothing
@@ -237,6 +220,10 @@ ppIdeaGroup ig = fixup <$> do
                 Just [trad1s, trad2s] -> do
                     trad1 <- imsg2doc . map (first (const 0)) =<< ppOne trad1s
                     trad2 <- imsg2doc . map (first (const 0)) =<< ppOne trad2s
+                    return $ Right (trad1, trad2)
+                Just (trad1s:otherTrads) -> do
+                    trad1 <- imsg2doc . map (first (const 0)) =<< ppOne trad1s
+                    trad2 <- formatideas otherTrads
                     return $ Right (trad1, trad2)
                 Just trads -> return . Left . Just . length $ trads
                 Nothing -> return (Left Nothing)
@@ -296,3 +283,24 @@ ppIdeaGroup ig = fixup <$> do
                 ,"<section end=", section, "/>"]
         (Nothing, _) -> throwError $ "Idea group " <> name <> " has no bonus"
         (_, n) -> throwError $ "Idea group " <> name <> " has non-standard number of ideas (" <> T.pack (show n) <> ")"
+    where
+    formatideas :: (EU4Info g, Monad m) => GenericScript -> PPT g (ExceptT Text m) Doc
+    formatideas idea = do
+        let unindent = map (first (const 0))
+        effmsgs <- ppMany idea
+        case effmsgs of
+            -- Remove the bullets from a single effect
+            [_] -> imsg2doc (unindent effmsgs)
+            {- This doesn't work, due to the template's abuse of
+                deflist markup and misbehaviour of MediaWiki.
+            -- Wrap multiple effects in a plainlist
+            _ -> do
+                effsdoc <- imsg2doc effmsgs
+                return $ templateDoc "plainlist" [effsdoc]
+            -}
+            -- Instead, replace bullets with colons.
+            [] -> return mempty
+            (msg:msgs) -> do
+                firstmsg <- imsg2doc (unindent [msg])
+                rest <- mapM (\m -> (":" <>) <$> imsg2doc [m]) (unindent msgs)
+                return (firstmsg <> PP.line <> PP.vsep rest)
