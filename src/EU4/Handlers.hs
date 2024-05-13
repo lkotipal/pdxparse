@@ -788,6 +788,8 @@ scriptIconTable = HM.fromList
     ,("trade_ideas", "trade")
     -- religion
     ,("dreamtime", "alcheringa")
+    -- pagan doesnt have its own icon, but we need an icon for has_harmonized_with
+    ,("pagan", "animist")
     -- technology
     ,("aboriginal_tech", "aboriginal")
     ,("polynesian_tech", "polynesian")
