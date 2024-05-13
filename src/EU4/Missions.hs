@@ -212,4 +212,4 @@ writeEU4Missions = do
                 "| "] ++ prereqs ++ [PP.line]
 
         linkSyntax :: Text -> Text
-        linkSyntax t = T.replace "]" ".5D" $ T.replace "[" ".5B" t
+        linkSyntax t = T.replace "]" "&#93;" $ T.replace "[" "&#91;" t
