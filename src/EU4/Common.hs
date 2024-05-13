@@ -986,7 +986,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("siege_blockade_progress"               , handleModifier "MODIFIER_SIEGE_BLOCKADE_PROGRESS" (colourNumSign True))
         ,("special_unit_forcelimit"               , handleModifier "MODIFIER_SPECIAL_UNIT_FORCELIMIT" (reducedNum (colourPcSign True)))
         ,("stability_cost_modifier"               , handleModifierWithIcon "STABILITY_COST_MODIFIER" "stability cost" (reducedNum (colourPcSign False)))
-        ,("stability_cost_to_declare_war"         , handleModifier "MODIFIER_STABILITY_COST_TO_DECLAR_WAR" (colourNumSign False))
+        ,("stability_cost_to_declare_war"         , handleModifier "MODIFIER_STABILITY_COST_TO_DECLARE_WAR" (colourNumSign False))
         ,("state_governing_cost"                  , handleModifierWithIcon "MODIFIER_STATES_GOVERNING_COST" "state governing cost" (reducedNum (colourPcSign False)))
         ,("state_maintenance_modifier"            , handleModifier "EXPENSE_STATE_MAINTENANCE" (reducedNum (colourPcSign False)))
         ,("sunk_ship_morale_hit_recieved"         , handleModifier "MODIFIER_SUNK_SHIP_MORALE_HIT_RECIEVED" (reducedNum (colourPcSign False)))
