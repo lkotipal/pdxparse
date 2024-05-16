@@ -2279,6 +2279,7 @@ handlersSpecialComplex = Tr.fromList
         ,("reverse_add_casus_belli"      , addCB False)
         ,("trading_bonus"                , tradingBonus)
         ,("trading_policy_in_node"       , tradingPolicyInNode)
+        ,("trading_policy_or_upgraded_policy_in_node", tradingPolicyInNode)
         ,("trigger_switch"               , triggerSwitch)
         ,("unfreeze_government_power"    , governmentPower MsgUnfreezeGovernmentPower)
 
