@@ -1465,6 +1465,8 @@ data ScriptMessage
     | MsgIronman {scriptMessageYn :: Bool}
     | MsgIsAheadOfTimeInTechnology {scriptMessageWhat :: Text}
     | MsgDistributeDevelopment {scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageMaybeLimt :: Maybe Text}
+    | MsgNumBattles {scriptMessageAmt :: Double}
+    | MsgNumWars {scriptMessageAmt :: Double}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -9826,7 +9828,18 @@ instance RenderMessage Script ScriptMessage where
                     , " development among random owned provinces"
                     , maybe "" ((" which fulfill the following conditions:\n") <>) _limit
                 ]
-
+        MsgNumBattles {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has won at least "
+                , toMessage (roundNum _amt)
+                , " battles"
+                ]
+        MsgNumWars {scriptMessageAmt = _amt}
+            -> mconcat
+                [ "Has won at least "
+                , toMessage (roundNum _amt)
+                , " wars"
+                ]
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."
 
 -- FIXME: What's the significance of this?
