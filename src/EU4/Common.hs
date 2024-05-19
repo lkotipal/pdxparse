@@ -2240,6 +2240,7 @@ handlersSpecialComplex = Tr.fromList
         ,("define_heir_to_general"       , defineMilitaryLeader "general" False MsgDefineHeirToGeneral)
         ,("define_ruler_to_general"      , defineMilitaryLeader "general" False MsgDefineRulerToGeneral)
         ,("disable_estate_action"        , handleGenericEstateAction MsgDisableEstateAction)
+        ,("distribute_development"       , distributeDevelopment)
         ,("enable_estate_action"         , handleGenericEstateAction MsgEnableEstateAction)
         ,("employed_advisor"             , employedAdvisor)
         ,("estate_action_off_cooldown"   , handleEstateActionCoolDown MsgEstateActionCoolDown)

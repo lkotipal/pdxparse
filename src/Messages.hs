@@ -1463,6 +1463,7 @@ data ScriptMessage
     | MsgSetDefenderOfTheFaith {scriptMessageWhat :: Text, scriptMessageWhom :: Text}
     | MsgIronman {scriptMessageYn :: Bool}
     | MsgIsAheadOfTimeInTechnology {scriptMessageWhat :: Text}
+    | MsgDistributeDevelopment {scriptMessageWhat :: Text, scriptMessageAmt :: Double, scriptMessageMaybeLimt :: Maybe Text}
 -- | Whether to default to English localization.
 useEnglish :: [Text] -> Bool
 useEnglish [] = True
@@ -4041,8 +4042,8 @@ instance RenderMessage Script ScriptMessage where
                 , maybe "" (\name -> " named " <> toMessage (iquotes name)) _name
                 , toMessage (ifThenElseT _scaled " with skill level scaled to monthly income" "")
                 , maybe "" (\c -> " with " <> c <> " culture") _culture
-                , maybe "" (\a -> " and a minumum age of " <> toMessage(roundNum a) <> " years")  _min_age
-                , maybe "" (\a -> " and a maximum age of " <> toMessage(roundNum a) <> " years")  _max_age
+                , maybe "" (\a -> " and a minumum age of " <> toMessage (roundNum a) <> " years")  _min_age
+                , maybe "" (\a -> " and a maximum age of " <> toMessage (roundNum a) <> " years")  _max_age
                 , maybe "" (\r -> ifThenElseT (isJust _culture) " and " " with " <> r <> " religion") _religion
                 , maybe "" (" in " <>) _where
                 , toMessage (advisorDiscountText _discount)
@@ -5487,11 +5488,11 @@ instance RenderMessage Script ScriptMessage where
                 [ if _free then "Gain " else ""
                 , if _free then _icon else ""
                 , if _free then " {{green|+1}} Max promoted culture until "  else ""
-                , if _free then toMessage(iquotes _what) else ""
+                , if _free then toMessage (iquotes _what) else ""
                 , if _free then " is demoted. " else ""
                 , _icon
                 , " Gain "
-                , toMessage(iquotes _what)
+                , toMessage (iquotes _what)
                 , " as an accepted culture."
                 , if _value > 0 then " If the culture is already an accepted culture, or if there are not enough slots, gain " else ""
                 , if _value > 0 then toMessage (colourNum True _value) else ""
@@ -9352,7 +9353,7 @@ instance RenderMessage Script ScriptMessage where
         MsgMercTemplate {scriptMessageWhat = _what}
             -> mconcat
                 [ "Is "
-                , toMessage(iquotes _what)
+                , toMessage (iquotes _what)
                 ]
         MsgHiredForMonths {scriptMessageAmt = _amt}
             -> mconcat
@@ -9804,6 +9805,18 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , "}} "
                 , _what
+                ]
+        MsgDistributeDevelopment {scriptMessageWhat = _what, scriptMessageAmt = _amt, scriptMessageMaybeLimt = _limit}
+            -> mconcat
+                [
+                    "Distribute {{icon|"
+                    , _what
+                    , "}} "
+                    , toMessage (colourNum True _amt)
+                    , " "
+                    , _what
+                    , " development among random owned provinces"
+                    , maybe "" ((" which fulfill the following conditions:\n") <>) _limit
                 ]
 
     renderMessage _ _ _ = error "Sorry, non-English localisation not yet supported."

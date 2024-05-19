@@ -168,6 +168,7 @@ module EU4.Handlers (
     ,   hasGovernmentReforTier
     ,   giveClaims
     ,   addAcceptedCultureOrDipPower
+    ,   distributeDevelopment
     ,   handleDynamicEffect
     ,   handleForLoop
     -- testing
@@ -4570,6 +4571,25 @@ foldCompound "addAcceptedCultureOrDipPower" "AddAcceptedCultureOrDipPower" "acod
         let free = isJust _free
         let value = fromMaybe (if dip_reward then 100 else 0) _value
         return $ MsgAddAcceptedCultureOrDipPower (iconText "max promoted cultures") culture free value
+    |]
+
+foldCompound "distributeDevelopment" "DistributeDevelopment" "distrDev"
+    []
+    [CompField "type" [t|Text|] Nothing True
+    ,CompField "amount" [t|Double|] Nothing True
+    ,CompField "limit" [t|Text|] Nothing False
+    ,CompField "tooltip" [t|Text|] Nothing False -- ignored
+    ]
+    [| do
+        case _limit of
+            Nothing -> return $ MsgDistributeDevelopment _type _amount Nothing
+            Just limit -> case readScriptFromText limit of
+                []      -> return $ MsgDistributeDevelopment _type _amount (Just ("<pre>" <> limit <> "</pre>"))
+                script  -> do
+                    -- TODO: ideally we could just return "ppMany script", but this would require a different version of foldCompound
+                    effectMsgs <- imsg2doc =<< ppMany script
+                    let effectText = Doc.doc2text effectMsgs
+                    return $ MsgDistributeDevelopment _type _amount (Just effectText)
     |]
 
 -------------------------------------------
