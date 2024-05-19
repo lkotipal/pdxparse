@@ -185,6 +185,8 @@ module EU4.Handlers (
     ,   handleModifierAlwaysYesWithIcon
     ,   handleAtLeast
     ,   handleAtLeastWithIcon
+    ,   handleIsAtLeast
+    ,   handleAtLeastWithIconAndMessage
     ,   handleAtLeastWithIconOrTag
     ) where
 
@@ -4784,10 +4786,21 @@ handleAtLeastWithIcon :: (EU4Info g, Monad m) =>
     -> Text
     -> (Double -> Doc)
         -> StatementHandler g m
-handleAtLeastWithIcon locKey iconKey valueTransformer [pdx| %_ = !amt |] = do
-    loc <- getGameL10n locKey
-    msgToPP $ MsgGenericAtLeast (if T.null iconKey then "" else (iconText iconKey)) amt loc valueTransformer
-handleAtLeastWithIcon _ _ _  stmt = plainMsg $ pre_statement' stmt
+handleAtLeastWithIcon = handleAtLeastWithIconAndMessage MsgGenericAtLeast
+
+handleIsAtLeast :: (EU4Info g, Monad m) => Text -> (Double -> Doc) -> StatementHandler g m
+handleIsAtLeast locKey = handleAtLeastWithIconAndMessage MsgGenericIsAtLeast locKey ""
+
+handleAtLeastWithIconAndMessage :: (EU4Info g, Monad m) =>
+    (Text -> Double -> Text -> (Double -> Doc) -> ScriptMessage)
+    -> Text
+    -> Text
+    -> (Double -> Doc)
+        -> StatementHandler g m
+handleAtLeastWithIconAndMessage msg locKey iconKey valueTransformer [pdx| %_ = !amt |] = do
+        loc <- getGameL10n locKey
+        msgToPP $ msg (if T.null iconKey then "" else (iconText iconKey)) amt loc valueTransformer
+handleAtLeastWithIconAndMessage _ _ _ _  stmt = plainMsg $ pre_statement' stmt
 
 handleAtLeastWithIconOrTag :: (EU4Info g, Monad m) =>
     Text
