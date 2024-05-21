@@ -349,6 +349,7 @@ lhs2pat lhs = case lhs of
     CustomLhs (PatStringOrNum _) -> error "string-or-num pattern not supported on LHS"
     -- non-custom
     AtLhs _label -> error "statement starting with @ not supported on LHS"
+    SquareBracketLhs _label _ -> error "statement starting with [ not supported on LHS"
     IntLhs _ -> error "int pattern not supported on LHS"
     GenericLhs gs gts ->
         [p| GenericLhs $(TH.litP (TH.stringL (T.unpack gs)))

@@ -37,6 +37,7 @@ module Abstract (
         Statement (..)
     ,   GenericStatement
     ,   GenericScript
+    ,   Script
     ,   Lhs (..)
 --    ,   GenericLhs
     ,   Operator (..)
@@ -53,9 +54,11 @@ module Abstract (
     -- Parsing
     ,   skipSpace
 --    ,   genericStatement
+    ,   script
     ,   genericScript
     ,   statement
     ,   ident
+    ,   identWithDollar
     ) where
 
 
@@ -126,6 +129,7 @@ data Lhs lhs
     | GenericLhs Text [Text]  -- ^ foo = ..., foo:bar = ... etc.
     | AtLhs Text                    -- ^ @foo = ...
     | IntLhs Int                    -- ^ 1234 = ...
+    | SquareBracketLhs Text Text    -- ^ [[foo] ...] for scripted triggers/effects. Can spawn multiple lines
     deriving (Eq, Ord, Show, Read)
 -- | LHS with no custom elements.
 type GenericLhs = Lhs Void
@@ -225,6 +229,22 @@ ident :: Parser Text
 ident = do
         res <- (<>) <$> (T.singleton <$> Ap.satisfy (\c -> c `elem` ['@','_','[','\x201C'] || isAlphaNum c))
                     <*> Ap.takeWhile (\c -> c `elem` ['_','.','@','-','?','^','/','\'','[',']','\x201D'] || isAlphaNum c)
+        if T.all isDigit res
+            then fail "ident: numeric identifier"
+            else return res
+    <?> "identifier"
+
+identWithoutBrackets :: Parser Text
+identWithoutBrackets = (<>) <$> (T.singleton <$> Ap.satisfy (\c -> c `elem` ['_'] || isAlphaNum c))
+                            <*> Ap.takeWhile (\c -> c `elem` ['_','.'] || isAlphaNum c)
+    <?> "identifier"
+
+-- | Variant of ident which also allows $ and which can start with a -. This is used by scripted triggers/effects in eu4. They support variable names which start and end with a
+-- dollar. The - at the start is necessary, because -$amount$ is a valid use of the variable "amount".
+identWithDollar :: Parser Text
+identWithDollar = do
+        res <- (<>) <$> (T.singleton <$> Ap.satisfy (\c -> c `elem` ['@','_','[','\x201C','$', '-'] || isAlphaNum c))
+                    <*> Ap.takeWhile (\c -> c `elem` ['_','.','@','-','?','^','/','\'','[',']','\x201D','$'] || isAlphaNum c)
         if T.all isDigit res
             then fail "ident: numeric identifier"
             else return res
@@ -346,8 +366,9 @@ script customLhs customRhs = statement customLhs customRhs `Ap.sepBy` skipSpace
 -- @
 lhs :: Parser lhs -> Parser (Lhs lhs)
 lhs custom = CustomLhs <$> custom
+         <|> SquareBracketLhs <$> ("[[" *> identWithoutBrackets <* "]") <*> Ap.takeTill (\c -> c == ']') <* "]"
          <|> AtLhs <$> ("@" *> ident) -- guessing at the syntax here...
-         <|> GenericLhs <$> ident <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")
+         <|> GenericLhs <$> identWithDollar <*> Ap.option [] (":" *> identWithDollar `Ap.sepBy'` ":")
          <|> GenericLhs <$> stringLit <*> Ap.option [] (":" *> ident `Ap.sepBy'` ":")-- in case of a literal string lhs
          <|> IntLhs <$> Ap.decimal
          <|> IntLhs <$> intLit
@@ -378,9 +399,9 @@ rhs customLhs customRhs
         <|> DateRhs     <$> dateLit
         <|> IntRhs      <$> intLit
         <|> FloatRhs    <$> floatLit
-        <|> GenericRhs  <$> ident <*> Ap.many' (":" *> ident)
-        <|> CompoundRhs <$> compoundRhs customLhs customRhs)
         <|> StringRhs   <$> "---" -- FIXME: Hack to work around weird "set_revolution_target = ---" line in the center_of_revolution.1500 event
+        <|> GenericRhs  <$> identWithDollar <*> Ap.many' (":" *> identWithDollar)
+        <|> CompoundRhs <$> compoundRhs customLhs customRhs)
         -- Need solution for variables like ^ ... = whatever?0
     <?> "statement RHS"
 
@@ -440,6 +461,7 @@ lhs2doc customLhs (CustomLhs lhs) = customLhs lhs
 lhs2doc _         (AtLhs lhs) = Doc.strictText ("@" <> lhs)
 lhs2doc _         (GenericLhs s ts) = Doc.strictText s <> mconcat (intersperse ":" (map Doc.strictText ts))
 lhs2doc _         (IntLhs lhs) = PP.text (TL.pack (show lhs))
+lhs2doc _         (SquareBracketLhs id statements) = Doc.strictText ("[[" <> id <> "]" <> statements)
 
 -- | Pretty-printer for a RHS, possibly with custom elements.
 rhs2doc :: (lhs -> Doc) -> (rhs -> Doc) -> Rhs lhs rhs -> Doc

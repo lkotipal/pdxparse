@@ -213,6 +213,7 @@ ppOne :: (StellarisInfo g, Monad m) =>
     GenericStatement -> PPT g m IndentedMessages
 ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
     AtLhs _ -> return [] -- Don't know how to deal with these
+    SquareBracketLhs _ _ -> return [] -- Don't know how to deal with these
     GenericLhs label _ -> case Tr.lookup (TE.encodeUtf8 (T.toLower label)) ppHandlers of
         Just handler -> handler stmt
         -- default

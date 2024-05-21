@@ -35,6 +35,7 @@ executable pdxparse
                        EU4.Missions,
                        EU4.Modifiers,
                        EU4.Policies,
+                       EU4.Scripted
                        EU4.Settings,
                        EU4.Templates,
                        EU4.Types,

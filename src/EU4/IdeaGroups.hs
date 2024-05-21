@@ -77,6 +77,7 @@ parseIdeaGroup (StatementBare _) = throwError "bare statement at top level"
 parseIdeaGroup [pdx| %left = %right |] = case right of
     CompoundRhs parts -> case left of
         CustomLhs _ -> throwError "internal error: custom lhs"
+        SquareBracketLhs _ _ -> throwError "internal error: SquareBracketLhs lhs"
         IntLhs _ -> throwError "int lhs at top level"
         AtLhs _ -> throwError "statement starting with @ in idea group file"
         GenericLhs name _ -> do

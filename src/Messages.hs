@@ -784,6 +784,7 @@ data ScriptMessage
     | MsgEventTargetVar {scriptMessageTag :: Text}
     | MsgAddLootFromProvinceEffect
     | MsgGenericTemplate {scriptMessageTemplate :: Text}
+    | MsgGenericScriptedEffectTemplate {scriptMessageTemplate :: Text, scriptMessageNum :: Int}
     | MsgGenericText {text :: Text}
     | MsgGenericTextWithIcon {scriptMessageIcon :: Text, text :: Text}
     | MsgGenericModifier {scriptMessageIcon :: Text, scriptMessageAmt :: Double, locModifierName :: Text, amtTransformer :: Double -> Doc}
@@ -5774,6 +5775,16 @@ instance RenderMessage Script ScriptMessage where
             -> "Gain {{icon|ducats}} ducats and {{icon|mil}} military power scaling with province development"
         MsgGenericTemplate {scriptMessageTemplate = _template}
             -> "{{" <> _template <> "}}"
+        MsgGenericScriptedEffectTemplate {scriptMessageTemplate = _template, scriptMessageNum = _indentation}
+            -> mconcat
+            [
+                 "{{SEffect|"
+                 , _template
+                 , "|"
+                 , toMessage (show _indentation)
+                 , "}}"
+
+            ]
         MsgGenericText {text = _text}
             -> _text
         MsgGenericTextWithIcon {scriptMessageIcon = _icon, text = _text}

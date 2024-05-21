@@ -15,6 +15,7 @@ module EU4.Types (
     ,   EU4MissionTreeBranch (..), EU4Mission (..)
     ,   EU4ProvinceTriggeredModifier (..)
     ,   EU4EstateAction (..)
+    ,   EU4Scripted (..)
         -- * Low level types
     ,   MonarchPower (..)
     ,   EU4Scope (..)
@@ -65,6 +66,8 @@ data EU4Data = EU4Data {
     ,   eu4opmodScripts :: HashMap FilePath GenericScript
     ,   eu4missionScripts :: HashMap FilePath GenericScript
     ,   eu4provtrigmodifierScripts :: HashMap FilePath GenericScript
+    ,   eu4scriptedEffectScripts :: HashMap FilePath GenericScript
+    ,   eu4scriptedEffects :: HashMap Text EU4Scripted
     ,   eu4tradeNodes :: HashMap Int Text -- Province Id -> Non localized provice name
     ,   eu4estateActions :: HashMap Text EU4EstateAction -- the key is the internal name of an estate action (e.g. RECRUIT_MINISTER_BRAHMINS)
     ,   eu4scriptedEffectsForEstates :: Text -- the contents of common/scripted_effects/01_scripted_effects_for_estates.txt
@@ -130,6 +133,11 @@ class (IsGame g,
     getProvinceTriggeredModifierScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | Get the parsed province triggered modifiers table (keyed on modifier ID).
     getProvinceTriggeredModifiers :: Monad m => PPT g m (HashMap Text EU4ProvinceTriggeredModifier)
+    -- | Get the contents of all scripted effects script files.
+    -- getScriptedEffectScripts :: Monad m => PPT g m (HashMap FilePath (Script Text Void))
+    getScriptedEffectScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
+    -- | get the names of scripted effects
+    getScriptedEffects :: Monad m => PPT g m (HashMap Text EU4Scripted)
     -- | Get the trade nodes
     getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
     -- | Get the decisions which enact estate actions
@@ -309,6 +317,13 @@ data EU4EstateAction = EU4EstateAction
     ,   eaPrivilege :: Text -- the (non-localised) name of the privilege which enables the estate action
     ,   eaScript :: GenericScript -- the scripted effect estate_action_
     }
+
+data EU4Scripted = EU4Scripted
+    {   scrName :: Text
+    ,   scrPath :: FilePath
+    ,   scrScript :: GenericScript
+    ,   scrScope :: Maybe EU4Scope
+    } deriving (Show)
 
 ------------------------------
 -- Shared lower level types --

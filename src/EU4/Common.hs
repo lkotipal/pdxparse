@@ -2635,13 +2635,20 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
                 else do
                     geoData <- getGeoData
                     mloc <- getGameL10nIfPresent label
+                    scripteffects <- getScriptedEffects
+                    curind <- getCurrentIndent
                     case mloc of
                         -- Check for localizable atoms, e.g. regions
                         Just loc -> case rhs of
                             CompoundRhs scr -> ppMaybeGeo label loc scr
                             _ -> compound loc stmt
-                        Nothing -> preStatement stmt
+                        Nothing -> case rhs of
+                                GenericRhs "yes" [] -> case HM.lookup label scripteffects of
+                                        Just effect -> msgToPP (MsgGenericScriptedEffectTemplate label (fromMaybe 1 curind))
+                                        Nothing -> preStatement stmt
+                                _ -> preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
+    SquareBracketLhs _ _ -> return [] -- don't know how to handle these
     IntLhs n -> do -- Treat as a province tag
         tradeNodes <- getTradeNodes
         case rhs of

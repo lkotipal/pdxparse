@@ -841,6 +841,7 @@ ppOne' stmt lhs rhs = case lhs of
                                 _ -> preStatement stmt
                 _ -> preStatement stmt
     AtLhs _ -> return [] -- don't know how to handle these
+    SquareBracketLhs _ _ -> return [] -- They should not happen in hoi4
     IntLhs n -> do -- Treat as a province tag
         case rhs of
             CompoundRhs scr -> do

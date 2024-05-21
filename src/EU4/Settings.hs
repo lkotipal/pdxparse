@@ -51,6 +51,7 @@ import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInGenericScript, findTriggeredEventsInMissions
                    , findTriggeredEventsInProvinceTriggeredModifiers, findTriggeredEventsInGovernmentMechanics, findTriggeredEventsInImperialIncidents)
 import EU4.Extra (writeEU4Extra, writeEU4ExtraCountryScope, writeEU4ExtraProvinceScope, writeEU4ExtraModifier)
+import EU4.Scripted (parseEU4ScriptedEffects)
 
 -- | Temporary (?) fix for HAW and UHW both localizing to "Hawai'i'"
 -- and for horde_ideas+horde_gov_ideas both localiying to "Horde Ideas"
@@ -105,6 +106,8 @@ instance IsGame EU4 where
                 ,   eu4geoData = HM.empty
                 ,   eu4provtrigmodifiers = HM.empty
                 ,   eu4provtrigmodifierScripts = HM.empty
+                ,   eu4scriptedEffectScripts = HM.empty
+                ,   eu4scriptedEffects = HM.empty
                 ,   eu4tradeNodes = HM.empty
                 ,   eu4estateActions = HM.empty
                 ,   eu4scriptedEffectsForEstates = ""
@@ -194,6 +197,12 @@ instance EU4Info EU4 where
     getProvinceTriggeredModifiers = do
         EU4D ed <- get
         return (eu4provtrigmodifiers ed)
+    getScriptedEffects = do
+        EU4D ed <- get
+        return (eu4scriptedEffects ed)
+    getScriptedEffectScripts = do
+        EU4D ed <- get
+        return (eu4scriptedEffectScripts ed)
     getTradeNodes = do
         EU4D ed <- get
         return (eu4tradeNodes ed)
@@ -337,6 +346,7 @@ readEU4Scripts = do
     provTrigModifiers <- readEU4Script "province_triggered_modifiers"
     genericScriptsForEventTriggers <- readGenericScriptsForEventTriggers
     scriptedEffectsForEstates <- liftIO (readFileRetry (buildPath settings "common/scripted_effects/01_scripted_effects_for_estates.txt"))
+    scriptedEffects <- readEU4Script "common/scripted_effects"
 
     extra <- mapM (readOneScript "extra") (concatMap getFileFromOpts (clargs settings))
     extraCountryScope <- mapM (readOneScript "extraCountryScope") (concatMap getCountryScopeFileFromOpts (clargs settings))
@@ -366,6 +376,7 @@ readEU4Scripts = do
         ,   eu4genericScriptsForEventTriggers = genericScriptsForEventTriggers
         ,   eu4geoData = HM.union (foldl HM.union HM.empty geoData) (foldl HM.union HM.empty geoMapData)
         ,   eu4provtrigmodifierScripts = provTrigModifiers
+        ,   eu4scriptedEffectScripts = scriptedEffects
         ,   eu4tradeNodes = HM.fromList (catMaybes (map processTradeNode (concatMap snd (HM.toList tradeNodeScripts))))
         ,   eu4scriptedEffectsForEstates = scriptedEffectsForEstates
         ,   eu4extraScripts = foldl (flip (uncurry HM.insert)) HM.empty extra
@@ -439,6 +450,7 @@ parseEU4Scripts = do
     decisions <- parseEU4Decisions =<< getDecisionScripts
     events <- parseEU4Events =<< getEventScripts
     missions <- parseEU4Missions =<< getMissionScripts
+    scriptedEffects <- parseEU4ScriptedEffects =<< getScriptedEffectScripts
     genericScriptsForEventTriggers <- getGenericScriptsForEventTriggers
     scriptedEffectsForEstates <- getScriptedEffectsForEstates
     let te1 = findTriggeredEventsInEvents HM.empty (HM.elems events)
@@ -458,6 +470,7 @@ parseEU4Scripts = do
             ,   eu4eventTriggers = te5
             ,   eu4provtrigmodifiers = provTrigModifiers
             ,   eu4estateActions = estateActions
+            ,   eu4scriptedEffects = scriptedEffects
             }
 
 -- | Output the game data as wiki text.
