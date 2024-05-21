@@ -1420,7 +1420,7 @@ handlersLocRhs = Tr.fromList
         ,("complete_mission"      , withLocAtomTitle MsgCompleteMission)
         ,("council_position"      , withLocAtom MsgCouncilPosition)
         ,("current_debate"        , withLocAtom MsgCurrentDebate)
-        ,("custom_tooltip"        , withLocAtom MsgTooltip)
+        ,("custom_tooltip"        , customTooltip MsgTooltip)
         ,("empire_of_china_has_active_decree", withLocAtomTitle MsgActiveDecree)
         ,("empire_of_china_reform_passed", withLocAtomTitle MsgEocReform)
         ,("end_disaster"          , withLocAtom MsgDisasterEnds)

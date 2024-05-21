@@ -177,6 +177,7 @@ module EU4.Handlers (
     ,   estatePrivilege
     ,   isOrAcceptsReligion
     ,   isOrAcceptsReligionGroup
+    ,   customTooltip
     ,   genericTextLines
     ,   handleModifier
     ,   handleModifierWithIcon
@@ -4720,6 +4721,16 @@ isOrAcceptsReligionGroup stmt =
                 , mconcat ["* The province has the state religion of its owner who has a syncretic religion in the ", loc, " group"]
                 ] stmt
         _ -> (trace $ "warning: Not handled by isOrAcceptsReligionGroup: " ++ (show stmt)) $ preStatement stmt
+
+customTooltip :: (EU4Info g, Monad m) =>
+    (Text -> ScriptMessage) -> StatementHandler g m
+customTooltip msg [pdx| %_ = ?key |] = do
+    loc <- getGameL10n key
+    if T.null (T.strip loc) then
+        return [] -- ignore empty tooltips. They are only used for the formatting of tooltips
+    else
+        msgToPP $ msg loc
+customTooltip _ stmt = preStatement stmt
 
 capitalizeFirstLetter :: Text -> Text
 capitalizeFirstLetter txt = T.toUpper (T.take 1 txt) <> T.drop 1 txt
