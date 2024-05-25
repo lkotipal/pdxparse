@@ -6428,8 +6428,8 @@ instance RenderMessage Script ScriptMessage where
             -> "These effects are lost if the state religion changes"
         MsgIsEnemy { scriptMessageWho = _who }
             -> mconcat
-                [ _who
-                , " is viewed as an enemy"
+                [ "Is rivaled by "
+                , _who
                 ]
         MsgHasSpyNetworkFrom {scriptMessageIcon = _icon, scriptMessageWho = _who, scriptMessageAmt = _amt}
             -> mconcat
