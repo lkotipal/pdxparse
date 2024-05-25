@@ -1614,7 +1614,7 @@ handlersSimpleIcon = Tr.fromList
         ,("has_adopted_cult"        , withLocAtomIcon MsgHasAdoptedCult)
         ,("has_building"            , withLocAtomIconBuilding MsgHasBuilding)
         ,("has_climate"             , withLocAtomIcon MsgHasClimate)
-        ,("has_estate"              , withLocAtomIconEU4Scope MsgEstateExists MsgHasEstate)
+        ,("has_estate"              , withLocAtomIcon MsgEstateExists)
         ,("has_harmonized_with"     , withLocAtomIcon MsgHasHarmonizedWith)
         ,("has_institution"         , withLocAtomIcon MsgHasInstitution)
         ,("has_personal_deity"      , withLocAtomIcon MsgHasPersonalDiety)

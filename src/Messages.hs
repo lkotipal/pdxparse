@@ -365,7 +365,6 @@ data ScriptMessage
     | MsgProducesGoods {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgProducesSameGoods {scriptMessageWhere :: Text}
     | MsgEstateExists {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
-    | MsgHasEstate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgAssignToEstate {scriptMessageIcon :: Text, scriptMessageWhat :: Text}
     | MsgRulerIsGeneral {scriptMessageIcon :: Text, scriptMessage_what :: Text}
     | MsgAlliedWith {scriptMessageWhom :: Text}
@@ -3153,13 +3152,6 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _what
                 , " estate exists"
-                ]
-        MsgHasEstate {scriptMessageIcon = _icon, scriptMessageWhat = _what}
-            -> mconcat
-                [ "Has estate "
-                , _icon
-                , " "
-                , _what
                 ]
         MsgAssignToEstate {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
