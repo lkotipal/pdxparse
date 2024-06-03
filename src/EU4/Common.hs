@@ -1288,6 +1288,7 @@ handlersForNonModifiersWithinModifiiers = Tr.fromList
         ,("is_tercio_modifier"          , rhsAlwaysYes (MsgGenericText "This modifier only applies to tercio regiments"))
         ,("is_voc_indiamen_modifier"    , rhsAlwaysYes (MsgGenericText "This modifier only applies to VOC indiamen ships"))
         ,("picture"                     , return $ return []) -- Some modifiers have custom pictures
+        ,("effect"                      , scope EU4Country . setIsInEffect True . compoundMessage MsgEffect)
         ]
 
 -- | Handlers for simple compound statements
@@ -2615,12 +2616,19 @@ getStatementHandlerByScope label scope = case scope of
         _               -> lookupLabel ppHandlers
         where lookupLabel modifierMap = Tr.lookup (TE.encodeUtf8 (T.toLower label)) modifierMap
 
+addScopeToScriptedEffects :: Text -> Maybe EU4Scope -> HashMap Text EU4Scripted -> HashMap Text EU4Scripted
+addScopeToScriptedEffects label scope scripteffects = case HM.lookup label scripteffects of
+        Just effect ->  HM.adjust (\ effect -> effect { scrScope = scope}) label scripteffects
+        _           -> scripteffects
+
 -- | Extract the appropriate message(s) from a single statement. Note that this
 -- may produce many lines (via 'ppMany'), since some statements are compound.
 ppOne :: (EU4Info g, Monad m) => StatementHandler g m
 ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
     GenericLhs label _ ->  do
         mscope <- getCurrentScope
+        scripteffects <- getScriptedEffects
+        setScriptedEffects (addScopeToScriptedEffects label mscope scripteffects) -- remember in which scope a scripted effect was used to use it when writing its wikicode
         case getStatementHandlerByScope label mscope of
             Just handler -> handler stmt
             -- default
@@ -2635,7 +2643,6 @@ ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
                 else do
                     geoData <- getGeoData
                     mloc <- getGameL10nIfPresent label
-                    scripteffects <- getScriptedEffects
                     curind <- getCurrentIndent
                     case mloc of
                         -- Check for localizable atoms, e.g. regions

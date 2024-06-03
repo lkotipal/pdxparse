@@ -191,6 +191,7 @@ data ScriptMessage
     | MsgAllNeighborCountries
     | MsgAllNeighborProvinces
     | MsgAllSubjectCountries
+    | MsgEffect
     | MsgElse
     | MsgElseIf
     | MsgEveryActiveTradeNode
@@ -2199,6 +2200,8 @@ instance RenderMessage Script ScriptMessage where
             -> "Capital"
         MsgController
             -> "Province controller"
+        MsgEffect
+            -> "Effect:"
         MsgElse
             -> "Else:"
         MsgElseIf

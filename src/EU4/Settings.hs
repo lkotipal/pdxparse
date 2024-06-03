@@ -51,7 +51,7 @@ import EU4.Events (parseEU4Events, writeEU4Events
                    , findTriggeredEventsInGenericScript, findTriggeredEventsInMissions
                    , findTriggeredEventsInProvinceTriggeredModifiers, findTriggeredEventsInGovernmentMechanics, findTriggeredEventsInImperialIncidents)
 import EU4.Extra (writeEU4Extra, writeEU4ExtraCountryScope, writeEU4ExtraProvinceScope, writeEU4ExtraModifier)
-import EU4.Scripted (parseEU4ScriptedEffects)
+import EU4.Scripted (parseEU4ScriptedEffects, writeEU4ScriptedEffects)
 
 -- | Temporary (?) fix for HAW and UHW both localizing to "Hawai'i'"
 -- and for horde_ideas+horde_gov_ideas both localiying to "Horde Ideas"
@@ -200,6 +200,9 @@ instance EU4Info EU4 where
     getScriptedEffects = do
         EU4D ed <- get
         return (eu4scriptedEffects ed)
+    setScriptedEffects scr = modify $ \(EU4D ed) -> EU4D $ ed {
+            eu4scriptedEffects = scr
+        }
     getScriptedEffectScripts = do
         EU4D ed <- get
         return (eu4scriptedEffectScripts ed)
@@ -484,6 +487,7 @@ writeEU4Scripts = do
         writeEU4Missions
         writeEU4OpinionModifiers
         writeEU4ProvTrigModifiers
+        writeEU4ScriptedEffects
     writeEU4Extra
     writeEU4ExtraCountryScope
     writeEU4ExtraProvinceScope

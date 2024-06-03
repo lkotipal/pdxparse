@@ -138,6 +138,7 @@ class (IsGame g,
     getScriptedEffectScripts :: Monad m => PPT g m (HashMap FilePath GenericScript)
     -- | get the names of scripted effects
     getScriptedEffects :: Monad m => PPT g m (HashMap Text EU4Scripted)
+    setScriptedEffects :: Monad m => HashMap Text EU4Scripted -> PPT g m ()
     -- | Get the trade nodes
     getTradeNodes :: Monad m => PPT g m (HashMap Int Text)
     -- | Get the decisions which enact estate actions

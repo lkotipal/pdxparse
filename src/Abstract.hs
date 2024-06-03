@@ -49,7 +49,7 @@ module Abstract (
     -- Presentation
     ,   genericStatement2doc
     ,   lhs2doc
---    ,   genericScript2doc
+   ,   genericScript2doc
 --    ,   displayGenericScript
     -- Parsing
     ,   skipSpace
