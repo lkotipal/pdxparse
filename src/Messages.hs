@@ -7472,6 +7472,9 @@ instance RenderMessage Script ScriptMessage where
                 , _what
                 , " tier to be at least "
                 , toMessage (plainNum _amt)
+                , " and gain 2 random development for each tier (up to "
+                , toMessage (plainNum _amt)
+                , ") which the great project already had"
                 ]
         MsgEstateRegency
             -> "Is in an estate regency"
