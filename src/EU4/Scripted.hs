@@ -77,6 +77,7 @@ parseEU4Scripted [pdx| $effectid = @effects |]
             ,   scrPath = file
             ,   scrScript = effects
             ,   scrScope = Nothing
+            ,   scrRootScope = Nothing
             }
 parseEU4Scripted _ = withCurrentFile $ \file ->
     throwError ("unrecognised form for scripted effect in " <> T.pack file)
@@ -97,7 +98,8 @@ writeEU4ScriptedEffects = do
         pp_effect :: (EU4Info g, Monad m) => EU4Scripted -> PPT g m Doc
         pp_effect effect = setCurrentFile (scrPath effect) $ do
             let ascope = fromMaybe EU4Country (scrScope effect)
-            effectText <- setIsInEffect True (scope ascope (ppScript (scrScript effect)))
+                rootScope = fromMaybe EU4Country (scrRootScope effect)
+            effectText <- setIsInEffect True (scope rootScope (scope ascope (ppScript (scrScript effect))))
             version <- gets (gameVersion . getSettings)
             -- mediawiki does not allow include loops, so we have to use the SEffec2 templae when calling an effect within another scripted effect
             let effectText' = T.replace "{{SEffect|" "{{SEffec2|" (toMessage effectText)

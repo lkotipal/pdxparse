@@ -324,6 +324,7 @@ data EU4Scripted = EU4Scripted
     ,   scrPath :: FilePath
     ,   scrScript :: GenericScript
     ,   scrScope :: Maybe EU4Scope
+    ,   scrRootScope :: Maybe EU4Scope
     } deriving (Show)
 
 ------------------------------

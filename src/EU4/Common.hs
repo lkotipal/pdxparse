@@ -2616,9 +2616,9 @@ getStatementHandlerByScope label scope = case scope of
         _               -> lookupLabel ppHandlers
         where lookupLabel modifierMap = Tr.lookup (TE.encodeUtf8 (T.toLower label)) modifierMap
 
-addScopeToScriptedEffects :: Text -> Maybe EU4Scope -> HashMap Text EU4Scripted -> HashMap Text EU4Scripted
-addScopeToScriptedEffects label scope scripteffects = case HM.lookup label scripteffects of
-        Just effect ->  HM.adjust (\ effect -> effect { scrScope = scope}) label scripteffects
+addScopeToScriptedEffects :: Text -> Maybe EU4Scope -> Maybe EU4Scope -> HashMap Text EU4Scripted -> HashMap Text EU4Scripted
+addScopeToScriptedEffects label scope rootScope scripteffects = case HM.lookup label scripteffects of
+        Just effect ->  HM.adjust (\ effect -> effect { scrScope = scope, scrRootScope = rootScope}) label scripteffects
         _           -> scripteffects
 
 -- | Extract the appropriate message(s) from a single statement. Note that this
@@ -2627,8 +2627,9 @@ ppOne :: (EU4Info g, Monad m) => StatementHandler g m
 ppOne stmt@[pdx| %lhs = %rhs |] = case lhs of
     GenericLhs label _ ->  do
         mscope <- getCurrentScope
+        rootScope <- getRootScope
         scripteffects <- getScriptedEffects
-        setScriptedEffects (addScopeToScriptedEffects label mscope scripteffects) -- remember in which scope a scripted effect was used to use it when writing its wikicode
+        setScriptedEffects (addScopeToScriptedEffects label mscope rootScope scripteffects) -- remember in which scope a scripted effect was used to use it when writing its wikicode
         case getStatementHandlerByScope label mscope of
             Just handler -> handler stmt
             -- default
