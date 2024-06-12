@@ -150,7 +150,7 @@ handlersRhsIrrelevant = Tr.fromList
         ,("divorce_consort_effect", rhsAlwaysYes MsgDivorceConsortEffect)
         ,("enable_hre_leagues"     , rhsAlwaysYes MsgEnableHRELeagues)
         ,("enable_propagate_religion_in_abrahamic_provinces" , rhsAlwaysYes (MsgGenericText "Allows propagating religion in abrahamic provinces"))
-        ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEnableHRELeagues)
+        ,("erase_advisor_flags_effect", rhsAlwaysYes MsgEraseAdvisorFlagsEffect)
         ,("fifty_percent_merc_army_professionalism_cost" , rhsAlwaysYes (MsgGenericText "Reduce the {{icon|army professionalism}} army professionalism cost of recruiting mercenaries by {{green|50%}}"))
         ,("grant_independence"      , rhsAlwaysYes MsgGrantIndependence)
         ,("halves_parliament_bribe_costs", rhsAlwaysYes (MsgGenericText "The costs of [[Parliament bribes]] are reduced by {{green|50%}}."))
