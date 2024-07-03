@@ -1183,6 +1183,11 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("qizilbash_influence_modifier"          , handleModifier "Qizilbash influence" (reducedNum plainPcSign))
         ,("qizilbash_loyalty_modifier"            , handleModifierWithIcon "Qizilbash loyalty equilibrium" "qizilbash loyalty" (reducedNum (colourPcSign True)))
         ,("qizilbash_privilege_slots"             , handleModifier "Qizilbash max privileges" (colourNumSign True))
+        ,("max_general_maneuver"                  , handleModifier "MODIFIER_MAX_GENERAL_MANEUVER" (colourNumSign True))
+        ,("max_general_shock"                     , handleModifier "MODIFIER_MAX_GENERAL_SHOCK" (colourNumSign True))
+        ,("max_general_siege"                     , handleModifier "MODIFIER_MAX_GENERAL_SIEGE" (colourNumSign True))
+        ,("max_admiral_shock"                     , handleModifier "MODIFIER_MAX_ADMIRAL_SHOCK" (colourNumSign True))
+        ,("max_admiral_siege"                     , handleModifier "MODIFIER_MAX_ADMIRAL_SIEGE" (colourNumSign True))
         ]) -- handlersForModifiers
 
 handlersForNonModifiersWithinModifiiers :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
