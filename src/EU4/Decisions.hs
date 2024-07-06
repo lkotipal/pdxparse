@@ -220,6 +220,6 @@ findEstateActions evts privilegeScripts scriptedEffectsForEstates = addScripts (
 
         getScript :: Text -> Text -> GenericScript
         getScript effectName scriptedEffectsForEstates = do
-            let regex = RE.makeRegexOpts RE.defaultCompOpt{RE.multiline=False} RE.defaultExecOpt (effectName <> " = {((\n[^}][^\n]*)*)\n}")
+            let regex = RE.makeRegexOpts RE.defaultCompOpt{RE.multiline=False} RE.defaultExecOpt (effectName <> " = {((\r?\n[^}][^\n\r]*)*)\r?\n}")
                 (_before, match, after, effectText:_othersubmatches) = RE.match regex scriptedEffectsForEstates :: (Text, Text, Text, [Text])
             readScriptFromText effectText
