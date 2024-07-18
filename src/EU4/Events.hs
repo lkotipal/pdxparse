@@ -453,7 +453,7 @@ pp_event evt = case (eu4evt_id evt
             -- triggered only.
             (if isTriggeredOnly then [] else case mmtth_pp'd of
                 Nothing ->
-                    ["| triggered_only =", PP.line
+                    ["| triggered only =", PP.line
                     ,"* Unknown (Missing MTTH and is_triggered_only)", PP.line]
                 Just mtth_pp'd ->
                     ["| mtth = ", PP.line
