@@ -1,10 +1,10 @@
 Unprocessed msg@Text: #{msg}
 Yes icon@Text: #{icon} Yes
 No icon@Text: #{icon} No
-AddCardinal: Gain a cardinal
+AddCardinal: Gain a veridical
 HeirDies: Heir dies
 RulerDies: Ruler dies
-LoseCardinal: Lose a cardinal
+LoseCardinal: Lose a veridical
 GainADM icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} administrative power
 GainAT icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} army tradition
 GainAuth amt@Double: #{gainOrLose amt} #{colourNum True amt} authority
@@ -21,7 +21,7 @@ GainKarma icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} 
 GainLegitimacy icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} legitimacy
 GainMIL icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} military power
 GainNavyTradition icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} navy tradition
-GainPapalInfluence icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} papal influence
+GainPapalInfluence icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} rectorate influence
 GainPrestige icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} prestige
 GainStability icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum True amt} stability
 GainWarExhaustion icon@Text amt@Double: #{gainOrLose amt} #{icon} #{colourNum False amt} war exhaustion
@@ -77,7 +77,7 @@ AnyRival: Any rival:
 AnySubject: Any subject:
 Capital: Capital:
 Controller: Province controller:
-Emperor: The Holy Roman Emperor:
+Emperor: The Emperor of Anbennar:
 AllCountries: All countries in the world:
 EveryCountry: Every country in the world:
 EveryEnemyCountry: Every enemy country:
@@ -180,14 +180,14 @@ YearlyLegitimacy icon@Text amt@Double: #{icon} #{colourPcSign True amt} Yearly l
 RulerMIL icon@Text amt@Double: Ruler's #{icon} military skill is at least #{roundNum amt}
 MILTech icon@Text amt@Double: #{icon} Military technology is at least #{roundNum amt}
 NumAllies icon@Text amt@Double: Has at least #{icon} #{roundNum amt} #{plural amt "ally" "allies"}
-NumCardinals icon@Text amt@Double: Has at least #{icon} #{roundNum amt} #{plural amt "cardinal" "cardinals"}
+NumCardinals icon@Text amt@Double: Has at least #{icon} #{roundNum amt} #{plural amt "veridical" "veridicals"}
 NumColonists icon@Text amt@Double: Has at least #{icon} #{roundNum amt} #{plural amt "colonist" "colonists"}
 NumHeavyShips icon@Text amt@Double: Has at least #{icon} #{roundNum amt} heavy #{plural amt "ship" "ships"}
 NumLightShips icon@Text amt@Double: Has at least #{icon} #{roundNum amt} light #{plural amt "ship" "ships"}
 NumMerchants icon@Text amt@Double: Has at least #{icon} #{roundNum amt} #{plural amt "merchant" "merchants"}
 Stability icon@Text amt@Double: #{icon} Stability is at least #{colourNumSign True amt}
 TotalDevelopment icon@Text amt@Double: Country's total #{icon} development is at least #{roundNum amt}
-TotalCardinals icon@Text amt@Double: At least #{icon} #{roundNum amt} #{plural amt "cardinal" "cardinals"} exist in the world
+TotalCardinals icon@Text amt@Double: At least #{icon} #{roundNum amt} #{plural amt "veridical" "veridicals"} exist in the world
 Unrest icon@Text amt@Double: Unrest is at least #{icon} #{colourNum False amt}
 MonthlyIncome icon@Text amt@Double: #{icon} Monthly income is at least #{colourNum True amt} ducats
 WarExhaustion icon@Text amt@Double: #{icon} War exhaustion is at least #{colourNum False amt}
@@ -244,7 +244,7 @@ HasCoreOn what@Text: Has a core on #{what}
 HasClaim who@Text: #{who} has a claim on this province
 HasClaimOn what@Text: Has a claim on #{what}
 IsAIControlled yn@Bool: Is #{ifThenElseT yn "AI" "player"}-controlled
-HasCardinal yn@Bool: #{ifThenElseT yn "Has" "Does ''not'' have"} a cardinal
+HasCardinal yn@Bool: #{ifThenElseT yn "Has" "Does ''not'' have"} a veridical
 HasHeir yn@Bool: #{ifThenElseT yn "Has" "Does ''not'' have"} an heir
 HasOwnerCulture yn@Bool: Has #{ifThenElseT yn "the same culture as" "a different culture from"} its owner
 HasOwnerReligion yn@Bool: Has #{ifThenElseT yn "the same religion as" "a different religion from"} its owner
@@ -256,12 +256,12 @@ AtWar yn@Bool: Is#{ifThenElseT yn "" " ''not''"} at war
 IsCapital yn@Bool: Is#{ifThenElseT yn "" " ''not''"} the country's capital
 IsCity yn@Bool: Is#{ifThenElseT yn "" " ''not''"} a city
 IsColony yn@Bool: Is#{ifThenElseT yn "" " ''not''"} a colony
-IsEmperor yn@Bool: Is#{ifThenElseT yn "" " ''not''"} the Holy Roman Emperor
+IsEmperor yn@Bool: Is#{ifThenElseT yn "" " ''not''"} the Emperor of Anbennar
 IsFemale yn@Bool: Is #{ifThenElseT yn "female" "male"}
 IsLesserInUnion yn@Bool: Is#{ifThenElseT yn "" " ''not''"} a lesser partner in a personal union
 IsLooted yn@Bool: Is#{ifThenElseT yn "" " ''not''"} looted
 IsOverseas yn@Bool: Is#{ifThenElseT yn "" " ''not''"} overseas
-IsPartOfHRE yn@Bool: Is#{ifThenElseT yn "" " ''not''"} part of the Holy Roman Empire
+IsPartOfHRE yn@Bool: Is#{ifThenElseT yn "" " ''not''"} part of the Empire of Anbennar
 IsCenterOfReformation yn@Bool: Is#{ifThenElseT yn "" " ''not''"} a Center of Reformation
 IsSubject yn@Bool: Is#{ifThenElseT yn "" " ''not''"} a subject nation
 PapacyIsActive yn@Bool: Papal interaction is#{ifThenElseT yn "" " ''not''"} active
@@ -369,18 +369,18 @@ NumOfReligion icon@Text name@Text amt@Double: Has at least #{roundNum amt} #{plu
 StrongestTradePower who@Text: #{who} is the strongest trade power in this node
 AreaIs what@Text: Is in #{what} area
 DominantReligion icon@Text what@Text: The country's dominant religion is #{icon} #{what}
-HREReligion icon@Text what@Text: The Holy Roman Empire's official religion is #{icon} #{what}
-SetHREReligionLocked yn@Bool: The Holy Roman Empire's religion #{ifThenElseT yn "becomes fixed" "is no longer fixed"}
-SetHREReligion icon@Text what@Text: The Holy Roman Empire's official religion becomes #{icon} #{what}
-SetHREHereticReligion icon@Text what@Text: The #{icon} #{what} religion is considered heretical within the Holy Roman Empire
-SignWestphalia: From now on, the Emperor, Electors and Princes of the {{icon|hre}} Holy Roman Empire may be of any Christian religion without being considered heretics.
-HRELeaguesEnabled yn@Bool: Leagues for the religion of the Holy Roman Empire #{ifThenElseT yn "have" "have ''not''"} begun to form
-HREReligionLocked yn@Bool: The religion of the Holy Roman Empire #{ifThenElseT yn "is" "is ''not''"} fixed
+HREReligion icon@Text what@Text: The Empire of Anbennar's official religion is #{icon} #{what}
+SetHREReligionLocked yn@Bool: The Empire of Anbennar's religion #{ifThenElseT yn "becomes fixed" "is no longer fixed"}
+SetHREReligion icon@Text what@Text: The Empire of Anbennar's official religion becomes #{icon} #{what}
+SetHREHereticReligion icon@Text what@Text: The #{icon} #{what} religion is considered heretical within the Empire of Anbennar
+SignWestphalia: From now on, the Emperor, Electors and Princes of the {{icon|hre}} Empire of Anbennar may be of any Christian religion without being considered heretics.
+HRELeaguesEnabled yn@Bool: Leagues for the religion of the Empire of Anbennar #{ifThenElseT yn "have" "have ''not''"} begun to form
+HREReligionLocked yn@Bool: The religion of the Empire of Anbennar #{ifThenElseT yn "is" "is ''not''"} fixed
 HREWestphalia yn@Bool: The Peace of Westphalia #{ifThenElseT yn "has" "has ''not''"} been signed
-IsElector yn@Bool: Is#{ifThenElseT yn "" " ''not''"} an Elector of the Holy Roman Empire
-NoHREReforms: No reforms have been passed in the Holy Roman Empire
+IsElector yn@Bool: Is#{ifThenElseT yn "" " ''not''"} an Elector of the Empire of Anbennar
+NoHREReforms: No reforms have been passed in the Empire of Anbennar
 HREPassedReform what@Text: The imperial reform ''#{what}'' has been passed
-EnableHRELeagues: Leagues for the religion of the Holy Roman Empire begin to form.
+EnableHRELeagues: Leagues for the religion of the Empire of Anbennar begin to form.
 IsInLeagueWar yn@Bool: Is#{ifThenElseT yn "" " ''not''"} involved in a religious league war
 IsLeagueEnemy whom@Text: Is in the opposite religious league to #{whom}
 ReligionYears icon@Text name@Text years@Double: The #{icon} #{name} religion has existed for at least #{plainNum years} years
@@ -429,7 +429,7 @@ MissionaryStrength icon@Text amt@Double: #{icon} #{reducedNum (colourPcSign True
 ToleranceHeathen icon@Text amt@Double: #{icon} #{colourNumSign True amt} Tolerance of heathens
 ToleranceHeretic icon@Text amt@Double: #{icon} #{colourNumSign True amt} Tolerance of heretics
 ToleranceTrue icon@Text amt@Double: #{icon} #{colourNumSign True amt} Tolerance of the true faith
-YearlyPapalInfluence icon@Text amt@Double: #{icon} #{colourNumSign True amt} Yearly papal influence
+YearlyPapalInfluence icon@Text amt@Double: #{icon} #{colourNumSign True amt} Yearly rectorate influence
 YearlyDevotion icon@Text amt@Double: #{icon} #{colourNumSign True amt} {{DLC-only|Yearly devotion}}
 MonthlyFervor icon@Text amt@Double: #{icon} #{colourNumSign True amt} {{DLC-only|Monthly fervor}}
 ChurchPowerModifier icon@Text amt@Double: #{icon} #{colourNumSign True amt} {{DLC-only|Church power}}
@@ -462,7 +462,7 @@ IsFormerColonialNation yn@Bool: Is#{ifThenElseT yn "" " ''not''"} a former colon
 IsNomad yn@Bool: Is#{ifThenElseT yn "" " ''not''"} a steppe horde
 ReligionReformed yn@Bool: The country's religion has#{ifThenElseT yn "" " ''not''"} been reformed
 ChangeTag who@Text: Country becomes #{who}
-SetInEmpire yn@Bool: Province #{ifThenElseT yn "joins" "leaves"} the Holy Roman Empire
+SetInEmpire yn@Bool: Province #{ifThenElseT yn "joins" "leaves"} the Empire of Anbennar
 HasSecondaryReligion yn@Bool: #{ifThenElseT yn "Has" "Does ''not'' have"} a secondary religion
 SecondaryReligion icon@Text what@Text: Secondary religion is #{icon} #{what}
 IsDefenderOfFaith yn@Bool: Is#{ifThenElseT yn "" " ''not''"} Defender of the Faith

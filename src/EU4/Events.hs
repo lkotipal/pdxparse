@@ -659,7 +659,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             --,("on_lock_hre_religion", "")
             ,("on_main_war_won", "<!-- on_main_war_won -->Winning a war against ''From''") -- root = winning country, from = loser country
             ,("on_main_war_lost", "<!-- on_main_war_lost -->Losing a war against ''From''") -- root = winning country, from = loser country
-            ,("on_mandate_of_heaven_gained", "<!-- on_mandate_of_heaven_gained -->Our country becoming the [[Emperor of China]] instead of ''From''")
+            ,("on_mandate_of_heaven_gained", "<!-- on_mandate_of_heaven_gained -->Our country becoming the [[Steward of the Sorrow]] instead of ''From''")
             ,("on_monarch_death", "<!-- on_monarch_death-->Curent ruler dying")
             ,("on_new_age", "<!-- on_new_age -->When a new age starts")
             ,("on_new_consort", "<!-- on_new_consort -->Getting a new consort")

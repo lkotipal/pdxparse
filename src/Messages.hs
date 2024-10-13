@@ -1441,7 +1441,7 @@ instance RenderMessage Script ScriptMessage where
                 , " No"
                 ]
         MsgAddCardinal
-            -> "Gain a cardinal"
+            -> "Gain a veridical"
         MsgHeirDies {scriptMessageYn = _yn}
             -> mconcat
                 [ "Heir dies"
@@ -1450,7 +1450,7 @@ instance RenderMessage Script ScriptMessage where
         MsgRulerDies
             -> "Ruler dies"
         MsgLoseCardinal
-            -> "Lose a cardinal"
+            -> "Lose a veridical"
         MsgIsJanissaryMod
             -> "This modifier only applies to janissary regiments"
         MsgIsRajputMod
@@ -1612,7 +1612,7 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (colourNum True _amt)
-                , " papal influence"
+                , " rectorate influence"
                 ]
         MsgGainPrestige {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -2093,7 +2093,7 @@ instance RenderMessage Script ScriptMessage where
         MsgTHISGeographic
             -> "This location"
         MsgEmperor
-            -> "The Holy Roman Emperor"
+            -> "The Emperor of Anbennar"
         MsgOriginalDynasty
             -> "the country's original dynasty"
         MsgHistoricDynasty
@@ -2872,7 +2872,7 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (roundNum _amt)
                 , " "
-                , plural _amt "cardinal" "cardinals"
+                , plural _amt "veridical" "veridicals"
                 ]
         MsgNumColonists {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
@@ -2983,7 +2983,7 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , toMessage (roundNum _amt)
                 , " "
-                , plural _amt "cardinal" "cardinals"
+                , plural _amt "veridical" "veridicals"
                 , " exist in the world"
                 ]
         MsgUnrest {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -3414,7 +3414,7 @@ instance RenderMessage Script ScriptMessage where
         MsgHasCardinal {scriptMessageYn = _yn}
             -> mconcat
                 [ toMessage (ifThenElseT _yn "Has" "Does ''not'' have")
-                , " a cardinal"
+                , " a veridical"
                 ]
         MsgHasConsort {scriptMessageYn = _yn}
             -> mconcat
@@ -3505,7 +3505,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
-                , " the Holy Roman Emperor"
+                , " the Emperor of Anbennar"
                 ]
         MsgIsFemale {scriptMessageYn = _yn}
             -> mconcat
@@ -3540,7 +3540,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
-                , " part of the Holy Roman Empire"
+                , " part of the Empire of Anbennar"
                 ]
         MsgIsCenterOfReformation {scriptMessageYn = _yn}
             -> mconcat
@@ -4337,19 +4337,19 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgHREReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
-                [ "The Holy Roman Empire's official religion is "
+                [ "The Empire of Anbennar's official religion is "
                 , _icon
                 , " "
                 , _what
                 ]
         MsgSetHREReligionLocked {scriptMessageYn = _yn}
             -> mconcat
-                [ "The Holy Roman Empire's religion "
+                [ "The Empire of Anbennar's religion "
                 , toMessage (ifThenElseT _yn "becomes fixed" "is no longer fixed")
                 ]
         MsgSetHREReligion {scriptMessageIcon = _icon, scriptMessageWhat = _what}
             -> mconcat
-                [ "The Holy Roman Empire's official religion becomes "
+                [ "The Empire of Anbennar's official religion becomes "
                 , _icon
                 , " "
                 , _what
@@ -4360,19 +4360,19 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , _what
-                , " religion is considered heretical within the Holy Roman Empire"
+                , " religion is considered heretical within the Empire of Anbennar"
                 ]
         MsgSignWestphalia
-            -> "From now on, the Emperor, Electors and Princes of the {{icon|hre}} Holy Roman Empire may be of any Christian religion without being considered heretics."
+            -> "From now on, the Emperor, Electors and Princes of the {{icon|hre}} Empire of Anbennar may be of any Christian religion without being considered heretics."
         MsgHRELeaguesEnabled {scriptMessageYn = _yn}
             -> mconcat
-                [ "Leagues for the religion of the Holy Roman Empire "
+                [ "Leagues for the religion of the Empire of Anbennar "
                 , toMessage (ifThenElseT _yn "have" "have ''not''")
                 , " begun to form"
                 ]
         MsgHREReligionLocked {scriptMessageYn = _yn}
             -> mconcat
-                [ "The religion of the Holy Roman Empire "
+                [ "The religion of the Empire of Anbennar "
                 , toMessage (ifThenElseT _yn "is" "is ''not''")
                 , " fixed"
                 ]
@@ -4386,10 +4386,10 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
-                , " an Elector of the Holy Roman Empire"
+                , " an Elector of the Empire of Anbennar"
                 ]
         MsgNoHREReforms
-            -> "No reforms have been passed in the Holy Roman Empire"
+            -> "No reforms have been passed in the Empire of Anbennar"
         MsgHREPassedReform {scriptMessageWhat = _what}
             -> mconcat
                 [ "The imperial reform ''"
@@ -4397,7 +4397,7 @@ instance RenderMessage Script ScriptMessage where
                 , "'' has been passed"
                 ]
         MsgEnableHRELeagues
-            -> "Leagues for the religion of the Holy Roman Empire begin to form."
+            -> "Leagues for the religion of the Empire of Anbennar begin to form."
         MsgIsInLeagueWar {scriptMessageYn = _yn}
             -> mconcat
                 [ "Is"
@@ -4522,12 +4522,12 @@ instance RenderMessage Script ScriptMessage where
                 , _icon
                 , " "
                 , toMessage (roundNum _amt)
-                , " Papal influence in the election of the next papal controller"
+                , " Rectorate influence in the election of the next rectorate controller"
                 ]
         MsgPapalInfluence {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " Papal influence is at least "
+                , " Rectorate influence is at least "
                 , toMessage (roundNum _amt)
                 ]
         MsgDevotion {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
@@ -4688,7 +4688,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Province "
                 , toMessage (ifThenElseT _yn "joins" "leaves")
-                , " the Holy Roman Empire"
+                , " the Empire of Anbennar"
                 ]
         MsgHasSecondaryReligion {scriptMessageYn = _yn}
             -> mconcat
@@ -5653,7 +5653,7 @@ instance RenderMessage Script ScriptMessage where
                 [ gainOrLose _amt
                 , " "
                 , toMessage (colourNum True _amt)
-                , " meritocracy"
+                , " hedonism"
                 ]
         MsgMutualOpinion {scriptMessageModid = _modid, scriptMessageWhat = _what, scriptMessageWhom = _whom}
             -> mconcat
@@ -5941,7 +5941,7 @@ instance RenderMessage Script ScriptMessage where
         MsgMeritocracy {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " Meritocracy is at least "
+                , " Hedonism is at least "
                 , toMessage (roundNum _amt)
                 ]
         MsgCheckIfNonStateAdvisorEffect
@@ -6203,7 +6203,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
-                , " the [[Emperor of China]]"
+                , " the [[Steward of the Sorrow]]"
                 ]
         MsgHasStatesGeneralMechanic { scriptMessageYn = _yn }
             -> mconcat
@@ -6979,7 +6979,7 @@ instance RenderMessage Script ScriptMessage where
                 , plural _amt "member" "members"
                 ]
         MsgHREExists -- Special case for hre_size = 1
-            -> "{{icon|imperial authority}} Holy Roman Empire exists"
+            -> "{{icon|imperial authority}} Empire of Anbennar exists"
         MsgInLeague {scriptMessageWhat = _what}
             -> mconcat
                 [ "Is part of the "
@@ -7600,7 +7600,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
-                , " the [[papal controller]]"
+                , " the [[rectorate controller]]"
                 ]
         MsgIsFederationNation {scriptMessageYn = _yn}
             -> mconcat
@@ -9326,12 +9326,12 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgActiveDecree {scriptMessageWhat = _what}
             -> mconcat
-                [ "Has the {{icon|emperor of china}} decree "
+                [ "Has the {{icon|eoc}} decree "
                 , toMessage (iquotes _what)
                 ]
         MsgEocReform {scriptMessageWhat = _what}
             -> mconcat
-                [ "Has the {{icon|emperor of china}} celestial reform "
+                [ "Has the {{icon|eoc}} Steward reform "
                 , toMessage (iquotes _what)
                 ]
         MsgIsLackingInstitutions {scriptMessageYn = _yn}
@@ -9376,7 +9376,7 @@ instance RenderMessage Script ScriptMessage where
         MsgSetEmperorOfChina {scriptMessageWhom = _whom}
             -> mconcat
                 [ _whom
-                , " becomes the {{icon|eoc}} emperor of china"
+                , " becomes the {{icon|eoc}} Steward of the Sorrow"
                 ]
         MsgSetBT {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
