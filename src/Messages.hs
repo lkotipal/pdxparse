@@ -545,6 +545,7 @@ data ScriptMessage
     | MsgSpawnProvinceReligiousRebels {scriptMessageSize :: Double}
     | MsgRebelsHaveRisen {scriptMessageIcon :: Text, scriptMessageRtype :: Text}
     | MsgHasDLC {scriptMessageIcon :: Text, scriptMessageDlc :: Text}
+    | MsgHasBuiltinDLC {scriptMessageDlc :: Text}
     | MsgProvince {scriptMessageWhere :: Text}
     | MsgTechGroup {scriptMessageIcon :: Text, scriptMessageName :: Text}
     | MsgUnlockCult {scriptMessageIcon :: Text, scriptMessageName :: Text}
@@ -4245,6 +4246,14 @@ instance RenderMessage Script ScriptMessage where
                 , " "
                 , _dlc
                 , " is active"
+                ]
+        MsgHasBuiltinDLC {scriptMessageDlc = _dlc}
+            -> mconcat
+                [ "{{icon|yes}} always<ref name=\"builtinDLC_"
+                , T.replace " " "_" _dlc
+                , "\">This condition checks for the built-in DLC "
+                , _dlc
+                , " which is always active</ref>"
                 ]
         MsgProvince {scriptMessageWhere = _where}
             -> mconcat
