@@ -652,7 +652,7 @@ findTriggeredEventsInOnActions hm scr = foldl' findInAction hm scr
             ,("on_heir_death", "<!-- on_heir_death -->Heir dying")
             ,("on_heir_disinherited", "<!-- on_heir_disinherited -->Heir disinherited")
             ,("on_heir_needed_theocracy", "<!-- on_heir_needed_theocracy -->A theocracy needing an heir")
-            ,("on_hre_dismantled", "<!-- on_hre_dismantled -->When dismantling the HRE")
+            ,("on_hre_dismantled", "<!-- on_hre_dismantled -->When dismantling the EoA")
             --,("on_hre_non_defense", "")
             --,("on_hre_religion_white_peace", "")
             ,("on_integrate", "Diplomatically integrating a junior partner")

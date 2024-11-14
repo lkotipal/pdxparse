@@ -1456,7 +1456,7 @@ instance RenderMessage Script ScriptMessage where
         MsgIsRajputMod
             -> "This modifier only applies to rajput regiments"
         MsgIsImperialMod
-            -> "This modifier only applies to members of the HRE"
+            -> "This modifier only applies to members of the EoA"
         MsgGainADM {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ gainOrLose _amt
@@ -4378,7 +4378,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgHREWestphalia {scriptMessageYn = _yn}
             -> mconcat
-                [ "The Peace of Westphalia "
+                [ "The Peace of Esmaria "
                 , toMessage (ifThenElseT _yn "has" "has ''not''")
                 , " been signed"
                 ]
@@ -6973,7 +6973,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgHRESize {scriptMessageAmt = _amt}
             -> mconcat
-                [ "The [[HRE]] has at least "
+                [ "The [[EoA]] has at least "
                 , toMessage (plainNum _amt)
                 , " "
                 , plural _amt "member" "members"
@@ -8339,7 +8339,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "Is voting for "
                 , _whom
-                , " to become Emperor of the HRE"
+                , " to become Emperor of the EoA"
                 ]
         MsgCurrentIcon {scriptMessageIcon = _icon, scriptMessageWhom = _what}
             -> mconcat
@@ -8463,7 +8463,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "The country is "
                 , ifThenElseT _yn "made" "removed as"
-                , " an elector of the HRE"
+                , " an elector of the EoA"
                 ]
         MsgNumOfWarReparations {scriptMessageAmt = _amt}
             -> mconcat
@@ -8482,7 +8482,7 @@ instance RenderMessage Script ScriptMessage where
             -> mconcat
                 [ "At least "
                 , toMessage (plainNum _amt)
-                , " HRE "
+                , " EoA "
                 , plural _amt "province is" "provinces are"
                 , " owned by non-member states or subjects of non-member states"
                 ]
@@ -8617,7 +8617,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgNumElectors {scriptMessageAmt = _amt}
             -> mconcat
-                [ "The HRE has at least "
+                [ "The EoA has at least "
                 , toMessage (plainNum _amt)
                 , plural _amt " elector" " electors"
                 ]
