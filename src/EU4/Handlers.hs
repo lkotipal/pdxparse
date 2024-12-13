@@ -2966,18 +2966,15 @@ declareWarWithCB stmt = preStatement stmt
 
 hasDlc :: (EU4Info g, Monad m) => StatementHandler g m
 hasDlc [pdx| %_ = ?dlc |]
-    = msgToPP $ MsgHasDLC dlc_icon dlc
+    = msgToPP $ if dlc `elem` builtin_dlc then MsgHasBuiltinDLC dlc else MsgHasDLC dlc_icon dlc
     where
         mdlc_key = HM.lookup dlc . HM.fromList $
             [("Conquest of Paradise", "cop")
             ,("Wealth of Nations", "won")
             ,("Res Publica", "rp")
-            ,("Art of War", "aow")
             ,("El Dorado", "ed")
-            ,("Common Sense", "cs")
             ,("The Cossacks", "cos")
             ,("Mare Nostrum", "mn")
-            ,("Rights of Man", "rom")
             ,("Mandate of Heaven", "moh")
             ,("Third Rome", "tr")
             ,("Cradle of Civilization", "coc")
@@ -2993,6 +2990,7 @@ hasDlc [pdx| %_ = ?dlc |]
             ,("Winds of Change", "woc")
             ]
         dlc_icon = maybe "" iconText mdlc_key
+        builtin_dlc = ["Art of War", "Rights of Man", "Common Sense", "Purple Phoenix", "Star and Crescent", "American Dream"]
 hasDlc stmt = preStatement stmt
 
 -- Estates
