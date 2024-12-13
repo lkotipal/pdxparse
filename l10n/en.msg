@@ -373,10 +373,10 @@ HREReligion icon@Text what@Text: The Empire of Anbennar's official religion is #
 SetHREReligionLocked yn@Bool: The Empire of Anbennar's religion #{ifThenElseT yn "becomes fixed" "is no longer fixed"}
 SetHREReligion icon@Text what@Text: The Empire of Anbennar's official religion becomes #{icon} #{what}
 SetHREHereticReligion icon@Text what@Text: The #{icon} #{what} religion is considered heretical within the Empire of Anbennar
-SignWestphalia: From now on, the Emperor, Electors and Princes of the {{icon|hre}} Empire of Anbennar may be of any Christian religion without being considered heretics.
+SignWestphalia: From now on, the Emperor, Electors and Princes of the {{icon|hre}} Empire of Anbennar may be of any Cannorian religion without being considered heretics.
 HRELeaguesEnabled yn@Bool: Leagues for the religion of the Empire of Anbennar #{ifThenElseT yn "have" "have ''not''"} begun to form
 HREReligionLocked yn@Bool: The religion of the Empire of Anbennar #{ifThenElseT yn "is" "is ''not''"} fixed
-HREWestphalia yn@Bool: The Peace of Westphalia #{ifThenElseT yn "has" "has ''not''"} been signed
+HREWestphalia yn@Bool: The Peace of Esmaria #{ifThenElseT yn "has" "has ''not''"} been signed
 IsElector yn@Bool: Is#{ifThenElseT yn "" " ''not''"} an Elector of the Empire of Anbennar
 NoHREReforms: No reforms have been passed in the Empire of Anbennar
 HREPassedReform what@Text: The imperial reform ''#{what}'' has been passed

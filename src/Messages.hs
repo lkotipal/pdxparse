@@ -4372,7 +4372,7 @@ instance RenderMessage Script ScriptMessage where
                 , " religion is considered heretical within the Empire of Anbennar"
                 ]
         MsgSignWestphalia
-            -> "From now on, the Emperor, Electors and Princes of the {{icon|hre}} Empire of Anbennar may be of any Christian religion without being considered heretics."
+            -> "From now on, the Emperor, Electors and Princes of the {{icon|hre}} Empire of Anbennar may be of any Cannorian religion without being considered heretics."
         MsgHRELeaguesEnabled {scriptMessageYn = _yn}
             -> mconcat
                 [ "Leagues for the religion of the Empire of Anbennar "
