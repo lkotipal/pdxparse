@@ -46,7 +46,7 @@ import SettingsTypes ( PPT, Settings (..), Game (..)
 useIconBox = True
 
 newMission :: Text -> Int -> Int -> EU4Mission
-newMission id slot pos = EU4Mission id "(unknown)" slot pos [] undefined undefined
+newMission id slot pos = EU4Mission id "(unknown)" slot pos [] [] []
 
 newMissionBranch :: FilePath -> Text -> EU4MissionTreeBranch
 newMissionBranch path id = EU4MissionTreeBranch path id 0 Nothing []
