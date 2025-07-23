@@ -59,6 +59,7 @@ import EU4.Scripted (parseEU4ScriptedEffects, writeEU4ScriptedEffects)
 fixLocalizations :: Settings -> Settings
 fixLocalizations s = foldr fixLocalization s [
     ("UHW", "HAW", "Hawai'i (HAW)"),
+    ("F38", "F97", "Phoenix Empire (F97)"),
     ("horde_ideas", "horde_gov_ideas", "Horde Government Ideas")]
 fixLocalization :: (Text, Text, Text) -> Settings -> Settings
 fixLocalization (lockey1, lockey2, newLocForKey2) s =
