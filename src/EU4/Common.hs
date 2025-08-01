@@ -953,7 +953,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("may_perform_slave_raid"                , handleModifierAlwaysYesWithIcon "{{DLC-only|May raid coasts}}" "may raid coasts")
         ,("may_perform_slave_raid_on_same_religion", handleModifierAlwaysYesWithIcon "{{DLC-only|May raid coasts}}, including coasts of countries with same religion" "may raid coasts including coasts of countries with same religion")
         ,("may_recruit_female_generals"           , handleModifierAlwaysYesWithIcon "May recruit female generals" "may recruit female generals")
-        ,("no_religion_penalty"                   , rhsAlwaysYes (MsgGenericText "Heretic and heathen provinces do not give any penalties"))
+        ,("no_religion_penalty"                   , handleModifierAlwaysYesWithIcon "Heretic and heathen provinces do not give any penalties" "no religion penalty")
         ,("cb_on_primitives"                      , rhsAlwaysYes (MsgGenericText "Can fabricate claim overseas in colonial regions.")) -- Full Exploration
         ,("cb_on_religious_enemies"               , handleModifierAlwaysYesWithIcon "Gain permanent “Holy War” and “Purging of Heresy” [[Casus Belli]] against heathens and heretics respectively." "cb on religious enemies") -- Deus Vult
         ,("may_explore"                           , handleModifierAlwaysYesWithIcon "Can recruit explorers and conquistadors. Explorers may explore ocean provinces." "may explore") -- Exploration: Quest for the New World
