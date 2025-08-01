@@ -1453,9 +1453,9 @@ instance RenderMessage Script ScriptMessage where
         MsgLoseCardinal
             -> "Lose a veridical"
         MsgIsJanissaryMod
-            -> "This modifier only applies to janissary regiments"
+            -> "This modifier only applies to ahati regiments"
         MsgIsRajputMod
-            -> "This modifier only applies to rajput regiments"
+            -> "This modifier only applies to artificer regiments"
         MsgIsImperialMod
             -> "This modifier only applies to members of the EoA"
         MsgGainADM {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
