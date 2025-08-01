@@ -1127,7 +1127,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("monthly_russian_mil_power"             , handleModifier "monthly_russian_mil_power" (colourNumSign True))
         ,("monthly_russian_modernization"         , handleModifier "monthly_russian_modernization" (colourNumSign True))
         ,("naval_morale_damage"                   , handleModifier "MODIFIER_NAVAL_MORALE_DAMAGE" (reducedNum (colourPcSign True)))
-        ,("naval_morale_damage_received"          , handleModifier "MODIFIER_MORALE_DAMAGE_RECIEVED" (reducedNum (colourPcSign False)))
+        ,("naval_morale_damage_received"          , handleModifier "MODIFIER_NAVAL_MORALE_DAMAGE_RECIEVED" (reducedNum (colourPcSign False)))
         ,("no_claim_cost_increasement"            , rhsAlwaysYes (MsgGenericText "No additional claim cost"))
         ,("nobles_privilege_slots"                , handleModifier "Nobility max privileges" (colourNumSign True))
         ,("num_of_parliament_issues"              , handleModifier "MODIFIER_NUM_OF_PARLIAMENT_ISSUES" (colourNumSign True))
