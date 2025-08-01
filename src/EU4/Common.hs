@@ -555,8 +555,8 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("flagship_durability"                   , handleModifier "MODIFIER_FLAGSHIP_DURABILITY_MODIFIER" (reducedNum (colourPcSign True)))
         ,("flagship_morale"                       , handleModifier "MODIFIER_MORALE_FLAGSHIP" (reducedNum (colourPcSign True)))
         ,("flagship_naval_engagement_modifier"    , handleModifier "MODIFIER_FLAGSHIP_NAVAL_ENGAGEMENT_IN_FLEET" (colourNumSign True))
-        ,("free_land_leader_pool"                 , handleModifier "MODIFIER_FREE_LAND_LEADER_POOL" (colourNumSign True))
-        ,("free_navy_leader_pool"                 , handleModifier "MODIFIER_FREE_NAVY_LEADER_POOL" (colourNumSign True))
+        ,("free_land_leader_pool"                 , handleModifierWithIcon "MODIFIER_FREE_LAND_LEADER_POOL" "free land leader pool" (colourNumSign True))
+        ,("free_navy_leader_pool"                 , handleModifierWithIcon "MODIFIER_FREE_NAVY_LEADER_POOL" "free navy leader pool" (colourNumSign True))
         ,("free_policy"                           , handleModifier "MODIFIER_FREE_POLICY" (colourNumSign True))
         ,("global_monthly_devastation"            , handleModifier "MODIFIER_GLOBAL_MONTHLY_DEVASTATION" (colourNumSign False))
         ,("global_naval_barrage_cost"             , handleModifier "MODIFIER_GLOBAL_NAVAL_BARRAGE_COST" (reducedNum (colourPcSign False)))
@@ -901,7 +901,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("rival_change_cost"                     , handleModifier "MODIFIER_RIVAL_CHANGE_COST" (reducedNum (colourPcSign False)))
         ,("sailor_maintenance_modifer"            , handleModifier "MODIFIER_SAILOR_MAINTENANCE" (reducedNum (colourPcSign False)))
         ,("sailors_recovery_speed"                , handleModifier "SAILORS_RECOVERY" (reducedNum (colourPcSign True)))
-        ,("same_culture_advisor_cost"             , handleModifier "MODIFIER_SAME_CULTURE_ADVISOR_COST" (reducedNum (colourPcSign False)))
+        ,("same_culture_advisor_cost"             , handleModifierWithIcon "MODIFIER_SAME_CULTURE_ADVISOR_COST" "same culture advisor cost" (reducedNum (colourPcSign False)))
         ,("ship_durability"                       , handleModifier "MODIFIER_SHIP_DURABILITY" (reducedNum (colourPcSign True)))
         ,("ship_recruit_speed"                    , handleModifier "L_SHIP_RECRUIT_SPEED" (reducedNum (colourPcSign False)))
         ,("ship_power_propagation"                , handleModifier "MODIFIER_SHIP_POWER_PROPAGATION" (reducedNum (colourPcSign True)))
@@ -958,7 +958,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("cb_on_religious_enemies"               , handleModifierAlwaysYesWithIcon "Gain permanent “Holy War” and “Purging of Heresy” [[Casus Belli]] against heathens and heretics respectively." "cb on religious enemies") -- Deus Vult
         ,("may_explore"                           , handleModifierAlwaysYesWithIcon "Can recruit explorers and conquistadors. Explorers may explore ocean provinces." "may explore") -- Exploration: Quest for the New World
         ,("reduced_stab_impacts"                  , rhsAlwaysYes (MsgGenericText "Lowered impact on stability from diplomatic actions")) -- Full Diplomacy
-        ,("sea_repair"                            , rhsAlwaysYes (MsgGenericText "Ships repair while in coastal sea provinces.")) -- Full Maritime
+        ,("sea_repair"                            , handleModifierAlwaysYesWithIcon "Ships repair while in coastal sea provinces." "sea repair") -- Full Maritime
         ,("advisor_pool"                          , handleModifierWithIconPlural "Possible advisor" "Possible advisors" "advisor pool" (colourNumSign True))
         ,("colonists"                             , handleModifierWithIconPlural "Colonist" "Colonists" "colonists" (colourNumSign True))
         ,("diplomatic_upkeep"                     , handleModifierWithIconPlural "Diplomatic relation" "Diplomatic relations" "diplomatic upkeep" (colourNumSign True))
@@ -1127,6 +1127,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("monthly_russian_mil_power"             , handleModifier "monthly_russian_mil_power" (colourNumSign True))
         ,("monthly_russian_modernization"         , handleModifier "monthly_russian_modernization" (colourNumSign True))
         ,("naval_morale_damage"                   , handleModifier "MODIFIER_NAVAL_MORALE_DAMAGE" (reducedNum (colourPcSign True)))
+        ,("naval_morale_damage_received"          , handleModifier "MODIFIER_MORALE_DAMAGE_RECIEVED" (reducedNum (colourPcSign False)))
         ,("no_claim_cost_increasement"            , rhsAlwaysYes (MsgGenericText "No additional claim cost"))
         ,("nobles_privilege_slots"                , handleModifier "Nobility max privileges" (colourNumSign True))
         ,("num_of_parliament_issues"              , handleModifier "MODIFIER_NUM_OF_PARLIAMENT_ISSUES" (colourNumSign True))
@@ -1145,7 +1146,7 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("relation_with_same_religion"           , handleModifier "MODIFIER_RELATION_WITH_SAME_RELIGION" (colourNumSign True))
         ,("reverse_relation_with_same_religion"   , handleModifier "MODIFIER_REVERSE_RELATION_WITH_SAME_RELIGION" (colourNumSign True))
         ,("russian_modernization_gain_modifier"   , handleModifier "russian_modernization_gain_modifier" (reducedNum (colourPcSign True)))
-        ,("same_religion_advisor_cost"            , handleModifier "MODIFIER_SAME_RELIGION_ADVISOR_COST" (reducedNum (colourPcSign False)))
+        ,("same_religion_advisor_cost"            , handleModifierWithIcon "MODIFIER_SAME_RELIGION_ADVISOR_COST" "same religion advisor cost" (reducedNum (colourPcSign False)))
         ,("ship_trade_power_modifier"             , handleModifier "MODIFIER_SHIP_TRADE_POWER_MODIFIER" (reducedNum (colourPcSign True)))
         ,("special_unit_cost_modifier"            , handleModifier "MODIFIER_SPECIAL_UNIT_COST_MODIFIER" (reducedNum (colourPcSign False)))
         ,("spy_action_cost_modifier"              , handleModifier "MODIFIER_SPY_ACTION_COST_MODIFIER" (reducedNum (colourPcSign False)))
