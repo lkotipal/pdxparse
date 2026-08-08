@@ -1246,6 +1246,22 @@ handlersForModifiers = Tr.unionL handlersForNonModifiersWithinModifiiers (Tr.fro
         ,("vampires_loyalty_modifier"             , handleModifierWithIcon "Vampires loyalty equilibrium" "vampires loyalty" (reducedNum (colourPcSign True)))
         ,("castonath_patricians_influence_modifier"           , handleModifierWithIcon "Castonath Patricians influence"           "castonath patricians influence" (reducedNum plainPcSign))
         ,("castonath_patricians_loyalty_modifier"             , handleModifierWithIcon "Castonath Patricians loyalty equilibrium" "castonath patricians loyalty" (reducedNum (colourPcSign True)))
+-- Magic
+        ,("mages_mana_regen"                      , handleModifierWithIcon "Mana regeneration" "mages mana regen" (colourNumSign True))
+        ,("mages_mana_regen_mult"                 , handleModifierWithIcon "Mana regeneration modifier" "mages mana regen mult" (reducedNum (colourPcSign True)))
+        ,("mages_mana_capacity"                   , handleModifierWithIcon "Mana capacity" "mana capacity" (colourNumSign True))
+        ,("mages_monthly_experience"              , handleModifierWithIcon "Monthly magic experience" "mages monthly experience" (colourNumSign True))
+        ,("max_estate_spell_levels"               , handleModifierWithIcon "Maximum estate spell levels" "max estate spell levels" (colourNumSign True))
+        ,("mages_ruler_experience_mod"            , handleModifierWithIcon "Ruler experience modifier" "mages ruler experience mod" (reducedNum (colourPcSign True)))
+        ,("mages_estate_experience_mod"           , handleModifierWithIcon "Estate experience modifier" "mages estate experience mod" (reducedNum (colourPcSign True)))
+        ,("abjuration_experience_mod"             , handleModifierWithIcon "Abjuration experience modifier" "abjuration experience mod" (reducedNum (colourPcSign True)))
+        ,("conjuration_experience_mod"            , handleModifierWithIcon "conjuration experience modifier" "conjuration experience mod" (reducedNum (colourPcSign True)))
+        ,("divination_experience_mod"             , handleModifierWithIcon "divination experience modifier" "divination experience mod" (reducedNum (colourPcSign True)))
+        ,("enchantment_experience_mod"            , handleModifierWithIcon "enchantment experience modifier" "enchantment experience mod" (reducedNum (colourPcSign True)))
+        ,("evocation_experience_mod"              , handleModifierWithIcon "evocation experience modifier" "evocation experience mod" (reducedNum (colourPcSign True)))
+        ,("illusion_experience_mod"               , handleModifierWithIcon "illusion experience modifier" "illusion experience mod" (reducedNum (colourPcSign True)))
+        ,("transmutation_experience_mod"          , handleModifierWithIcon "transmutation experience modifier" "transmutation experience mod" (reducedNum (colourPcSign True)))
+        ,("necromancy_experience_mod"             , handleModifierWithIcon "necromancy experience modifier" "necromancy experience mod" (reducedNum (colourPcSign True)))
         ]) -- handlersForModifiers
 
 handlersForNonModifiersWithinModifiiers :: (EU4Info g, Monad m) => Trie (StatementHandler g m)
