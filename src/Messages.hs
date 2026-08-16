@@ -8352,7 +8352,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgCurrentIcon {scriptMessageIcon = _icon, scriptMessageWhom = _what}
             -> mconcat
-                [ "Has commissioned "
+                [ "Has activated "
                 , _icon
                 , " "
                 , _what
@@ -8360,7 +8360,7 @@ instance RenderMessage Script ScriptMessage where
         MsgPatriarchAuthority {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
                 [ _icon
-                , " Patriarch authority is at least "
+                , " Demonic power is at least "
                 , toMessage (reducedNum plainPc _amt)
                 ]
         MsgIsRevolutionTarget {scriptMessageYn = _yn}
