@@ -17,7 +17,7 @@ import Control.Monad.State (MonadState (..), gets)
 import Control.Monad.Trans (MonadIO (..))
 
 import Data.List (foldl')
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, listToMaybe)
 import Data.Monoid ((<>))
 
 import Data.HashMap.Strict (HashMap)
@@ -221,5 +221,7 @@ findEstateActions evts privilegeScripts scriptedEffectsForEstates = addScripts (
         getScript :: Text -> Text -> GenericScript
         getScript effectName scriptedEffectsForEstates = do
             let regex = RE.makeRegexOpts RE.defaultCompOpt{RE.multiline=False} RE.defaultExecOpt (effectName <> " = {((\r?\n[^}][^\n\r]*)*)\r?\n}")
-                (_before, match, after, effectText:_othersubmatches) = RE.match regex scriptedEffectsForEstates :: (Text, Text, Text, [Text])
-            readScriptFromText effectText
+                (_before, match, after, othersubmatches) = RE.match regex scriptedEffectsForEstates :: (Text, Text, Text, [Text])
+            case listToMaybe othersubmatches of
+                Nothing -> readScriptFromText "404 effect not found"
+                Just first -> readScriptFromText first

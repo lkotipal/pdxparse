@@ -463,7 +463,7 @@ parseEU4Scripts = do
         te3 = findTriggeredEventsInMissions te2 (HM.elems missions)
         te4 = findTriggeredEventsInProvinceTriggeredModifiers te3 (HM.elems provTrigModifiers)
         te5 = findTriggeredEventsInUnhandledFiles te4 genericScriptsForEventTriggers
-        --estateActions = findEstateActions (HM.elems decisions) (HM.findWithDefault [] "estate_privileges" genericScriptsForEventTriggers) scriptedEffectsForEstates
+        estateActions = findEstateActions (HM.elems decisions) (HM.findWithDefault [] "estate_privileges" genericScriptsForEventTriggers) scriptedEffectsForEstates
     --traceM $ concat (map (\(k,v) -> (show k) ++ " -> " ++ show v ++ "\n") (HM.toList $ te5))
     modify $ \(EU4D s) -> EU4D $
             s { eu4events = events
@@ -474,7 +474,7 @@ parseEU4Scripts = do
             ,   eu4missions = missions
             ,   eu4eventTriggers = te5
             ,   eu4provtrigmodifiers = provTrigModifiers
-            --,   eu4estateActions = estateActions
+            ,   eu4estateActions = estateActions
             ,   eu4scriptedEffects = scriptedEffects
             }
 
