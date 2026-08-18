@@ -2105,7 +2105,7 @@ handlersNumProvinces = Tr.fromList
 
         -- Trade goods
         ,("coal"          , numProvinces "coal" MsgGoodsProvinces)
-        ,("chinaware"     , numProvinces "chinaware" MsgGoodsProvinces)
+        ,("chinaware"     , numProvinces "porcelain" MsgGoodsProvinces)
         ,("cloth"         , numProvinces "cloth" MsgGoodsProvinces)
         ,("cocoa"         , numProvinces "cocoa" MsgGoodsProvinces)
         ,("coffee"        , numProvinces "coffee" MsgGoodsProvinces)
