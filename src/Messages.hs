@@ -3557,7 +3557,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgPapacyIsActive {scriptMessageYn = _yn}
             -> mconcat
-                [ "Papal interaction is"
+                [ "Rectorate interaction is"
                 , toMessage (ifThenElseT _yn "" " ''not''")
                 , " active"
                 ]
