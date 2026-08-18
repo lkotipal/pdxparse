@@ -223,5 +223,7 @@ findEstateActions evts privilegeScripts scriptedEffectsForEstates = addScripts (
             let regex = RE.makeRegexOpts RE.defaultCompOpt{RE.multiline=False} RE.defaultExecOpt (effectName <> " = {((\r?\n[^}][^\n\r]*)*)\r?\n}")
                 (_before, match, after, othersubmatches) = RE.match regex scriptedEffectsForEstates :: (Text, Text, Text, [Text])
             case listToMaybe othersubmatches of
-                Nothing -> readScriptFromText "404 effect not found"
                 Just first -> readScriptFromText first
+                nothing -> do
+                    traceM $ "Error parsing effect " ++ T.unpack effectName
+                    readScriptFromText ""
