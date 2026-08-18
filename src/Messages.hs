@@ -8848,7 +8848,7 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgJanissaryPercentage {scriptMessageAmt = _amt}
             -> mconcat
-                [ "The ratio of janissary regiments to total army size is at least "
+                [ "The ratio of ahati regiments to total army size is at least "
                 , toMessage (reducedNum plainPc _amt)
                 ]
         MsgBreakUnion {scriptMessageWhom = _whom}
