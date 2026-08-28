@@ -1836,21 +1836,21 @@ instance RenderMessage Script ScriptMessage where
                 ]
         MsgReformDesire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
-                [ "{{icon|catholic}} Catholicism has at least "
+                [ "{{icon|ravelian}} Ravelianism has at least "
                 , _icon
                 , " "
                 , toMessage (reducedNum plainPc _amt)
-                , " reform desire"
+                , " unraveling knowledge"
                 ]
         MsgGainReformDesire {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
-                [ "{{icon|catholic}} Catholicism "
+                [ "{{icon|ravelian}} Ravelianism "
                 , gainsOrLoses _amt
                 , " "
                 , _icon
                 , " "
-                , toMessage (reducedNum (colourPc False) _amt)
-                , " reform desire"
+                , toMessage (reducedNum (colourPc True) _amt)
+                , " unraveling knowledge"
                 ]
         MsgGainMercantilism {scriptMessageIcon = _icon, scriptMessageAmt = _amt}
             -> mconcat
