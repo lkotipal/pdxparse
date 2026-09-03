@@ -157,13 +157,24 @@ stringLit = T.init . handleEmpty . T.dropWhileEnd (/='"') . T.pack <$> (Ap.char 
 -- | Characters within a string. Process backslash escapes (apostrophes,
 -- newlines and tabs).
 stringChar :: Parser Char
-stringChar = Ap.satisfy (not . \c -> Ap.inClass "\\" c || Ap.isEndOfLine c)
+stringChar = Ap.satisfy (not . \c -> Ap.inClass "\\|€©†‡‹•‰™®¦" c || Ap.isEndOfLine c)
          <|> Ap.char '\\'
-            *> (    Ap.char '\''
+            *> (    Ap.char '\''$> '\''
                 <|> Ap.char 'n' $> '\n'
                 <|> Ap.char 't' $> '\t'
                 <|> Ap.anyChar
                )
+         <|> Ap.char '|' $> '¦' -- TODO how da faq can I replace with {{!}}
+         <|> Ap.char '€' $> 'ā'
+         <|> Ap.char '©' $> 'ē'
+         <|> Ap.char '†' $> 'ī'
+         <|> Ap.char '‡' $> 'ō'
+         <|> Ap.char '‹' $> 'ū'
+         <|> Ap.char '•' $> 'Ā'
+         <|> Ap.char '‰' $> 'Ē'
+         <|> Ap.char '™' $> 'Ī'
+         <|> Ap.char '®' $> 'Ō'
+         <|> Ap.char '¦' $> 'Ū'
     <?> "string character"
 
 -----------------------
@@ -188,7 +199,6 @@ stringChar = Ap.satisfy (not . \c -> Ap.inClass "\\" c || Ap.isEndOfLine c)
 locFile :: Parser L10nO
 locFile = startspace *> lang <* endspace
     <?> "localization file"
-
 -- | Parse a localization file. If the parser fails, returns
 -- @Left <the parse error>@.
 parseLocFile :: Text -> Either String L10nO
